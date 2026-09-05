@@ -1,4 +1,4 @@
-using GstSharp.Generator.GirParsing.Model;
+﻿using GstSharp.Generator.GirParsing.Model;
 
 namespace GstSharp.Generator.Semantic;
 
@@ -314,13 +314,9 @@ internal sealed class SubclassModel
         List<ClassStructMember> members = [];
         foreach (GirField field in typeStruct.Fields)
         {
-            bool isFunctionPointer = field.Callback is not null
-                || (field.Type is not GirArrayRef
-                    && field.Type?.Name is { } typeName
-                    && repository.Resolve(typeName, ns) is { Kind: GirSymbolKind.Callback });
-
             GirVirtualMethod? method = null;
-            if (isFunctionPointer && methods.TryGetValue(field.Name, out GirVirtualMethod? candidate))
+            if (IsFunctionPointerField(repository, ns, field)
+                && methods.TryGetValue(field.Name, out GirVirtualMethod? candidate))
             {
                 method = candidate;
                 method.OverlayKey = qualifiedName + "::" + method.Name;
@@ -331,4 +327,26 @@ internal sealed class SubclassModel
 
         return members;
     }
+
+    /// <summary>
+    /// Tests whether a class struct field holds a function pointer, whether the
+    /// gir spells it as an inline <c>&lt;callback&gt;</c> or as a
+    /// <c>&lt;type&gt;</c> naming a callback typedef.
+    /// </summary>
+    /// <param name="repository">The loaded girs, for resolving the type name.</param>
+    /// <param name="ns">The namespace the field is declared in.</param>
+    /// <param name="field">The field, as the gir spells it.</param>
+    /// <returns><see langword="true"/> when the field is a function pointer.</returns>
+    /// <remarks>
+    /// The pairing and the mirror have to agree on this, member for member: a
+    /// field the pairing calls a slot and the mirror calls data would be laid
+    /// out at the width of the data type, which is the one error in a class
+    /// struct nothing below the generator catches. They therefore ask the same
+    /// question here rather than each spelling it out.
+    /// </remarks>
+    internal static bool IsFunctionPointerField(Repository repository, GirNamespace ns, GirField field) =>
+        field.Callback is not null
+        || (field.Type is not GirArrayRef
+            && field.Type?.Name is { } typeName
+            && repository.Resolve(typeName, ns) is { Kind: GirSymbolKind.Callback });
 }

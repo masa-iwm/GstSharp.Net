@@ -1,4 +1,4 @@
-using GstSharp.Generator.GirParsing.Model;
+﻿using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
 
 namespace GstSharp.Generator.Emit;
@@ -514,13 +514,12 @@ internal sealed class ClassStructEmitter
     /// The two spellings mean the same thing to the C compiler and the mirror
     /// treats them the same way, but only the inline one carries a signature
     /// the pairing can read, which is why a field of either shape that is not
-    /// an overridable slot ends up here rather than in the data branch.
+    /// an overridable slot ends up here rather than in the data branch. The
+    /// question itself is <see cref="SubclassModel.IsFunctionPointerField"/>,
+    /// which is what the pairing asks, so the two cannot drift apart.
     /// </remarks>
     private bool IsCallbackField(GirField field, GirNamespace ns) =>
-        field.Callback is not null
-        || (field.Type is not GirArrayRef
-            && field.Type?.Name is { } name
-            && _repository.Resolve(name, ns) is { Kind: GirSymbolKind.Callback });
+        SubclassModel.IsFunctionPointerField(_repository, ns, field);
 
     /// <summary>
     /// Lays a function pointer field out that carries no managed surface, and
