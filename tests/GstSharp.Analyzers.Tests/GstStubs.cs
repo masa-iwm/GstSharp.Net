@@ -86,9 +86,38 @@ internal static class GstStubs
                 {
                 }
 
-                /// <summary>A stand-in for the wrapped GObject base class.</summary>
+                /// <summary>A stand-in for a property specification.</summary>
+                public sealed class ParamSpec
+                {
+                }
+
+                /// <summary>A stand-in for the read-only view of a value.</summary>
+                public readonly ref struct ValueView
+                {
+                }
+
+                /// <summary>A stand-in for the writable view of a value.</summary>
+                public ref struct ValueRef
+                {
+                }
+
+                /// <summary>
+                /// A stand-in for the wrapped GObject base class, carrying the
+                /// property slots every subclassable class inherits.
+                /// </summary>
                 public class Object
                 {
+                    public static VfuncOverride SetPropertyOverride { get; } = default;
+
+                    public static VfuncOverride GetPropertyOverride { get; } = default;
+
+                    protected virtual void OnSetProperty(uint propertyId, ValueView value, ParamSpec pspec)
+                    {
+                    }
+
+                    protected virtual void OnGetProperty(uint propertyId, ValueRef value, ParamSpec pspec)
+                    {
+                    }
                 }
 
                 /// <summary>
@@ -108,7 +137,7 @@ internal static class GstStubs
             /// ".Subclass.cs" partials: a slot declaration property and an "On"
             /// method per vfunc, plus the registration entry point.
             /// </summary>
-            public class FakeSrc
+            public class FakeSrc : GObject.Object
             {
                 public static GObject.VfuncOverride XOverride { get; } = default;
 

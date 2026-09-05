@@ -115,6 +115,13 @@ rather than guessing, and a `DefineSubclass` call outside a class that derives
 from the class it registers against, such as the negative registration tests,
 is never looked at.
 
+The stem rule is what makes the pairing open-ended: it covers every slot a
+subclassable class declares, including the two `Gst.GObject.Object` itself
+contributes — `SetPropertyOverride` with `OnSetProperty(uint, ValueView,
+ParamSpec)` and `GetPropertyOverride` with `OnGetProperty(uint, ValueRef,
+ParamSpec)`, which every class that installs a property has to declare and
+override together.
+
 The override may live in a base class between the declaring class and the
 wrapped base: the search walks that stretch of the hierarchy, so an
 intermediate abstract class carrying the implementation pairs with a leaf that

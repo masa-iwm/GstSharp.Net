@@ -278,4 +278,54 @@ public sealed class SubclassOverridePairingAnalyzerTests
                 protected override int OnX() => 1;
             }
             """);
+
+    [Fact]
+    public Task PropertyOverridesAndOverrides_AreSilent() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("managed", null, SetPropertyOverride, GetPropertyOverride);
+
+                protected override void OnSetProperty(
+                    uint propertyId, Gst.GObject.ValueView value, Gst.GObject.ParamSpec pspec)
+                {
+                }
+
+                protected override void OnGetProperty(
+                    uint propertyId, Gst.GObject.ValueRef value, Gst.GObject.ParamSpec pspec)
+                {
+                }
+            }
+            """);
+
+    [Fact]
+    public Task OnSetPropertyWithoutDeclaration_IsReported() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("managed", null);
+
+                protected override void {|GST0003:OnSetProperty|}(
+                    uint propertyId, Gst.GObject.ValueView value, Gst.GObject.ParamSpec pspec)
+                {
+                }
+            }
+            """);
+
+    [Fact]
+    public Task GetPropertyOverrideWithoutOverride_IsReported() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeSrc
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("managed", null, SetPropertyOverride, {|GST0004:GetPropertyOverride|});
+
+                protected override void OnSetProperty(
+                    uint propertyId, Gst.GObject.ValueView value, Gst.GObject.ParamSpec pspec)
+                {
+                }
+            }
+            """);
 }
