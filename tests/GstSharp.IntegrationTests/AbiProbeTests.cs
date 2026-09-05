@@ -50,6 +50,7 @@ public sealed class AbiProbeTests
         Gst.Base.ClassStructRegistry.CreateEntries,
         Gst.Audio.ClassStructRegistry.CreateEntries,
         Gst.Video.ClassStructRegistry.CreateEntries,
+        GES.ClassStructRegistry.CreateEntries,
     ];
 
     /// <summary>

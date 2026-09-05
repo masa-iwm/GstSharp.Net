@@ -46,7 +46,7 @@ public sealed class SubclassCensusTests
     [InlineData("GstTag", 0, 0)]
     [InlineData("GstTranscoder", 0, 0)]
     [InlineData("GstPlay", 0, 0)]
-    [InlineData("GES", 0, 0)]
+    [InlineData("GES", 8, 22)]
     public void TheSubclassingCensusIsStable(string module, int classStructs, int vfuncs)
     {
         EmissionCensus census = Generated.Census;
@@ -56,24 +56,23 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: twenty two mirrors and two hundred and eighteen
-    /// slots, the numbers the release notes and <c>docs/subclassing.md</c>
-    /// quote.
+    /// The run as a whole: thirty mirrors and two hundred and forty slots, the
+    /// numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsTwentyTwoMirrorsAndTwoHundredAndEighteenSlots()
+    public void TheRunEmitsThirtyMirrorsAndTwoHundredAndFortySlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
         int slots = 0;
-        foreach (string module in new[] { "Gst", "GstBase", "GstAudio", "GstVideo" })
+        foreach (string module in new[] { "Gst", "GstBase", "GstAudio", "GstVideo", "GES" })
         {
             mirrors += census.EmittedCount(module, "class struct");
             slots += census.EmittedCount(module, "vfunc");
         }
 
-        Assert.Equal(22, mirrors);
-        Assert.Equal(218, slots);
+        Assert.Equal(30, mirrors);
+        Assert.Equal(240, slots);
     }
 
     /// <summary>
@@ -116,6 +115,40 @@ public sealed class SubclassCensusTests
 
         Assert.Empty(census.SkippedVirtuals("GstVideo"));
 
-        Assert.Equal(8, census.SkippedVirtualCount());
+        const string GListReturn =
+            "the slot answers a GList whose container the caller takes, which the reverse planner has "
+            + "no bucket for; the C default implementation wraps create_track_element "
+            + "(ges-clip.c:2796-2808), so a managed clip that implements create_track_element already "
+            + "behaves the way this slot would make it behave";
+        const string FloatingCopy =
+            "the copy the slot is handed arrives floating, and FromNative(copy, None) settles that "
+            + "reference into the wrapper, while GESContainer::_deep_copy (ges-container.c:332) adopts "
+            + "the very same reference by a plain store and unrefs it in _free_mapping: a managed clip "
+            + "deep copied inside a native group would lose the reference its wrapper owns. Temporary, "
+            + "until a floating vfunc argument can be borrowed without settling it; state that is worth "
+            + "copying belongs in an installed property, which ges_timeline_element_copy copies by itself";
+        const string Opaque = "OpaqueSlot";
+        const string Unsupported = "UnsupportedSignature";
+        Assert.Equal(
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["GES.AudioSource::create_source"] = Opaque,
+                ["GES.Clip::create_track_elements"] = GListReturn,
+                ["GES.Container::group"] = Opaque,
+                ["GES.TimelineElement::deep_copy"] = FloatingCopy,
+                ["GES.TimelineElement::list_children_properties"] = Unsupported,
+                ["GES.TimelineElement::lookup_child"] = Unsupported,
+                ["GES.TimelineElement::set_child_property"] = Unsupported,
+                ["GES.TimelineElement::set_child_property_full"] = Unsupported,
+                ["GES.TrackElement::list_children_properties"] = Unsupported,
+                ["GES.TrackElement::lookup_child"] = Unsupported,
+                ["GES.VideoSource::create_filters"] = Opaque,
+                ["GES.VideoSource::create_source"] = Opaque,
+                ["GES.VideoSource::get_natural_size"] = Opaque,
+                ["GES.VideoSource::needs_converters"] = Opaque,
+            },
+            census.SkippedVirtuals("GES"));
+
+        Assert.Equal(22, census.SkippedVirtualCount());
     }
 }

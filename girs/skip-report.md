@@ -8,8 +8,9 @@ disappears shows up here as an added line.
 
 ## GES
 
-### HandBound (6)
+### HandBound (7)
 
+- `ges_asset_extract`
 - `ges_asset_request_async`
 - `ges_asset_request_finish`
 - `ges_timeline_element_get_child_property`
@@ -64,13 +65,12 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (13)
+### UnsupportedSignature (12)
 
 - `GES.Layer::active-changed`
 - `GES.MetaContainer::notify-meta`
 - `GES.Timeline::group-removed`
 - `GES.Timeline::select-tracks-for-object`
-- `ges_asset_extract`
 - `ges_base_effect_set_time_translation_funcs`
 - `ges_command_line_formatter_get_help`
 - `ges_init_check`
@@ -1240,12 +1240,29 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (8)
+## Virtuals (22)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape; every other
 reason is the statement of an overlay entry. The mirror still lays every slot
 out, so what is listed here is the managed surface and not the ABI.
+
+### GES (14)
+
+- `GES.AudioSource::create_source` — OpaqueSlot
+- `GES.Clip::create_track_elements` — the slot answers a GList whose container the caller takes, which the reverse planner has no bucket for; the C default implementation wraps create_track_element (ges-clip.c:2796-2808), so a managed clip that implements create_track_element already behaves the way this slot would make it behave
+- `GES.Container::group` — OpaqueSlot
+- `GES.TimelineElement::deep_copy` — the copy the slot is handed arrives floating, and FromNative(copy, None) settles that reference into the wrapper, while GESContainer::_deep_copy (ges-container.c:332) adopts the very same reference by a plain store and unrefs it in _free_mapping: a managed clip deep copied inside a native group would lose the reference its wrapper owns. Temporary, until a floating vfunc argument can be borrowed without settling it; state that is worth copying belongs in an installed property, which ges_timeline_element_copy copies by itself
+- `GES.TimelineElement::list_children_properties` — UnsupportedSignature
+- `GES.TimelineElement::lookup_child` — UnsupportedSignature
+- `GES.TimelineElement::set_child_property` — UnsupportedSignature
+- `GES.TimelineElement::set_child_property_full` — UnsupportedSignature
+- `GES.TrackElement::list_children_properties` — UnsupportedSignature
+- `GES.TrackElement::lookup_child` — UnsupportedSignature
+- `GES.VideoSource::create_filters` — OpaqueSlot
+- `GES.VideoSource::create_source` — OpaqueSlot
+- `GES.VideoSource::get_natural_size` — OpaqueSlot
+- `GES.VideoSource::needs_converters` — OpaqueSlot
 
 ### Gst (7)
 

@@ -234,7 +234,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 7, 0, 0, 0, 0)]
     [InlineData("GstPlay", 0, 23, 0, 0, 0, 0)]
-    [InlineData("GES", 6, 3, 4, 10, 13, 2)]
+    [InlineData("GES", 6, 3, 4, 10, 12, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -481,12 +481,15 @@ public sealed class ClassEmitterTests
         // classes: the nineteenth it emits is RtspServerGlobal, the static
         // holder of the namespace level calls, whose declaration carries the
         // static modifier the pattern here does not match.
-        // Twenty one more since the subclassing surface landed: the
+        // Twenty eight more since the subclassing surface landed: the
         // `*.Subclass.cs` partial of each allowlisted class opens with the same
         // `public unsafe partial class` the counting keys on, and the allowlist
-        // holds twenty one classes - fourteen from stage 2a, the five codec
-        // bases of stage 2b, and Gst.Pad and GstBase.AggregatorPad of stage 3a.
-        Assert.Equal(211, classes);
+        // holds twenty eight classes - fourteen from stage 2a, the five codec
+        // bases of stage 2b, Gst.Pad and GstBase.AggregatorPad of stage 3a, and
+        // the seven GES classes of stage 3c. GES.Container is not among them:
+        // it is on the chain of GES.Clip, so it gets a mirror and no managed
+        // surface of its own.
+        Assert.Equal(218, classes);
 
         // 127 rather than 123 since the field accessors of a string and of a
         // handle landed: GstSdp.SDPKey, GstSdp.SDPOrigin and
@@ -1048,7 +1051,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]
     [InlineData("GstPlay", 6, 0, 1, 0, 0, 0, 16)]
-    [InlineData("GES", 2, 0, 1, 0, 0, 2, 6)]
+    [InlineData("GES", 2, 0, 1, 0, 0, 2, 7)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,

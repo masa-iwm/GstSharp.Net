@@ -414,9 +414,14 @@ public sealed class SkipRulesTests
         // wrapper the caller keeps its signal handlers on down with it, so
         // src/GstSharp.Net.RtspServer/Custom takes a reference of its own and
         // hands that one over.
+        // ges_asset_extract joins them as the one call a managed GES subclass
+        // cannot do without: the planner refuses it for its GError, and
+        // GES.Asset.Extract<T> in src/GstSharp.Net.GES/Custom is what a clip
+        // builds its children with.
         Assert.Equal(
             [
                 "GstWebRTC.WebRTCDataChannel::on-message-data",
+                "ges_asset_extract",
                 "ges_asset_request_async",
                 "ges_asset_request_finish",
                 "ges_timeline_element_get_child_property",
