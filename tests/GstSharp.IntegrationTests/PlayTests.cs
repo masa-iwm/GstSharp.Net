@@ -91,7 +91,7 @@ public sealed class PlayTests
         play.Uri = media.Uri;
         play.Start();
 
-        using Bus bus = play.GetMessageBus();
+        Bus bus = play.GetMessageBus();
         Assert.True(
             WaitForState(bus, PlayState.Playing),
             "the play never reported the PLAYING state on its API bus");
@@ -184,7 +184,7 @@ public sealed class PlayTests
         play.Uri = media.Uri;
         play.Start();
 
-        using Bus bus = play.GetMessageBus();
+        Bus bus = play.GetMessageBus();
         Assert.True(
             WaitForState(bus, PlayState.Playing),
             "the play never reported the PLAYING state on its API bus");
@@ -219,7 +219,7 @@ public sealed class PlayTests
         play.Uri = "file:///gstsharp-no-such-file.ogg";
         play.Start();
 
-        using Bus bus = play.GetMessageBus();
+        Bus bus = play.GetMessageBus();
         using Message message = WaitForKind(bus, PlayMessage.Error)
             ?? throw new InvalidOperationException("the play reported no error for an unopenable URI");
 
@@ -382,7 +382,7 @@ public sealed class PlayTests
         play.Uri = "file:///gstsharp-no-such-file.ogg";
         play.Start();
 
-        using Bus bus = play.GetMessageBus();
+        Bus bus = play.GetMessageBus();
         using Message message = WaitForKind(bus, PlayMessage.Error)
             ?? throw new InvalidOperationException("the play reported no error for an unopenable URI");
 
@@ -424,7 +424,7 @@ public sealed class PlayTests
 
         using ManualResetEventSlim playing = new(initialState: false);
         using ManualResetEventSlim stopped = new(initialState: false);
-        using Bus bus = play.GetMessageBus();
+        Bus bus = play.GetMessageBus();
         adapter.StateChanged += OnStateChanged;
         try
         {
@@ -626,7 +626,7 @@ public sealed class PlayTests
         play.Uri = media.Uri;
         play.Start();
 
-        using Bus bus = play.GetMessageBus();
+        Bus bus = play.GetMessageBus();
         Assert.True(
             WaitForState(bus, PlayState.Playing),
             "the play never reported the PLAYING state on its API bus");

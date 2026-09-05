@@ -42,7 +42,7 @@ public sealed class MessageInfoTests
 
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("info"));
         using Element element = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "sink"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         // Adding the element to the pipeline is what gives it the bus it posts
         // to; no state change is needed to post a message.
@@ -109,7 +109,7 @@ public sealed class MessageInfoTests
 
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("info-wrong-type"));
         using Element element = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "sink"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         Assert.True(pipeline.Add(element));
 

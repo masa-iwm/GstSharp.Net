@@ -43,7 +43,7 @@ public sealed class MessageErrorTests
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("errors"));
         using Element source = Assert.IsAssignableFrom<Element>(ElementFactory.Make("filesrc", "source"));
         using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "sink"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         // A property set by name with a string value, which is how an
         // application configures an element it parsed.

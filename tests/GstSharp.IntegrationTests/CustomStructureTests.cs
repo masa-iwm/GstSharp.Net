@@ -196,7 +196,7 @@ public sealed class CustomStructureTests
     public void ACustomMessageReachesTheBus()
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("custom-message-bus"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         using (Message message = Message.NewCustom(
             MessageType.Element,

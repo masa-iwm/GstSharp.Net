@@ -103,7 +103,7 @@ public sealed class AppSinkTests
 
         using Element? element = pipeline.GetByName("sink");
         AppSink sink = Assert.IsType<AppSink>(element);
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         nint[] samples = new nint[Frames];
         int[] sampleReferences = new int[Frames];

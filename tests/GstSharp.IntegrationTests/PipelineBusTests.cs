@@ -34,7 +34,7 @@ public sealed class PipelineBusTests
         // entry produces.
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(
             Global.ParseLaunch("fakesrc num-buffers=5 ! fakesink"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
 
@@ -107,7 +107,7 @@ public sealed class PipelineBusTests
         using Element source = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesrc", "source"));
         using Element middle = Assert.IsAssignableFrom<Element>(ElementFactory.Make("identity", "middle"));
         using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "sink"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         Global.UtilSetObjectArg(source, "num-buffers", "5");
 

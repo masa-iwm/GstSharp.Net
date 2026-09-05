@@ -37,7 +37,7 @@ public sealed class MessageApplicationTests
     public void APostedApplicationMessageArrivesWithItsPayload()
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("application"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         Assert.True(Post(pipeline, "Pipeline interrupted"));
 
@@ -64,7 +64,7 @@ public sealed class MessageApplicationTests
     public void BothCallsConsumeTheirArgument()
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("application-consumes"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         Structure structure = Structure.NewEmpty("GstLaunchInterrupt");
         Message message = Message.NewApplication(pipeline, structure);
@@ -111,7 +111,7 @@ public sealed class MessageApplicationTests
     public void TheRoundTripSurvivesRepetition()
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("application-repeated"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         for (int i = 0; i < Iterations; i++)
         {

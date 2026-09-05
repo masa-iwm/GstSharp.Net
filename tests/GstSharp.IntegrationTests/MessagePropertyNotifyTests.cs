@@ -49,7 +49,7 @@ public sealed class MessagePropertyNotifyTests
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("notify"));
         using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "sink"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         Assert.True(pipeline.Add(sink));
 
@@ -110,7 +110,7 @@ public sealed class MessagePropertyNotifyTests
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("notify-bare"));
         using Element sink = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "sink"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         Assert.True(pipeline.Add(sink));
 
@@ -155,7 +155,7 @@ public sealed class MessagePropertyNotifyTests
     public void AnotherMessageTypeIsRejected()
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(Pipeline.New("notify-wrong-type"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         try
         {

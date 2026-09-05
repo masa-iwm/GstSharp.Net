@@ -65,7 +65,7 @@ public sealed class AppSinkSimpleCallbacksTests
 
         using Element? element = pipeline.GetByName("sink");
         AppSink sink = Assert.IsType<AppSink>(element);
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         int pulled = 0;
         List<Exception> failures = [];
@@ -164,7 +164,7 @@ public sealed class AppSinkSimpleCallbacksTests
 
         using Element? element = pipeline.GetByName("sink");
         AppSink sink = Assert.IsType<AppSink>(element);
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         int pulled = 0;
         int emptyPulls = 0;
@@ -449,7 +449,7 @@ public sealed class AppSinkSimpleCallbacksTests
 
         using Element? element = pipeline.GetByName("sink");
         AppSink sink = Assert.IsType<AppSink>(element);
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         int calls = 0;
         List<Exception> failures = [];
@@ -514,7 +514,7 @@ public sealed class AppSinkSimpleCallbacksTests
         using Element? sinkElement = pipeline.GetByName("sink");
         AppSrc source = Assert.IsType<AppSrc>(sourceElement);
         AppSink sink = Assert.IsType<AppSink>(sinkElement);
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         int wanted = 0;
         int enough = 0;

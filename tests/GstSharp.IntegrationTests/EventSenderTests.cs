@@ -52,7 +52,7 @@ public sealed class EventSenderTests
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(
             Global.ParseLaunch("videotestsrc ! fakesink sync=false"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         try
         {
@@ -101,7 +101,7 @@ public sealed class EventSenderTests
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(
             Global.ParseLaunch("videotestsrc ! fakesink name=sink sync=false"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
         using Element? sink = pipeline.GetByName("sink");
 
         Assert.NotNull(sink);
@@ -148,7 +148,7 @@ public sealed class EventSenderTests
     {
         using Pipeline pipeline = Assert.IsAssignableFrom<Pipeline>(
             Global.ParseLaunch("videotestsrc name=source ! fakesink name=sink sync=false"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
         using Element? source = pipeline.GetByName("source");
 
         Assert.NotNull(source);

@@ -268,7 +268,7 @@ public sealed class VideoCodecFrameTests
         using Element? named = pipeline.GetByName("dec");
         VideoDecoder decoder = Assert.IsAssignableFrom<VideoDecoder>(named);
         using Pad source = Assert.IsAssignableFrom<Pad>(decoder.GetStaticPad("src"));
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         _ = source.AddProbe(PadProbeType.EventDownstream, (_, info) =>
         {
