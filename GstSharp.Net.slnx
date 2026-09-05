@@ -4,6 +4,9 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/benches/">
+    <Project Path="benches/GstSharp.Benchmarks/GstSharp.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/generator/">
     <Project Path="generator/GstSharp.Generator/GstSharp.Generator.csproj" />
   </Folder>

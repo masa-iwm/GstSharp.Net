@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Benchmarks</RootNamespace>
+
+    <!-- The harness ships with nothing: it is built by every CI job and packed
+         by none, like the samples and the tests. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The entry point of the binding is the type GstSharp in the global
+         namespace, and this assembly declares a namespace of the same name, so
+         the type is only reachable through an alias. The reference stays in the
+         global alias as well, so that every other type is used unqualified. -->
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" Aliases="global,gstsharp" />
+
+    <!-- The managed identity filter of the trampoline benchmark derives from
+         GstBaseTransform. -->
+    <ProjectReference Include="../../src/GstSharp.Net.Base/GstSharp.Net.Base.csproj" />
+  </ItemGroup>
+
+</Project>

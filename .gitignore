@@ -10,6 +10,9 @@ artifacts/
 *.suo
 *.userprefs
 
+# Benchmark results
+BenchmarkDotNet.Artifacts/
+
 # Test / publish
 [Tt]est[Rr]esults/
 publish/
