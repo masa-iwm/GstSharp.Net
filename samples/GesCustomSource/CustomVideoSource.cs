@@ -16,9 +16,9 @@ using Gst.GObject;
 /// </para>
 /// <para>
 /// The override answers an element and never <see langword="null"/>. A null
-/// answer is a documented C shape, but it leaves the source with no top bin at
-/// all, and the process that holds such a source does not survive the teardown
-/// of its timeline.
+/// answer would leave the track element holding an nleobject the composition
+/// frees under it (<c>ges-track-element.c:1022</c>, <c>1066-1070</c>), which
+/// the binding has to substitute an <c>identity</c> element for.
 /// </para>
 /// </remarks>
 internal sealed class CustomVideoSource : GES.VideoSource, IManagedSubclass<CustomVideoSource>
