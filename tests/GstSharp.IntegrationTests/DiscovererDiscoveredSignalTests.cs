@@ -9,12 +9,11 @@ using Xunit.Abstractions;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// The <c>GstDiscoverer::discovered</c> signal, which is the borrowed
-/// <c>GError</c> argument of the corpus that is registered
-/// <c>G_SIGNAL_TYPE_STATIC_SCOPE</c>: the handler is handed the very
-/// <c>GError</c> the discoverer keeps in its private data and frees once the
-/// emission returns, so the projection has to copy it inside the trampoline
-/// and free nothing.
+/// The <c>GstDiscoverer::discovered</c> signal. Its <c>GError</c> argument is
+/// registered <c>G_SIGNAL_TYPE_STATIC_SCOPE</c>, so it is borrowed: the
+/// handler is handed the very <c>GError</c> the discoverer keeps in its
+/// private data and frees once the emission returns. The projection therefore
+/// copies it inside the trampoline and frees nothing.
 /// </summary>
 /// <remarks>
 /// <para>
