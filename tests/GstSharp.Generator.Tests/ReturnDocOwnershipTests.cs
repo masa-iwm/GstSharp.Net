@@ -90,6 +90,28 @@ public sealed class ReturnDocOwnershipTests
             StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The same class, but with a gir that already declares the returned
+    /// widget <c>transfer none</c>.
+    /// </summary>
+    private static readonly string BorrowedBody =
+        Body.Replace("transfer-ownership=\"full\"", "transfer-ownership=\"none\"", StringComparison.Ordinal);
+
+    [Fact]
+    public void AReturnTheGirItselfCallsBorrowedKeepsWhatItSays()
+    {
+        FixtureRun run = Run(BorrowedBody, "{ " + Allowlist + " }");
+
+        string source = run.File("Subclassing/Widget.Subclass.cs");
+
+        // Nothing corrected this gir, so the sentence about releasing the
+        // value is the gir's own business and stands as written.
+        Assert.Contains(
+            "the widget if found, otherwise %NULL. Release after usage.",
+            source,
+            StringComparison.Ordinal);
+    }
+
     private static FixtureRun Run(string body, string fixups)
     {
         string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
