@@ -327,10 +327,8 @@ Standing rules that outlive a single release and are easy to miss:
   `AnalyzerReleases.Shipped.md`, under a `## Release <version>` heading naming
   the version that ships it, before that version is tagged.** Leaving a rule
   listed as unshipped after it has shipped makes the release-tracking file
-  disagree with what the package carries in `analyzers/dotnet/cs`, and the
-  RS2000-series analyzers can then no longer tell a genuinely new rule from a
-  stale entry. Between releases `Unshipped.md` keeps only its two header
-  comment lines.
+  disagree with what the package carries in `analyzers/dotnet/cs`. Between
+  releases `Unshipped.md` keeps only its two header comment lines.
 
 ## Docs
 

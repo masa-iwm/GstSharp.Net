@@ -71,8 +71,8 @@ design's stage 3 lands is instantiate a *managed* element by type name
   construction lands (stage 3), but shipping a loadable plugin is out of
   scope for this design.
 * **Installing properties and signals** on managed types
-  (`g_object_class_install_property`, `g_signal_newv`) — stage 3+, not
-  needed for the first usable sources/sinks.
+  (`g_object_class_install_property`, `g_signal_newv`) — not needed for the
+  first usable sources/sinks. (Landed in stage 3b, see §5.6.)
 * **Class finalization** — managed types are static types; their classes are
   never finalized (`class_finalize = NULL`, `base_init = NULL`,
   `value_table = NULL`).
