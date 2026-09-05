@@ -659,6 +659,13 @@ internal static class Launcher
         private readonly bool _interactive =
             options.Interactive && options.OutputUri is null && !Console.IsInputRedirected;
 
+        /// <summary>Whether an interrupt asked the run to end.</summary>
+        /// <remarks>
+        /// Written on the thread the console raises the event on and read on
+        /// the thread that polls the bus, so it is volatile.
+        /// </remarks>
+        private volatile bool _interrupted;
+
         /// <summary>
         /// What a seek does to the buffers it asks for, the values of
         /// <c>GstPlayTrickMode</c> the C tool cycles through with <c>t</c>.
@@ -698,24 +705,46 @@ internal static class Launcher
                 Console.WriteLine("Press 'k' to see a list of keyboard shortcuts.");
             }
 
-            while (Within(elapsed, options.Timeout))
+            // Ctrl+C would otherwise end the process where it stands, without
+            // the NULL that the caller's finally does - and a render that is
+            // stopped that way is left truncated. The C tool takes the same
+            // way out through intr_handler at ges-launcher.c:1104-1116, which
+            // only asks the application to quit.
+            ConsoleCancelEventHandler cancel = OnCancelKeyPress;
+            Console.CancelKeyPress += cancel;
+
+            try
             {
-                using (Message? message = bus.TimedPopFiltered(
-                    PollInterval,
-                    MessageType.Error | MessageType.Warning | MessageType.Eos))
+                while (!_interrupted && Within(elapsed, options.Timeout))
                 {
-                    if (message is not null && Handle(message) is int code)
+                    using (Message? message = bus.TimedPopFiltered(
+                        PollInterval,
+                        MessageType.Error | MessageType.Warning | MessageType.Eos))
                     {
-                        return code;
+                        if (message is not null && Handle(message) is int code)
+                        {
+                            return code;
+                        }
+                    }
+
+                    GstSharp.DrainPendingReleases();
+
+                    if (!ReadKey())
+                    {
+                        return 0;
                     }
                 }
 
-                GstSharp.DrainPendingReleases();
-
-                if (!ReadKey())
+                if (_interrupted)
                 {
+                    // The C tool quits its application here and ends with the
+                    // code it would have ended with anyway, which is 0.
                     return 0;
                 }
+            }
+            finally
+            {
+                Console.CancelKeyPress -= cancel;
             }
 
             Console.Error.WriteLine(string.Create(
@@ -723,6 +752,27 @@ internal static class Launcher
                 $"GesLaunch: the run did not finish within {options.Timeout.TotalSeconds:F0} s."));
 
             return 2;
+        }
+
+        /// <summary>Turns Ctrl+C into the end of the poll loop.</summary>
+        /// <param name="sender">The console.</param>
+        /// <param name="e">Whether the process is allowed to end.</param>
+        /// <remarks>
+        /// The first interrupt belongs to the run, so that the pipeline is
+        /// brought back to NULL before anything is released; a second one is
+        /// the way out of a pipeline that will not stop, and letting it
+        /// through ends the process.
+        /// </remarks>
+        private void OnCancelKeyPress(object? sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = !_interrupted;
+
+            if (e.Cancel)
+            {
+                Console.WriteLine();
+                Console.WriteLine("interrupt received.");
+                _interrupted = true;
+            }
         }
 
         /// <summary>Acts on one message of the bus.</summary>

@@ -44,9 +44,10 @@
 //   Playback needs none of this. Once the timeline is loaded the bus is polled
 //   with a timed pop, the way every other sample in this repository does it.
 //
-// Exit codes: 0 on end of stream, on --list-transitions and on --save-only,
-// 1 on any error or on a command line that cannot be read, 2 when the run did
-// not finish within --timeout.
+// Exit codes: 0 on end of stream, on --list-transitions, on --save-only and on
+// an interrupt, 1 on any error or on a command line that cannot be read, 2 when
+// the run did not finish within --timeout. Ctrl+C ends the run rather than the
+// process, so that the pipeline is back in NULL and a render is not truncated.
 //
 // What is deliberately different from the C tool:
 //
