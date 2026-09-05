@@ -1243,9 +1243,11 @@ disappears shows up here as an added line.
 ## Virtuals (22)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
-the reason. `UnsupportedSignature` is the planner refusing a shape; every other
-reason is the statement of an overlay entry. The mirror still lays every slot
-out, so what is listed here is the managed surface and not the ABI.
+the reason. `UnsupportedSignature` is the planner refusing a shape and
+`OpaqueSlot` is a function pointer field the mirror lays out with no virtual
+method to pair it with; every other reason is the statement of an overlay
+entry. The mirror still lays every slot out, so what is listed here is the
+managed surface and not the ABI.
 
 ### GES (14)
 

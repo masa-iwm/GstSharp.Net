@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using GstSharp.Generator.Semantic;
 
 namespace GstSharp.Generator.Emit;
@@ -368,9 +368,11 @@ internal sealed class EmissionCensus
             $"## Virtuals ({SkippedVirtualCount()})"));
         writer.WriteLine();
         writer.WriteLine("The class struct slots of a subclassable class that carry no `OnX` member, with");
-        writer.WriteLine("the reason. `UnsupportedSignature` is the planner refusing a shape; every other");
-        writer.WriteLine("reason is the statement of an overlay entry. The mirror still lays every slot");
-        writer.WriteLine("out, so what is listed here is the managed surface and not the ABI.");
+        writer.WriteLine("the reason. `UnsupportedSignature` is the planner refusing a shape and");
+        writer.WriteLine("`OpaqueSlot` is a function pointer field the mirror lays out with no virtual");
+        writer.WriteLine("method to pair it with; every other reason is the statement of an overlay");
+        writer.WriteLine("entry. The mirror still lays every slot out, so what is listed here is the");
+        writer.WriteLine("managed surface and not the ABI.");
 
         foreach ((string module, SortedDictionary<string, string> slots) in _skippedVirtuals)
         {
