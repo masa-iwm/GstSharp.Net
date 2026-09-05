@@ -20,24 +20,15 @@
 //
 //   * An element page: the factory details, the plugin details, the GObject
 //     hierarchy, the implemented interfaces, the element flags, the pad
-//     templates with their caps, the clocking interaction, the URI handling
-//     capabilities and their protocols, the pads of a fresh element, every
-//     property with its blurb, flags, range, default and enumeration or flags
-//     table, the signals and the action signals with their C signatures, the
-//     children of a bin, and the presets.
+//     templates with their caps and, where the pads of a template are a class
+//     of their own, the "Type:" line and the "Pad Properties" block of that
+//     class, the clocking interaction, the URI handling capabilities and their
+//     protocols, the pads of a fresh element, every property with its blurb,
+//     flags, range, default and enumeration or flags table, the signals and
+//     the action signals with their C signatures, the children of a bin, and
+//     the presets.
 //
 // What is not reachable, and what it costs:
-//
-//   * A pad template whose pads have a GType of their own gets a "Type:" line
-//     and a "Pad Properties" section from the C tool, printed by the same
-//     function as the element properties with a class and no instance. Two
-//     things are missing for it: GST_PAD_TEMPLATE_GTYPE, which reads a field
-//     of GstPadTemplate, and g_object_class_list_properties on a class that
-//     has no instance -- the binding lists the properties of an object. So
-//     neither line is printed, and the page of an element whose pads are its
-//     own class is short by that block: multiqueue, input-selector,
-//     compositor, matroskamux, rtpbin and webrtcbin are the ones measured. The
-//     four elements the CI diff covers have plain GstPads.
 //
 //   * A metadata value that is not ASCII comes out differently under Windows:
 //     the C tool hands its page to a stdout that transliterates -- "Dröge"

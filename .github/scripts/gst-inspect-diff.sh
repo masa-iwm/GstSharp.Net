@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Diffs the page samples/GstInspect prints against the page the real
-# gst-inspect-1.0 of the same installation prints, for four elements. Run from
+# gst-inspect-1.0 of the same installation prints, for six elements. Run from
 # the root of the checkout, after the solution has been built: the sample is
 # started with --no-build.
 #
@@ -16,12 +16,14 @@
 # GST_ERROR to stderr for a property of type long, and that is not part of the
 # page.
 #
-# The four elements are four shapes of page: fakesink has signals, an
-# enumeration table and a structure valued property whose fields are expanded,
-# identity has a float range and a flags table, videotestsrc has several
-# enumeration tables and the widest property listing of the four, and
-# capsfilter has a caps valued property. All four come from the core and base
-# plugins every leg installs.
+# The six elements are six shapes of page: fakesink has signals, an enumeration
+# table and a structure valued property whose fields are expanded, identity has
+# a float range and a flags table, videotestsrc has several enumeration tables
+# and the widest property listing of the six, capsfilter has a caps valued
+# property, and multiqueue and input-selector have pad templates whose pads are
+# a class of their own, which is what puts a "Type:" line and a "Pad
+# Properties" block on the page. All six come from the core and base plugins
+# every leg installs.
 #
 # One script rather than three copies of it in ci.yml, so that the version
 # guard below is written once.
@@ -37,7 +39,7 @@ export LC_ALL=C
 # The port reproduces the page format of the current C tool, and that format is
 # younger than every gst-inspect-1.0 in the field: the "Element Flags:" section
 # arrived in 1.26.0, the " (type)" suffix on every caps field in 1.28.0, and
-# "string" in place of "gchararray" in 1.28.3. Against an older tool all four
+# "string" in place of "gchararray" in 1.28.3. Against an older tool all six
 # diffs report a difference that is the tool's age rather than a defect of the
 # port, so such a leg is skipped with a warning. The test is the C tool's own
 # --atleast-version, which exists in every version that could be installed here
@@ -49,7 +51,7 @@ gst-inspect-1.0 --exists --atleast-version=1.28.3 fakesink || { echo "::warning:
 pages=$(mktemp -d)
 status=0
 
-for element in fakesink identity videotestsrc capsfilter; do
+for element in fakesink identity videotestsrc capsfilter multiqueue input-selector; do
   gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"
   dotnet run --project samples/GstInspect --no-restore --no-build -- "$element" \
     | tr -d '\r' > "$pages/actual-$element.txt"

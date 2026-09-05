@@ -270,6 +270,19 @@ internal sealed partial class Inspection
             Line(2, "Capabilities:");
             PrintCaps(caps, 3, string.Empty, string.Empty);
 
+            // A template whose pads are of a class of their own, which is what
+            // GST_PAD_TEMPLATE_GTYPE answers: the C tool names the class and
+            // prints its properties with no instance to read them off. A
+            // template that builds plain pads reports GstPad, and one that was
+            // built without a type reports none; neither gets the block.
+            GType padType = template.Gtype;
+
+            if (padType != GType.None && !string.Equals(padType.Name, "GstPad", StringComparison.Ordinal))
+            {
+                Line(2, $"Type: {padType.Name}");
+                PrintProperties(Gst.GObject.Object.ListProperties(padType), null, "Pad Properties", 2);
+            }
+
             if (i + 1 < templates.Count)
             {
                 Line(1, string.Empty);
@@ -326,31 +339,85 @@ internal sealed partial class Inspection
     private static void PrintProperties(Element element)
     {
         Console.WriteLine();
-        Line(0, "Element Properties:");
-        Line(0, string.Empty);
+        PrintProperties(element.ListProperties(), element, "Element Properties", 0);
+    }
 
-        List<ParamSpec> properties = [.. element.ListProperties()];
-        properties.Sort(static (left, right) => string.CompareOrdinal(left.Name, right.Name));
+    /// <summary>
+    /// Prints one block of properties, the way
+    /// <c>print_object_properties_info</c> does.
+    /// </summary>
+    /// <param name="properties">The specifications to print, disposed here.</param>
+    /// <param name="instance">
+    /// The object to read the values off, or <see langword="null"/> for a class
+    /// nothing has an instance of.
+    /// </param>
+    /// <param name="description">The heading, without its colon.</param>
+    /// <param name="depth">The indentation of the heading.</param>
+    /// <remarks>
+    /// The C function takes a class and an object that may be <c>NULL</c>.
+    /// With no object it reads no value - the default of each specification
+    /// stands in for one - and it leaves out every property the pad hierarchy
+    /// already carries, so that the block under a pad template says what that
+    /// pad type adds rather than repeating a page of its own.
+    /// </remarks>
+    private static void PrintProperties(
+        ParamSpec[] properties,
+        Gst.GObject.Object? instance,
+        string description,
+        int depth)
+    {
+        Line(depth, $"{description}:");
+        Line(depth, string.Empty);
+
+        List<ParamSpec> sorted = [.. properties];
+        sorted.Sort(static (left, right) => string.CompareOrdinal(left.Name, right.Name));
 
         try
         {
-            foreach (ParamSpec property in properties)
+            int printed = 0;
+
+            foreach (ParamSpec property in sorted)
             {
-                PrintProperty(element, property);
+                if (instance is null && IsInherited(property))
+                {
+                    continue;
+                }
+
+                PrintProperty(instance, property, depth + 1);
+                printed++;
             }
 
-            if (properties.Count == 0)
+            if (printed == 0)
             {
-                Line(1, "none");
+                Line(depth + 1, "none");
             }
         }
         finally
         {
-            foreach (ParamSpec property in properties)
+            foreach (ParamSpec property in sorted)
             {
                 property.Dispose();
             }
         }
+    }
+
+    /// <summary>
+    /// Tells whether a property comes from the hierarchy every pad has, which
+    /// is what the C tool leaves out of a block printed without an object.
+    /// </summary>
+    /// <param name="property">The property to test.</param>
+    /// <returns><see langword="true"/> when the property is inherited.</returns>
+    private static bool IsInherited(ParamSpec property)
+    {
+        // The C tool compares the owner against G_TYPE_OBJECT, GST_TYPE_OBJECT
+        // and GST_TYPE_PAD. It is the owner itself that is compared, never a
+        // derivation of it, and a registered name names one type, so the names
+        // say the same thing - and they are what a sample can ask for.
+        string owner = property.OwnerType.Name;
+
+        return string.Equals(owner, "GObject", StringComparison.Ordinal)
+            || string.Equals(owner, "GstObject", StringComparison.Ordinal)
+            || string.Equals(owner, "GstPad", StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -365,23 +432,53 @@ internal sealed partial class Inspection
     /// not; <see cref="ParamSpec.DefaultValue"/> is that default, copied here
     /// because the value itself belongs to the specification.
     /// </remarks>
-    private static void PrintProperty(Element element, ParamSpec property)
+    private static void PrintProperty(Gst.GObject.Object? instance, ParamSpec property, int depth)
     {
         bool readable = (property.Flags & ParamFlags.Readable) != 0;
 
-        Line(1, $"{property.Name,-20}: {property.Blurb ?? "(null)"}");
+        Line(depth, $"{property.Name,-20}: {property.Blurb ?? "(null)"}");
 
-        using Value value = readable
-            ? element.GetProperty(property.Name)
+        using Value value = readable && instance is not null
+            ? instance.GetProperty(property.Name)
             : property.DefaultValue.ToValue();
 
         StringBuilder text = new();
         text.Append(PropertyIndent).Append("flags: ").Append(FlagsOf(property.Flags)).Append('\n');
         AppendValue(text, property, value);
         text.Append(readable ? "\n" : " Write only\n");
-        Write(text);
+        Write(Indented(text, depth - 1));
 
-        Line(1, string.Empty);
+        Line(depth, string.Empty);
+    }
+
+    /// <summary>
+    /// Indents every line of a block by the levels a caller pushed on top of
+    /// the one <c>print_object_properties_info</c> writes its lines at.
+    /// </summary>
+    /// <param name="block">The block, whose lines already carry that one level.</param>
+    /// <param name="levels">How many levels to add.</param>
+    /// <returns>The same block.</returns>
+    private static StringBuilder Indented(StringBuilder block, int levels)
+    {
+        if (levels <= 0)
+        {
+            return block;
+        }
+
+        string padding = new(' ', 2 * levels);
+
+        // Backwards, and short of the newline that ends the block: an
+        // insertion moves everything after it, and the end carries no line of
+        // its own.
+        for (int position = block.Length - 2; position >= 0; position--)
+        {
+            if (block[position] == '\n')
+            {
+                block.Insert(position + 1, padding);
+            }
+        }
+
+        return block.Insert(0, padding);
     }
 
     /// <summary>
