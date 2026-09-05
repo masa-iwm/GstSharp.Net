@@ -383,8 +383,9 @@ public sealed class GesSubclassTests
     /// </param>
     /// <remarks>
     /// The twin of <see cref="AssertARefusedSourceIsGuarded"/> one slot down.
-    /// <c>GESSource</c> implements <c>create_element</c> itself and calls
-    /// <c>create_source</c> from there, so an override of the lower slot
+    /// <c>GESSource</c> leaves <c>create_element</c> NULL;
+    /// <c>GESVideoSource</c> implements it and calls <c>create_source</c> from
+    /// there (<c>GESAudioSource</c> is its twin), so an override of the lower slot
     /// replaces the whole of that: the element the track element is given is
     /// the substitute itself rather than a top bin built around one.
     /// </remarks>
