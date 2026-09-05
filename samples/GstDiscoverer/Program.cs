@@ -26,28 +26,6 @@
 //
 // What is deliberately different, and why:
 //
-//   * A URI whose discovery posted an error message loses its report.
-//     gst_discoverer_discover_uri fills its GError *and* returns an information
-//     object whenever the run saw an error on the bus, whatever result it
-//     settled on; the binding raises the GError before it wraps the return
-//     value, releasing it rather than leaking it, so the object is out of
-//     reach of the caller either way. This prints the three lines the C
-//     tool prints for GST_DISCOVERER_ERROR -- "Done discovering <uri>", "An
-//     error was encountered while discovering the file", and the message.
-//
-//     Two consequences, and both were measured rather than reasoned about. A
-//     failed discovery that still produced a topology has its properties block
-//     printed by the C tool and not by this one. And an unplayable URI scheme,
-//     which the C tool reports as "Missing plugins" followed by the installer
-//     detail of the missing element, is reported here as the error message that
-//     came with it. That was measured against the C tool on the same file with
-//     one decoder ranked out: the C tool prints "Missing plugins" and the
-//     installer detail, this prints the error. The headline branch does walk
-//     gst_discoverer_info_get_missing_elements_installer_details and print one
-//     " (detail)" line per entry, as the C tool does, but nothing reaches it
-//     until the binding offers a discovery that reports the GError instead of
-//     raising it.
-//
 //   * Caps printed without --verbose have their buffers stripped, as the C
 //     caps_to_string strips them, through gst_caps_map_in_place and
 //     gst_structure_filter_and_map_in_place_id_str over a copy, and the filter

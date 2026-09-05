@@ -257,46 +257,37 @@ internal sealed partial class Discovery
     /// <param name="uri">The URI to discover.</param>
     /// <remarks>
     /// <para>
-    /// <c>gst_discoverer_discover_uri</c> returns an information object <b>and</b>
-    /// fills its <c>GError</c> when the result is
-    /// <see cref="DiscovererResult.Error"/>, and the binding turns a filled
-    /// <c>GError</c> into an exception before it wraps the return value, so the
-    /// information object of a failed discovery is out of reach here. The C
-    /// tool prints its result line and, when the failed run still produced a
-    /// topology, the properties underneath; this prints the result line alone.
-    /// Every other result — a timeout, an invalid URI, missing plugins — leaves
-    /// the error unset and arrives as an ordinary return value, so those
-    /// reports are the C tool's, line for line.
+    /// <c>gst_discoverer_discover_uri</c> returns an information object
+    /// <b>and</b> fills its <c>GError</c> when the run saw an error on its bus,
+    /// which is what <see cref="Discoverer.TryDiscoverUri"/> hands out
+    /// together: the report of a failed discovery is read here exactly as the
+    /// C tool reads it, and <c>print_info</c> is given the error to print
+    /// under the result line.
     /// </para>
     /// <para>
-    /// The <c>Could not discover URI</c> branch of <c>print_info</c> is not
-    /// reachable from here for the same reason and would not be reachable
-    /// anyway: the only way the C call answers nothing at all is a second
-    /// discovery while one is running, and this tool discovers one URI at a
-    /// time.
+    /// The <c>Could not discover URI</c> branch of <c>print_info</c> stays out
+    /// of reach in practice: the only way the C call answers nothing at all is
+    /// a second discovery while one is running, and this tool discovers one URI
+    /// at a time. It is written out all the same, because a call that can
+    /// answer nothing is a call whose nothing has to be printed.
     /// </para>
     /// </remarks>
     private void Analyze(string uri)
     {
         Console.WriteLine($"Analyzing {uri}");
 
-        DiscovererInfo info;
+        DiscovererInfo? info = _discoverer.TryDiscoverUri(uri, out GException? error);
 
-        try
+        if (info is null)
         {
-            info = _discoverer.DiscoverUri(uri);
-        }
-        catch (GException error)
-        {
-            Console.WriteLine($"Done discovering {uri}");
-            Console.WriteLine("An error was encountered while discovering the file");
-            Console.WriteLine($" {error.Message}");
+            Console.WriteLine("Could not discover URI");
+            Console.WriteLine($" {error?.Message}");
             Console.WriteLine();
             _anyFailed = true;
             return;
         }
 
-        PrintInfo(info);
+        PrintInfo(info, error);
 
         if (info.GetResult() != DiscovererResult.Ok)
         {

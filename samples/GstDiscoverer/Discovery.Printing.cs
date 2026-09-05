@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Gst;
 using Gst.Audio;
+using Gst.GLib;
 using Gst.GObject;
 using Gst.Pbutils;
 
@@ -45,7 +46,11 @@ internal sealed partial class Discovery
     /// <c>print_info</c> does.
     /// </summary>
     /// <param name="info">What the discovery returned.</param>
-    private void PrintInfo(DiscovererInfo info)
+    /// <param name="error">
+    /// What went wrong on the way, which a discovery reports beside its report
+    /// rather than instead of it.
+    /// </param>
+    private void PrintInfo(DiscovererInfo info, GException? error)
     {
         Console.WriteLine($"Done discovering {info.GetUri()}");
 
@@ -59,11 +64,8 @@ internal sealed partial class Discovery
                 break;
 
             case DiscovererResult.Error:
-                // Not reachable: a run that ends here posted an error on its
-                // bus, which fills the GError, which the binding raises before
-                // the information object is wrapped. Analyze prints these two
-                // lines and the message from the exception instead.
                 Console.WriteLine("An error was encountered while discovering the file");
+                Console.WriteLine($" {error?.Message}");
                 break;
 
             case DiscovererResult.Timeout:
@@ -75,13 +77,11 @@ internal sealed partial class Discovery
                 break;
 
             case DiscovererResult.MissingPlugins:
-                // Not reachable, and measured: a run that ends here also fills
-                // the GError -- "Your GStreamer installation is missing a
-                // plug-in" -- which Discoverer.DiscoverUri raises before the
-                // information object is wrapped, so Analyze prints the error
-                // lines instead. The installer details are printed the way the
-                // C tool prints them for the day a non raising discovery
-                // arrives. See the remarks on Analyze.
+                // A run that ends here also fills the GError -- "Your GStreamer
+                // installation is missing a plug-in" -- and the C tool prints
+                // neither the error nor its message for this result, only the
+                // headline and one installer detail per missing element. So
+                // does this, now that the report and the error arrive together.
                 Console.WriteLine("Missing plugins");
 
                 foreach (string detail in info.GetMissingElementsInstallerDetails() ?? [])
