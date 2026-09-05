@@ -309,7 +309,7 @@ against the same frozen `expected`, logs in with `NuGet/login` and pushes with
 
 ### Before tagging
 
-Two standing rules that outlive a single release and are easy to miss:
+Standing rules that outlive a single release and are easy to miss:
 
 * **Confirm the nuget.org Trusted Publishing policy lists every package ID that
   is about to be pushed.** A policy that misses one lets the push start and then
@@ -322,11 +322,15 @@ Two standing rules that outlive a single release and are easy to miss:
   removes the property and the comment, and moves
   `PackageValidationBaselineVersion` forward to the version that shipped it.
   Until that happens, such a package is one the surface check does not cover.
-* **Move the analyzer rules the release ships from
+* **A rule that a release ships moves from
   `src/GstSharp.Net.Analyzers/AnalyzerReleases.Unshipped.md` to
-  `AnalyzerReleases.Shipped.md` under a `## Release <version>` heading** before
-  the tag, so the release-tracking convention matches what the package carries
-  (GST0001-GST0004 are all still listed as unshipped as of 2026-09-04).
+  `AnalyzerReleases.Shipped.md`, under a `## Release <version>` heading naming
+  the version that ships it, before that version is tagged.** Leaving a rule
+  listed as unshipped after it has shipped makes the release-tracking file
+  disagree with what the package carries in `analyzers/dotnet/cs`, and the
+  RS2000-series analyzers can then no longer tell a genuinely new rule from a
+  stale entry. Between releases `Unshipped.md` keeps only its two header
+  comment lines.
 
 ## Docs
 
