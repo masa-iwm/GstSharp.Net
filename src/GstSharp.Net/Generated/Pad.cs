@@ -1521,32 +1521,6 @@ public unsafe partial class Pad : Gst.Object
     /// <summary>Sets the given event handler for the pad.</summary>
     /// <remarks>
     /// <para>
-    /// This writes the same storage as SetEventFunction (gstpad.c:1933-1937, :1979-1984): a pad
-    /// carries one of the two handlers, not both, and the later call releases the state of the
-    /// earlier one. Unsetting this handler leaves the event_wrap wrapper this setter installed
-    /// as the plain event function of the pad (gstpad.c:1981-1982), and that wrapper
-    /// dereferences the full function pointer the same call has just cleared, so a pad left in
-    /// that state crashes on the next event. Follow SetEventFullFunction(null) with
-    /// SetEventFunction(null), which takes the wrapper off the pad and leaves a pad with no
-    /// event function at all, or install a plain event handler with SetEventFunction instead of
-    /// unsetting. GStreamer reads this function pointer without holding a lock
-    /// (gstpad.c:4590-4594), so replacing or unsetting the handler while the pad is running
-    /// races an invocation that is already under way: the handler being replaced may still be
-    /// executing when this returns.
-    /// </para>
-    /// </remarks>
-    /// <param name="event">the #GstPadEventFullFunction to set.</param>
-    public void SetEventFullFunction(Gst.PadEventFullFunction? @event)
-    {
-        nint instanceHandle = Handle;
-        Gst.Interop.CallbackHandle @eventState = Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "event", @event);
-        GstPadSetEventFullFunctionFull(instanceHandle, @event is null ? 0 : Gst.PadEventFullFunctionTrampoline.Pointer, @eventState.UserData, @event is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
-        System.GC.KeepAlive(this);
-    }
-
-    /// <summary>Sets the given event handler for the pad.</summary>
-    /// <remarks>
-    /// <para>
     /// This writes the same storage as SetEventFullFunction (gstpad.c:1933-1937, :1979-1984): a
     /// pad carries one of the two handlers, not both, and the later call releases the state of
     /// the earlier one. Installing this handler while a full event handler is installed does
@@ -2240,10 +2214,6 @@ public unsafe partial class Pad : Gst.Object
     /// <summary>The <c>gst_pad_set_element_private</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_set_element_private")]
     private static partial void GstPadSetElementPrivate(nint pad, nint priv);
-
-    /// <summary>The <c>gst_pad_set_event_full_function_full</c> entry point.</summary>
-    [LibraryImport("Gst", EntryPoint = "gst_pad_set_event_full_function_full")]
-    private static partial void GstPadSetEventFullFunctionFull(nint pad, nint @event, nint userData, nint notify);
 
     /// <summary>The <c>gst_pad_set_event_function_full</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_set_event_function_full")]

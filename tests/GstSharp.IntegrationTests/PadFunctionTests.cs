@@ -157,6 +157,59 @@ public sealed unsafe partial class PadFunctionTests
         Assert.Equal(1, full);
     }
 
+    /// <summary>
+    /// Unsetting the full event handler leaves the pad answering events the way
+    /// a fresh pad of the same direction does, and a plain handler can be
+    /// installed afterwards.
+    /// </summary>
+    /// <remarks>
+    /// The C setter would leave its own event_wrap wrapper over a cleared full
+    /// function pointer, so a pad in that state crashes on the next event; the
+    /// hand written member puts gst_pad_event_default back instead.
+    /// </remarks>
+    [Fact]
+    public void UnsettingTheEventFullFunctionRestoresTheDefaultHandler()
+    {
+        using Pad fresh = Pad.New("sink", PadDirection.Sink);
+        using Pad pad = Pad.New("sink", PadDirection.Sink);
+        int full = 0;
+
+        pad.SetEventFullFunction((self, parent, @event) =>
+        {
+            full++;
+            return self.EventDefault(parent, @event) ? FlowReturn.Ok : FlowReturn.Error;
+        });
+
+        Assert.True(fresh.SetActive(true));
+        Assert.True(pad.SetActive(true));
+        Assert.True(pad.SendEvent(Event.NewStreamStart("pad-function-test")));
+        Assert.Equal(1, full);
+
+        pad.SetEventFullFunction(null);
+
+        // The pad answers exactly as one that was never given a handler does,
+        // rather than crashing in the wrapper the C setter left behind.
+        Assert.Equal(
+            fresh.SendEvent(Event.NewStreamStart("pad-function-test-fresh")),
+            pad.SendEvent(Event.NewStreamStart("pad-function-test-unset")));
+        Assert.Equal(
+            fresh.SendEvent(Event.NewEos()),
+            pad.SendEvent(Event.NewEos()));
+        Assert.Equal(1, full);
+
+        // The slot the two setters share is free again.
+        int plain = 0;
+        pad.SetEventFunction((self, parent, @event) =>
+        {
+            plain++;
+            return self.EventDefault(parent, @event);
+        });
+
+        Assert.True(pad.SendEvent(Event.NewStreamStart("pad-function-test-again")));
+        Assert.Equal(1, plain);
+        Assert.Equal(1, full);
+    }
+
     [Fact]
     public void AQueryFunctionIsHandedTheQueryBorrowed()
     {

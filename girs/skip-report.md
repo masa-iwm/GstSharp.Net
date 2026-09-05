@@ -89,7 +89,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (47)
+### HandBound (48)
 
 - `gst_buffer_copy`
 - `gst_buffer_extract`
@@ -127,6 +127,7 @@ disappears shows up here as an added line.
 - `gst_mini_object_unref`
 - `gst_pad_push_event`
 - `gst_pad_send_event`
+- `gst_pad_set_event_full_function_full`
 - `gst_promise_reply`
 - `gst_query_new_custom`
 - `gst_query_parse_nth_allocation_param`

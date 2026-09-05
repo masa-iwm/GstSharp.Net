@@ -5,6 +5,15 @@ namespace Gst;
 public unsafe partial class Pad
 {
     /// <summary>
+    /// The address of <c>gst_pad_event_default</c>, resolved once: it is the
+    /// handler <c>gst_pad_init</c> installs, and the one
+    /// <see cref="SetEventFullFunction"/> puts back when it is unset.
+    /// </summary>
+    private static readonly Lazy<nint> EventDefaultAddress = new(
+        static () => Resolve("gst_pad_event_default"),
+        isThreadSafe: true);
+
+    /// <summary>
     /// Sends an event into this pad, taking the event over.
     /// </summary>
     /// <param name="event">
@@ -148,9 +157,83 @@ public unsafe partial class Pad
         return result != 0;
     }
 
+    /// <summary>Sets the given event handler for the pad.</summary>
+    /// <param name="event">
+    /// The handler to install, or <see langword="null"/> to take the current
+    /// one off the pad and leave GStreamer's default event handler behind.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// This writes the same storage as <see cref="SetEventFunction"/>
+    /// (gstpad.c:1933-1937, :1979-1984): a pad carries one of the two handlers,
+    /// not both, and the later call releases the state of the earlier one.
+    /// GStreamer reads this function pointer without holding a lock
+    /// (gstpad.c:4590-4594), so replacing or unsetting the handler while the
+    /// pad is running races an invocation that is already under way: the
+    /// handler being replaced may still be executing when this returns.
+    /// </para>
+    /// <para>
+    /// Passing <see langword="null"/> restores <c>gst_pad_event_default</c>,
+    /// the handler <c>gst_pad_init</c> puts on a fresh pad (gstpad.c:422). The
+    /// C call alone would not: it clears the full handler and installs its own
+    /// <c>event_wrap</c> wrapper as the plain event function unconditionally
+    /// (gstpad.c:1981-1982), and that wrapper dereferences the pointer the same
+    /// call has just cleared, so the next event on such a pad crashes. Leaving
+    /// the plain function <c>NULL</c> instead is the state GStreamer treats as
+    /// a bug: a pad without an event handler answers every event with
+    /// <c>GST_FLOW_NOT_SUPPORTED</c> and a warning that asks for a bug report
+    /// (gstpad.c:6267-6280). This member is written by hand for that reason,
+    /// and takes the pad back to the default handler instead.
+    /// </para>
+    /// </remarks>
+    public void SetEventFullFunction(Gst.PadEventFullFunction? @event)
+    {
+        nint instanceHandle = Handle;
+        Gst.Interop.CallbackHandle @eventState =
+            Gst.Interop.InstanceKeyedCallbacks.Install(instanceHandle, "event", @event);
+        GstPadSetEventFullFunctionFull(
+            instanceHandle,
+            @event is null ? 0 : Gst.PadEventFullFunctionTrampoline.Pointer,
+            @eventState.UserData,
+            @event is null ? 0 : (nint)Gst.Interop.InstanceKeyedCallbacks.DestroyNotify);
+
+        if (@event is null)
+        {
+            // The call above left event_wrap on the pad over the full function
+            // pointer it has just cleared. The default handler is what a pad
+            // that was never given one carries, so restoring it is what
+            // unsetting means here.
+            GstPadSetEventFunctionFull(instanceHandle, EventDefaultAddress.Value, 0, 0);
+        }
+
+        System.GC.KeepAlive(this);
+    }
+
     /// <summary>The <c>gst_pad_send_event</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_send_event")]
     private static partial int GstPadSendEvent(nint pad, nint @event);
+
+    /// <summary>The <c>gst_pad_set_event_full_function_full</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_pad_set_event_full_function_full")]
+    private static partial void GstPadSetEventFullFunctionFull(nint pad, nint @event, nint userData, nint notify);
+
+    /// <summary>Resolves an entry point of the running GStreamer by name.</summary>
+    /// <param name="symbol">The C name of the entry point.</param>
+    /// <returns>The address of the entry point.</returns>
+    /// <exception cref="InvalidOperationException">The library does not export it.</exception>
+    private static nint Resolve(string symbol)
+    {
+        nint module = Gst.Interop.NativeLoader.Load("Gst");
+
+        if (!NativeLibrary.TryGetExport(module, symbol, out nint address))
+        {
+            throw new InvalidOperationException(
+                $"The running GStreamer does not export '{symbol}', so the event handler of a pad cannot be " +
+                "taken back to its default.");
+        }
+
+        return address;
+    }
 
     /// <summary>The <c>gst_pad_push_event</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_pad_push_event")]
