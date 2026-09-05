@@ -402,6 +402,26 @@ public class ParamSpec : IDisposable
         pspec == nint.Zero ? GType.Invalid : new GType(*(nuint*)((byte*)pspec + (3 * sizeof(nint))));
 
     /// <summary>
+    /// Reads the property identifier out of a native <c>GParamSpec</c>.
+    /// </summary>
+    /// <param name="pspec">The parameter specification to read.</param>
+    /// <returns>
+    /// The identifier the installing class gave it, or zero when it has never
+    /// been installed.
+    /// </returns>
+    /// <remarks>
+    /// <c>param_id</c> lives in the private part of <c>GParamSpec</c>, behind
+    /// <c>GTypeInstance</c>, <c>name</c>, the padded <c>flags</c>,
+    /// <c>value_type</c>, <c>owner_type</c>, <c>_nick</c>, <c>_blurb</c>,
+    /// <c>qdata</c> and <c>ref_count</c>: eight pointer sized slots and the
+    /// <c>guint</c> reference count, so the identifier is the <c>guint</c> that
+    /// follows it. There is no accessor for it, and the installed-or-not
+    /// question it answers has none either.
+    /// </remarks>
+    internal static unsafe uint ParamIdOf(nint pspec) =>
+        pspec == nint.Zero ? 0u : *(uint*)((byte*)pspec + (8 * sizeof(nint)) + sizeof(uint));
+
+    /// <summary>
     /// Reads the flags out of a native <c>GParamSpec</c>.
     /// </summary>
     /// <param name="pspec">The parameter specification to read.</param>
@@ -415,6 +435,7 @@ public class ParamSpec : IDisposable
     /// <c>GType</c> behind it, which is what puts <c>value_type</c> at three
     /// slots rather than at two and a half.
     /// </remarks>
+
     internal static unsafe ParamFlags FlagsOf(nint pspec) =>
         pspec == nint.Zero ? ParamFlags.None : (ParamFlags)(*(uint*)((byte*)pspec + (2 * sizeof(nint))));
 

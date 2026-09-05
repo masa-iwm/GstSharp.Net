@@ -590,4 +590,54 @@ internal static unsafe partial class GObjectNative
 
     [LibraryImport("GObject", EntryPoint = "g_closure_sink")]
     internal static partial void ClosureSink(nint closure);
+
+    /// <summary>The <c>get_type</c> of <c>GObject</c> itself.</summary>
+    /// <remarks>
+    /// It is imported so that the two property slots the runtime hands out as
+    /// <c>VfuncOverride</c> values can name the class that declares them, the
+    /// way every generated slot names its own class.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_object_get_type")]
+    internal static partial nuint ObjectGetType();
+
+    /// <summary>
+    /// Installs a property on a class that is being initialised.
+    /// </summary>
+    /// <remarks>
+    /// The call sinks the specification and the pool takes a reference of its
+    /// own, so the caller may still release the wrapper it built the
+    /// specification with.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_object_class_install_property")]
+    internal static partial void ObjectClassInstallProperty(nint objectClass, uint propertyId, nint pspec);
+
+    /// <summary>Emits <c>notify</c> for one property, from any thread.</summary>
+    [LibraryImport("GObject", EntryPoint = "g_object_notify_by_pspec")]
+    internal static partial void ObjectNotifyByPspec(nint instance, nint pspec);
+
+    /// <summary>Tests a signal name without the crash a bad one would cause.</summary>
+    [LibraryImport("GObject", EntryPoint = "g_signal_is_valid_name")]
+    internal static partial int SignalIsValidName(byte* name);
+
+    /// <summary>
+    /// Creates a signal on a type, in the non variadic form.
+    /// </summary>
+    /// <remarks>
+    /// <c>g_signal_new</c> is variadic in its parameter types, so the array
+    /// form is the only one that can be imported. A <c>NULL</c> C marshaller
+    /// asks GObject for its generic marshaller, which serves the plain and the
+    /// <c>va_list</c> path alike.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_signal_newv")]
+    internal static partial uint SignalNewV(
+        byte* signalName,
+        nuint itype,
+        uint signalFlags,
+        nint classClosure,
+        nint accumulator,
+        nint accumulatorData,
+        nint cMarshaller,
+        nuint returnType,
+        uint parameterCount,
+        nuint* parameterTypes);
 }

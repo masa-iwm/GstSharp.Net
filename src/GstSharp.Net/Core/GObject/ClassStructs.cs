@@ -25,6 +25,18 @@ internal struct GTypeClassRaw
 [StructLayout(LayoutKind.Sequential)]
 internal struct GObjectClassRaw
 {
+    /// <summary>
+    /// The byte offset of the <c>set_property</c> slot, which
+    /// <c>Gst.GObject.Object.SetPropertyOverride</c> declares.
+    /// </summary>
+    internal const int SetPropertyOffset = 24;
+
+    /// <summary>
+    /// The byte offset of the <c>get_property</c> slot, which
+    /// <c>Gst.GObject.Object.GetPropertyOverride</c> declares.
+    /// </summary>
+    internal const int GetPropertyOffset = 32;
+
     /// <summary>The <c>g_type_class</c> field.</summary>
     internal GTypeClassRaw TypeClass;
 

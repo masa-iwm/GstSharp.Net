@@ -324,6 +324,23 @@ internal static unsafe class SubclassRegistry
     /// <summary>The registered subclasses, keyed by the type they were registered as.</summary>
     private static readonly ConcurrentDictionary<nuint, SubclassDescriptor> ByType = new();
 
+    /// <summary>
+    /// The long lived wrappers of the specifications managed subclasses
+    /// installed, keyed by the type that installed one and the specification
+    /// itself.
+    /// </summary>
+    /// <remarks>
+    /// A <c>GParamSpec</c> is never removed from a class once it is installed,
+    /// and <see cref="ParamSpec"/> has no finalizer, so the property slots
+    /// cannot afford to wrap the specification anew on every call — each wrap
+    /// would take a reference nothing gives back. The table is filled by
+    /// <see cref="ObjectClassConfig.InstallProperty"/> while the class is being
+    /// initialised and read by the two property slots afterwards; it stays
+    /// writable for the life of the process because installing a property after
+    /// <c>class_init</c> is legal.
+    /// </remarks>
+    private static readonly ConcurrentDictionary<(nuint Owner, nint Spec), ParamSpec> InstalledSpecs = new();
+
     private static long _nextClassDataId;
 
     /// <summary>
@@ -725,6 +742,38 @@ internal static unsafe class SubclassRegistry
         Find(instance) ??
         throw new InvalidOperationException(
             $"{TypeRegistry.GetInstanceType(instance).Name} is not a registered managed subclass.");
+
+    /// <summary>
+    /// Keeps the wrapper of a specification a managed subclass just installed.
+    /// </summary>
+    /// <param name="owner">The type that installed the property.</param>
+    /// <param name="spec">The wrapper to keep, which must not be disposed again.</param>
+    internal static void RememberInstalledSpec(GType owner, ParamSpec spec)
+    {
+        ArgumentNullException.ThrowIfNull(spec);
+        InstalledSpecs.TryAdd((owner.Value, spec.Handle), spec);
+    }
+
+    /// <summary>
+    /// Finds the kept wrapper of an installed specification.
+    /// </summary>
+    /// <param name="spec">The native <c>GParamSpec</c> a property slot was given.</param>
+    /// <returns>
+    /// The wrapper <see cref="RememberInstalledSpec"/> kept, or
+    /// <see langword="null"/> when the specification was installed by something
+    /// other than a managed subclass.
+    /// </returns>
+    internal static ParamSpec? InstalledSpecFor(nint spec)
+    {
+        if (spec == nint.Zero)
+        {
+            return null;
+        }
+
+        return InstalledSpecs.TryGetValue((ParamSpec.OwnerTypeOf(spec).Value, spec), out ParamSpec? kept)
+            ? kept
+            : null;
+    }
 
     /// <summary>
     /// Initialises the class of a managed subclass: captures the parent class
