@@ -196,6 +196,15 @@ internal sealed class ClassStructEmitter
         List<(string Name, int Length, string Element, string Doc)> inlineArrays = [];
         List<string> slots = [];
         bool first = true;
+
+        // How many bytes of this class struct's own members stand in front of
+        // the member being written, which is what says whether a union starts
+        // on a pointer boundary. The embedded parent class struct at index 0
+        // contributes nothing to the count: every class struct roots in
+        // GTypeClass, whose first member is a GType, so its alignment is that
+        // of a pointer and its size is a whole number of pointers by the C
+        // rule that a structure is padded out to its own alignment.
+        int offset = 0;
         for (int index = 0; index <= model.Members.Count; index++)
         {
             // The gir keeps the fields and the unions of a record in two lists,
@@ -206,7 +215,7 @@ internal sealed class ClassStructEmitter
             {
                 if (union.FieldIndex == index)
                 {
-                    EmitUnion(writer, module, ns, model, union, cName, inlineArrays);
+                    EmitUnion(writer, module, ns, model, union, cName, offset, inlineArrays);
                     first = false;
                 }
             }
@@ -247,6 +256,8 @@ internal sealed class ClassStructEmitter
                     + cName + "</c> is made of."));
                 writer.WriteLine("/// <summary>The <c>" + field.Name + "</c> field.</summary>");
                 writer.WriteLine("private " + arrayType + " " + Lowered(name) + ";");
+                int element = WidthOf(ScalarOf(array.ElementType, ns, field.Name));
+                offset = Align(offset, element) + (array.FixedSize.Value * element);
                 continue;
             }
 
@@ -255,19 +266,23 @@ internal sealed class ClassStructEmitter
                 slots.Add(name);
                 writer.WriteLine("/// <summary>The <c>" + field.Name + "</c> slot.</summary>");
                 writer.WriteLine("internal nint " + name + ";");
+                offset = Align(offset, PointerWidth) + PointerWidth;
                 continue;
             }
 
             if (IsCallbackField(field, ns))
             {
                 WriteOpaqueSlot(writer, module, model, field, name);
+                offset = Align(offset, PointerWidth) + PointerWidth;
                 continue;
             }
 
+            string scalar = ScalarOf(field.Type, ns, field.Name);
             writer.WriteLine(
                 "/// <summary>The <c>" + field.Name
                 + "</c> field, which carries data rather than an overridable slot.</summary>");
-            writer.WriteLine("internal " + ScalarOf(field.Type, ns, field.Name) + " " + name + ";");
+            writer.WriteLine("internal " + scalar + " " + name + ";");
+            offset = Align(offset, WidthOf(scalar)) + WidthOf(scalar);
         }
 
         if (slots.Count > 0)
@@ -339,6 +354,10 @@ internal sealed class ClassStructEmitter
     /// <param name="model">The class struct being mirrored.</param>
     /// <param name="union">The union to lay out.</param>
     /// <param name="cName">The C name of the class struct, for the documentation.</param>
+    /// <param name="offset">
+    /// How many bytes of the class struct's own members stand in front of the
+    /// union, the embedded parent class struct not counted.
+    /// </param>
     /// <param name="inlineArrays">Where the filler type is collected.</param>
     /// <remarks>
     /// <para>
@@ -362,6 +381,14 @@ internal sealed class ClassStructEmitter
     /// filler is computed, and it is computed for an eight byte pointer, which
     /// is what every target of this binding has.
     /// </para>
+    /// <para>
+    /// Two things the corpus does not contain are refused rather than laid out
+    /// on a guess: a union that does not start on a pointer boundary, because
+    /// the filler is measured in pointers from the start of the block, and a
+    /// second <c>&lt;record&gt;</c> inside the union, because only one member
+    /// of a union can be spelled in a sequential mirror and nothing here says
+    /// which of two it should be.
+    /// </para>
     /// </remarks>
     private void EmitUnion(
         CodeWriter writer,
@@ -370,8 +397,29 @@ internal sealed class ClassStructEmitter
         ClassStructModel model,
         GirUnion union,
         string cName,
+        int offset,
         List<(string Name, int Length, string Element, string Doc)> inlineArrays)
     {
+        if (offset % PointerWidth != 0)
+        {
+            _diagnostics.Error(
+                "GEN0043",
+                $"The union '{union.Name}' of the class struct '{cName}' follows {offset} bytes of members "
+                + "of that class struct, which is not a whole number of pointers; the mirror lays a union "
+                + "out on the assumption that it starts on a pointer boundary.");
+            return;
+        }
+
+        if (union.Records.Count > 1)
+        {
+            _diagnostics.Error(
+                "GEN0043",
+                $"The union '{union.Name}' of the class struct '{cName}' declares {union.Records.Count} "
+                + "records; only one member of a union can be spelled in a sequential mirror, and nothing "
+                + "says which of these carries the offsets that have to come out right.");
+            return;
+        }
+
         // The gir spells a union name the way C does, and GES shouts it: ABI.
         // Lower casing first is what turns it into a C# identifier rather than
         // an ABIFiller nobody would write by hand.
@@ -380,9 +428,9 @@ internal sealed class ClassStructEmitter
         int consumed = 0;
 
         // Every union of the corpus overlaps at most one record with its
-        // reserve; a second one could not be laid out at the same offsets, so
-        // the first is the one the mirror spells and the rest only count
-        // towards the size.
+        // reserve, and that record is the one the mirror spells: it is what
+        // carries the fields whose offsets have to come out right. A union
+        // with a second record was refused above.
         if (union.Records.Count > 0)
         {
             foreach (GirField field in union.Records[0].Fields)
@@ -408,7 +456,20 @@ internal sealed class ClassStructEmitter
         }
 
         int remaining = size - Align(consumed, PointerWidth);
-        if (remaining < 0 || remaining % PointerWidth != 0)
+        if (remaining < 0)
+        {
+            // The record is the largest member and it ends on something other
+            // than a pointer boundary, so the block is shorter than the
+            // members the mirror has already padded out to one.
+            _diagnostics.Error(
+                "GEN0043",
+                $"The union '{union.Name}' of the class struct '{cName}' lays out {consumed} bytes of members, "
+                + $"which the mirror pads to {Align(consumed, PointerWidth)}, inside a block measured at "
+                + $"{size} bytes; the members do not fit in the block.");
+            return;
+        }
+
+        if (remaining % PointerWidth != 0)
         {
             _diagnostics.Error(
                 "GEN0043",
