@@ -292,8 +292,9 @@ public sealed class AppSinkSimpleCallbacksTests
         // The wrapper gives its reference of the sink back first, so that the
         // last one goes away inside Pipeline.Dispose: the bin drops its
         // children, the sink releases the set of callbacks and the destroy
-        // notification runs on this thread.
-        bus.Dispose();
+        // notification runs on this thread. The bus is not part of that order:
+        // it is an interned wrapper this test did not make, so it is left to
+        // the collector. See docs/ownership.md.
         sink.Dispose();
         pipeline.Dispose();
 

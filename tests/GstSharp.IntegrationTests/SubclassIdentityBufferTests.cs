@@ -68,7 +68,6 @@ public sealed class SubclassIdentityBufferTests
         finally
         {
             _ = pipeline.SetState(State.Null);
-            bus.Dispose();
         }
 
         // The parent answered the buffer it was given every time, and the
