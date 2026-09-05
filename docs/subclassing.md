@@ -625,6 +625,87 @@ bindings share one assembly (`GstSharp.Net`), while `GstBase` bases live in
 `GstSharp.Net.Base`, the facade is extensible per module rather than
 hardcoded in Core.
 
+### 5.6 Properties and signals a subclass installs (stage 3b, landed)
+
+`ObjectClassConfig` grew two more class-init operations, so every subclassable
+type has them and not only the elements:
+
+```csharp
+config.InstallProperty(ValueId, ValueSpec);              // ParamSpecX.New(...)
+uint id = config.AddSignal("gstsharp-ping", SignalFlags.RunLast,
+                           GType.None, [GType.Int], OnPing);
+```
+
+**Dispatch is by owner, so there is no chain up.** `object_set_property` picks
+the class to call by the `owner_type` of the specification, not by the type of
+the instance (gobject.c:2214-2217 / 2188-2191): a property an ancestor installed
+is answered by the ancestor's own class struct and never travels through the
+managed slot. So `Object.OnSetProperty`/`OnGetProperty` are the one pair of
+`On<X>` members with no `ChainUp<X>` beside them — there is nothing below them
+that could answer. The default arm of the `switch` calls `base.OnSetProperty`,
+which warns about an identifier no property claims, the way GObject's own
+`G_OBJECT_WARN_INVALID_PROPERTY_ID` does. Chaining a managed identifier up
+would land in the parent's `switch (prop_id)`, which ignores the specification
+entirely, and a numeric collision would silently write a field of the parent.
+
+Redefining a property of an ancestor is legal — GObject documents it — and it
+follows from the same rule that the redefinition *takes the name over*: install
+a property called `name` on an `Element` subclass and `name=` in a pipeline
+description reaches the managed setter and nothing else, so the element has no
+name as far as `GstObject` is concerned. It is a sharp tool.
+
+**Construct properties are refused** (`ArgumentException`). `g_object_new`
+delivers every construct property — the value the caller named, or the default
+of the specification when nobody named one — from inside the constructor
+(gobject.c:2688-2709), before a wrapper can exist for an instance a C#
+constructor is building; the fabrication is suppressed for the type being
+constructed on this thread (§5.4). The value would therefore arrive for an
+instance GStreamer created and vanish for one C# created. Construct-time state
+belongs in the constructor of the subclass.
+
+**Notifications.** Without `ParamFlags.ExplicitNotify` GObject emits `notify`
+itself once the setter returns (gobject.c:2264-2266), and the managed setter
+must stay silent or the change is announced twice. With the flag GObject stays
+silent and the setter calls `Notify(pspec)` — which is `g_object_notify_by_pspec`,
+safe from any thread and from inside a setter, queued when notifications are
+frozen. `Notify` checks that the specification belongs to the object, because
+GObject checks nothing there.
+
+**The window inside `g_object_new`.** A property write can be the *first*
+managed contact an instance ever has: `gst_parse_launch("… value=5 ! fakesink")`
+creates the element with `gst_element_factory_create_with_properties`, so the
+set_property slot runs before the caller of `ParseLaunch` has seen anything.
+The trampoline fabricates the wrapper there, on the calling thread, and the
+setter must behave like any other fabrication-time code: store the value, call
+nothing. A write from another thread stays on that thread; nothing hops.
+
+**No wrapper means warn and drop.** If `TryGetOrFabricate` answers nothing — an
+instance of the type being constructed on this thread, or a wrapper that was
+disposed — the slot logs a warning through GLib and returns. It cannot chain up
+(above), and it must not throw across the native frame. The one case worth
+naming is the rare one of §8: a fabricated wrapper that was collected is
+rebuilt in its default state, so the managed side of an installed property is
+lost with it. Keep a reference to a managed element you care about.
+
+**Signals.** `AddSignal` wraps `g_signal_newv` — the array form, because
+`g_signal_new` is variadic — with a `NULL` C marshaller, which asks GObject for
+its generic marshaller and covers the `va_list` path as well. The class handler
+is an ordinary `DynamicSignalHandler` wrapped in the same closure the
+`ConnectSignal` path uses, with one difference: the class closure resolves the
+instance without settling its reference, because it can be reached while the
+instance is still floating. Two accumulators are offered, the two GLib exports:
+`TrueHandled` (the signal has to return a boolean; the first handler that
+returns `true` ends the emission) and `FirstWins`. Emission and subscription go
+through the existing `EmitSignal` and `ConnectSignal`: a signal a managed
+subclass defined is not special once it exists. `SignalFlags.MustCollect` is
+dropped — it describes a variadic collection this binding never performs.
+
+Specifications are owned as GObject owns them: `g_object_class_install_property`
+sinks the specification and the pool takes a reference of its own, and the
+runtime keeps one long-lived wrapper per installed specification so the property
+slots have something to hand out without leaking a reference per call. The
+wrapper the caller built is theirs to dispose.
+
 ---
 
 ## 6. Class-struct ABI: layout source, validation, versioning
@@ -1288,19 +1369,21 @@ classes do not, and the registration says so before it takes the type name:
   is wrapped as the closest registered ancestor, `TypeRegistry.Fallback` reports
   it once, and its vfuncs chain up for ever: **functional never**. The overload
   is the whole difference, and the fallback is what diagnoses the mistake.
-* **No properties and no signals** on managed types, so a managed element
-  cannot be configured with `g_object_set` or from a pipeline description.
+* **No construct properties** on managed types: a property a managed subclass
+  installs is refused if it asks for `CONSTRUCT` or `CONSTRUCT_ONLY`, because
+  GObject delivers those before any wrapper exists (§5.6). Plain readable and
+  writable properties are installed, are settable from a pipeline description,
+  and notify like any other; signals are defined with `AddSignal`.
 * **`GstAudioSink::stop` has no managed member.** Its name collides with
   `BaseSink::stop`, which answers a `bool` where the audio one answers nothing,
   and C# cannot give one name two return types; a disambiguated managed name is
   a naming decision that has not been taken. The device is unblocked through
   `OnReset` instead, which is what `gst_audio_sink_ring_buffer_stop` falls back
   to when the slot is NULL (gstaudiosink.c:594-602).
-* **A managed pad carries no properties or signals of its own** — that is the
-  bullet above, not a pad-specific limit. `Gst.Pad` and `GstBase.AggregatorPad`
-  are subclassable and `Aggregator.OnCreateNewPad` answers a managed pad; what
-  a pad type cannot do yet is install a property that a pipeline description
-  could set.
+* **A managed pad installs properties and signals through the same facade** as
+  everything else: `InstallProperty` and `AddSignal` live on
+  `ObjectClassConfig`, which is what the class initialiser of `Gst.Pad` and
+  `GstBase.AggregatorPad` is given, so a pad type is not a special case here.
 * **No `dispose` or `finalize` override**, by design (§1): teardown belongs in
   the `READY` to `NULL` transition of `OnChangeState`, or in `OnStop`.
 * **Disposing a managed element that GStreamer still drives** does not crash,
