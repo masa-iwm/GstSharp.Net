@@ -160,7 +160,9 @@ public unsafe partial class Pad
     /// <summary>Sets the given event handler for the pad.</summary>
     /// <param name="event">
     /// The handler to install, or <see langword="null"/> to take the current
-    /// one off the pad and leave GStreamer's default event handler behind.
+    /// one off the pad and restore GStreamer's default event handler,
+    /// <c>gst_pad_event_default</c>, which is the one a pad carries until
+    /// something installs its own.
     /// </param>
     /// <remarks>
     /// <para>
@@ -182,7 +184,7 @@ public unsafe partial class Pad
     /// the plain function <c>NULL</c> instead is the state GStreamer treats as
     /// a bug: a pad without an event handler answers every event with
     /// <c>GST_FLOW_NOT_SUPPORTED</c> and a warning that asks for a bug report
-    /// (gstpad.c:6267-6280). This member is written by hand for that reason,
+    /// (gstpad.c:6267-6277). This member is written by hand for that reason,
     /// and takes the pad back to the default handler instead.
     /// </para>
     /// </remarks>

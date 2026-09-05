@@ -54,7 +54,7 @@ public unsafe partial class Discoverer
         GC.KeepAlive(this);
 
         // The GError of this call is a copy the caller owns
-        // (gstdiscoverer.c:2646), unlike the borrowed one a signal is handed,
+        // (gstdiscoverer.c:2675), unlike the borrowed one a signal is handed,
         // so it is read into a managed exception and released here.
         error = GException.FromBorrowed(errorNative);
         if (errorNative != 0)
