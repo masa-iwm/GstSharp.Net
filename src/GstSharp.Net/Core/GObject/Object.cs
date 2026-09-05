@@ -117,8 +117,9 @@ public partial class Object : IDisposable
     /// module's <c>CreateWrapper</c> factory reach — a floating reference is
     /// sunk whichever of the two this is, because the wrapper always ends up
     /// owning a real reference. Nothing is sunk when the runtime fabricates the
-    /// wrapper of an instance a native <c>g_object_new</c> is still
-    /// constructing: the instance belongs to whoever created it, the wrapper
+    /// wrapper of an instance native code created — inside <c>g_object_new</c>
+    /// or at the first managed contact after it: the instance belongs to
+    /// whoever created it and may still be floating, the wrapper
     /// only takes a reference of its own, and this parameter settles nothing.
     /// See
     /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md">docs/subclassing.md</see>
