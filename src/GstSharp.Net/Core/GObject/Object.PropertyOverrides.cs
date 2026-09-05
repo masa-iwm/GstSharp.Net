@@ -134,7 +134,9 @@ public partial class Object
     /// <c>gst_parse_launch</c> sees it. The wrapper exists by then — the
     /// runtime builds it here if this is the first managed contact with the
     /// instance — and no lock of the runtime is held, so a setter may call
-    /// whatever it likes. What is <em>not</em> finished is the rest of the
+    /// whatever it likes, <see cref="Notify"/> included: GObject may have
+    /// frozen the notification queue around the write, in which case the
+    /// notification is delivered when it thaws a few lines later. What is <em>not</em> finished is the rest of the
     /// world around the instance: it is not in a bin, it has no peers, and
     /// nobody has been handed it yet. Store the value and leave anything that
     /// needs a pipeline to the state change that brings one.

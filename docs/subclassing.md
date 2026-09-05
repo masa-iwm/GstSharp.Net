@@ -1135,8 +1135,8 @@ un-skipped `Aggregator::create_new_pad`. Twenty one classes are subclassable,
 with twenty two class struct mirrors and 218 slots.
 
 **Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
-construction (twenty one `New` factories, plus the `ParamSpecFraction` and
-`ParamSpecArray` of GStreamer), `ObjectClassConfig.InstallProperty` with the
+construction (twenty `New` factories for the GObject kinds, plus the
+`ParamSpecFraction` and `ParamSpecArray` of GStreamer), `ObjectClassConfig.InstallProperty` with the
 `OnSetProperty`/`OnGetProperty` overrides, `AddSignal` over the dynamic signal
 closure, and `g_type_add_interface_static` with `GstURIHandler` first. A
 property a managed type installs cannot be written while the instance is being
