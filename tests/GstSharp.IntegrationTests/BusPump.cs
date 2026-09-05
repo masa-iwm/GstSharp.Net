@@ -52,12 +52,12 @@ internal static class BusPump
     /// <param name="timeout">How long to wait for the end of the stream.</param>
     /// <param name="output">The output of the test, which every message is written to.</param>
     /// <remarks>
-    /// The bus is transfer full - <c>gst_pipeline_get_bus</c> hands a reference
-    /// out - so the wrapper is the caller's and is disposed here.
+    /// The bus wrapper is interned and is left to the collector, which is what
+    /// <c>docs/ownership.md</c> asks of every wrapper but the few a test owns.
     /// </remarks>
     internal static void RunToEos(Pipeline pipeline, TimeSpan timeout, ITestOutputHelper output)
     {
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         try
         {

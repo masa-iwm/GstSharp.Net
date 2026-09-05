@@ -45,7 +45,7 @@ public sealed class SubclassAggregatorTests
         Link(second, aggregator.RequestSinkPad());
         Assert.True(aggregator.Link(sink));
 
-        using Bus bus = pipeline.GetBus();
+        Bus bus = pipeline.GetBus();
 
         try
         {
