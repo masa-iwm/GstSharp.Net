@@ -391,6 +391,15 @@ jobs:
       - name: RtspServer
         run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
 
+      # The editing services with a managed clip and a managed source in the
+      # timeline: what this gates is the child contract, since the clip is only
+      # given a child if its create_track_element answered one the library could
+      # extract from an asset. It needs videotestsrc and fakesink and nothing
+      # else, and --timeout 20 is the deadline the half second clip has to reach
+      # the end of stream in.
+      - name: GesCustomSource
+        run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
+
       # The inspect-lite port, run the two ways it can be run. The census walks
       # the whole registry and needs no plugin in particular; the element page
       # is asked for fakesink, which is in the core elements every leg has, and
@@ -551,6 +560,10 @@ jobs:
       - name: RtspServer
         run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
 
+      # Same run as the Linux leg; see the comments there.
+      - name: GesCustomSource
+        run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
+
       - name: GstDeviceMonitor
         run: dotnet run --project samples/GstDeviceMonitor --no-restore
 
@@ -690,6 +703,10 @@ jobs:
       # Same run as the Linux leg; see the comments there.
       - name: RtspServer
         run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
+
+      # Same run as the Linux leg; see the comments there.
+      - name: GesCustomSource
+        run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
 
       # Same two runs as the Linux leg; see the comments there.
       - name: GstInspect
