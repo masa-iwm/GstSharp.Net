@@ -32,18 +32,6 @@ internal sealed partial class Discovery
     private readonly Discoverer _discoverer;
     private bool _anyFailed;
 
-    /// <summary>
-    /// Gets a value indicating whether caps are printed with everything they
-    /// carry.
-    /// </summary>
-    /// <remarks>
-    /// The C tool reads a file scope <c>verbose</c> from <c>caps_to_string</c>,
-    /// which is reached from the static tag printers as well as from the
-    /// instance ones; this is that global, written once when the command line
-    /// has been read.
-    /// </remarks>
-    private static bool Verbose { get; set; }
-
     /// <summary>Initialises a run.</summary>
     /// <param name="options">The command line of the process.</param>
     /// <param name="discoverer">The discoverer every URI goes through.</param>
@@ -132,10 +120,6 @@ internal sealed partial class Discovery
     /// <returns>The exit code.</returns>
     private static int Discover(Options options)
     {
-        // The global, written once from the command line before the first page
-        // is printed, rather than from a constructor that runs per URI.
-        Verbose = options.Verbose;
-
         Discoverer discoverer;
 
         try

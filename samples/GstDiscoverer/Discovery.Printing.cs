@@ -420,7 +420,7 @@ internal sealed partial class Discovery
     /// </summary>
     /// <param name="tags">The tags to print.</param>
     /// <param name="depth">The indentation of each line.</param>
-    private static void PrintTags(TagList tags, int depth) =>
+    private void PrintTags(TagList tags, int depth) =>
         tags.Foreach((list, tag) => PrintTag(list, tag, depth));
 
     /// <summary>
@@ -435,7 +435,7 @@ internal sealed partial class Discovery
     /// is described rather than printed, and everything else goes through
     /// <c>gst_value_serialize</c>.
     /// </remarks>
-    private static void PrintTag(TagList tags, string tag, int depth)
+    private void PrintTag(TagList tags, string tag, int depth)
     {
         using Value value = tags.CopyValue(tag);
 
@@ -468,7 +468,7 @@ internal sealed partial class Discovery
     /// </summary>
     /// <param name="value">The value holding the sample.</param>
     /// <returns>The description the C tool builds.</returns>
-    private static string DescribeSample(in Value value)
+    private string DescribeSample(in Value value)
     {
         using Sample? sample = value.GetMiniObject<Sample>();
         using Gst.Buffer? image = sample?.GetBuffer();
@@ -493,7 +493,7 @@ internal sealed partial class Discovery
     /// </summary>
     /// <param name="entry">The entry to print.</param>
     /// <param name="depth">The indentation of the entry.</param>
-    private static void PrintTocEntry(TocEntry entry, int depth)
+    private void PrintTocEntry(TocEntry entry, int depth)
     {
         _ = entry.GetStartStopTimes(out long start, out long stop);
 
@@ -544,9 +544,9 @@ internal sealed partial class Discovery
     /// tool does for an array that holds anything else.
     /// </para>
     /// </remarks>
-    private static string CapsToString(Caps caps)
+    private string CapsToString(Caps caps)
     {
-        if (Verbose)
+        if (_options.Verbose)
         {
             return caps.ToString();
         }
