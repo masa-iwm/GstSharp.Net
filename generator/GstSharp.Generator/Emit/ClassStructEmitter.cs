@@ -30,6 +30,12 @@ internal sealed class ClassStructEmitter
     /// <summary>The suffix every mirror carries.</summary>
     private const string MirrorSuffix = "ClassRaw";
 
+    /// <summary>
+    /// The width of a pointer, which is what the filler of a class struct union
+    /// is measured in. Every target of this binding is 64 bit.
+    /// </summary>
+    private const int PointerWidth = 8;
+
     private readonly Repository _repository;
     private readonly EmissionCensus _census;
     private readonly DiagnosticBag _diagnostics;
@@ -187,11 +193,29 @@ internal sealed class ClassStructEmitter
         writer.WriteLine("internal struct " + mirror);
         writer.OpenBlock();
 
-        List<(string Name, int Length, string Element)> inlineArrays = [];
+        List<(string Name, int Length, string Element, string Doc)> inlineArrays = [];
         List<string> slots = [];
         bool first = true;
-        for (int index = 0; index < model.Members.Count; index++)
+        for (int index = 0; index <= model.Members.Count; index++)
         {
+            // The gir keeps the fields and the unions of a record in two lists,
+            // so a union is placed by the number of fields it follows. Every
+            // union of the allowlist is a trailing one, which is the index one
+            // past the last field.
+            foreach (GirUnion union in model.TypeStruct.Unions)
+            {
+                if (union.FieldIndex == index)
+                {
+                    EmitUnion(writer, module, ns, model, union, cName, inlineArrays);
+                    first = false;
+                }
+            }
+
+            if (index == model.Members.Count)
+            {
+                break;
+            }
+
             ClassStructMember member = model.Members[index];
             GirField field = member.Field;
             string name = MemberNameOf(field);
@@ -215,7 +239,12 @@ internal sealed class ClassStructEmitter
             if (field.Type is GirArrayRef { FixedSize: > 0 } array)
             {
                 string arrayType = name + "Array";
-                inlineArrays.Add((arrayType, array.FixedSize.Value, ScalarOf(array.ElementType, ns, field.Name)));
+                inlineArrays.Add((
+                    arrayType,
+                    array.FixedSize.Value,
+                    ScalarOf(array.ElementType, ns, field.Name),
+                    "Inline storage of the " + Count(array.FixedSize.Value) + " elements the reserved tail of <c>"
+                    + cName + "</c> is made of."));
                 writer.WriteLine("/// <summary>The <c>" + field.Name + "</c> field.</summary>");
                 writer.WriteLine("private " + arrayType + " " + Lowered(name) + ";");
                 continue;
@@ -265,14 +294,11 @@ internal sealed class ClassStructEmitter
             }
         }
 
-        foreach ((string arrayType, int length, string element) in inlineArrays)
+        foreach ((string arrayType, int length, string element, string doc) in inlineArrays)
         {
             writer.WriteLine();
-            writer.WriteLine(
-                "/// <summary>Inline storage of the " + length.ToString(System.Globalization.CultureInfo.InvariantCulture)
-                + " elements the reserved tail of <c>" + cName + "</c> is made of.</summary>");
-            writer.WriteLine(
-                "[InlineArray(" + length.ToString(System.Globalization.CultureInfo.InvariantCulture) + ")]");
+            writer.WriteLine("/// <summary>" + doc + "</summary>");
+            writer.WriteLine("[InlineArray(" + Count(length) + ")]");
             writer.WriteLine("private struct " + arrayType);
             writer.OpenBlock();
             writer.WriteLine("private " + element + " _element0;");
@@ -296,6 +322,185 @@ internal sealed class ClassStructEmitter
     /// </remarks>
     private static string ParentMirrorOf(ClassStructModel model) =>
         model.Parent is { } parent ? MirrorNameOf(parent) : "Gst.GObject.GObjectClassRaw";
+
+    /// <summary>Spells a count the way the invariant culture does.</summary>
+    /// <param name="value">The count.</param>
+    /// <returns>The decimal digits.</returns>
+    private static string Count(int value) =>
+        value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Lays a <c>&lt;union&gt;</c> of a class struct out as a block of the size
+    /// of its largest member.
+    /// </summary>
+    /// <param name="writer">The writer of the mirror.</param>
+    /// <param name="module">The module the class belongs to.</param>
+    /// <param name="ns">The gir namespace of the module.</param>
+    /// <param name="model">The class struct being mirrored.</param>
+    /// <param name="union">The union to lay out.</param>
+    /// <param name="cName">The C name of the class struct, for the documentation.</param>
+    /// <param name="inlineArrays">Where the filler type is collected.</param>
+    /// <remarks>
+    /// <para>
+    /// The unions of the GES class structs are all the same shape: a reserved
+    /// array of pointers and, overlapping it, a record of the members later
+    /// versions took out of that reserve. Only one member of a union can be
+    /// spelled in a sequential mirror, and it is the record: it is what carries
+    /// the fields whose offsets have to come out right. The reserve is what
+    /// says how large the block is, and the difference between the two is
+    /// written out as an explicit filler, because a mirror that stopped at the
+    /// end of the record would be shorter than the C struct by the whole
+    /// remainder of the reserve - which is 160 bytes on
+    /// <c>GESClipClass</c> - and every class derived from it would carry the
+    /// error.
+    /// </para>
+    /// <para>
+    /// Nothing here pads by hand: the members of the record are written in gir
+    /// order and the natural alignment of a sequential struct is the alignment
+    /// the C compiler applied, so a <c>gboolean</c> in front of a pointer is
+    /// followed by the same four bytes of padding in both. Only the trailing
+    /// filler is computed, and it is computed for an eight byte pointer, which
+    /// is what every target of this binding has.
+    /// </para>
+    /// </remarks>
+    private void EmitUnion(
+        CodeWriter writer,
+        ModuleInfo module,
+        GirNamespace ns,
+        ClassStructModel model,
+        GirUnion union,
+        string cName,
+        List<(string Name, int Length, string Element, string Doc)> inlineArrays)
+    {
+        // The gir spells a union name the way C does, and GES shouts it: ABI.
+        // Lower casing first is what turns it into a C# identifier rather than
+        // an ABIFiller nobody would write by hand.
+        string block = NameMapper.ToPascalCase(union.Name.ToLowerInvariant());
+        int size = SizeOfUnion(union, ns);
+        int consumed = 0;
+
+        // Every union of the corpus overlaps at most one record with its
+        // reserve; a second one could not be laid out at the same offsets, so
+        // the first is the one the mirror spells and the rest only count
+        // towards the size.
+        if (union.Records.Count > 0)
+        {
+            foreach (GirField field in union.Records[0].Fields)
+            {
+                string name = MemberNameOf(field);
+                string type = IsCallbackField(field, ns) ? "nint" : ScalarOf(field.Type, ns, field.Name);
+                consumed = Align(consumed, WidthOf(type));
+                writer.WriteLine();
+                if (IsCallbackField(field, ns))
+                {
+                    WriteOpaqueSlot(writer, module, model, field, name);
+                }
+                else
+                {
+                    writer.WriteLine(
+                        "/// <summary>The <c>" + field.Name + "</c> field of the <c>" + union.Name
+                        + "</c> union, which carries data rather than an overridable slot.</summary>");
+                    writer.WriteLine("internal " + type + " " + name + ";");
+                }
+
+                consumed += WidthOf(type);
+            }
+        }
+
+        int remaining = size - Align(consumed, PointerWidth);
+        if (remaining < 0 || remaining % PointerWidth != 0)
+        {
+            _diagnostics.Error(
+                "GEN0043",
+                $"The union '{union.Name}' of the class struct '{cName}' lays out {consumed} bytes of members "
+                + $"inside a block of {size} bytes; the remainder is not a whole number of pointers, so the "
+                + "mirror has no filler for it.");
+            return;
+        }
+
+        if (remaining == 0)
+        {
+            return;
+        }
+
+        string filler = block + "Filler";
+        writer.WriteLine();
+        writer.WriteLine(
+            "/// <summary>The unused tail of the <c>" + union.Name + "</c> union.</summary>");
+        writer.WriteLine("private " + filler + " " + Lowered(filler) + ";");
+        inlineArrays.Add((
+            filler,
+            remaining / PointerWidth,
+            "nint",
+            "Inline storage of the " + Count(remaining / PointerWidth) + " pointers that pad the <c>"
+            + union.Name + "</c> union of <c>" + cName + "</c> out to the size of its largest member."));
+    }
+
+    /// <summary>Measures a class struct union, which is its largest member.</summary>
+    /// <param name="union">The union to measure.</param>
+    /// <param name="ns">The gir namespace of the module.</param>
+    /// <returns>The size in bytes.</returns>
+    private int SizeOfUnion(GirUnion union, GirNamespace ns)
+    {
+        int size = 0;
+        foreach (GirField field in union.Fields)
+        {
+            size = Math.Max(size, SizeOfField(field, ns));
+        }
+
+        foreach (GirRecord record in union.Records)
+        {
+            int consumed = 0;
+            int alignment = 1;
+            foreach (GirField field in record.Fields)
+            {
+                int width = SizeOfField(field, ns);
+                int fieldAlignment = AlignmentOfField(field, ns);
+                alignment = Math.Max(alignment, fieldAlignment);
+                consumed = Align(consumed, fieldAlignment) + width;
+            }
+
+            size = Math.Max(size, Align(consumed, alignment));
+        }
+
+        return size;
+    }
+
+    /// <summary>Measures one field of a union, in bytes.</summary>
+    /// <param name="field">The field, as the gir spells it.</param>
+    /// <param name="ns">The gir namespace of the module.</param>
+    /// <returns>The size in bytes.</returns>
+    private int SizeOfField(GirField field, GirNamespace ns) =>
+        field.Type is GirArrayRef { FixedSize: > 0 } array
+            ? array.FixedSize.Value * WidthOf(ScalarOf(array.ElementType, ns, field.Name))
+            : AlignmentOfField(field, ns);
+
+    /// <summary>Returns the alignment one field of a union is laid out on.</summary>
+    /// <param name="field">The field, as the gir spells it.</param>
+    /// <param name="ns">The gir namespace of the module.</param>
+    /// <returns>The alignment in bytes, which for every scalar here is its width.</returns>
+    private int AlignmentOfField(GirField field, GirNamespace ns) =>
+        field.Type is GirArrayRef { FixedSize: > 0 } array
+            ? WidthOf(ScalarOf(array.ElementType, ns, field.Name))
+            : WidthOf(IsCallbackField(field, ns) ? "nint" : ScalarOf(field.Type, ns, field.Name));
+
+    /// <summary>Rounds an offset up to an alignment.</summary>
+    /// <param name="offset">The offset so far.</param>
+    /// <param name="alignment">The alignment to round to.</param>
+    /// <returns>The rounded offset.</returns>
+    private static int Align(int offset, int alignment) =>
+        (offset + alignment - 1) / alignment * alignment;
+
+    /// <summary>Returns the width of one of the types a mirror lays fields out with.</summary>
+    /// <param name="type">The C# type name the mirror uses.</param>
+    /// <returns>The width in bytes.</returns>
+    /// <remarks>
+    /// Only the four byte types are named: everything else a class struct field
+    /// maps onto - a pointer, a 64 bit integer, a double - is the width of a
+    /// pointer on every target of this binding, all of which are 64 bit.
+    /// </remarks>
+    private static int WidthOf(string type) =>
+        type is "int" or "uint" or "float" ? 4 : PointerWidth;
 
     /// <summary>
     /// Tests whether a class struct field holds a function pointer, whether the
