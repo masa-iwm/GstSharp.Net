@@ -345,6 +345,22 @@ jobs:
           dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error typefind-sample.wav
           dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error --verbose --toc tutorial-media.ogg
 
+      # The transcoder port, on the only leg provisioned for it: uritranscodebin
+      # and transcodebin come from the transcode plugin of gst-plugins-bad,
+      # which this job installs and lists in GSTSHARP_REQUIRED_ELEMENTS, and
+      # macOS and Windows have no such guarantee.
+      #
+      # The input is the wav the typefind step made rather than the ogg: the
+      # default profile is application/ogg:audio/x-vorbis, audio only, so an
+      # audio only source is what it can be asked to reproduce. Both arguments
+      # are URIs, which is the sample's contract. The file the run wrote is the
+      # gate on top of the exit code — a transcoder that reported success and
+      # produced nothing would otherwise pass.
+      - name: GstTranscode
+        run: |
+          dotnet run --project samples/GstTranscode --no-restore -- "file://$PWD/typefind-sample.wav" "file://$PWD/transcoded.ogg"
+          test -s transcoded.ogg
+
       # The gst-play port, backed by the Play object of GstSharp.Net.Play rather
       # than by a playbin of its own. It runs against the ogg the tutorial step
       # made, which is the file with both an audio and a video stream in it, so
