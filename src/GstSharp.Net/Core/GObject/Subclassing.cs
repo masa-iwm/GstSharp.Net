@@ -424,7 +424,22 @@ public sealed class SubclassType
     /// </exception>
     private static InterfaceImplementation[] ValidateInterfaces(GType parent, SubclassOptions? options)
     {
-        if (options is null || options.Interfaces.Count == 0)
+        if (options is null)
+        {
+            return [];
+        }
+
+        // The property is initialised to an empty list, so this is only
+        // reachable through a deliberate null; it is still an argument that is
+        // wrong rather than a null reference somewhere inside the registration.
+        if (options.Interfaces is null)
+        {
+            throw new ArgumentException(
+                "SubclassOptions.Interfaces is null. Leave it alone for a type that implements no interface.",
+                nameof(options));
+        }
+
+        if (options.Interfaces.Count == 0)
         {
             return [];
         }

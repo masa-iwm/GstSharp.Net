@@ -261,6 +261,53 @@ public sealed unsafe partial class SubclassUriHandlerTests
                 options));
     }
 
+    /// <summary>
+    /// A declaration belongs to the type it was made for. Put into the
+    /// registration of another type it attaches the interface all the same -
+    /// GObject has no idea the two are different - and what the instance slots
+    /// then find is a wrapper that implements none of it. The refusal has to
+    /// say that rather than claim there is no managed instance, because there
+    /// is one, and it is the type named in the message.
+    /// </summary>
+    [Fact]
+    public void AnElementThatDoesNotImplementTheInterfaceSaysWhichTypeDeclaredIt()
+    {
+        using MisdeclaredHandler element = new();
+        IURIHandler handler = element.As<IURIHandler>()
+            ?? throw new InvalidOperationException("The interface was not attached at all.");
+
+        Assert.Null(handler.GetUri());
+
+        GException failure = Assert.Throws<GException>(() => handler.SetUri("gstsharptest://misdeclared"));
+
+        Assert.Contains("does not implement", failure.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(ProbeUriElement), failure.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The protocol vector of a type is pinned once and reused: the second
+    /// declaration of <see cref="ProbeUriElement"/> - the one
+    /// <see cref="MisdeclaredHandler"/> carries - hands out the very pointer
+    /// the first one pinned, so repeated declarations leak nothing.
+    /// </summary>
+    [Fact]
+    public void TheProtocolsOfATypeArePinnedOnce()
+    {
+        Assert.True(ProbeUriElement.IsRegistered);
+
+        using Element first = Element.MakeFromUri(URIType.Src, "gstsharptest://pinned", null);
+        using MisdeclaredHandler second = new();
+
+        byte** one = UriHandlerGetProtocols(first.Handle);
+        byte** two = UriHandlerGetProtocols(second.Handle);
+
+        Assert.True(one is not null);
+        Assert.True(one == two);
+    }
+
+    [LibraryImport("Gst", EntryPoint = "gst_uri_handler_get_protocols")]
+    private static partial byte** UriHandlerGetProtocols(nint handler);
+
     [LibraryImport("Gst", EntryPoint = "gst_uri_handler_get_type")]
     private static partial nuint UriHandlerGetType();
 
@@ -283,6 +330,54 @@ public sealed unsafe partial class SubclassUriHandlerTests
         /// <inheritdoc/>
         internal override unsafe void InitializeVTable(void* iface, GType instanceType) =>
             throw new NotSupportedException("The declaration is refused before it is used.");
+    }
+
+    /// <summary>
+    /// An element whose registration carries the URI handler declaration of
+    /// <see cref="ProbeUriElement"/> although it implements none of it. It is
+    /// deliberately not registered as an element factory, so no URI lookup can
+    /// pick it up and the mistake stays inside these two facts.
+    /// </summary>
+    private sealed class MisdeclaredHandler : PushSrc, IManagedSubclass<MisdeclaredHandler>
+    {
+        private static readonly PadTemplate SrcTemplate = NewSrcTemplate();
+
+        private static readonly SubclassType Definition = DefineSubclass<MisdeclaredHandler>(
+            "GstSharpTestMisdeclaredUriHandler",
+            static config => config.AddPadTemplate(SrcTemplate),
+            new SubclassOptions { Interfaces = [URIHandlerImplementation.For<ProbeUriElement>()] },
+            CreateOverride);
+
+        /// <summary>Creates an element of the type.</summary>
+        internal MisdeclaredHandler()
+            : base(Definition.NewInstance())
+        {
+        }
+
+        private MisdeclaredHandler(SubclassCtorArgs args)
+            : base(args)
+        {
+        }
+
+        /// <summary>Builds the wrapper of an instance native code created.</summary>
+        /// <param name="args">What the runtime says about the instance.</param>
+        /// <returns>The wrapper.</returns>
+        public static MisdeclaredHandler CreateWrapper(SubclassCtorArgs args) => new(args);
+
+        /// <inheritdoc/>
+        protected override FlowReturn OnCreate(out Gst.Buffer? buffer)
+        {
+            buffer = null;
+            return FlowReturn.Eos;
+        }
+
+        private static PadTemplate NewSrcTemplate()
+        {
+            using Caps caps = Caps.NewEmptySimple("application/x-gstsharp-misdeclared");
+
+            return PadTemplate.New("src", PadDirection.Src, PadPresence.Always, caps)
+                ?? throw new InvalidOperationException("The source pad template could not be created.");
+        }
     }
 
     /// <summary>A bin subclass that is only ever used to be refused.</summary>

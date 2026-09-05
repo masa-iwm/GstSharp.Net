@@ -43,8 +43,14 @@ public static unsafe class URIHandlerImplementation
     /// two static answers and copy the protocol list into unmanaged memory that
     /// is <b>never released</b>: <c>gst_uri_handler_get_protocols</c> returns
     /// the array to its callers as it is, so it has to stay valid for as long
-    /// as the process can ask, and the type itself is equally permanent. One
-    /// call per type is the intent; each call pins another copy.
+    /// as the process can ask, and the type itself is equally permanent.
+    /// </para>
+    /// <para>
+    /// <b>One pin per type for the lifetime of the process.</b> The vector is
+    /// cached per <typeparamref name="TSelf"/> and the first call is the one
+    /// that wins, so asking twice for one type costs nothing beyond the
+    /// validation - which does run every time, so a declaration that is wrong
+    /// is refused however often it is asked for.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">
@@ -86,7 +92,7 @@ public static unsafe class URIHandlerImplementation
             }
         }
 
-        return new UriHandler(InterfaceType, uriType, Pin(protocols));
+        return new UriHandler(InterfaceType, uriType, ProtocolPin<TSelf>.Vector(protocols), typeof(TSelf));
     }
 
     /// <summary>Gets the type of <c>GstURIHandler</c>, resolved once.</summary>
@@ -127,6 +133,59 @@ public static unsafe class URIHandlerImplementation
     }
 
     /// <summary>
+    /// The protocol vector of one type, pinned once.
+    /// </summary>
+    /// <typeparam name="TSelf">The managed element type it belongs to.</typeparam>
+    /// <remarks>
+    /// A static field of a generic type is one field per type argument, which
+    /// is the whole cache: no dictionary, no key comparison and no reflection,
+    /// so it costs nothing under ahead of time compilation. The first caller
+    /// wins; one that raced it frees the copy it made, which no slot has been
+    /// handed.
+    /// </remarks>
+    private static class ProtocolPin<TSelf>
+    {
+        private static nint _vector;
+
+        /// <summary>Answers the pinned vector, pinning it on the first call.</summary>
+        /// <param name="protocols">The protocols, already validated.</param>
+        /// <returns>The vector, owned by nobody and released never.</returns>
+        internal static byte** Vector(IReadOnlyList<string> protocols)
+        {
+            nint pinned = Volatile.Read(ref _vector);
+            if (pinned != nint.Zero)
+            {
+                return (byte**)pinned;
+            }
+
+            byte** made = Pin(protocols);
+            nint raced = Interlocked.CompareExchange(ref _vector, (nint)made, nint.Zero);
+
+            if (raced == nint.Zero)
+            {
+                return made;
+            }
+
+            Release(made);
+            return (byte**)raced;
+        }
+    }
+
+    /// <summary>
+    /// Frees a vector no slot was ever handed.
+    /// </summary>
+    /// <param name="vector">The vector to release, with its strings.</param>
+    private static void Release(byte** vector)
+    {
+        for (int i = 0; vector[i] is not null; i++)
+        {
+            NativeMemory.Free(vector[i]);
+        }
+
+        NativeMemory.Free(vector);
+    }
+
+    /// <summary>
     /// Returns the implementation a type-keyed slot was called for.
     /// </summary>
     /// <param name="type">The type the slot was handed.</param>
@@ -137,12 +196,47 @@ public static unsafe class URIHandlerImplementation
             : null;
 
     /// <summary>
-    /// Returns the managed side of an instance, or null when there is none.
+    /// Names the type whose declaration attached the interface to an instance.
     /// </summary>
-    /// <param name="handler">The native <c>GstURIHandler</c>.</param>
-    /// <returns>The implementation, or null.</returns>
-    private static IURIHandlerImplementation? Managed(nint handler) =>
-        Gst.GObject.Object.TryGetOrFabricate(handler) as IURIHandlerImplementation;
+    /// <param name="handler">The native instance.</param>
+    /// <returns>The managed type the declaration was made for, or a placeholder.</returns>
+    private static string DeclaredFor(nint handler)
+    {
+        if (handler == nint.Zero)
+        {
+            return "another type";
+        }
+
+        UriHandler? implementation = Lookup(TypeRegistry.GetInstanceType(handler).Value);
+        return implementation is null ? "another type" : implementation.DeclaredFor.ToString();
+    }
+
+    /// <summary>
+    /// Says why an instance cannot answer for a URI.
+    /// </summary>
+    /// <param name="handler">The native instance.</param>
+    /// <param name="wrapper">The wrapper, which may be null.</param>
+    /// <returns>The reason, ready to be put into a message.</returns>
+    /// <remarks>
+    /// The two cases are not the same mistake and must not read as if they
+    /// were. No wrapper at all is the window of §5.4 - a disposed wrapper, or
+    /// an instance of the type being constructed on this thread. A wrapper that
+    /// is not an <see cref="IURIHandlerImplementation"/> is a misconfiguration:
+    /// the declaration of one type was put into the registration of another, so
+    /// the interface hangs on a type that answers none of it.
+    /// </remarks>
+    private static string ReasonFor(nint handler, Gst.GObject.Object? wrapper) =>
+        wrapper is null
+            ? string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "\"{0}\" has no managed instance to answer for it.",
+                NameOf(handler))
+            : string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "\"{0}\" does not implement IURIHandlerImplementation: the GstURIHandler declaration in its "
+                    + "registration was made for {1}.",
+                NameOf(handler),
+                DeclaredFor(handler));
 
     /// <summary>Names a type for an error message, without assuming a wrapper.</summary>
     /// <param name="handler">The native instance.</param>
@@ -199,6 +293,11 @@ public static unsafe class URIHandlerImplementation
                 domain = reported.Domain.Value;
                 code = reported.Code;
             }
+
+            // A domain the handler set without a usable message is dropped with
+            // the message: g_error_new_literal answers NULL for an empty one, so
+            // there would be nothing left to carry the domain, and the
+            // synthesised GST_URI_ERROR at least says what happened.
         }
 
         if (message.Contains('\0', StringComparison.Ordinal))
@@ -265,8 +364,11 @@ public static unsafe class URIHandlerImplementation
     {
         try
         {
-            if (Managed(handler) is not { } managed)
+            Gst.GObject.Object? wrapper = Gst.GObject.Object.TryGetOrFabricate(handler);
+
+            if (wrapper is not IURIHandlerImplementation managed)
             {
+                GLibNative.Warn("GStreamer", "gst_uri_handler_get_uri: " + ReasonFor(handler, wrapper));
                 return nint.Zero;
             }
 
@@ -293,16 +395,11 @@ public static unsafe class URIHandlerImplementation
         {
             string uriValue = GMarshal.PtrToStringUtf8((nint)uri) ?? string.Empty;
 
-            if (Managed(handler) is not { } managed)
+            Gst.GObject.Object? wrapper = Gst.GObject.Object.TryGetOrFabricate(handler);
+
+            if (wrapper is not IURIHandlerImplementation managed)
             {
-                WriteError(
-                    error,
-                    null,
-                    string.Format(
-                        System.Globalization.CultureInfo.InvariantCulture,
-                        "\"{0}\" has no managed instance to take the URI \"{1}\".",
-                        NameOf(handler),
-                        uriValue));
+                WriteError(error, null, ReasonFor(handler, wrapper));
                 return 0;
             }
 
@@ -358,15 +455,23 @@ public static unsafe class URIHandlerImplementation
         /// <param name="interfaceType">The type of <c>GstURIHandler</c>.</param>
         /// <param name="uriType">Whether the type is a source or a sink.</param>
         /// <param name="protocols">The pinned protocol vector.</param>
-        internal UriHandler(GType interfaceType, URIType uriType, byte** protocols)
+        /// <param name="declaredFor">The managed type the declaration was made for.</param>
+        internal UriHandler(GType interfaceType, URIType uriType, byte** protocols, Type declaredFor)
             : base(interfaceType)
         {
             UriType = uriType;
             _protocols = protocols;
+            DeclaredFor = declaredFor;
         }
 
         /// <summary>Gets whether the type is a source or a sink.</summary>
         internal URIType UriType { get; }
+
+        /// <summary>
+        /// Gets the managed type <c>For</c> was called on, which is the one
+        /// whose static answers this carries.
+        /// </summary>
+        internal Type DeclaredFor { get; }
 
         /// <summary>Gets the pinned protocol vector.</summary>
         internal byte** Protocols => _protocols;
