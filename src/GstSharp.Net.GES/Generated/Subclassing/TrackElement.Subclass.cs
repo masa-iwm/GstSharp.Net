@@ -173,7 +173,7 @@ public unsafe partial class TrackElement
     /// <remarks>
     /// <para>Return what the chain-up answered: set_asset references the object once, and only while
     /// priv-&gt;nleobject is still NULL (ges-track-element.c:306-309), and dispose drops that
-    /// one reference again (ges-track-element.c:1249-1252).</para>
+    /// one reference again (ges-track-element.c:269-271).</para>
     /// </remarks>
     /// <returns>
     /// the #NLEObject to use in the #nlecomposition
@@ -187,16 +187,24 @@ public unsafe partial class TrackElement
     /// <remarks>
     /// <para>The same rules as GES.Source::create_source: the element is answered floating, the
     /// consumer adds it to the bin (ges-track-element.c:1026-1038), which sinks it and owns it,
-    /// and the answer is not referenced on the way out. Answer an element that has no parent,
-    /// and expect a null answer to leave an empty nlesource that fails at the state change.</para>
+    /// and the answer is not referenced on the way out. Answer an element that has no parent.
+    /// Answering null, or throwing, which the trampoline turns into a null answer, would leave
+    /// the nleobject of the track element over-released and freed while dispose still unrefs it
+    /// (ges-track-element.c:1022, 1066-1070, and the composition sinks what is left) in GES
+    /// 1.28.6, so the binding answers an identity element in its place and reports the
+    /// substitution through the exception trap. Answer a real element, or do not declare the
+    /// slot.</para>
     /// </remarks>
     /// <returns>
     /// the #GstElement that the underlying nleobject
     /// controls.
     /// The answer is borrowed: no reference is added for the caller, so the
     /// override has to keep the object alive by other means.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected virtual Gst.Element? OnCreateElement() =>
+    protected virtual Gst.Element OnCreateElement() =>
         ChainUpCreateElement();
 
     /// <summary>Notify when the #GESTrackElement:active property changes</summary>
@@ -212,7 +220,7 @@ public unsafe partial class TrackElement
     /// <remarks>
     /// <para>Return what the chain-up answered: set_asset references the object once, and only while
     /// priv-&gt;nleobject is still NULL (ges-track-element.c:306-309), and dispose drops that
-    /// one reference again (ges-track-element.c:1249-1252).</para>
+    /// one reference again (ges-track-element.c:269-271).</para>
     /// </remarks>
     /// <returns>
     /// the #NLEObject to use in the #nlecomposition
@@ -231,19 +239,29 @@ public unsafe partial class TrackElement
     /// <remarks>
     /// <para>The same rules as GES.Source::create_source: the element is answered floating, the
     /// consumer adds it to the bin (ges-track-element.c:1026-1038), which sinks it and owns it,
-    /// and the answer is not referenced on the way out. Answer an element that has no parent,
-    /// and expect a null answer to leave an empty nlesource that fails at the state change.</para>
+    /// and the answer is not referenced on the way out. Answer an element that has no parent.
+    /// Answering null, or throwing, which the trampoline turns into a null answer, would leave
+    /// the nleobject of the track element over-released and freed while dispose still unrefs it
+    /// (ges-track-element.c:1022, 1066-1070, and the composition sinks what is left) in GES
+    /// 1.28.6, so the binding answers an identity element in its place and reports the
+    /// substitution through the exception trap. Answer a real element, or do not declare the
+    /// slot.</para>
     /// </remarks>
     /// <returns>
     /// the #GstElement that the underlying nleobject
     /// controls.
     /// The answer is borrowed: no reference is added for the caller, so the
     /// override has to keep the object alive by other means.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected Gst.Element? ChainUpCreateElement()
+    protected Gst.Element ChainUpCreateElement()
     {
         nint resultNative = ChainUpCreateElement(Handle);
-        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(resultNative, Gst.Interop.Transfer.None);
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(resultNative, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException(
+                "create_element answered null below the managed override.");
         GC.KeepAlive(this);
         return result;
     }
@@ -357,12 +375,18 @@ public unsafe partial class TrackElement
             }
 
             Gst.Element? result = managed.OnCreateElement();
+            if (result is null)
+            {
+                throw new InvalidOperationException(
+                    "OnCreateElement answered null, which create_element does not allow.");
+            }
+
             return result is null ? nint.Zero : result.Handle;
         }
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return nint.Zero;
+            return Gst.GstNative.ElementFactoryMakeRaw("identity", null);
         }
     }
 

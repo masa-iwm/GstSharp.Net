@@ -99,12 +99,14 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
     }
 
     /// <inheritdoc/>
-    protected override Gst.Element? OnCreateSource()
+    protected override Gst.Element OnCreateSource()
     {
-        // The element must have no parent: a failed gst_bin_add releases the
-        // answer again (ges-track-element.c:1066-1071). The wrapper keeps the
-        // reference it made and the topbin takes one of its own.
-        return Gst.ElementFactory.Make("videotestsrc", null);
+        // The element must have no parent: a failed gst_bin_add releases both
+        // the answer and the nlesource (ges-track-element.c:1073-1078). The
+        // wrapper keeps the reference it made and the topbin takes one of its
+        // own.
+        return Gst.ElementFactory.Make("videotestsrc", null)
+            ?? throw new InvalidOperationException("videotestsrc is not installed.");
     }
 
     /// <inheritdoc/>

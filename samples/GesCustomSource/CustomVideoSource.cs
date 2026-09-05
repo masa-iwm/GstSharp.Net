@@ -48,10 +48,10 @@ internal sealed class CustomVideoSource : GES.VideoSource, IManagedSubclass<Cust
     public static CustomVideoSource CreateWrapper(SubclassCtorArgs args) => new(args);
 
     /// <inheritdoc/>
-    protected override Gst.Element? OnCreateSource()
+    protected override Gst.Element OnCreateSource()
     {
-        // The element must have no parent: a failed gst_bin_add releases the
-        // answer again (ges-track-element.c:1066-1071). The wrapper keeps the
+        // The element must have no parent: a failed gst_bin_add releases both
+        // the answer and the nlesource (ges-track-element.c:1073-1078). The wrapper keeps the
         // reference it made and the top bin takes one of its own, so the
         // wrapper may be let go of right after the call.
         Gst.Element source = Gst.ElementFactory.Make("videotestsrc", null)

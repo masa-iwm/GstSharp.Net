@@ -177,16 +177,25 @@ public unsafe partial class Source
     /// is not referenced on the way out. The trampoline hands the handle on and moves no
     /// reference, so a wrapper you answer keeps the reference it already owns and may be
     /// disposed after the call or read back from the track element instead of being kept.
-    /// Answer an element that has no parent: add_failure unrefs the answer when the bin refuses
-    /// it (ges-track-element.c:1066-1071). A null answer leaves an empty nlesource in the track
-    /// and fails at the state change rather than here.</para>
+    /// Answer an element that has no parent: add_failure unrefs both the answer and the
+    /// nlesource when the bin refuses it (ges-track-element.c:1073-1078). Answering null, or
+    /// throwing, which the trampoline turns into a null answer, would leave the track element
+    /// with an nleobject it no longer owns: child_failure unrefs it while it is still floating
+    /// (ges-track-element.c:1022, 1066-1070), the composition sinks the last reference and
+    /// frees the object when the element is removed, and dispose unrefs it again. GES 1.28.6
+    /// does that; the binding therefore answers an identity element in place of a null one and
+    /// reports the substitution through the exception trap, so the element fails at the state
+    /// change instead. Answer a real element, or do not declare the slot.</para>
     /// </remarks>
     /// <returns>
     /// The source element to use.
     /// The answer is borrowed: no reference is added for the caller, so the
     /// override has to keep the object alive by other means.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected virtual Gst.Element? OnCreateSource() =>
+    protected virtual Gst.Element OnCreateSource() =>
         ChainUpCreateSource();
 
     /// <summary>Runs the implementation of <c>select_pad</c> below the managed override.</summary>
@@ -217,19 +226,30 @@ public unsafe partial class Source
     /// is not referenced on the way out. The trampoline hands the handle on and moves no
     /// reference, so a wrapper you answer keeps the reference it already owns and may be
     /// disposed after the call or read back from the track element instead of being kept.
-    /// Answer an element that has no parent: add_failure unrefs the answer when the bin refuses
-    /// it (ges-track-element.c:1066-1071). A null answer leaves an empty nlesource in the track
-    /// and fails at the state change rather than here.</para>
+    /// Answer an element that has no parent: add_failure unrefs both the answer and the
+    /// nlesource when the bin refuses it (ges-track-element.c:1073-1078). Answering null, or
+    /// throwing, which the trampoline turns into a null answer, would leave the track element
+    /// with an nleobject it no longer owns: child_failure unrefs it while it is still floating
+    /// (ges-track-element.c:1022, 1066-1070), the composition sinks the last reference and
+    /// frees the object when the element is removed, and dispose unrefs it again. GES 1.28.6
+    /// does that; the binding therefore answers an identity element in place of a null one and
+    /// reports the substitution through the exception trap, so the element fails at the state
+    /// change instead. Answer a real element, or do not declare the slot.</para>
     /// </remarks>
     /// <returns>
     /// The source element to use.
     /// The answer is borrowed: no reference is added for the caller, so the
     /// override has to keep the object alive by other means.
+    /// Answering <see langword="null"/> is not allowed: the caller of the slot does
+    /// not check for it. A null answer is reported through the exception trap and
+    /// the slot answers a value the caller fails cleanly on.
     /// </returns>
-    protected Gst.Element? ChainUpCreateSource()
+    protected Gst.Element ChainUpCreateSource()
     {
         nint resultNative = ChainUpCreateSource(Handle);
-        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(resultNative, Gst.Interop.Transfer.None);
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(resultNative, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException(
+                "create_source answered null below the managed override.");
         GC.KeepAlive(this);
         return result;
     }
@@ -302,12 +322,18 @@ public unsafe partial class Source
             }
 
             Gst.Element? result = managed.OnCreateSource();
+            if (result is null)
+            {
+                throw new InvalidOperationException(
+                    "OnCreateSource answered null, which create_source does not allow.");
+            }
+
             return result is null ? nint.Zero : result.Handle;
         }
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
-            return nint.Zero;
+            return Gst.GstNative.ElementFactoryMakeRaw("identity", null);
         }
     }
 }

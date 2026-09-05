@@ -89,6 +89,35 @@ internal static unsafe partial class GstNative
     [LibraryImport("Gst", EntryPoint = "gst_caps_new_empty")]
     internal static partial nint CapsNewEmpty();
 
+    /// <summary>The <c>gst_element_factory_make</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_element_factory_make")]
+    private static partial nint ElementFactoryMake(byte* factoryName, byte* name);
+
+    /// <summary>
+    /// Creates an element without a wrapper, which is what a slot answers when
+    /// it has to answer an element and the managed override answered none: the
+    /// consumer adds the answer to a bin and sinks it, so a real element there
+    /// keeps the reference counting of the normal path while a NULL would not.
+    /// </summary>
+    /// <param name="factoryName">
+    /// The name of the factory. Name one of the core elements, which
+    /// <c>gst_init</c> always registers, so that the answer cannot itself be
+    /// NULL for want of a plugin.
+    /// </param>
+    /// <param name="name">The name of the element, or <see langword="null"/> for a generated one.</param>
+    /// <returns>
+    /// The new element, floating, with the one reference the caller takes over.
+    /// </returns>
+    internal static nint ElementFactoryMakeRaw(string factoryName, string? name)
+    {
+        System.Span<byte> factoryBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope factoryScope = Gst.Interop.GMarshal.StackUtf8(factoryName, factoryBuffer);
+        System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
+
+        return ElementFactoryMake(factoryScope.Pointer, nameScope.Pointer);
+    }
+
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_ref")]
     internal static partial nint MiniObjectRef(nint miniObject);
 
