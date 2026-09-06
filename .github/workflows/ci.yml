@@ -233,6 +233,12 @@ jobs:
       # reads it, and it is set on this leg alone because this is the only leg
       # that installs the plugins.
       #
+      # gesdemux is here for a step, not for a test: it is what the GesLaunch
+      # step that loads a nested project below plays the .xges through, and it
+      # comes from the ges plugin of libges-1.0-0. Listing it here makes a leg
+      # that lost that plugin red on this step, which names the missing
+      # factory, instead of red further down on a load that cannot say why.
+      #
       # --blame-hang names the test that stopped making progress: without it a
       # hung leg is killed by timeout-minutes, and the upload steps are gated
       # on `if: ${{ failure() }}`, which a cancellation by the job cap does not
@@ -250,7 +256,7 @@ jobs:
       # upload step already takes.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert,gesdemux
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
@@ -488,6 +494,30 @@ jobs:
           dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --smart-rendering -o "file://$PWD/ges-smart.ogg" +clip "file://$PWD/ges-render.ogg" d=1.0 | tee ges-smart.log
           grep -q -- "Encoding profile from: smart rendering (1 candidate profiles)" ges-smart.log
           dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-smart.ogg
+
+      # A project that carries another project as a clip. The inner one is
+      # ges-launch-saved.xges from the save and load step above, on this same
+      # job, and the only .xges written before this step; the run here puts it
+      # on a timeline, and --embed-nesteds then registers it as an asset of the
+      # outer project. The count in the line is the gate: without the embedding
+      # the save would write the same outer project with a nested count of
+      # zero, so it is the number and not the file that says the path ran. The
+      # load that follows is the other half - a nested project is only really
+      # embedded if the saved file plays back again.
+      #
+      # This step is Linux only, unlike the rest of the GesLaunch steps: a
+      # nested .xges clip is played through the gesdemux element, and on
+      # Windows gesdemux fails writing its temporary timeline description file
+      # (gesdemux.c:551-562 keeps the fd from g_file_open_tmp open while
+      # g_file_set_contents replaces the same path, which cannot be renamed
+      # over while a handle on it is open). The sample is not what fails there,
+      # so the fixture is simply not run on the Windows legs.
+      - name: GesLaunch (embed nested timelines)
+        run: |
+          set -o pipefail
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-nested.xges --embed-nesteds +clip "file://$PWD/ges-launch-saved.xges" d=1.0 | tee ges-nested.log
+          grep -q "Embedded nested projects: 1" ges-nested.log
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-nested.xges
 
       # The inspect-lite port, run the two ways it can be run. The census walks
       # the whole registry and needs no plugin in particular; the element page
