@@ -12,5 +12,7 @@
       href: ../docs/modules.md
     - name: Platform notes
       href: ../docs/platform-notes.md
+    - name: Samples
+      href: ../docs/samples.md
 - name: API reference
   href: api/

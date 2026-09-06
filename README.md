@@ -216,6 +216,11 @@ never end up with half an MSVC and half a MinGW GStreamer.
 
 ## Samples
 
+The table below is the short index;
+[`docs/samples.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/samples.md)
+is the long-form companion, with the samples grouped by theme, the binding APIs
+each one exercises and what it deliberately leaves out.
+
 | Sample | What it shows | Run it |
 | --- | --- | --- |
 | `samples/PlaybinPlayer` | A pipeline from a description, driven by a polled bus. No main loop, no signal handler. | `dotnet run --project samples/PlaybinPlayer` |
@@ -233,7 +238,7 @@ never end up with half an MSVC and half a MinGW GStreamer.
 | `samples/RtspServer` | The port of gst-rtsp-server's `examples/test-launch.c`: one mount point built from a `gst-launch` description, served until it is asked to stop, and then shut down in the order the library documents. Without a launch line it serves a test tone, so it runs on a machine with no media on it. | `dotnet run --project samples/RtspServer -- --port 8554` |
 | `samples/GesCustomSource` | A timeline of the editing services whose clip and whose source are managed types: the clip builds its own track element and the source answers the element behind it, both through overrides of the class struct slots. It is the smallest application that exercises the child contract of `docs/subclassing.md`. | `dotnet run --project samples/GesCustomSource -- --timeout 20` |
 | `samples/GesLaunch` | A port of `ges-launch-1.0`: the `ges:` description with its escaping and its synthesized `+track` keywords, `--load`/`--save`/`--save-only` of a project, the render branch with its encoding profile, the preview sinks and the keyboard controls. It is where the asynchronous half of the editing services shows: `loaded` is deferred through an idle source, so the sample iterates the default main context until the project answers, and its header comment says why it may not push a context of its own. | `dotnet run --project samples/GesLaunch -- +test-clip snow d=1.0` |
-| `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, and run five managed subclasses - an element, a source and sink pair, a managed audio sink, a managed video sink and an element an element factory made - with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
+| `samples/AotSmoke` | The NativeAOT gate: initialise, make an element, release it, and run the managed subclasses of the sample - an element, a source and sink pair, an audio sink, a video sink, an audio encoder and an element an element factory made - with zero trimming warnings. | `dotnet publish samples/AotSmoke -r win-x64 -c Release /p:PublishAot=true` |
 
 `PlaybinPlayer`, `AppSinkSpans`, `AppSrcPush` and `CustomMeta` also take
 `--native-path <directory>`,
