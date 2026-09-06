@@ -24,9 +24,30 @@ said here.
 | `BasicTutorial09` | [Media information gathering](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-information-gathering.html) | `GstDiscoverer`, an answer that arrives as a signal, the topology |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 
-The rest of the basic and playback tutorials follow later. Basic 5 needs a
-window and a widget toolkit, basic 10, 11 and 14 have no code upstream, and
-basic 15 is Clutter, which is gone.
+## What is not ported, and why
+
+Of the basic tutorials, 5 needs a window and a widget toolkit, 10, 11 and 14
+have no code upstream, and 15 is Clutter, which is gone. One more is only
+missing:
+
+| Tutorial | What it is about | Why it is not here |
+| --- | --- | --- |
+| [Basic 12](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | Streaming | not ported yet |
+
+None of the nine playback tutorials is ported. Six of them are only missing;
+the other three have a reason of their own:
+
+| Tutorial | What it is about | Why it is not here |
+| --- | --- | --- |
+| [Playback 1](https://gstreamer.freedesktop.org/documentation/tutorials/playback/playbin-usage.html) | Playbin usage | not ported yet |
+| [Playback 2](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | Subtitle management | not ported yet |
+| [Playback 3](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | Short-cutting the pipeline | not ported yet; it is an `appsrc` inside a playbin |
+| [Playback 4](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | Progressive streaming | not ported yet |
+| [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | needs a real video sink, so it cannot run headless in this tree |
+| [Playback 6](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | Audio visualization | not ported yet |
+| [Playback 7](https://gstreamer.freedesktop.org/documentation/tutorials/playback/custom-playbin-sinks.html) | Custom playbin sinks | needs a real video sink, so it cannot run headless in this tree |
+| [Playback 8](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | Hardware-accelerated video decoding | not ported yet |
+| [Playback 9](https://gstreamer.freedesktop.org/documentation/tutorials/playback/digital-audio-pass-through.html) | Digital audio pass-through | no example code upstream, and it needs pass-through hardware |
 
 ## Running one
 
