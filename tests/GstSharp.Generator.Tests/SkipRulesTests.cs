@@ -426,6 +426,11 @@ public sealed class SkipRulesTests
         // cannot do without: the planner refuses it for its GError, and
         // GES.Asset.Extract<T> in src/GstSharp.Net.GES/Custom is what a clip
         // builds its children with.
+        // gst_param_spec_array and gst_param_spec_fraction are the two
+        // namespace scope factories of the parameter specifications that
+        // src/GstSharp.Net/Custom writes by hand rather than generating: the
+        // ledger had them under the catch all reason, which read as a gap
+        // where there is a binding.
         Assert.Equal(
             [
                 "GstWebRTC.WebRTCDataChannel::on-message-data",
@@ -494,6 +499,8 @@ public sealed class SkipRulesTests
                 "gst_pad_push_event",
                 "gst_pad_send_event",
                 "gst_pad_set_event_full_function_full",
+                "gst_param_spec_array",
+                "gst_param_spec_fraction",
                 "gst_play_message_parse_error",
                 "gst_play_message_parse_error_missing_plugin",
                 "gst_play_message_parse_warning",
