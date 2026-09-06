@@ -318,7 +318,7 @@ internal static class Launcher
                 return 1;
             }
 
-            if (!SetRenderingDetails(pipeline, project, options))
+            if (!SetRenderingDetails(pipeline, project, timeline, options))
             {
                 return 1;
             }
@@ -411,14 +411,20 @@ internal static class Launcher
 
     /// <summary>
     /// Applies the track options to the loaded timeline, which is
-    /// <c>_timeline_set_user_options</c> at <c>ges-launcher.c:813-862</c>
-    /// without its <c>--profile-from</c> branch.
+    /// <c>_timeline_set_user_options</c> at <c>ges-launcher.c:764-862</c>.
     /// </summary>
     /// <param name="timeline">The timeline that was loaded.</param>
     /// <param name="options">The command line.</param>
     /// <returns><see langword="false"/> when an option could not be applied.</returns>
     private static bool SetUserOptions(Timeline timeline, Options options)
     {
+        // Before anything else, because the tracks the rest of this method
+        // works on are the ones it builds (ges-launcher.c:772-810).
+        if (options.ProfileFrom is string named && !RebuildTracksFrom(timeline, named))
+        {
+            return false;
+        }
+
         // The track wrappers are interned: the timeline owns the tracks and
         // this only looks them up, so none of them is disposed here.
         foreach (Track track in timeline.GetTracks())
@@ -429,7 +435,10 @@ internal static class Launcher
                 track.SetMixing(false);
             }
 
-            if ((track.TrackType & options.TrackTypes) == 0)
+            // The C tool skips this filter when --profile-from rebuilt the
+            // tracks (ges-launcher.c:822-828): they came from the streams of a
+            // clip rather than from -t, and trimming them here would undo it.
+            if (options.ProfileFrom is null && (track.TrackType & options.TrackTypes) == 0)
             {
                 timeline.RemoveTrack(track);
                 continue;
@@ -493,15 +502,22 @@ internal static class Launcher
     /// <summary>
     /// Decides between preview and render, which is
     /// <c>_set_rendering_details</c> at <c>ges-launcher.c:589-747</c> without
-    /// its <c>--profile-from</c> branch and without the <c>get_smart_profile</c>
-    /// attempt that <c>--smart-rendering</c> makes before the file extension
-    /// (<c>ges-launcher.c:507-575</c>); see the header of Program.cs.
+    /// the <c>get_smart_profile</c> attempt that <c>--smart-rendering</c> makes
+    /// before the file extension (<c>ges-launcher.c:507-575</c>); see the
+    /// header of Program.cs.
     /// </summary>
     /// <param name="pipeline">The pipeline to configure.</param>
     /// <param name="project">The project, which may carry profiles of its own.</param>
+    /// <param name="timeline">
+    /// The timeline, which <c>--profile-from</c> reads the named clip of.
+    /// </param>
     /// <param name="options">The command line.</param>
     /// <returns><see langword="false"/> when there is nothing to render with.</returns>
-    private static bool SetRenderingDetails(GES.Pipeline pipeline, Project project, Options options)
+    private static bool SetRenderingDetails(
+        GES.Pipeline pipeline,
+        Project project,
+        Timeline timeline,
+        Options options)
     {
         if (options.OutputUri is null)
         {
@@ -553,6 +569,14 @@ internal static class Launcher
             {
                 if (format is null)
                 {
+                    // The chain of ges-launcher.c:628-638: the named clip
+                    // first, and only then the extension of the output file.
+                    if (options.ProfileFrom is string named)
+                    {
+                        profile = created = ProfileFromNamedClip(timeline, named);
+                        source = $"--profile-from {named}";
+                    }
+
                     if (profile is null)
                     {
                         format = FileExtension(options.OutputUri);
@@ -637,6 +661,94 @@ internal static class Launcher
             created?.Dispose();
         }
     }
+
+    /// <summary>
+    /// Rebuilds the tracks of the timeline out of the streams of a named clip,
+    /// which is the <c>--profile-from</c> branch of
+    /// <c>_timeline_set_user_options</c> at <c>ges-launcher.c:772-810</c>.
+    /// </summary>
+    /// <param name="timeline">The timeline whose tracks are replaced.</param>
+    /// <param name="name">The name the clip was given in the description.</param>
+    /// <returns><see langword="false"/> when there is no such clip.</returns>
+    private static bool RebuildTracksFrom(Timeline timeline, string name)
+    {
+        if (AssetForNamedClip(timeline, name) is not { } asset)
+        {
+            Console.Error.WriteLine();
+            Console.Error.WriteLine(
+                $"ERROR: can't create profile from named clip, no such clip {name}");
+            Console.Error.WriteLine();
+            return false;
+        }
+
+        // Every track goes, whatever its type: from here on the streams of the
+        // clip decide the topology.
+        foreach (Track track in timeline.GetTracks())
+        {
+            timeline.RemoveTrack(track);
+        }
+
+        // The discoverer information belongs to the asset, and the stream
+        // information objects belong to it in turn, so nothing here is
+        // disposed; see docs/ownership.md on GObject wrappers.
+        DiscovererInfo info = asset.GetInfo();
+
+        for (int i = info.GetAudioStreams().Count; i > 0; i--)
+        {
+            timeline.AddTrack(AudioTrack.New());
+        }
+
+        for (int i = info.GetVideoStreams().Count; i > 0; i--)
+        {
+            timeline.AddTrack(VideoTrack.New());
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Answers the asset of the uri clip that carries a name, which is
+    /// <c>_asset_for_named_clip</c> at <c>ges-launcher.c:465-489</c>.
+    /// </summary>
+    /// <param name="timeline">The timeline to walk.</param>
+    /// <param name="name">The name to look for.</param>
+    /// <returns>The asset, or <see langword="null"/> when there is no such clip.</returns>
+    /// <remarks>
+    /// The layers, the clips and their assets are all owned by the timeline and
+    /// the project, so none of the wrappers here is disposed.
+    /// </remarks>
+    private static UriClipAsset? AssetForNamedClip(Timeline timeline, string name)
+    {
+        foreach (Layer layer in timeline.GetLayers())
+        {
+            foreach (Clip clip in layer.GetClips())
+            {
+                if (clip is UriClip && string.Equals(clip.GetName(), name, StringComparison.Ordinal))
+                {
+                    return clip.GetAsset() as UriClipAsset;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Reads the encoding profile out of a named clip, which is
+    /// <c>_get_profile_from</c> at <c>ges-launcher.c:490-505</c>.
+    /// </summary>
+    /// <param name="timeline">The timeline the clip is on.</param>
+    /// <param name="name">The name of the clip.</param>
+    /// <returns>The profile, which the caller owns.</returns>
+    /// <remarks>
+    /// The clip is known to be there: <see cref="SetUserOptions"/> ran first
+    /// and ended the run when it was not, which is what the <c>g_assert</c> of
+    /// the C tool stands for.
+    /// </remarks>
+    private static EncodingProfile? ProfileFromNamedClip(Timeline timeline, string name) =>
+        AssetForNamedClip(timeline, name) is { } asset
+            ? EncodingProfile.FromDiscoverer(asset.GetInfo())
+            : null;
 
     /// <summary>
     /// Re-parents a profile tree into a container profile, which is the
