@@ -257,6 +257,155 @@ public unsafe partial class AppSink
         GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Blocks until a sample or a serialized event becomes available, or until
+    /// this sink is set to the READY or the NULL state.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The answer is a <see cref="Gst.Sample"/> for a buffer or a buffer list
+    /// and a <see cref="Gst.Event"/> for every serialized event except the end
+    /// of the stream: stream-start, caps, segment, tag, gap, a custom event.
+    /// Which of the two it is, is decided at run time, so the caller matches on
+    /// the type it is handed.
+    /// </para>
+    /// <para>
+    /// The answer is <see langword="null"/> when the sink is not started, that
+    /// is when it sits in the READY or the NULL state, and when the stream has
+    /// ended. The end of the stream is never queued as an event, so
+    /// <see cref="IsEos"/> is what tells the two apart.
+    /// </para>
+    /// <para>
+    /// The queue read here is the one <see cref="PullSample"/> and
+    /// <see cref="TryPullSample(Gst.ClockTime)"/> read, and those two discard
+    /// every event they are handed, so a consumer picks one of the two families
+    /// and stays with it.
+    /// </para>
+    /// <para>The caller owns the answer: dispose it.</para>
+    /// </remarks>
+    /// <returns>
+    /// The sample or the event that was queued, or <see langword="null"/> when
+    /// the sink is stopped or the stream is over.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The object that was pulled is of a type this binding does not know.
+    /// </exception>
+    public Gst.MiniObject? PullObject()
+    {
+        nint nativeResult = GstAppSinkPullObject(Handle);
+        GC.KeepAlive(this);
+        return WrapPulledObject(nativeResult);
+    }
+
+    /// <summary>
+    /// Blocks until a sample or a serialized event becomes available, until
+    /// this sink is set to the READY or the NULL state, or until the timeout
+    /// expires.
+    /// </summary>
+    /// <param name="timeout">
+    /// The longest time to wait for an object. A timeout of zero answers with
+    /// whatever is queued without waiting at all.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// The answer is a <see cref="Gst.Sample"/> for a buffer or a buffer list
+    /// and a <see cref="Gst.Event"/> for every serialized event except the end
+    /// of the stream: stream-start, caps, segment, tag, gap, a custom event.
+    /// Which of the two it is, is decided at run time, so the caller matches on
+    /// the type it is handed.
+    /// </para>
+    /// <para>
+    /// The answer is <see langword="null"/> when the sink is not started, that
+    /// is when it sits in the READY or the NULL state, when the stream has
+    /// ended, and when the timeout expired. The end of the stream is never
+    /// queued as an event, so <see cref="IsEos"/> is what tells those apart.
+    /// </para>
+    /// <para>
+    /// The queue read here is the one <see cref="PullSample"/> and
+    /// <see cref="TryPullSample(Gst.ClockTime)"/> read, and those two discard
+    /// every event they are handed, so a consumer picks one of the two families
+    /// and stays with it.
+    /// </para>
+    /// <para>The caller owns the answer: dispose it.</para>
+    /// </remarks>
+    /// <returns>
+    /// The sample or the event that was queued, or <see langword="null"/> when
+    /// the sink is stopped, the stream is over or the timeout expired.
+    /// </returns>
+    /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The object that was pulled is of a type this binding does not know.
+    /// </exception>
+    public Gst.MiniObject? TryPullObject(Gst.ClockTime timeout)
+    {
+        nint nativeResult = GstAppSinkTryPullObject(Handle, timeout.Nanoseconds);
+        GC.KeepAlive(this);
+        return WrapPulledObject(nativeResult);
+    }
+
+    /// <summary>
+    /// Creates the wrapper of an object the sink handed over, whatever its
+    /// type is.
+    /// </summary>
+    /// <param name="handle">
+    /// The mini object the sink answered with, owned by the caller, or
+    /// <see cref="nint.Zero"/>.
+    /// </param>
+    /// <returns>The wrapper of that object, or <see langword="null"/>.</returns>
+    /// <remarks>
+    /// The first word of a mini object is its <c>GType</c>, so the type
+    /// registry can be asked for the factory of the concrete type and build the
+    /// <see cref="Gst.Sample"/> or the <see cref="Gst.Event"/> the sink meant.
+    /// <c>Gst.GObject.TypeRegistry.TryCreateWrapper</c> is asked rather than
+    /// its mini object variant, because the variant answers the same
+    /// <see langword="false"/> whether no factory was found or the factory
+    /// built something that is not a mini object, and those two are released
+    /// differently: in the first case nothing took the reference over and it is
+    /// this method that has to drop it, in the second the wrapper that was
+    /// built already owns it and dropping it here as well would be a double
+    /// free. A factory that answers null is counted with the first case, which
+    /// is safe: every registered mini object factory constructs its wrapper and
+    /// none of them answers null.
+    /// </remarks>
+    private static Gst.MiniObject? WrapPulledObject(nint handle)
+    {
+        if (handle == nint.Zero)
+        {
+            return null;
+        }
+
+        Gst.GObject.GType type = Gst.GObject.Value.MiniObjectTypeOf(handle);
+
+        if (!Gst.GObject.TypeRegistry.TryCreateWrapper(type, handle, Gst.Interop.Transfer.Full, out object? wrapper))
+        {
+            // Nothing adopted the reference the sink handed over, so it is
+            // released here rather than leaked.
+            Gst.GstNative.MiniObjectUnref(handle);
+            throw new InvalidOperationException(
+                $"gst_app_sink_pull_object answered an object of type {type.Name}, which this binding does not wrap.");
+        }
+
+        if (wrapper is Gst.MiniObject miniObject)
+        {
+            return miniObject;
+        }
+
+        // The wrapper that was built owns the reference now, so it is what
+        // releases it; the handle must not be unreffed a second time.
+        (wrapper as IDisposable)?.Dispose();
+        throw new InvalidOperationException(
+            $"gst_app_sink_pull_object answered an object of type {type.Name}, which this binding wraps as something that is not a mini object.");
+    }
+
+    /// <summary>The <c>gst_app_sink_pull_object</c> entry point.</summary>
+    [LibraryImport("GstApp", EntryPoint = "gst_app_sink_pull_object")]
+    private static partial nint GstAppSinkPullObject(nint appsink);
+
+    /// <summary>The <c>gst_app_sink_try_pull_object</c> entry point.</summary>
+    [LibraryImport("GstApp", EntryPoint = "gst_app_sink_try_pull_object")]
+    private static partial nint GstAppSinkTryPullObject(nint appsink, ulong timeout);
+
     /// <summary>The <c>gst_app_sink_set_simple_callbacks</c> entry point.</summary>
     [LibraryImport("GstApp", EntryPoint = "gst_app_sink_set_simple_callbacks")]
     private static partial void GstAppSinkSetSimpleCallbacks(nint appsink, nint cb);

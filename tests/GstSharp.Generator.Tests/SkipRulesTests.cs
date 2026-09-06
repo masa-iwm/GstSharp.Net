@@ -445,6 +445,12 @@ public sealed class SkipRulesTests
         // managed signature should carry; RTSPMessage.AppendHeaders in
         // src/GstSharp.Net.Rtsp/Custom owns one for the length of the call and
         // appends what it holds to a StringBuilder.
+        // gst_app_sink_pull_object and gst_app_sink_try_pull_object are the
+        // pair that hands out whatever the sink has queued: the return is a
+        // GstMiniObject whose concrete type is decided at run time, which no
+        // generated signature can name, so AppSink.PullObject and
+        // AppSink.TryPullObject in src/GstSharp.Net.App/Custom read the GType
+        // of the answer and let the type registry build the wrapper of it.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
@@ -458,8 +464,10 @@ public sealed class SkipRulesTests
                 "ges_uri_clip_asset_new",
                 "gst_adapter_map",
                 "gst_adapter_unmap",
+                "gst_app_sink_pull_object",
                 "gst_app_sink_set_simple_callbacks",
                 "gst_app_sink_simple_callbacks_ref",
+                "gst_app_sink_try_pull_object",
                 "gst_app_src_push_buffer",
                 "gst_app_src_set_simple_callbacks",
                 "gst_app_src_simple_callbacks_ref",

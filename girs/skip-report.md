@@ -552,10 +552,12 @@ disappears shows up here as an added line.
 - `GstApp.AppSrc::push-buffer-list`
 - `GstApp.AppSrc::push-sample`
 
-### HandBound (5)
+### HandBound (7)
 
+- `gst_app_sink_pull_object`
 - `gst_app_sink_set_simple_callbacks`
 - `gst_app_sink_simple_callbacks_ref`
+- `gst_app_sink_try_pull_object`
 - `gst_app_src_push_buffer`
 - `gst_app_src_set_simple_callbacks`
 - `gst_app_src_simple_callbacks_ref`
@@ -582,11 +584,6 @@ disappears shows up here as an added line.
 ### ShadowedBy (1)
 
 - `GstApp.AppSrc:is-live`
-
-### UnsupportedSignature (2)
-
-- `gst_app_sink_pull_object`
-- `gst_app_sink_try_pull_object`
 
 ## GstAudio
 
