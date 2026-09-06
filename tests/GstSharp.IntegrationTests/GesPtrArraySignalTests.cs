@@ -25,10 +25,13 @@ namespace GstSharp.IntegrationTests;
 /// </para>
 /// <para>
 /// Two triggers have no binding of their own and are called through an import
-/// of this file. <c>ges_container_ungroup</c> consumes the container it is
-/// given, which is why it is not bound, so the reference it consumes is minted
-/// here; <c>ges_meta_container_set_meta</c> takes the <c>GValue</c> the binding
-/// does not project on a method, and passing it none is the only way to make
+/// of this file. <c>ges_container_ungroup</c> is annotated as taking over the
+/// container it is given, which keeps it off the generated surface, but the
+/// library releases nothing of the caller's (the annotation describes the
+/// timeline dropping its own reference once the group is empty), so the handle
+/// is passed as it is and no reference is minted for the call;
+/// <c>ges_meta_container_set_meta</c> takes the <c>GValue</c> the binding does
+/// not project on a method, and passing it none is the only way to make
 /// <c>notify-meta</c> carry no value.
 /// </para>
 /// <para>

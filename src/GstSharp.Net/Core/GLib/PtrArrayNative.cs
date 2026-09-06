@@ -94,9 +94,9 @@ internal static unsafe partial class PtrArray
     /// </exception>
     /// <remarks>
     /// No free function is installed: how the elements are released is the
-    /// receiver's to say, and it installs its own — GES answers the tracks a
-    /// handler selected with <c>gst_object_unref</c> — which replaces anything
-    /// set here rather than running beside it. For the same reason the failure
+    /// receiver's to say, and it installs its own — GES sets
+    /// <c>gst_object_unref</c> on the array of tracks a handler answered with —
+    /// which replaces anything set here rather than running beside it. For the same reason the failure
     /// path releases by hand: the references minted so far are unref'd and the
     /// array is freed, so a rejected element strands nothing.
     /// </remarks>
