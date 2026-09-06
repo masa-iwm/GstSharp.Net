@@ -70,7 +70,9 @@ internal static class Program
         // The listing of what was left out belongs next to the gir files it was
         // derived from, not into the binding projects: it is review
         // documentation rather than source. It is committed, so that a member
-        // that stops being generated shows up as a line of its diff.
+        // that stops being generated shows up as a line of its diff. A run that
+        // writes its sources somewhere else says so with '--report-dir', which
+        // is how a dry run keeps its hands off the committed listing.
         CodeWriter.WriteFile(SkipReportPath(options), result.SkipReport);
 
         Console.Out.WriteLine(string.Create(
@@ -200,7 +202,7 @@ internal static class Program
     }
 
     private static string SkipReportPath(GeneratorOptions options) =>
-        Path.Combine(options.GirDirectory, GenerationPipeline.SkipReportFileName);
+        Path.Combine(options.ReportDirectory, GenerationPipeline.SkipReportFileName);
 
     /// <summary>Tests whether a file already holds exactly the given text.</summary>
     /// <param name="path">The file to compare.</param>
@@ -261,8 +263,9 @@ internal static class Program
         writer.WriteLine("  verify     Regenerate into a temporary tree and fail when it differs.");
         writer.WriteLine();
         writer.WriteLine("Options:");
-        writer.WriteLine($"  --gir-dir <path>   Directory holding reference/ and overlays/ (default: '{GeneratorOptions.DefaultGirDirectory}').");
-        writer.WriteLine($"  --out-dir <path>   Directory holding the binding projects (default: '{GeneratorOptions.DefaultOutputDirectory}').");
-        writer.WriteLine("  -h, --help         Show this help text.");
+        writer.WriteLine($"  --gir-dir <path>      Directory holding reference/ and overlays/ (default: '{GeneratorOptions.DefaultGirDirectory}').");
+        writer.WriteLine($"  --out-dir <path>      Directory holding the binding projects (default: '{GeneratorOptions.DefaultOutputDirectory}').");
+        writer.WriteLine($"  --report-dir <path>   Directory holding {GenerationPipeline.SkipReportFileName} (default: the --gir-dir directory).");
+        writer.WriteLine("  -h, --help            Show this help text.");
     }
 }

@@ -22,11 +22,16 @@ internal sealed class GeneratorOptions
     internal const string DefaultGirDirectory = "girs";
     internal const string DefaultOutputDirectory = "src";
 
-    private GeneratorOptions(GeneratorVerb verb, string girDirectory, string outputDirectory)
+    private GeneratorOptions(
+        GeneratorVerb verb,
+        string girDirectory,
+        string outputDirectory,
+        string reportDirectory)
     {
         Verb = verb;
         GirDirectory = girDirectory;
         OutputDirectory = outputDirectory;
+        ReportDirectory = reportDirectory;
     }
 
     /// <summary>Gets the requested verb.</summary>
@@ -37,6 +42,14 @@ internal sealed class GeneratorOptions
 
     /// <summary>Gets the directory that holds the binding projects.</summary>
     internal string OutputDirectory { get; }
+
+    /// <summary>Gets the directory the skip report is written to and read from.</summary>
+    /// <remarks>
+    /// It defaults to <see cref="GirDirectory"/>, where the committed report
+    /// lives. A run into a scratch tree passes it beside <c>--out-dir</c> so
+    /// that the dry run leaves the committed report alone.
+    /// </remarks>
+    internal string ReportDirectory { get; }
 
     /// <summary>
     /// Parses <paramref name="args"/> into a <see cref="GeneratorOptions"/> instance.
@@ -66,6 +79,10 @@ internal sealed class GeneratorOptions
         string girDirectory = DefaultGirDirectory;
         string outputDirectory = DefaultOutputDirectory;
 
+        // Left unset until the loop is over: the default is the gir directory
+        // the run ends up with, not the one it started with.
+        string? reportDirectory = null;
+
         for (int i = 1; i < args.Length; i++)
         {
             switch (args[i])
@@ -84,13 +101,21 @@ internal sealed class GeneratorOptions
                     }
 
                     break;
+                case "--report-dir":
+                    if (!TryTakeValue(args, ref i, out string report, out error))
+                    {
+                        return false;
+                    }
+
+                    reportDirectory = report;
+                    break;
                 default:
                     error = $"Unknown option '{args[i]}'.";
                     return false;
             }
         }
 
-        options = new GeneratorOptions(verb, girDirectory, outputDirectory);
+        options = new GeneratorOptions(verb, girDirectory, outputDirectory, reportDirectory ?? girDirectory);
         return true;
     }
 
