@@ -85,8 +85,9 @@ public sealed class MetaAuthorTests
 
     /// <summary>
     /// An initialisation that refuses the item is the documented way of failing
-    /// an attachment: the attachment answers nothing and the release delegate
-    /// never runs, because the library frees the item without calling it.
+    /// an attachment: the attachment answers nothing, the release delegate never
+    /// runs, because the library frees the item without calling it, and the
+    /// wrapper the refusal was handed is dead.
     /// </summary>
     [Fact]
     public void AnInitialisationThatRefusesLeavesNoItemAndRunsNoRelease()
@@ -101,6 +102,11 @@ public sealed class MetaAuthorTests
         Assert.Equal(1, registration.Probe.InitCalls);
         Assert.Equal(0, registration.Probe.FreeCalls);
         Assert.Null(buffer.GetMeta(registration.Api));
+
+        // The library freed the item as the refusal returned, so the wrapper the
+        // delegate was handed has to be empty rather than pointed at that memory.
+        Meta refused = Assert.IsType<Meta>(registration.Probe.LastInitMeta);
+        Assert.Throws<ObjectDisposedException>(() => refused.Payload<Pair>());
     }
 
     /// <summary>
@@ -207,6 +213,15 @@ public sealed class MetaAuthorTests
     /// A name that is already a GType name is refused, and the refusal leaves
     /// the registration that owns the name working.
     /// </summary>
+    /// <remarks>
+    /// <b>This test is noisy on purpose.</b> Registering an existing GType name
+    /// makes GLib print a warning, which <c>gst_meta_info_new</c> leaves to
+    /// GLib rather than repeating; the block it still answers carries an invalid
+    /// type, and <c>gst_meta_info_register</c> then refuses it without a word.
+    /// That one warning is the library reporting the refusal this test is about;
+    /// it does not end the process, and the assertions below are what the test
+    /// measures.
+    /// </remarks>
     [Fact]
     public void ADuplicateImplementationNameIsRefused()
     {
@@ -410,10 +425,48 @@ public sealed class MetaAuthorTests
     }
 
     /// <summary>
+    /// A registration with no delegate at all is still a working implementation:
+    /// its items carry a zero filled payload, no copy carries them, and they can
+    /// be removed.
+    /// </summary>
+    /// <remarks>
+    /// The zero filling is the one thing the bindings add on this path. The
+    /// library allocates an item with <c>g_malloc</c> rather than
+    /// <c>g_malloc0</c> whenever the implementation has an initialisation
+    /// function, and the bindings install one unconditionally, so the payload
+    /// would be uninitialised memory were the trampoline not clearing it.
+    /// </remarks>
+    [Fact]
+    public void ARegistrationWithNoDelegatesStillCarriesAZeroFilledPayload()
+    {
+        Registration registration = Register("GstSharpTestMetaL", init: false);
+
+        using Buffer buffer = Assert.IsType<Buffer>(Buffer.NewAllocate(null, 16, null));
+
+        Meta item = Assert.IsType<Meta>(buffer.AddMeta(registration.Info, 0));
+        Pair payload = item.Payload<Pair>();
+        Assert.Equal(0, payload.First);
+        Assert.Equal(0, payload.Second);
+
+        item.Payload<Pair>().First = 5;
+
+        // No transformation delegate means the item is simply not carried, which
+        // is what a null transform_func means in C.
+        using (Buffer copy = Assert.IsType<Buffer>(buffer.Copy()))
+        {
+            Assert.Null(copy.GetMeta(registration.Api));
+        }
+
+        Assert.True(buffer.RemoveMeta(item));
+        Assert.Null(buffer.GetMeta(registration.Api));
+    }
+
+    /// <summary>
     /// Registers one implementation, or hands back the one this process already
     /// registered under the same name.
     /// </summary>
     /// <param name="name">The implementation name, unique per test.</param>
+    /// <param name="init">Whether an initialisation delegate is installed.</param>
     /// <param name="free">Whether a release delegate is installed.</param>
     /// <param name="transform">Whether a transformation delegate is installed.</param>
     /// <param name="serialize">Whether a serialisation delegate is installed.</param>
@@ -421,6 +474,7 @@ public sealed class MetaAuthorTests
     /// <returns>The API type, the implementation and the probe behind them.</returns>
     private static Registration Register(
         string name,
+        bool init = true,
         bool free = false,
         bool transform = false,
         bool serialize = false,
@@ -443,7 +497,7 @@ public sealed class MetaAuthorTests
             MetaInfo info = Meta.Register<Pair>(
                 api,
                 name,
-                probe.Init,
+                init ? probe.Init : null,
                 free ? probe.Free : null,
                 transform ? probe.Transform : null,
                 serialize ? probe.Serialize : null,
@@ -498,6 +552,9 @@ public sealed class MetaAuthorTests
         /// <summary>The item the last release was handed.</summary>
         internal Meta? LastMeta;
 
+        /// <summary>The item the last initialisation was handed.</summary>
+        internal Meta? LastInitMeta;
+
         /// <summary>The kind of the last transformation.</summary>
         internal Gst.GLib.Quark LastTransformType;
 
@@ -528,6 +585,7 @@ public sealed class MetaAuthorTests
             LastParams = 0;
             LastBuffer = 0;
             LastMeta = null;
+            LastInitMeta = null;
             LastTransformSource = 0;
             LastVersion = 0;
             RefuseInit = false;
@@ -544,6 +602,7 @@ public sealed class MetaAuthorTests
             InitCalls++;
             LastParams = parameters;
             LastBuffer = buffer.Handle;
+            LastInitMeta = meta;
             return !RefuseInit;
         }
 
@@ -599,7 +658,7 @@ public sealed class MetaAuthorTests
             Span<byte> bytes = stackalloc byte[8];
             BitConverter.TryWriteBytes(bytes, payload.First);
             BitConverter.TryWriteBytes(bytes[4..], payload.Second);
-            return data.Append(bytes);
+            return data.AppendData(bytes);
         }
 
         /// <summary>The deserialisation delegate.</summary>

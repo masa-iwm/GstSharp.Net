@@ -1018,10 +1018,10 @@ public sealed class ClassEmitterTests
     /// gst_transcoder_message_parse_warning,
     /// gst_play_message_parse_error_missing_plugin and
     /// gst_play_message_parse_warning_missing_plugin are declared twice. That
-    /// is the whole of the difference: Gst counts 50 hand bound declarations
-    /// against the 47 symbols of the report, GstAudio 6 against 5, GstVideo 7
-    /// against 5, GstRtsp 2 against 1, GstTranscoder 4 against 2 and GstPlay
-    /// 16 against 14, and every other module counts the same on both sides.
+    /// is the whole of the difference: Gst, GstAudio, GstVideo, GstRtsp,
+    /// GstTranscoder and GstPlay each count more hand bound declarations than
+    /// the report lists symbols, by the twins named above, and every other
+    /// module counts the same on both sides.
     /// All eleven are on the skip list, so both of their declarations are
     /// rejected as an overlay skip and the ledger claims both; a twin that is
     /// only kept out by its own moved-to is left under MovedTo instead, which

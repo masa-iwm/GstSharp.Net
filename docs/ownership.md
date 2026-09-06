@@ -194,7 +194,9 @@ What each delegate has to promise:
   attached, with the `params` pointer of that call. The payload is zero filled
   before it runs. Answering `false` makes `AddMeta` answer `null` and the
   library frees the item **without calling the release delegate**, so an
-  initialisation that fails half way has to undo its own work itself.
+  initialisation that fails half way has to undo its own work itself. The item
+  wrapper it was handed is detached on that path, because the memory behind it
+  is freed as the refusal returns.
 * **`MetaFreeFunction`** runs immediately before the item memory is freed, from
   a buffer being finalised, from `RemoveMeta` and from a removal a
   `ForeachMeta` walk honoured. The buffer wrapper it is handed is disposed when
@@ -209,7 +211,7 @@ What each delegate has to promise:
   `transform_func` means in C. A copy passes the quark of `"gst-copy"` and the
   address of a `Gst.MetaTransformCopy`.
 * **`MetaSerializeFunction`** appends the payload through
-  `Gst.ByteArrayInterface.Append` and may write a version byte;
+  `Gst.ByteArrayInterface.AppendData` and may write a version byte;
   **`MetaDeserializeFunction`** reads it back, adds an item to the buffer it is
   handed and answers that item. Both arrived in GStreamer 1.24.
 * **`MetaClearFunction`** is called only by `GstBufferPool`, when a buffer goes
@@ -218,8 +220,10 @@ What each delegate has to promise:
 All six run on whatever thread touches the buffer, which is usually a streaming
 thread and never one the caller chose. An exception that escapes one of them is
 caught on the boundary and handed to `Gst.Interop.ExceptionTrap`, and the
-callback answers its own default — `false` for the initialisation, the
-transformation and the serialisation, nothing for the deserialisation.
+callback answers its own default: `false` for the initialisation, the
+transformation and the serialisation, `null` for the deserialisation, and
+nothing at all for the release and for the reset, which answer nothing to begin
+with.
 
 ## GObject wrappers
 

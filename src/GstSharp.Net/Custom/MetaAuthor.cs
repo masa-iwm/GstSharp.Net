@@ -18,10 +18,17 @@ namespace Gst;
 /// <see langword="true"/> when the item was initialised.
 /// </returns>
 /// <remarks>
+/// <para>
+/// The delegate runs on whatever thread touches the buffer, which is usually a
+/// streaming thread of the pipeline and never one the caller chose.
+/// </para>
+/// <para>
 /// Answering <see langword="false"/> makes <see cref="Gst.Buffer.AddMeta"/>
 /// answer <see langword="null"/> and the item is freed without the free
 /// delegate ever running, so this delegate has to undo whatever it had already
-/// done before it refuses.
+/// done before it refuses. The item wrapper is detached on that path, because
+/// the memory behind it is freed as the refusal returns.
+/// </para>
 /// </remarks>
 public delegate bool MetaInitFunction(Gst.Meta meta, nint @params, Gst.Buffer buffer);
 
@@ -31,10 +38,16 @@ public delegate bool MetaInitFunction(Gst.Meta meta, nint @params, Gst.Buffer bu
 /// <param name="meta">The item that is about to be freed.</param>
 /// <param name="buffer">The buffer that carried it.</param>
 /// <remarks>
+/// <para>
+/// The delegate runs on whatever thread touches the buffer, which is usually a
+/// streaming thread of the pipeline and never one the caller chose.
+/// </para>
+/// <para>
 /// The buffer is being freed or has just lost the item; the delegate must not
 /// keep, ref or return the buffer wrapper, which is disposed when the delegate
 /// returns. The item wrapper is dead as soon as this returns as well, because
 /// the memory behind it is freed there.
+/// </para>
 /// </remarks>
 public delegate void MetaFreeFunction(Gst.Meta meta, Gst.Buffer buffer);
 
@@ -56,10 +69,23 @@ public delegate void MetaFreeFunction(Gst.Meta meta, Gst.Buffer buffer);
 /// <see langword="true"/> when the item was carried over.
 /// </returns>
 /// <remarks>
+/// <para>
+/// The delegate runs on whatever thread touches the buffer, which is usually a
+/// streaming thread of the pipeline and never one the caller chose.
+/// </para>
+/// <para>
 /// The delegate is called on the SOURCE item and has to add an item to
 /// <paramref name="transbuf"/> itself. Answering <see langword="false"/> is
 /// only logged by the library; the copy goes on either way. A registration
 /// with no transform delegate is not carried across a copy at all.
+/// </para>
+/// <para>
+/// A copy is read by comparing <paramref name="type"/> against
+/// <c>Gst.GLib.Quark.FromString("gst-copy")</c> and casting
+/// <paramref name="data"/> to <c>Gst.MetaTransformCopy*</c>: the projection is
+/// a plain structure, so reading it is a copy of three words and neither side
+/// owns anything.
+/// </para>
 /// </remarks>
 public delegate bool MetaTransformFunction(
     Gst.Buffer transbuf,
@@ -81,7 +107,19 @@ public delegate bool MetaTransformFunction(
 /// <see langword="true"/> when the payload was written. Answering
 /// <see langword="false"/> rolls the sink back to the length it had.
 /// </returns>
-/// <remarks>Available since GStreamer 1.24.</remarks>
+/// <remarks>
+/// <para>Available since GStreamer 1.24.</para>
+/// <para>
+/// The delegate runs on whatever thread touches the buffer, which is usually a
+/// streaming thread of the pipeline and never one the caller chose.
+/// </para>
+/// <para>
+/// <paramref name="data"/> is valid only until the delegate returns: the
+/// wrapper addresses a structure the library's caller owns, usually one on that
+/// caller's stack, and it is never detached, so filing it away leaves a wrapper
+/// that reads whatever now lives at that address.
+/// </para>
+/// </remarks>
 public delegate bool MetaSerializeFunction(Gst.Meta meta, Gst.ByteArrayInterface data, ref byte version);
 
 /// <summary>
@@ -97,6 +135,10 @@ public delegate bool MetaSerializeFunction(Gst.Meta meta, Gst.ByteArrayInterface
 /// </returns>
 /// <remarks>
 /// <para>Available since GStreamer 1.24.</para>
+/// <para>
+/// The delegate runs on whatever thread touches the buffer, which is usually a
+/// streaming thread of the pipeline and never one the caller chose.
+/// </para>
 /// <para>
 /// The delegate has to add the item to <paramref name="buffer"/> itself and
 /// answer that item; the buffer keeps owning it.
@@ -119,6 +161,10 @@ public delegate Gst.Meta? MetaDeserializeFunction(
 /// The buffer comes first, as it does in C. Only
 /// <c>GstBufferPool</c> ever calls this; a buffer that has no pool is freed
 /// through the free delegate instead.
+/// </para>
+/// <para>
+/// The delegate runs on whatever thread touches the buffer, which is usually a
+/// streaming thread of the pipeline and never one the caller chose.
 /// </para>
 /// </remarks>
 public delegate void MetaClearFunction(Gst.Buffer buffer, Gst.Meta meta);
@@ -178,20 +224,29 @@ internal sealed class MetaAuthorRegistration
 /// thread affinity.
 /// </para>
 /// <para>
-/// Entries are added and never removed, because an implementation block is
-/// immortal, and reads are lock free so that a metadata callback on a streaming
-/// thread never waits on a registration.
+/// An entry is filed before <c>gst_meta_info_register</c> is called, so that a
+/// callback reached through a block another thread already resolved by name
+/// always finds it, and it is taken back only when that call refuses the block.
+/// Filing it early is exact rather than hopeful: the call answers the very
+/// pointer it was handed, and that pointer is what an item stores in its
+/// <c>info</c> field. A block that survives the call is immortal, so an entry
+/// of a completed registration is never removed. Reads are lock free, so that a
+/// metadata callback on a streaming thread never waits on a registration.
 /// </para>
 /// </remarks>
 internal static class MetaAuthorRegistry
 {
     private static readonly ConcurrentDictionary<nint, MetaAuthorRegistration> Entries = new();
 
-    /// <summary>Records what a completed registration settled.</summary>
-    /// <param name="info">The implementation block the library handed back.</param>
+    /// <summary>Records what a registration settled, before it is offered.</summary>
+    /// <param name="info">The implementation block, as it will be registered.</param>
     /// <param name="registration">The payload type and the delegates.</param>
     internal static void Add(nint info, MetaAuthorRegistration registration) =>
         Entries[info] = registration;
+
+    /// <summary>Takes an entry back after the library refused its block.</summary>
+    /// <param name="info">The block, which the library has freed.</param>
+    internal static void Remove(nint info) => Entries.TryRemove(info, out _);
 
     /// <summary>Looks an implementation block up.</summary>
     /// <param name="info">The implementation block, or <c>0</c>.</param>
@@ -226,8 +281,8 @@ public sealed unsafe partial class Meta
     /// <typeparam name="T">
     /// The payload. Its alignment requirement must not exceed eight bytes: the
     /// library allocates an item with <c>g_malloc</c> and the bindings promise
-    /// nothing stronger than the eight byte alignment
-    /// <see cref="PayloadOffset"/> is rounded to.
+    /// nothing stronger than the eight byte alignment the payload offset is
+    /// rounded to.
     /// </typeparam>
     /// <param name="api">
     /// The metadata API the implementation implements, which
@@ -268,6 +323,12 @@ public sealed unsafe partial class Meta
     /// every implementation it registered in a table it only empties in
     /// <c>gst_deinit</c>, so the delegates handed here are never released and
     /// whatever they capture is rooted for as long.
+    /// </para>
+    /// <para>
+    /// Every delegate handed here runs on whatever thread touches the buffer,
+    /// which is usually a streaming thread of the pipeline and never one the
+    /// caller chose. Two of them can be running at once, on two buffers, so
+    /// whatever state they share has to be safe for that.
     /// </para>
     /// <para>
     /// The payload of an item is reached with <see cref="Payload{T}"/>. It is
@@ -352,18 +413,14 @@ public sealed unsafe partial class Meta
             raw->ClearFunc = (nint)(delegate* unmanaged[Cdecl]<nint, nint, void>)&ClearTrampoline;
         }
 
-        nint registered = MetaInfoRegister(info);
-        if (registered == 0)
-        {
-            // The library freed the block on this path, so there is nothing to
-            // release here, and nothing was written to the registry either.
-            throw new InvalidOperationException(
-                "gst_meta_info_register returned no value, so the metadata implementation was refused: the " +
-                "implementation name is already taken by another type, or it is not a valid GType name.");
-        }
-
+        // The entry is filed before the block is offered, not after: the
+        // registration publishes the name, and another thread that resolves it
+        // with gst_meta_get_info can reach a trampoline before this one gets its
+        // answer back. The key is exact, because gst_meta_info_register answers
+        // the very pointer it was handed and an item stores that pointer in its
+        // info field.
         MetaAuthorRegistry.Add(
-            registered,
+            info,
             new MetaAuthorRegistration
             {
                 PayloadType = typeof(T),
@@ -375,6 +432,18 @@ public sealed unsafe partial class Meta
                 Deserialize = deserialize,
                 Clear = clear,
             });
+
+        nint registered = MetaInfoRegister(info);
+        if (registered == 0)
+        {
+            // The library freed the block on this path, so there is nothing to
+            // release here; the entry is taken back so that a later block at the
+            // same address does not inherit this registration.
+            MetaAuthorRegistry.Remove(info);
+            throw new InvalidOperationException(
+                "gst_meta_info_register returned no value, so the metadata implementation was refused: the " +
+                "implementation name is already taken by another type, or it is not a valid GType name.");
+        }
 
         return Gst.MetaInfo.FromNative(registered)
             ?? throw new InvalidOperationException("gst_meta_info_register returned no value.");
@@ -448,6 +517,11 @@ public sealed unsafe partial class Meta
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static int InitTrampoline(nint meta, nint @params, nint buffer)
     {
+        // The wrapper is declared out here because every path that answers 0
+        // has to empty it: gst_buffer_add_meta frees the item the moment an
+        // initialisation refuses, and it does that without calling the free
+        // delegate, so this is the only place the wrapper can be detached.
+        Gst.Meta? metaValue = null;
         try
         {
             if (RegistrationOf(meta) is not { } registration)
@@ -471,13 +545,21 @@ public sealed unsafe partial class Meta
             }
 
             using Gst.Buffer bufferValue = Gst.Buffer.Borrow(buffer);
-            Gst.Meta metaValue = Gst.Meta.FromNative(meta)
+            metaValue = Gst.Meta.FromNative(meta)
                 ?? throw new InvalidOperationException("GstMetaInitFunction passed no meta.");
-            return init(metaValue, @params, bufferValue) ? 1 : 0;
+            if (init(metaValue, @params, bufferValue))
+            {
+                // The item stays, so the wrapper stays with it.
+                return 1;
+            }
+
+            metaValue.Detach();
+            return 0;
         }
         catch (Exception exception)
         {
             Gst.Interop.ExceptionTrap.Report(exception);
+            metaValue?.Detach();
             return 0;
         }
     }

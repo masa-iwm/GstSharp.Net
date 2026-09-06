@@ -30,8 +30,14 @@ public sealed unsafe partial class ByteArrayInterface
     /// interface, and the only other member of it says how long the array
     /// already is.
     /// </para>
+    /// <para>
+    /// The name follows the C one: the header also carries a
+    /// <c>gst_byte_array_interface_append</c> that grows the array by a byte
+    /// count and answers where the room begins, so the plain <c>Append</c> name
+    /// is left for that sibling.
+    /// </para>
     /// </remarks>
-    public bool Append(System.ReadOnlySpan<byte> data)
+    public bool AppendData(System.ReadOnlySpan<byte> data)
     {
         ByteArrayInterfaceRaw* raw = (ByteArrayInterfaceRaw*)Handle;
         if (raw->Resize == 0)
