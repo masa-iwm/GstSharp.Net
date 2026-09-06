@@ -62,6 +62,12 @@ internal sealed class Options
     /// <summary>Gets the file to save the project to before exiting.</summary>
     internal string? SaveOnlyPath { get; private set; }
 
+    /// <summary>
+    /// Gets a value indicating whether the nested timelines of the project are
+    /// embedded into it when it is saved, the <c>--embed-nesteds</c> option.
+    /// </summary>
+    internal bool EmbedNesteds { get; private set; }
+
     /// <summary>Gets a value indicating whether to list the transition types.</summary>
     internal bool ListTransitions { get; private set; }
 
@@ -227,6 +233,10 @@ internal sealed class Options
                     options.EncodingProfile = ValueOf(arguments, ref i);
                     break;
 
+                case "--embed-nesteds":
+                    options.EmbedNesteds = true;
+                    break;
+
                 case "--container-profile":
                     options.ContainerProfile = ValueOf(arguments, ref i);
                     break;
@@ -334,6 +344,7 @@ internal sealed class Options
         Console.WriteLine("  -l, --load <path>          Load the project from a file.");
         Console.WriteLine("  -s, --save <path>          Save the project to a file, +r for its own uri.");
         Console.WriteLine("      --save-only <path>     Save the project and exit without playing it.");
+        Console.WriteLine("      --embed-nesteds        Embed the nested timelines into the saved project.");
         Console.WriteLine();
         Console.WriteLine("Informative options:");
         Console.WriteLine("      --list-transitions     List the transition types and exit.");

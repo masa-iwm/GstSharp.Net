@@ -249,6 +249,19 @@ internal static class Launcher
             return false;
         }
 
+        if (options.EmbedNesteds)
+        {
+            // The C tool does this from _save_timeline, which runs before the
+            // pipeline is built rather than from the save this port keeps
+            // (ges-launcher.c:1123-1143). It is the same project object either
+            // way, so the assets it registers are in whichever save runs.
+            int embedded = EmbedNestedTimelines(project);
+
+            Console.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"Embedded nested projects: {embedded}"));
+        }
+
         Console.WriteLine($"Saving project to {uri}");
 
         // A refusal comes back as false, a failure as a GException; an
@@ -958,6 +971,80 @@ internal static class Launcher
         }
 
         return target;
+    }
+
+    /// <summary>
+    /// Registers the nested timelines of the project as sub project assets, so
+    /// that saving writes them out rather than only pointing at their files.
+    /// This is the <c>--embed-nesteds</c> block of <c>_save_timeline</c> at
+    /// <c>ges-launcher.c:1123-1143</c>.
+    /// </summary>
+    /// <param name="project">The project that is about to be saved.</param>
+    /// <returns>How many nested projects were embedded.</returns>
+    /// <remarks>
+    /// <c>GES_TYPE_URI_CLIP</c> and <c>GES_TYPE_TIMELINE</c> are looked up by
+    /// name, the way <see cref="EncodingProfileType"/> does, because the
+    /// <c>GetGType()</c> of the generated classes is internal to the binding. A
+    /// name the type system does not know yet is not an error here: nothing has
+    /// made a clip or a timeline of that type, so there is no such asset on the
+    /// project either and there is nothing to embed.
+    /// </remarks>
+    private static int EmbedNestedTimelines(Project project)
+    {
+        Gst.GObject.GType uriClip = Gst.GObject.GType.FromName("GESUriClip");
+        Gst.GObject.GType timeline = Gst.GObject.GType.FromName("GESTimeline");
+
+        if (!uriClip.IsValid || !timeline.IsValid)
+        {
+            return 0;
+        }
+
+        int embedded = 0;
+
+        // The assets of the project are the project's, so they are not disposed
+        // here; the filter is the extractable type a uri clip asset produces.
+        foreach (Asset listed in project.ListAssets(uriClip))
+        {
+            if (listed is not UriClipAsset asset || !asset.IsNestedTimeline)
+            {
+                continue;
+            }
+
+            Asset? subProject;
+
+            try
+            {
+                subProject = Asset.Request(timeline, asset.GetId());
+            }
+            catch (GException exception)
+            {
+                // The C tool hands ges_asset_request no error to fill in and
+                // then adds whatever came back, including nothing.
+                Console.Error.WriteLine(
+                    $"GesLaunch: could not embed {asset.GetId()}: {exception.Message}");
+                continue;
+            }
+
+            if (subProject is null)
+            {
+                continue;
+            }
+
+            // Requested here, so disposed here: the asset parameter of
+            // ges_project_add_asset is transfer none and the project takes a
+            // reference of its own. The C tool never gives this one back, which
+            // leaks one reference per nested project; this port does, the same
+            // deliberate divergence the -m/--mute handling is.
+            using (subProject)
+            {
+                if (project.AddAsset(subProject))
+                {
+                    embedded++;
+                }
+            }
+        }
+
+        return embedded;
     }
 
     /// <summary>
