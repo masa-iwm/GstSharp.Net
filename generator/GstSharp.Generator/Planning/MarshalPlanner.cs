@@ -333,6 +333,7 @@ internal sealed class MarshalPlanner
     /// </remarks>
     private static readonly Dictionary<string, RuntimeEnum> RuntimeEnums = new(StringComparer.Ordinal)
     {
+        ["Gio.TlsAuthenticationMode"] = new("Gst.Gio.TlsAuthenticationMode"),
         ["Gio.TlsCertificateFlags"] = new("Gst.Gio.TlsCertificateFlags"),
         ["Gio.SocketFamily"] = new("Gst.Gio.SocketFamily", "Gst.Gio.SocketFamilyNative"),
     };

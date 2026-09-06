@@ -45,6 +45,10 @@ public sealed class GioRuntimeTypeTests
               <member name="no_flags" value="0" c:identifier="G_TLS_CERTIFICATE_NO_FLAGS"/>
               <member name="validate_all" value="127" c:identifier="G_TLS_CERTIFICATE_VALIDATE_ALL"/>
             </bitfield>
+            <enumeration name="TlsAuthenticationMode" c:type="GTlsAuthenticationMode" glib:type-name="GTlsAuthenticationMode" glib:get-type="g_tls_authentication_mode_get_type">
+              <member name="none" value="0" c:identifier="G_TLS_AUTHENTICATION_NONE"/>
+              <member name="required" value="2" c:identifier="G_TLS_AUTHENTICATION_REQUIRED"/>
+            </enumeration>
             <enumeration name="SocketFamily" c:type="GSocketFamily" glib:type-name="GSocketFamily" glib:get-type="g_socket_family_get_type">
               <member name="invalid" value="0" c:identifier="G_SOCKET_FAMILY_INVALID"/>
               <member name="ipv6" value="10" c:identifier="G_SOCKET_FAMILY_IPV6"/>
@@ -100,6 +104,29 @@ public sealed class GioRuntimeTypeTests
               <method name="get_validation_flags" c:identifier="gst_connection_get_validation_flags">
                 <return-value transfer-ownership="none">
                   <type name="Gio.TlsCertificateFlags" c:type="GTlsCertificateFlags"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="connection" transfer-ownership="none">
+                    <type name="Connection" c:type="GstConnection*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+              <method name="set_authentication_mode" c:identifier="gst_connection_set_authentication_mode">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="connection" transfer-ownership="none">
+                    <type name="Connection" c:type="GstConnection*"/>
+                  </instance-parameter>
+                  <parameter name="mode" transfer-ownership="none">
+                    <type name="Gio.TlsAuthenticationMode" c:type="GTlsAuthenticationMode"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <method name="get_authentication_mode" c:identifier="gst_connection_get_authentication_mode">
+                <return-value transfer-ownership="none">
+                  <type name="Gio.TlsAuthenticationMode" c:type="GTlsAuthenticationMode"/>
                 </return-value>
                 <parameters>
                   <instance-parameter name="connection" transfer-ownership="none">
@@ -228,6 +255,39 @@ public sealed class GioRuntimeTypeTests
             StringComparison.Ordinal);
 
         Assert.Equal(0, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    }
+
+    /// <summary>
+    /// The second plain enumeration of the map, which the
+    /// <c>GstRtspServer</c> authentication surface names in both directions.
+    /// It has no converter, because <c>GTlsAuthenticationMode</c> numbers its
+    /// three members itself rather than from the platform.
+    /// </summary>
+    [Fact]
+    public void TheAuthenticationModeOfTheMapCrossesAsItsUnderlyingInteger()
+    {
+        Assert.Equal(
+            """
+            public void SetAuthenticationMode(Gst.Gio.TlsAuthenticationMode mode)
+            {
+                GstConnectionSetAuthenticationMode(Handle, (int)mode);
+                System.GC.KeepAlive(this);
+            }
+            """,
+            Run.Member("Connection.cs", "public void SetAuthenticationMode("),
+            StringComparer.Ordinal);
+
+        Assert.Equal(
+            """
+            public Gst.Gio.TlsAuthenticationMode GetAuthenticationMode()
+            {
+                int nativeResult = GstConnectionGetAuthenticationMode(Handle);
+                System.GC.KeepAlive(this);
+                return (Gst.Gio.TlsAuthenticationMode)nativeResult;
+            }
+            """,
+            Run.Member("Connection.cs", "public Gst.Gio.TlsAuthenticationMode GetAuthenticationMode("),
+            StringComparer.Ordinal);
     }
 
     /// <summary>

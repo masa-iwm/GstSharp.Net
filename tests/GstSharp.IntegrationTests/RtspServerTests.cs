@@ -522,6 +522,28 @@ public sealed unsafe class RtspServerTests
     }
 
     /// <summary>
+    /// The TLS authentication mode of an authentication object is written and
+    /// read back through the hand written <see cref="Gst.Gio.TlsAuthenticationMode"/>,
+    /// which is the enumeration of a module the generator does not emit.
+    /// </summary>
+    /// <remarks>
+    /// A fresh <c>GstRTSPAuth</c> starts at <c>G_TLS_AUTHENTICATION_NONE</c>,
+    /// so reading the default first is what says the value that comes back is
+    /// the one that was set rather than whatever the memory held.
+    /// </remarks>
+    [Fact]
+    public void TheTlsAuthenticationModeOfAnAuthIsWrittenAndReadBack()
+    {
+        using RTSPAuth auth = RTSPAuth.New();
+
+        Assert.Equal(Gst.Gio.TlsAuthenticationMode.None, auth.GetTlsAuthenticationMode());
+
+        auth.SetTlsAuthenticationMode(Gst.Gio.TlsAuthenticationMode.Required);
+
+        Assert.Equal(Gst.Gio.TlsAuthenticationMode.Required, auth.GetTlsAuthenticationMode());
+    }
+
+    /// <summary>
     /// The <see cref="RTSPStream"/> members that take a <c>GSocketFamily</c>
     /// reach the library through the converter of the runtime, which is what
     /// makes the same managed member mean the same family on every platform.

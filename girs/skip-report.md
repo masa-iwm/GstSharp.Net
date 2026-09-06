@@ -974,10 +974,8 @@ disappears shows up here as an added line.
 - `gst_rtsp_permissions_add_role`
 - `gst_rtsp_token_new`
 
-### UnsupportedSignature (16)
+### UnsupportedSignature (14)
 
-- `gst_rtsp_auth_get_tls_authentication_mode`
-- `gst_rtsp_auth_set_tls_authentication_mode`
 - `gst_rtsp_client_set_connection`
 - `gst_rtsp_media_complete_pipeline`
 - `gst_rtsp_media_set_state`

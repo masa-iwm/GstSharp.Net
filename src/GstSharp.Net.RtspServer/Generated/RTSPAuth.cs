@@ -120,6 +120,15 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
         return (Gst.Rtsp.RTSPAuthMethod)nativeResult;
     }
 
+    /// <summary>Get the #GTlsAuthenticationMode.</summary>
+    /// <returns>the #GTlsAuthenticationMode.</returns>
+    public Gst.Gio.TlsAuthenticationMode GetTlsAuthenticationMode()
+    {
+        int nativeResult = GstRtspAuthGetTlsAuthenticationMode(Handle);
+        System.GC.KeepAlive(this);
+        return (Gst.Gio.TlsAuthenticationMode)nativeResult;
+    }
+
     /// <summary>Get the #GTlsCertificate used for negotiating TLS @auth.</summary>
     /// <returns>
     /// the #GTlsCertificate of @auth. g_object_unref() after
@@ -219,6 +228,18 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     public void SetSupportedMethods(Gst.Rtsp.RTSPAuthMethod methods)
     {
         GstRtspAuthSetSupportedMethods(Handle, (int)methods);
+        System.GC.KeepAlive(this);
+    }
+
+    /// <summary>
+    /// The #GTlsAuthenticationMode to set on the underlying GTlsServerConnection.
+    /// When set to another value than %G_TLS_AUTHENTICATION_NONE,
+    /// #GstRTSPAuth::accept-certificate signal will be emitted and must be handled.
+    /// </summary>
+    /// <param name="mode">a #GTlsAuthenticationMode</param>
+    public void SetTlsAuthenticationMode(Gst.Gio.TlsAuthenticationMode mode)
+    {
+        GstRtspAuthSetTlsAuthenticationMode(Handle, (int)mode);
         System.GC.KeepAlive(this);
     }
 
@@ -382,6 +403,10 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_auth_get_supported_methods")]
     private static partial int GstRtspAuthGetSupportedMethods(nint auth);
 
+    /// <summary>The <c>gst_rtsp_auth_get_tls_authentication_mode</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_auth_get_tls_authentication_mode")]
+    private static partial int GstRtspAuthGetTlsAuthenticationMode(nint auth);
+
     /// <summary>The <c>gst_rtsp_auth_get_tls_certificate</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_auth_get_tls_certificate")]
     private static partial nint GstRtspAuthGetTlsCertificate(nint auth);
@@ -413,6 +438,10 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     /// <summary>The <c>gst_rtsp_auth_set_supported_methods</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_auth_set_supported_methods")]
     private static partial void GstRtspAuthSetSupportedMethods(nint auth, int methods);
+
+    /// <summary>The <c>gst_rtsp_auth_set_tls_authentication_mode</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_auth_set_tls_authentication_mode")]
+    private static partial void GstRtspAuthSetTlsAuthenticationMode(nint auth, int mode);
 
     /// <summary>The <c>gst_rtsp_auth_set_tls_certificate</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_auth_set_tls_certificate")]
