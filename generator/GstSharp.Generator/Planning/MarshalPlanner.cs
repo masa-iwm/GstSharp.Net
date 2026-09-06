@@ -4449,11 +4449,12 @@ internal sealed class MarshalPlanner
             parameter.IsNullable,
             "a signal parameter");
 
-        // The one container a handler is handed: a NULL terminated vector of
-        // strings, which is read out into an array of its own the way an
-        // inbound one of a callable is. Every other array shape stays refused,
-        // because reading it needs a length the emission states somewhere the
-        // trampoline cannot see, or an element the runtime has no reader for.
+        // The two containers a handler is handed: a pointer array of objects,
+        // and a NULL terminated vector of strings, both read out into an array
+        // of their own the way an inbound one of a callable is. Every other
+        // array shape stays refused, because reading it needs a length the
+        // emission states somewhere the trampoline cannot see, or an element
+        // the runtime has no reader for.
         if (parameter.Type is GirArrayRef array)
         {
             return PlanSignalPtrArrayArgument(parameter, array, name, nullable, context)
@@ -4561,9 +4562,11 @@ internal sealed class MarshalPlanner
     /// </para>
     /// <para>
     /// What the handler sees is an array of its own, read out while the
-    /// emission still holds the container, so the null pointer needs no
-    /// spelling of its own: it arrives as the empty array and the argument is
-    /// not nullable whatever the annotation says.
+    /// emission still holds the container. The argument is not nullable, and a
+    /// <c>nullable="1"</c> annotation keeps the signal off the surface rather
+    /// than being tolerated: the reader answers the empty array for the null
+    /// pointer, so the shape could be spelled either way, and the narrower one
+    /// is taken while no emission of the corpus passes one.
     /// </para>
     /// </remarks>
     private ArgumentPlan? PlanSignalPtrArrayArgument(
@@ -4601,6 +4604,15 @@ internal sealed class MarshalPlanner
     /// <param name="required">The transfer this direction accepts.</param>
     /// <param name="context">The module that is being emitted.</param>
     /// <returns>The element type, for example <c>GES.Track</c>.</returns>
+    /// <remarks>
+    /// The element has to be a class. <c>PtrArray.ToArray</c> and
+    /// <c>PtrArray.FromObjects</c> are written over
+    /// <c>Gst.GObject.Object</c>, which an interface a wrapper only implements
+    /// is not, so an interface element is refused here rather than left to the
+    /// scalar plan: it is refused there today as well, and stating the rule
+    /// where the constraint lives keeps a later plan for one from reaching the
+    /// two readers.
+    /// </remarks>
     private string? PtrArrayElementType(
         GirArrayRef array,
         GirTransfer transfer,
@@ -4617,6 +4629,11 @@ internal sealed class MarshalPlanner
         }
 
         MappedType mapped = _types.Map(elementType, context.Namespace);
+        if (mapped.Kind != MarshalKind.GObject)
+        {
+            return null;
+        }
+
         ArgumentPlan? element = PlanScalar(
             elementType,
             mapped,
@@ -4764,9 +4781,11 @@ internal sealed class MarshalPlanner
     /// <para>
     /// What the accumulator of a signal may do is therefore bounded rather than
     /// unknown: it sees an owned reference and either keeps it or releases it.
-    /// Every other non blittable shape stays rejected, notably a container the
-    /// handler would have to allocate — the accumulator of such a signal
-    /// decides how the container is freed, and no annotation states it.
+    /// The one container a handler may allocate is the pointer array of
+    /// objects planned below, where the emission owns what it is handed and
+    /// installs the function its elements are released with. Every other non
+    /// blittable shape stays rejected, a container the annotations leave
+    /// unowned among them.
     /// </para>
     /// </remarks>
     /// <param name="signal">The signal declaration.</param>

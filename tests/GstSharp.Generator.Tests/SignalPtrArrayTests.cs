@@ -134,6 +134,74 @@ public sealed class SignalPtrArrayTests
         """;
 
     /// <summary>
+    /// The interface an element of the two fixtures below is declared as. It is
+    /// a real emitted type, so nothing but the element rule keeps those signals
+    /// off the surface.
+    /// </summary>
+    private const string SizerInterface =
+        """
+            <interface name="Sizer" c:type="GstSizer" glib:type-name="GstSizer" glib:get-type="gst_sizer_get_type">
+              <method name="get_size" c:identifier="gst_sizer_get_size">
+                <return-value transfer-ownership="none">
+                  <type name="gint" c:type="gint"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="sizer" transfer-ownership="none">
+                    <type name="Sizer" c:type="GstSizer*"/>
+                  </instance-parameter>
+                </parameters>
+              </method>
+            </interface>
+        """;
+
+    /// <summary>
+    /// A borrowed pointer array whose element is an interface rather than a
+    /// class, which the two readers cannot be instantiated over.
+    /// </summary>
+    private const string InterfaceElementBody =
+        SizerInterface
+        + """
+
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <glib:signal name="tracks-changed" when="first">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="tracks" transfer-ownership="none">
+                    <array name="GLib.PtrArray">
+                      <type name="Sizer"/>
+                    </array>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+            </class>
+        """;
+
+    /// <summary>
+    /// The same element on the side the handler answers with.
+    /// </summary>
+    private const string InterfaceElementReturnBody =
+        SizerInterface
+        + """
+
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <glib:signal name="select-widgets" when="last">
+                <return-value transfer-ownership="full">
+                  <array name="GLib.PtrArray">
+                    <type name="Sizer"/>
+                  </array>
+                </return-value>
+                <parameters>
+                  <parameter name="item" transfer-ownership="none">
+                    <type name="Widget"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+            </class>
+        """;
+
+    /// <summary>
     /// A borrowed pointer array of objects reaches the handler as an array of
     /// its own, read out of the container while the emission still holds it.
     /// </summary>
@@ -227,6 +295,32 @@ public sealed class SignalPtrArrayTests
     public void APointerArrayTheEmissionOnlyBorrowsIsRefused()
     {
         FixtureRun run = Fixture.Run(BorrowedReturnBody);
+
+        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "signal"));
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.DoesNotContain("SelectWidgets", run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A pointer array of an interface element keeps the signal off the
+    /// surface: the two readers are written over a class, not over an
+    /// interface a wrapper only implements.
+    /// </summary>
+    [Fact]
+    public void ABorrowedPointerArrayOfInterfaceElementsIsRefused()
+    {
+        FixtureRun run = Fixture.Run(InterfaceElementBody);
+
+        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "signal"));
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.DoesNotContain("TracksChanged", run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    /// <summary>The same element on the side the handler answers with.</summary>
+    [Fact]
+    public void APointerArrayOfInterfaceElementsTheHandlerHandsOverIsRefused()
+    {
+        FixtureRun run = Fixture.Run(InterfaceElementReturnBody);
 
         Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "signal"));
         Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));

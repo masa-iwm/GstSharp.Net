@@ -791,6 +791,43 @@ well and still answers `GST_ITERATOR_OK`. `Iterator.Foreach` has no failure
 value at all, so its walk carries on with the next element. Each member says so
 in its own remarks.
 
+### A `GValue` a signal lends
+
+A signal handler is on the same side of the pointer as a callback.
+`notify-meta`, the signal every GES meta container carries, hands its handler
+the value that was just written under a key, and the emission owns that value:
+the args object carries `HasValue` and a `Value` that is a
+`Gst.GObject.ValueView` over the emission's own storage. What differs from a
+callback is that the args object is an ordinary class, which a handler is free
+to store, so the compiler cannot fence the lifetime for it. The args object
+does it instead: `Value` throws `InvalidOperationException` once the emission
+has ended, and `ToValue()` is still how a handler keeps what the view holds.
+`HasValue` stays readable afterwards, and it is `false` when the field was
+removed rather than written — GES emits the signal for a removal with no value
+at all.
+
+`notify-meta` is declared detailed, but the library only ever emits it with
+detail 0. Connecting the handler therefore never narrows it to one key: it runs
+for every field of the container that changes, and a handler that cares about
+one field tests `Key` itself.
+
+## Tracks a timeline is answered with
+
+`GES.Timeline.SelectTracksForObject` is answered with an array of tracks, and
+the timeline does not take that answer at face value. A track that appears
+twice in it, and a track that belongs to another timeline, are dropped with a
+warning on the GStreamer debug log; the element joins the tracks that are left.
+The reference the binding minted for a dropped track is released with it, so a
+rejected answer strands nothing. Answering `null` or an empty array puts the
+element in no track at all, which the member documents.
+
+Which handler the timeline asks depends on the version it runs against. From
+GStreamer 1.28, a timeline that has a `SelectElementTrack` handler connected
+does not emit `SelectTracksForObject` at all — not even when that handler
+answered null. On 1.24 and 1.26 only an answer that names a track stops it, so
+an application that connects both handlers and runs there sees
+`SelectTracksForObject` emitted after a null answer.
+
 ## Errors that cross the boundary
 
 A `GError` is not a wrapper and is never owned by a `Gst.GLib.GException`: the

@@ -127,9 +127,13 @@ public sealed unsafe partial class GesPtrArraySignalTests
 
             try
             {
-                // ges_container_ungroup takes the container over, so it is given
-                // a reference of its own and the wrapper keeps the one it holds.
-                nint list = GesContainerUngroup(GObjectNative.ObjectRef(grouped.Handle), recursive: 0);
+                // The gir annotates the container as transfer full, but the call
+                // unrefs nothing: what the annotation describes is the timeline
+                // dropping the reference it took when the group was added, once
+                // the group has lost its last child. The wrapper's toggle
+                // reference keeps the group alive through the emission, so the
+                // handle is passed as it is.
+                nint list = GesContainerUngroup(grouped.Handle, recursive: 0);
                 FreeOwnedList(list);
             }
             finally

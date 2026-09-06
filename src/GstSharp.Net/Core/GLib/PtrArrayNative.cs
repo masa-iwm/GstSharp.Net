@@ -93,11 +93,12 @@ internal static unsafe partial class PtrArray
     /// An element is <see langword="null"/> or its wrapper was disposed.
     /// </exception>
     /// <remarks>
-    /// No free function is installed: the caller of the emission installs its
-    /// own before it releases the array, and installing one here would free
-    /// every element twice. When an element cannot be handed over, the
-    /// references minted so far are released and the array is freed, so the
-    /// failure strands nothing.
+    /// No free function is installed: how the elements are released is the
+    /// receiver's to say, and it installs its own — GES answers the tracks a
+    /// handler selected with <c>gst_object_unref</c> — which replaces anything
+    /// set here rather than running beside it. For the same reason the failure
+    /// path releases by hand: the references minted so far are unref'd and the
+    /// array is freed, so a rejected element strands nothing.
     /// </remarks>
     internal static nint FromObjects<T>(T[]? items)
         where T : Gst.GObject.Object
