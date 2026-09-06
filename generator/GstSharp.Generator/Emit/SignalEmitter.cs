@@ -290,8 +290,13 @@ internal static class SignalEmitter
         // between several signals and anything that stores the arguments as
         // EventArgs all need the conversion. Deriving costs nothing at run time
         // and is purely additive to the surface.
+        // A borrowed GValue is held as a raw pointer and shown through a
+        // ref struct built over it, which needs the unsafe context; every
+        // other arguments class stays as it was.
+        bool borrowsValue = HasBorrowedValue(plan);
         writer.WriteLine(
-            "public " + (isNew ? "new " : string.Empty) + "sealed class " + name + " : System.EventArgs");
+            "public " + (isNew ? "new " : string.Empty) + "sealed "
+            + (borrowsValue ? "unsafe " : string.Empty) + "class " + name + " : System.EventArgs");
         writer.OpenBlock();
 
         List<string> parameters = [];
@@ -315,7 +320,11 @@ internal static class SignalEmitter
         writer.OpenBlock();
         foreach (SignalArgument argument in plan.Arguments)
         {
-            writer.WriteLine(argument.PropertyName + " = " + argument.Argument.Name + ";");
+            writer.WriteLine(
+                (argument.Argument.Kind == ArgumentKind.SignalBorrowedGValue
+                    ? ValueFieldName(argument)
+                    : argument.PropertyName)
+                + " = " + argument.Argument.Name + ";");
         }
 
         writer.CloseBlock();
@@ -323,6 +332,12 @@ internal static class SignalEmitter
         foreach (SignalArgument argument in plan.Arguments)
         {
             writer.WriteLine();
+            if (argument.Argument.Kind == ArgumentKind.SignalBorrowedGValue)
+            {
+                WriteBorrowedValueMembers(writer, argument);
+                continue;
+            }
+
             XmlDocWriter.Write(
                 writer,
                 argument.Argument.Doc,
@@ -384,7 +399,107 @@ internal static class SignalEmitter
                 "public " + argument.Argument.PublicType + " " + argument.PropertyName + " { get; }");
         }
 
+        if (borrowsValue)
+        {
+            writer.WriteLine();
+            writer.WriteLine("/// <summary>Ends the borrow the emission lent these arguments.</summary>");
+            writer.WriteLine("/// <remarks>");
+            writer.WriteLine("/// Called by the trampoline once the handler has returned. The storage the");
+            writer.WriteLine("/// emitter holds may be gone from that moment on, so the view is refused");
+            writer.WriteLine("/// from here rather than handed out over memory nobody owns any more. What");
+            writer.WriteLine("/// the emission carried is still readable: only the reading of the value");
+            writer.WriteLine("/// itself is closed off.");
+            writer.WriteLine("/// </remarks>");
+            writer.WriteLine("internal void Invalidate() => _ended = true;");
+            writer.WriteLine();
+            writer.WriteLine("private bool _ended;");
+        }
+
         writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Tests whether a signal carries a <c>GValue</c> the emission only lends.
+    /// </summary>
+    /// <param name="plan">The signal.</param>
+    /// <returns><see langword="true"/> when one of its arguments is one.</returns>
+    private static bool HasBorrowedValue(SignalPlan plan)
+    {
+        foreach (SignalArgument argument in plan.Arguments)
+        {
+            if (argument.Argument.Kind == ArgumentKind.SignalBorrowedGValue)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Returns the name of the field holding a borrowed <c>GValue</c>.</summary>
+    /// <param name="argument">The argument.</param>
+    /// <returns>The field name, for example <c>_value</c>.</returns>
+    private static string ValueFieldName(SignalArgument argument) =>
+        "_" + DocName(argument.Argument.Name);
+
+    /// <summary>
+    /// Writes the three members a borrowed <c>GValue</c> argument contributes:
+    /// the field holding the pointer, the flag that says the emission carried
+    /// one, and the view over it.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="argument">The argument.</param>
+    /// <remarks>
+    /// A <c>ref struct</c> cannot be a field, so the pointer is what is held
+    /// and the view is built on every read. Reading is refused twice over: when
+    /// the emission carried no value at all, and once the handler has returned,
+    /// which is when the storage the emitter holds stops being anybody's.
+    /// </remarks>
+    private static void WriteBorrowedValueMembers(CodeWriter writer, SignalArgument argument)
+    {
+        string field = ValueFieldName(argument);
+        string source = argument.Argument.Source?.Name ?? argument.Argument.Name;
+
+        writer.WriteLine(
+            "/// <summary>Gets a value indicating whether the emission carried a <c>" + source
+            + "</c>.</summary>");
+        writer.WriteLine("public bool Has" + argument.PropertyName + " => " + field + " != 0;");
+        writer.WriteLine();
+        XmlDocWriter.Write(
+            writer,
+            argument.Argument.Doc,
+            "A read only view of the <c>" + source + "</c> argument.");
+        writer.WriteLine("/// <remarks>");
+        writer.WriteLine("/// The view is only valid while the handler runs: it looks at storage the");
+        writer.WriteLine("/// emitter holds and nothing is copied out of it. To keep what it holds,");
+        writer.WriteLine("/// copy it with <c>ToValue</c> and dispose the copy.");
+        writer.WriteLine("/// </remarks>");
+        writer.WriteLine(
+            "/// <exception cref=\"InvalidOperationException\">The emission carried no value, or it has ended.</exception>");
+        writer.WriteLine("public Gst.GObject.ValueView " + argument.PropertyName);
+        writer.OpenBlock();
+        writer.WriteLine("get");
+        writer.OpenBlock();
+        writer.WriteLine("if (_ended)");
+        writer.OpenBlock();
+        writer.WriteLine(
+            "throw new InvalidOperationException(\"The emission has ended, so the value it carried is gone.\");");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine("if (" + field + " == 0)");
+        writer.OpenBlock();
+        writer.WriteLine(
+            "throw new InvalidOperationException(\"The emission carried no value; test Has"
+            + argument.PropertyName + " first.\");");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine(
+            "return new Gst.GObject.ValueView(ref System.Runtime.CompilerServices.Unsafe"
+            + ".AsRef<Gst.GObject.GValueNative>((void*)" + field + "));");
+        writer.CloseBlock();
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine("private readonly nint " + field + ";");
     }
 
     private static void WriteHandlerDelegate(CodeWriter writer, SignalPlan plan, string cType)
@@ -590,7 +705,38 @@ internal static class SignalEmitter
             ? "System.EventArgs.Empty"
             : "new " + plan.ArgsType + "(" + string.Join(", ", values) + ")";
 
-        if (plan.Return.IsVoid)
+        if (HasBorrowedValue(plan))
+        {
+            // The arguments lend a pointer into storage the emitter holds, so
+            // they are named here and told the emission is over the moment the
+            // handler returns - by any path, which is what the finally is for.
+            // A handler that stored them away is left with arguments that
+            // still say what the emission carried and refuse to read it.
+            writer.WriteLine(plan.ArgsType + " args = " + arguments + ";");
+            if (!plan.Return.IsVoid)
+            {
+                writer.WriteLine(plan.Return.PublicType + " result;");
+            }
+
+            writer.WriteLine("try");
+            writer.OpenBlock();
+            writer.WriteLine((plan.Return.IsVoid ? string.Empty : "result = ") + "handler(");
+            writer.WriteLine("    " + sender + ",");
+            writer.WriteLine("    args);");
+            writer.CloseBlock();
+            writer.WriteLine("finally");
+            writer.OpenBlock();
+            writer.WriteLine("args.Invalidate();");
+            writer.CloseBlock();
+            if (!plan.Return.IsVoid)
+            {
+                writer.WriteLine();
+                writer.WriteLine(plan.Return.RawType + " owned = " + ToNative(plan.Return, "result") + ";");
+                writer.WriteLine("System.GC.KeepAlive(result);");
+                writer.WriteLine("return owned;");
+            }
+        }
+        else if (plan.Return.IsVoid)
         {
             writer.WriteLine("handler(");
             writer.WriteLine("    " + sender + ",");

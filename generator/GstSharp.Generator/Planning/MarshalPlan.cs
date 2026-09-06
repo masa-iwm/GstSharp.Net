@@ -110,6 +110,17 @@ internal enum ArgumentKind
     BorrowedGValue,
 
     /// <summary>
+    /// A <c>const GValue*</c> one argument of a signal carries, which the
+    /// emission may spell as <c>NULL</c>. It differs from
+    /// <see cref="BorrowedGValue"/> in what it is projected onto: a handler is
+    /// given an arguments object rather than a parameter list, and a
+    /// <c>ref struct</c> cannot be a field of one, so the arguments carry the
+    /// pointer and hand the view out of a property that refuses to build one
+    /// after the emission ended.
+    /// </summary>
+    SignalBorrowedGValue,
+
+    /// <summary>
     /// A <c>GPtrArray</c> of GObjects that a signal carries, read out into a
     /// managed array of wrappers before the handler runs and built back into a
     /// fresh array when a handler returns one. The eager copy is the contract:

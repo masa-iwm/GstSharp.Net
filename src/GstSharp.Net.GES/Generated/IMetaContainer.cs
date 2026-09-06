@@ -1020,6 +1020,128 @@ public static unsafe partial class MetaContainerExtensions
         return nativeResult != 0;
     }
 
+    /// <summary>The arguments of the <c>notify-meta</c> signal of <c>GESMetaContainer</c>.</summary>
+    public sealed unsafe class NotifyMetaSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="NotifyMetaSignalArgs"/> class.</summary>
+        /// <param name="key">The key for the @container field that changed</param>
+        /// <param name="value">The new value under @key</param>
+        internal NotifyMetaSignalArgs(string key, nint value)
+        {
+            Key = key;
+            _value = value;
+        }
+
+        /// <summary>The key for the @container field that changed</summary>
+        public string Key { get; }
+
+        /// <summary>Gets a value indicating whether the emission carried a <c>value</c>.</summary>
+        public bool HasValue => _value != 0;
+
+        /// <summary>The new value under @key</summary>
+        /// <remarks>
+        /// The view is only valid while the handler runs: it looks at storage the
+        /// emitter holds and nothing is copied out of it. To keep what it holds,
+        /// copy it with <c>ToValue</c> and dispose the copy.
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">The emission carried no value, or it has ended.</exception>
+        public Gst.GObject.ValueView Value
+        {
+            get
+            {
+                if (_ended)
+                {
+                    throw new InvalidOperationException("The emission has ended, so the value it carried is gone.");
+                }
+
+                if (_value == 0)
+                {
+                    throw new InvalidOperationException("The emission carried no value; test HasValue first.");
+                }
+
+                return new Gst.GObject.ValueView(ref System.Runtime.CompilerServices.Unsafe.AsRef<Gst.GObject.GValueNative>((void*)_value));
+            }
+        }
+
+        private readonly nint _value;
+
+        /// <summary>Ends the borrow the emission lent these arguments.</summary>
+        /// <remarks>
+        /// Called by the trampoline once the handler has returned. The storage the
+        /// emitter holds may be gone from that moment on, so the view is refused
+        /// from here rather than handed out over memory nobody owns any more. What
+        /// the emission carried is still readable: only the reading of the value
+        /// itself is closed off.
+        /// </remarks>
+        internal void Invalidate() => _ended = true;
+
+        private bool _ended;
+    }
+
+    /// <summary>
+    /// This is emitted for a meta container whenever the metadata under one
+    /// of its fields changes, is set for the first time, or is removed. In
+    /// the latter case, @value will be %NULL.
+    /// </summary>
+    /// <param name="self">The instance to connect the handler to.</param>
+    /// <param name="handler">The handler to connect.</param>
+    /// <remarks>
+    /// The signal is detailed. The handler is connected to <c>notify-meta</c>
+    /// without a detail, so it runs for every detail of the signal.
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public static void AddNotifyMetaHandler(this GES.IMetaContainer self, System.EventHandler<GES.MetaContainerExtensions.NotifyMetaSignalArgs> handler) =>
+        GES.SignalConnections.Add((Gst.GObject.Object)self, "notify-meta", (nint)(delegate* unmanaged[Cdecl]<nint, byte*, nint, nint, void>)&NotifyMetaTrampoline, handler);
+
+    /// <summary>Disconnects the handler that was connected last for a delegate of the <c>notify-meta</c> signal of <c>GESMetaContainer</c>.</summary>
+    /// <param name="self">The instance the handler was connected to.</param>
+    /// <param name="handler">The handler to disconnect.</param>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public static void RemoveNotifyMetaHandler(this GES.IMetaContainer self, System.EventHandler<GES.MetaContainerExtensions.NotifyMetaSignalArgs> handler) =>
+        GES.SignalConnections.Remove((Gst.GObject.Object)self, "notify-meta", handler);
+
+    /// <summary>The native handler of the <c>notify-meta</c> signal of <c>GESMetaContainer</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void NotifyMetaTrampoline(nint instance, byte* key, nint value, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<GES.MetaContainerExtensions.NotifyMetaSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            string keyValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)key)
+                ?? throw new InvalidOperationException("The notify-meta signal of GESMetaContainer passed no key.");
+            nint valueValue = value;
+            GES.MetaContainerExtensions.NotifyMetaSignalArgs args = new GES.MetaContainerExtensions.NotifyMetaSignalArgs(keyValue, valueValue);
+            try
+            {
+                handler(
+                    Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                    args);
+            }
+            finally
+            {
+                args.Invalidate();
+            }
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The <c>ges_meta_container_add_metas_from_string</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_meta_container_add_metas_from_string")]
     private static partial int GesMetaContainerAddMetasFromString(nint container, byte* str);

@@ -4460,6 +4460,14 @@ internal sealed class MarshalPlanner
                 ?? PlanSignalStrvArgument(parameter, array, mapped, name, context);
         }
 
+        // The one pointer the emission may spell as NULL and the handler must
+        // not keep: a const GValue* is projected onto a view of its own rather
+        // than onto the owning value type, exactly as it is for a callback.
+        if (SignalBorrowedGValueOf(parameter, mapped, name, nullable) is { } view)
+        {
+            return view;
+        }
+
         // The refusal that PlanParameter applies to the in parameter of a
         // callable, hoisted in front of the projection a signal argument goes
         // through: a handler receives the pointer the emitter passes exactly
@@ -4622,6 +4630,49 @@ internal sealed class MarshalPlanner
         return element is { Kind: ArgumentKind.Handle, Flavor: HandleFlavor.GObject }
             ? element.PublicType
             : null;
+    }
+
+    /// <summary>
+    /// Plans a <c>const GValue*</c> argument of a signal, which the handler is
+    /// shown through a borrowed view that stops working once the emission ends.
+    /// </summary>
+    /// <param name="parameter">The gir parameter.</param>
+    /// <param name="mapped">The mapping of the parameter.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="nullable">Whether the annotations allow the emission to pass none.</param>
+    /// <returns>The plan, or <see langword="null"/> when the parameter is not one.</returns>
+    /// <remarks>
+    /// A writable <c>GValue*</c> stays refused: an argument a handler may write
+    /// through is an out parameter of the emission, and no signal of the corpus
+    /// has one. Only the <c>const</c> reading is planned, which the gir spells
+    /// as a plain <c>GObject.Value</c> parameter a signal lends.
+    /// </remarks>
+    private static ArgumentPlan? SignalBorrowedGValueOf(
+        GirParameter parameter,
+        MappedType mapped,
+        string name,
+        bool nullable)
+    {
+        if (mapped.Kind != MarshalKind.GValue
+            || parameter.Transfer != GirTransfer.None
+            || parameter.Type is GirArrayRef
+            || parameter.Type.CType is { } cType && cType.EndsWith("**", StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return new ArgumentPlan
+        {
+            Source = parameter,
+            Kind = ArgumentKind.SignalBorrowedGValue,
+            Name = name,
+            PublicType = "nint",
+            RawType = "nint",
+            Direction = ArgumentDirection.In,
+            Transfer = GirTransfer.None,
+            IsNullable = nullable,
+            Doc = parameter.Doc,
+        };
     }
 
     /// <summary>
