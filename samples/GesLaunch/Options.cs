@@ -77,6 +77,12 @@ internal sealed class Options
     /// <summary>Gets the name of a profile the project carries, the <c>-e</c> option.</summary>
     internal string? EncodingProfile { get; private set; }
 
+    /// <summary>
+    /// Gets the muxer profile the profile tree is re-parented into, the
+    /// <c>--container-profile</c> option.
+    /// </summary>
+    internal string? ContainerProfile { get; private set; }
+
     /// <summary>Gets a value indicating whether tags are forwarded to the output.</summary>
     internal bool ForwardTags { get; private set; }
 
@@ -215,6 +221,10 @@ internal sealed class Options
                     options.EncodingProfile = ValueOf(arguments, ref i);
                     break;
 
+                case "--container-profile":
+                    options.ContainerProfile = ValueOf(arguments, ref i);
+                    break;
+
                 case "--forward-tags":
                     options.ForwardTags = true;
                     break;
@@ -323,6 +333,7 @@ internal sealed class Options
         Console.WriteLine("  -o, --outputuri <uri>      Render the timeline into <uri> instead of playing it.");
         Console.WriteLine("  -f, --format <profile>     The serialized encoding profile to render with.");
         Console.WriteLine("  -e, --encoding-profile <n> The name of a profile the loaded project carries.");
+        Console.WriteLine("      --container-profile <p> Re-parent the profile tree into this muxer profile.");
         Console.WriteLine("      --forward-tags         Forward the tags of the input files to the output.");
         Console.WriteLine("      --smart-rendering      Avoid reencoding; implies --disable-mixing.");
         Console.WriteLine();

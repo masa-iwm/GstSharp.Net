@@ -493,10 +493,9 @@ internal static class Launcher
     /// <summary>
     /// Decides between preview and render, which is
     /// <c>_set_rendering_details</c> at <c>ges-launcher.c:589-747</c> without
-    /// its <c>--profile-from</c> and <c>--container-profile</c> branches and
-    /// without the <c>get_smart_profile</c> attempt that <c>--smart-rendering</c>
-    /// makes before the file extension (<c>ges-launcher.c:508-577</c>); see the
-    /// header of Program.cs.
+    /// its <c>--profile-from</c> branch and without the <c>get_smart_profile</c>
+    /// attempt that <c>--smart-rendering</c> makes before the file extension
+    /// (<c>ges-launcher.c:507-575</c>); see the header of Program.cs.
     /// </summary>
     /// <param name="pipeline">The pipeline to configure.</param>
     /// <param name="project">The project, which may carry profiles of its own.</param>
@@ -517,6 +516,11 @@ internal static class Launcher
         // flag is for.
         EncodingProfile? created = null;
 
+        // Which of the paths below answered. Every one of them ends in a
+        // profile and a rendered file, so a run says out loud which one it
+        // took rather than leaving that to be guessed from the output.
+        string source = "--format";
+
         try
         {
             string? format = options.Format;
@@ -530,6 +534,7 @@ internal static class Launcher
                 if (carried.Count > 0)
                 {
                     profile = carried[0];
+                    source = "the project";
 
                     if (options.EncodingProfile is not null)
                     {
@@ -548,8 +553,12 @@ internal static class Launcher
             {
                 if (format is null)
                 {
-                    format = FileExtension(options.OutputUri);
-                    profile = created = format is null ? null : ParseEncodingProfile(format);
+                    if (profile is null)
+                    {
+                        format = FileExtension(options.OutputUri);
+                        profile = created = format is null ? null : ParseEncodingProfile(format);
+                        source = "the output file extension";
+                    }
                 }
                 else
                 {
@@ -570,12 +579,29 @@ internal static class Launcher
 
                     format = FallbackFormat;
                     profile = created = ParseEncodingProfile(format);
+                    source = "the theora+vorbis in ogg default";
                 }
 
                 if (profile is null)
                 {
                     Console.Error.WriteLine($"GesLaunch: could not find any encoding format for {format}");
                     return false;
+                }
+
+                if (options.ContainerProfile is string container)
+                {
+                    if (ReParent(profile, container) is not { } reparented)
+                    {
+                        return false;
+                    }
+
+                    // Both arms of ReParent settle the profile that went in:
+                    // the container took its children over and its shell was
+                    // dropped, or it became the sole child of the container
+                    // and the call that took it disposed the wrapper.
+                    profile = created = reparented;
+
+                    Console.WriteLine($"Re-parented the encoding profile into --container-profile {container}");
                 }
 
                 Console.WriteLine();
@@ -587,6 +613,8 @@ internal static class Launcher
 
                 project.AddEncodingProfile(profile);
             }
+
+            Console.WriteLine($"Encoding profile from: {source}");
 
             string outputUri = EnsureUri(options.OutputUri);
 
@@ -608,6 +636,70 @@ internal static class Launcher
         {
             created?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Re-parents a profile tree into a container profile, which is the
+    /// <c>--container-profile</c> block of <c>_set_rendering_details</c> at
+    /// <c>ges-launcher.c:665-710</c>.
+    /// </summary>
+    /// <param name="profile">
+    /// The profile that was resolved so far. It is spent whatever the answer
+    /// is: its children were taken over and its shell disposed, or it became
+    /// the sole child of the new container, which consumed it.
+    /// </param>
+    /// <param name="container">
+    /// The serialised muxer profile, which has to be a bare container - one
+    /// with no <c>:</c> sub profiles.
+    /// </param>
+    /// <returns>
+    /// The new top level container, which the caller owns, or
+    /// <see langword="null"/> when the option is not a bare container profile.
+    /// </returns>
+    private static EncodingContainerProfile? ReParent(EncodingProfile profile, string container)
+    {
+        if (ParseEncodingProfile(container) is not { } parsed)
+        {
+            Console.Error.WriteLine($"GesLaunch: failed to parse container profile {container}");
+            return null;
+        }
+
+        if (parsed is not EncodingContainerProfile target)
+        {
+            Console.Error.WriteLine("GesLaunch: top level profile should be container profile");
+            parsed.Dispose();
+            return null;
+        }
+
+        if (target.GetProfiles().Count > 0)
+        {
+            Console.Error.WriteLine("GesLaunch: --container-profile cannot contain children profiles");
+            target.Dispose();
+            return null;
+        }
+
+        if (profile is EncodingContainerProfile existing)
+        {
+            // The children move under the new container and the old shell is
+            // dropped. AddProfile consumes the wrapper it is handed, which is
+            // exactly the gst_encoding_profile_ref the C tool takes before it
+            // adds each child (ges-launcher.c:696-702); the reference the old
+            // container still holds on them goes away with it.
+            foreach (EncodingProfile child in existing.GetProfiles())
+            {
+                target.AddProfile(child);
+            }
+
+            existing.Dispose();
+        }
+        else
+        {
+            // A single elementary stream profile becomes the sole child. The
+            // call consumes it, so there is nothing left to dispose.
+            target.AddProfile(profile);
+        }
+
+        return target;
     }
 
     /// <summary>
