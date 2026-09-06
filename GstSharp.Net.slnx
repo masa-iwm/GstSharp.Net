@@ -14,6 +14,7 @@
     <Project Path="samples/AotSmoke/AotSmoke.csproj" />
     <Project Path="samples/AppSinkSpans/AppSinkSpans.csproj" />
     <Project Path="samples/AppSrcPush/AppSrcPush.csproj" />
+    <Project Path="samples/CustomMeta/CustomMeta.csproj" />
     <Project Path="samples/GesCustomSource/GesCustomSource.csproj" />
     <Project Path="samples/GesLaunch/GesLaunch.csproj" />
     <Project Path="samples/GstDeviceMonitor/GstDeviceMonitor.csproj" />

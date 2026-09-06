@@ -270,6 +270,16 @@ jobs:
       - name: RtpPacketDump
         run: dotnet run --project samples/RtpPacketDump --no-restore
 
+      # A metadata implementation of the application's own, carried across a
+      # real conversion: the sample registers its API type with no tags,
+      # attaches one item per frame it pushes into an appsrc, and reads the
+      # payload back off the buffers videoconvert allocated. It is an exit code
+      # gate — a frame that arrives without its item, or with the wrong
+      # sequence number in it, exits 1. appsrc, appsink and videoconvert all
+      # come from the base and app plugins this job already installs.
+      - name: CustomMeta
+        run: dotnet run --project samples/CustomMeta --no-restore
+
       # The gst-launch port, run headless three ways: the plain end of stream,
       # the buffering state machine, and the interrupt, which travels through a
       # GstLaunchInterrupt application message and out again as an injected EOS.
@@ -659,6 +669,10 @@ jobs:
       - name: RtpPacketDump
         run: dotnet run --project samples/RtpPacketDump --no-restore
 
+      # Same run as the Linux leg; see the comments there.
+      - name: CustomMeta
+        run: dotnet run --project samples/CustomMeta --no-restore
+
       - name: GstLaunch
         run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
 
@@ -813,6 +827,10 @@ jobs:
       # built and read back.
       - name: RtpPacketDump
         run: dotnet run --project samples/RtpPacketDump --no-restore
+
+      # Same run as the Linux leg; see the comments there.
+      - name: CustomMeta
+        run: dotnet run --project samples/CustomMeta --no-restore
 
       # The Windows half of the gst-launch port: this is the only leg where the
       # multimedia timer is raised, and the sample says which precision it got
