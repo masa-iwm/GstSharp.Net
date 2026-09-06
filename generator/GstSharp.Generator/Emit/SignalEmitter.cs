@@ -402,6 +402,20 @@ internal static class SignalEmitter
             writer.WriteLine("/// to the emitting library and can differ between GStreamer versions.");
             writer.WriteLine("/// </remarks>");
         }
+        else if (plan.Return.Kind == ArgumentKind.ObjectPtrArray)
+        {
+            writer.WriteLine("/// <remarks>");
+            writer.WriteLine("/// The array the handler returns is copied into one the emitting library");
+            writer.WriteLine("/// takes over, with a reference minted for every object in it, so the");
+            writer.WriteLine("/// wrappers the handler holds stay usable and are still the caller's to");
+            writer.WriteLine("/// manage. Returning <see langword=\"null\"/> and returning an empty array both");
+            writer.WriteLine("/// answer no objects, and what the emission makes of that is the contract of");
+            writer.WriteLine("/// the signal, stated in its own returns documentation. An element that is");
+            writer.WriteLine("/// <see langword=\"null\"/> or whose wrapper was disposed is reported through");
+            writer.WriteLine("/// the exception trap and the emission is answered as if the handler had");
+            writer.WriteLine("/// thrown.");
+            writer.WriteLine("/// </remarks>");
+        }
         else if (plan.Return.Kind == ArgumentKind.Utf8Owned)
         {
             writer.WriteLine("/// <remarks>");
@@ -737,6 +751,13 @@ internal static class SignalEmitter
             : "(" + value.RawType + ")" + source,
         ArgumentKind.Handle => source + " is null ? 0 : Gst.Interop.GObjectNative.ObjectRef("
             + source + ".Handle)",
+
+        // A fresh container at a reference count of one, carrying one minted
+        // reference per element, which is what the generic marshal takes off
+        // the handler. No free function is installed: the emitting library
+        // installs its own before it releases the array.
+        ArgumentKind.ObjectPtrArray => "Gst.GLib.PtrArray.FromObjects<"
+            + TrimNullable(value.PublicType)[..^2] + ">(" + source + ")",
 
         // The string is copied into memory the emitting library owns: the
         // accumulator of the signal g_frees what the handler answered, and

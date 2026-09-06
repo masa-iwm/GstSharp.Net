@@ -4,12 +4,13 @@ using Xunit;
 namespace GstSharp.Generator.Tests;
 
 /// <summary>
-/// The second container a signal handler is handed: a <c>GPtrArray</c> of
-/// GObjects the emission lends it, read out into an array of wrappers before
-/// the handler runs. Every other element and every other transfer keeps the
-/// signal off the surface.
+/// The second container a signal carries: a <c>GPtrArray</c> of GObjects the
+/// emission lends the handler, read out into an array of wrappers before the
+/// handler runs, and one the handler answers with, built fresh with a minted
+/// reference per element. Every other element and every other transfer keeps
+/// the signal off the surface.
 /// </summary>
-public sealed class SignalPtrArrayArgumentTests
+public sealed class SignalPtrArrayTests
 {
     /// <summary>
     /// The shape <c>GESLayer::active-changed</c> has: a borrowed pointer array
@@ -88,6 +89,51 @@ public sealed class SignalPtrArrayArgumentTests
         """;
 
     /// <summary>
+    /// The shape <c>GESTimeline::select-tracks-for-object</c> has: a pointer
+    /// array of objects the handler hands over.
+    /// </summary>
+    private const string ReturnedBody =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <glib:signal name="select-widgets" when="last">
+                <return-value transfer-ownership="full">
+                  <doc xml:space="preserve">The widgets to use</doc>
+                  <array name="GLib.PtrArray">
+                    <type name="Widget"/>
+                  </array>
+                </return-value>
+                <parameters>
+                  <parameter name="item" transfer-ownership="none">
+                    <type name="Widget"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+            </class>
+        """;
+
+    /// <summary>
+    /// The same signal answering a pointer array the emission only borrows,
+    /// which leaves nobody owning the container the handler allocated.
+    /// </summary>
+    private const string BorrowedReturnBody =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+              <glib:signal name="select-widgets" when="last">
+                <return-value transfer-ownership="none">
+                  <array name="GLib.PtrArray">
+                    <type name="Widget"/>
+                  </array>
+                </return-value>
+                <parameters>
+                  <parameter name="item" transfer-ownership="none">
+                    <type name="Widget"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+            </class>
+        """;
+
+    /// <summary>
     /// A borrowed pointer array of objects reaches the handler as an array of
     /// its own, read out of the container while the emission still holds it.
     /// </summary>
@@ -139,5 +185,51 @@ public sealed class SignalPtrArrayArgumentTests
         Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "signal"));
         Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
         Assert.DoesNotContain("TracksChanged", run.File("Widget.cs"), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A pointer array the handler hands over is built fresh, with one minted
+    /// reference per element, and is always nullable: C spells "no objects" as
+    /// the null pointer and no annotation of the corpus states it.
+    /// </summary>
+    [Fact]
+    public void APointerArrayTheHandlerHandsOverIsPlanned()
+    {
+        FixtureRun run = Fixture.Run(ReturnedBody);
+        string source = run.File("Widget.cs");
+
+        Assert.Equal(1, run.Result.Census.EmittedCount("Gst", "signal"));
+        Assert.Equal(0, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+
+        Assert.Contains(
+            "public delegate Gst.Widget[]? SelectWidgetsHandler(object? sender, Gst.Widget.SelectWidgetsSignalArgs args);",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "private static nint SelectWidgetsTrampoline(nint instance, nint item, nint userData)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "return Gst.GLib.PtrArray.FromObjects<Gst.Widget>(result);",
+            source,
+            StringComparison.Ordinal);
+
+        // A null or a disposed element leaves the emission with the answer a
+        // handler that threw would have left it.
+        Assert.Contains("/// the exception trap and the emission is answered", source, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A pointer array the emission only borrows keeps the signal off the
+    /// surface: nobody would own the container the handler allocated.
+    /// </summary>
+    [Fact]
+    public void APointerArrayTheEmissionOnlyBorrowsIsRefused()
+    {
+        FixtureRun run = Fixture.Run(BorrowedReturnBody);
+
+        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "signal"));
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.DoesNotContain("SelectWidgets", run.File("Widget.cs"), StringComparison.Ordinal);
     }
 }

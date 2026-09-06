@@ -1133,6 +1133,147 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
         }
     }
 
+    /// <summary>The arguments of the <c>select-tracks-for-object</c> signal of <c>GESTimeline</c>.</summary>
+    public sealed class SelectTracksForObjectSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="SelectTracksForObjectSignalArgs"/> class.</summary>
+        /// <param name="clip">The clip that @track_element is being added to</param>
+        /// <param name="trackElement">The element being added</param>
+        internal SelectTracksForObjectSignalArgs(GES.Clip clip, GES.TrackElement trackElement)
+        {
+            Clip = clip;
+            TrackElement = trackElement;
+        }
+
+        /// <summary>The clip that @track_element is being added to</summary>
+        public GES.Clip Clip { get; }
+
+        /// <summary>The element being added</summary>
+        public GES.TrackElement TrackElement { get; }
+    }
+
+    /// <summary>The handler of the <c>select-tracks-for-object</c> signal of <c>GESTimeline</c>.</summary>
+    /// <remarks>
+    /// The array the handler returns is copied into one the emitting library
+    /// takes over, with a reference minted for every object in it, so the
+    /// wrappers the handler holds stay usable and are still the caller's to
+    /// manage. Returning <see langword="null"/> and returning an empty array both
+    /// answer no objects, and what the emission makes of that is the contract of
+    /// the signal, stated in its own returns documentation. An element that is
+    /// <see langword="null"/> or whose wrapper was disposed is reported through
+    /// the exception trap and the emission is answered as if the handler had
+    /// thrown.
+    /// </remarks>
+    /// <param name="sender">The instance that emitted the signal.</param>
+    /// <param name="args">The arguments of the signal.</param>
+    /// <returns>
+    /// An array of
+    /// #GESTrack-s that @track_element should be added to, or %NULL to
+    /// not add the element to any track.
+    /// </returns>
+    public delegate GES.Track[]? SelectTracksForObjectHandler(object? sender, GES.Timeline.SelectTracksForObjectSignalArgs args);
+
+    /// <summary>
+    /// This will be emitted whenever the timeline needs to determine which
+    /// tracks a clip's children should be added to. The track element will
+    /// be added to each of the tracks given in the return. If a track
+    /// element is selected to go into multiple tracks, it will be copied
+    /// into the additional tracks, under the same clip. Note that the copy
+    /// will *not* keep its properties or state in sync with the original.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Connect to this signal once if you wish to control which element
+    /// should be added to which track. Doing so will overwrite the default
+    /// behaviour, which adds @track_element to all tracks whose
+    /// #GESTrack:track-type includes the @track_element's
+    /// #GESTrackElement:track-type.
+    /// </para>
+    /// <para>
+    /// Note that under the default track selection, if a clip would produce
+    /// multiple core children of the same #GESTrackType, it will choose
+    /// one of the core children arbitrarily to place in the corresponding
+    /// tracks, with a warning for the other core children that are not
+    /// placed in the track. For example, this would happen for a #GESUriClip
+    /// that points to a file that contains multiple audio streams. If you
+    /// wish to choose the stream, you could connect to this signal, and use,
+    /// say, ges_uri_source_asset_get_stream_info() to choose which core
+    /// source to add.
+    /// </para>
+    /// <para>
+    /// When a clip is first added to a timeline, its core elements will
+    /// be created for the current tracks in the timeline if they have not
+    /// already been created. Then this will be emitted for each of these
+    /// core children to select which tracks, if any, they should be added
+    /// to. It will then be called for any non-core children in the clip.
+    /// </para>
+    /// <para>
+    /// In addition, if a new track element is ever added to a clip in a
+    /// timeline (and it is not already part of a track) this will be emitted
+    /// to select which tracks the element should be added to.
+    /// </para>
+    /// <para>
+    /// Finally, as a special case, if a track is added to the timeline
+    /// *after* it already contains clips, then it will request the creation
+    /// of the clips' core elements of the corresponding type, if they have
+    /// not already been created, and this signal will be emitted for each of
+    /// these newly created elements. In addition, this will also be released
+    /// for all other track elements in the timeline's clips that have not
+    /// yet been assigned a track. However, in this final case, the timeline
+    /// will only check whether the newly added track appears in the track
+    /// list. If it does appear, the track element will be added to the newly
+    /// added track. All other tracks in the returned track list are ignored.
+    /// </para>
+    /// <para>
+    /// In this latter case, track elements that are already part of a track
+    /// will not be asked if they want to be copied into the new track. If
+    /// you wish to do this, you can use ges_clip_add_child_to_track().
+    /// </para>
+    /// <para>
+    /// Note that the returned #GPtrArray should own a new reference to each
+    /// of its contained #GESTrack. The timeline will set the #GDestroyNotify
+    /// free function on the #GPtrArray to dereference the elements.
+    /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event GES.Timeline.SelectTracksForObjectHandler SelectTracksForObject
+    {
+        add => GES.SignalConnections.Add(this, "select-tracks-for-object", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, nint>)&SelectTracksForObjectTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "select-tracks-for-object", value);
+    }
+
+    /// <summary>The native handler of the <c>select-tracks-for-object</c> signal of <c>GESTimeline</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static nint SelectTracksForObjectTrampoline(nint instance, nint clip, nint trackElement, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<GES.Timeline.SelectTracksForObjectHandler>(userData) is not { } handler)
+            {
+                return default;
+            }
+
+            GES.Clip clipValue = Gst.GObject.Object.FromNative<GES.Clip>(clip, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The select-tracks-for-object signal of GESTimeline passed no clip.");
+            GES.TrackElement trackElementValue = Gst.GObject.Object.FromNative<GES.TrackElement>(trackElement, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The select-tracks-for-object signal of GESTimeline passed no track_element.");
+            GES.Track[]? result = handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.Timeline.SelectTracksForObjectSignalArgs(clipValue, trackElementValue));
+            return Gst.GLib.PtrArray.FromObjects<GES.Track>(result);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
     /// <summary>The arguments of the <c>snapping-ended</c> signal of <c>GESTimeline</c>.</summary>
     public sealed class SnappingEndedSignalArgs : System.EventArgs
     {

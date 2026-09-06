@@ -187,7 +187,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
     [InlineData("GstPlay", 8, 1, 1, 0, 5, 120, 17, 13, 0)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 382, 77, 37, 7)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 382, 77, 38, 7)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -234,7 +234,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 7, 0, 0, 0, 0)]
     [InlineData("GstPlay", 0, 23, 0, 0, 0, 0)]
-    [InlineData("GES", 6, 3, 4, 10, 10, 2)]
+    [InlineData("GES", 6, 3, 4, 10, 9, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,

@@ -4736,6 +4736,15 @@ internal sealed class MarshalPlanner
             };
         }
 
+        // The one container a handler may answer with: a pointer array of
+        // GObjects the emission takes over. What frees it is the contract of
+        // the signal rather than an annotation, so the shape is accepted only
+        // where the transfer says the emission owns what it is given.
+        if (value.Type is GirArrayRef array)
+        {
+            return PlanSignalPtrArrayReturn(value, array, context);
+        }
+
         ArgumentPlan? scalar = PlanScalar(
             value.Type,
             mapped,
@@ -4782,6 +4791,51 @@ internal sealed class MarshalPlanner
             IsNullable = scalar.IsNullable,
             Flavor = scalar.Flavor,
             EnumConverter = scalar.EnumConverter,
+            Doc = value.Doc,
+        };
+    }
+
+    /// <summary>
+    /// Plans a <c>GPtrArray</c> a signal handler answers with: an array of
+    /// GObjects the emission takes over.
+    /// </summary>
+    /// <param name="value">The return value of the signal.</param>
+    /// <param name="array">The array the return value declares.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The plan, or <see langword="null"/> when the value is not this shape.</returns>
+    /// <remarks>
+    /// <para>
+    /// Only <c>transfer-ownership="full"</c> is accepted, which is the shape
+    /// whose emitter takes the container: the generic marshal hands what the
+    /// handler returned to <c>g_value_take_boxed</c>, so the trampoline builds
+    /// a fresh array at a reference count of one and mints one reference per
+    /// element for it. Nothing is freed here on the way out and no free
+    /// function is installed, because the emitting library installs its own
+    /// before it releases the array.
+    /// </para>
+    /// <para>
+    /// The managed type is always nullable. C spells "no elements" as the null
+    /// pointer and the gir of the corpus annotates none of that, so a handler
+    /// that has nothing to answer would otherwise have no way of saying so.
+    /// </para>
+    /// </remarks>
+    private ReturnPlan? PlanSignalPtrArrayReturn(
+        GirReturnValue value,
+        GirArrayRef array,
+        PlanningContext context)
+    {
+        if (PtrArrayElementType(array, value.Transfer, GirTransfer.Full, context) is not { } element)
+        {
+            return null;
+        }
+
+        return new ReturnPlan
+        {
+            Kind = ArgumentKind.ObjectPtrArray,
+            PublicType = element + "[]?",
+            RawType = "nint",
+            Transfer = GirTransfer.Full,
+            IsNullable = true,
             Doc = value.Doc,
         };
     }
