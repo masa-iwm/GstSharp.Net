@@ -81,7 +81,12 @@ public static unsafe partial class VideoGlobal
     /// (<c>gstvideometa.c:1259-1260</c>) - the same shape as
     /// <c>BufferAddVideoMeta</c>. It returns before it stores the user data, so
     /// the free it was handed never runs on that path and the handle is
-    /// released here instead.
+    /// released here instead. The sibling attach
+    /// <c>Gst.Audio.AudioGlobal.BufferAddAudioDownmixMeta</c> throws on a
+    /// shared buffer instead, because its C body does not check what
+    /// <c>gst_buffer_add_meta</c> answered (<c>gstaudiometa.c:151-156</c>) and
+    /// would dereference NULL, so the buffer has to be kept off the call
+    /// altogether.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">
@@ -186,7 +191,13 @@ internal static unsafe class VideoGLTextureUploadTrampoline
                 ?? throw new InvalidOperationException("GstVideoGLTextureUpload passed no meta.");
 
             int count = (int)Math.Min(raw->NTextures, (uint)Gst.Video.VideoGLTextureUploadMeta.MaxTextures);
-            return callback(metaValue, new ReadOnlySpan<uint>((void*)textureId, count)) ? 1 : 0;
+
+            // A caller that passes no block at all is handed an empty span
+            // rather than one over NULL, which no managed reader may form.
+            ReadOnlySpan<uint> ids = textureId == 0
+                ? ReadOnlySpan<uint>.Empty
+                : new ReadOnlySpan<uint>((void*)textureId, count);
+            return callback(metaValue, ids) ? 1 : 0;
         }
         catch (Exception exception)
         {

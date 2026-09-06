@@ -34,7 +34,10 @@ public static unsafe partial class AudioGlobal
     /// This is <c>gst_buffer_add_audio_downmix_meta</c>. The library deep
     /// copies the positions and the coefficients into storage the metadata item
     /// owns (<c>gstaudiometa.c:159-172</c>), so the spans need not outlive the
-    /// call.
+    /// call. The transform the library registers for the item re-attaches it
+    /// through this same call, so <see cref="Gst.Buffer.Copy"/> gives the copy
+    /// a second deep copy of the positions and the matrix rather than a shared
+    /// one.
     /// </para>
     /// <para>
     /// The C function takes the matrix as a <c>const gfloat**</c>, a table of
@@ -51,7 +54,12 @@ public static unsafe partial class AudioGlobal
     /// is what keeps the call off a process crash, exactly as on
     /// <see cref="BufferAddAudioMeta(Gst.Buffer, Gst.Audio.AudioInfo, nuint, System.ReadOnlySpan{nuint})"/>.
     /// The return is therefore not nullable: every other way the library
-    /// answers nothing is a guard the arguments below exclude.
+    /// answers nothing is a guard the arguments below exclude. The sibling
+    /// attach <c>Gst.Video.VideoGlobal.BufferAddVideoGLTextureUploadMeta</c>
+    /// answers <see langword="null"/> for a shared buffer instead, because its
+    /// C body does check what <c>gst_buffer_add_meta</c> answered
+    /// (<c>gstvideometa.c:1259-1260</c>); the difference in the two C bodies is
+    /// the whole difference between the two signatures.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">
@@ -66,7 +74,10 @@ public static unsafe partial class AudioGlobal
     /// <paramref name="toPosition"/> names more than 64 channels.
     /// </exception>
     /// <exception cref="ObjectDisposedException">The buffer wrapper was disposed.</exception>
-    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The buffer is not writable, or the library answered nothing even though
+    /// every guard of it was excluded above.
+    /// </exception>
     public static Gst.Audio.AudioDownmixMeta BufferAddAudioDownmixMeta(
         Gst.Buffer buffer,
         ReadOnlySpan<Gst.Audio.AudioChannelPosition> fromPosition,

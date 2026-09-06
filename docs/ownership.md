@@ -154,7 +154,7 @@ a second wrapper over the same address; both are alive exactly as long as the
 item is.
 
 An item that carries a **managed callback** owns the state of it, and the
-buffer owns the item. `VideoGlobal.BufferAddVideoGLTextureUploadMeta` is the one
+buffer owns the item. `VideoGlobal.BufferAddVideoGLTextureUploadMeta` is one
 of those: the upload delegate is held by a `CallbackHandle` the library releases
 through the user data free the attach hands it, so the delegate stays reachable
 for as long as any buffer carries the item — including every copy, each of which

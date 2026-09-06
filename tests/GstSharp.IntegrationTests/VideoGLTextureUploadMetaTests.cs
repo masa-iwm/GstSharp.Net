@@ -107,10 +107,16 @@ public sealed class VideoGLTextureUploadMetaTests
     /// <remarks>
     /// The library shares the upload function between an item and its copy and
     /// duplicates the state through the user data copy this binding supplies,
-    /// so the copy holds a second handle to the one delegate.
+    /// so the copy holds a second handle to the one delegate. That second
+    /// handle is what is read out of the raw item here: both user data slots
+    /// are non-zero and they differ, which is the observable statement that the
+    /// copy took a handle rather than the one its source holds. The copy and
+    /// the free the transform carried over are checked against the pair this
+    /// binding passes, so the rule that the two always travel together is
+    /// pinned across the native transform as well.
     /// </remarks>
     [Fact]
-    public void ACopyOfTheBufferReachesTheSameUpload()
+    public unsafe void ACopyOfTheBufferReachesTheSameUpload()
     {
         using Buffer buffer = Buffer.New();
 
@@ -136,6 +142,14 @@ public sealed class VideoGLTextureUploadMetaTests
         VideoGLTextureUploadMeta? carried = VideoGLTextureUploadMeta.FromNative(item.Handle);
         Assert.NotNull(carried);
         Assert.NotEqual(added.Handle, carried.Handle);
+
+        VideoGLTextureUploadMetaRaw* source = (VideoGLTextureUploadMetaRaw*)added.Handle;
+        VideoGLTextureUploadMetaRaw* copiedRaw = (VideoGLTextureUploadMetaRaw*)carried.Handle;
+        Assert.NotEqual((nint)0, source->UserData);
+        Assert.NotEqual((nint)0, copiedRaw->UserData);
+        Assert.NotEqual(source->UserData, copiedRaw->UserData);
+        Assert.Equal(VideoGLTextureUploadTrampoline.CopyUserData, copiedRaw->UserDataCopy);
+        Assert.Equal((nint)Gst.Interop.CallbackHandle.DestroyNotify, copiedRaw->UserDataFree);
 
         Assert.True(carried.Upload([7u]));
         Assert.True(added.Upload([7u]));
