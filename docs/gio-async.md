@@ -124,8 +124,8 @@ guarantees are structural rather than a rule somebody has to keep.
 
 ## 3. Cancellation
 
-The public surface takes a `CancellationToken` and never a
-`Gst.Gio.Cancellable`. Per call:
+The public surface takes a `CancellationToken`, which the binding translates.
+Per call:
 
 1. If the token *can* be cancelled, the state creates a private `Cancellable`
    and registers `token.Register(static s => ((Cancellable)s!).Cancel(), …)`.
@@ -146,6 +146,20 @@ handed out, which is what makes the binding disposing a GObject wrapper here the
 right thing rather than a breach of the "wrappers are not disposed by users"
 doctrine — the same reasoning as the consuming callback install of
 `Gst.App.AppSink.SetSimpleCallbacks`.
+
+There is a second overload of each method that takes a `Gst.Gio.Cancellable`
+instead, for a caller who already holds one. That object is **borrowed**: the
+state takes a `g_object_ref` of its own on the calling thread — the operation
+starts and completes on another thread, and a caller writing `using var
+cancellable = Cancellable.New();` is writing ordinary code — and drops that
+reference in `Cleanup`. It never cancels, resets or disposes the caller's
+object; cancelling the request is the caller's own `Cancel()`. A request
+cancelled that way completes as an `OperationCanceledException` whose
+`CancellationToken` is `None`, because no token was involved. Gio's rule about
+the object holds unchanged: a `GCancellable` that has been cancelled is not
+reused for a new operation. `g_cancellable_reset` exists, but it may only be
+called when no operation is running, so a fresh `Cancellable.New()` per
+operation is the simpler shape.
 
 Whether an operation *honours* the token is the library's business, not the
 binding's. A `ges_asset_request_async` that the asset cache can answer straight
@@ -264,6 +278,11 @@ private sealed class RequestState : GioAsyncState<GES.Asset>
 }
 ```
 
+The `Cancellable` overload is one more public method and one more constructor
+of the same state, chaining to `base(owner, cancellable)` instead of
+`base(owner, cancellationToken)`; nothing else in the state changes, because
+which `GCancellable` reaches `Invoke` is the base class's answer.
+
 `owner` is `null` here because `ges_asset_request_async` is a function of the
 library rather than a method on an object, so there is no wrapper to keep
 reachable. An instance operation passes `this` instead, and needs no
@@ -283,7 +302,9 @@ because none of them is visible from the signature:
   methods);
 * that the operation runs on the binding's dispatcher thread, and that the
   application therefore needs no main loop;
-* whether the returned wrapper is owned.
+* whether the returned wrapper is owned;
+* for a `Cancellable` overload, that the object is borrowed and that the
+  cancellation it produces carries no token.
 
 ## 8. Known library hazard
 
@@ -302,9 +323,6 @@ need it most.
 
 ## 9. Deliberate omissions
 
-* **No explicit `Cancellable` overloads.** A caller who already holds one — from
-  GstRtsp, say — has no way in yet. The token-only surface keeps the machinery
-  as small as its consumers require.
 * **No generator support.** The pinned reference girs carry `glib:finish-func`
   only in `GES-1.0.gir`; pairing `*_async` with `*_finish` mechanically across
   the whole surface would need either a gir refresh or name convention matching.

@@ -110,6 +110,7 @@ internal abstract class GioAsyncState
 
     private Cancellable? _cancellable;
     private CancellationTokenRegistration _registration;
+    private nint _borrowed;
 
     /// <summary>
     /// Initialises the state of an operation.
@@ -125,6 +126,38 @@ internal abstract class GioAsyncState
     {
         _owner = owner;
         _token = cancellationToken;
+    }
+
+    /// <summary>
+    /// Initialises the state of an operation that watches a
+    /// <c>GCancellable</c> the caller owns.
+    /// </summary>
+    /// <param name="owner">
+    /// The wrapper the operation was started on, or <see langword="null"/> when
+    /// there is none.
+    /// </param>
+    /// <param name="cancellable">
+    /// The token the caller wants the operation to watch. It is borrowed: the
+    /// binding never cancels, resets or disposes it.
+    /// </param>
+    /// <remarks>
+    /// The native reference is taken <em>here</em>, on the calling thread,
+    /// rather than read out of the wrapper when the operation starts. The
+    /// operation starts on another thread and completes on another thread
+    /// again, while a caller writing <c>using var cancellable =
+    /// Cancellable.New();</c> is writing ordinary code: reading
+    /// <c>Handle</c> later could therefore find a disposed wrapper. A borrowed
+    /// object that has to outlive the call it was passed to gets a reference of
+    /// its own, which is the same rule the rest of the binding follows.
+    /// </remarks>
+    protected GioAsyncState(Gst.GObject.Object? owner, Cancellable cancellable)
+    {
+        ArgumentNullException.ThrowIfNull(cancellable);
+
+        _owner = owner;
+        _token = default;
+        _borrowed = GObjectNative.ObjectRef(cancellable.Handle);
+        GC.KeepAlive(cancellable);
     }
 
     /// <summary>
@@ -231,7 +264,9 @@ internal abstract class GioAsyncState
     /// the binding and was never handed out, which is what makes disposing a
     /// GObject wrapper here the right thing rather than a doctrine violation —
     /// the same reasoning as the consuming callback install of
-    /// <c>Gst.App.AppSink.SetSimpleCallbacks</c>.
+    /// <c>Gst.App.AppSink.SetSimpleCallbacks</c>. A <c>GCancellable</c> the
+    /// caller handed in is the opposite case and is only <em>unreferenced</em>
+    /// here: the wrapper belongs to the caller, who may go on using it.
     /// </para>
     /// </remarks>
     internal virtual void Cleanup()
@@ -241,6 +276,12 @@ internal abstract class GioAsyncState
 
         Cancellable? cancellable = Interlocked.Exchange(ref _cancellable, null);
         cancellable?.Dispose();
+
+        nint borrowed = Interlocked.Exchange(ref _borrowed, nint.Zero);
+        if (borrowed != nint.Zero)
+        {
+            GObjectNative.ObjectUnref(borrowed);
+        }
 
         // The wrapper had to stay reachable for the whole operation, not just
         // for the extent of the call that started it.
@@ -261,10 +302,13 @@ internal abstract class GioAsyncState
     protected abstract void Invoke(nint cancellable, nint userData);
 
     /// <summary>
-    /// Gets the <c>GCancellable</c> to hand to the native call, or
-    /// <see cref="nint.Zero"/> when the caller's token can never be cancelled.
+    /// Gets the <c>GCancellable</c> to hand to the native call: the one the
+    /// caller passed in when there is one, the private one built for the
+    /// caller's token when the token can be cancelled, and
+    /// <see cref="nint.Zero"/> otherwise.
     /// </summary>
-    private nint CancellableHandle => _cancellable is null ? nint.Zero : _cancellable.Handle;
+    private nint CancellableHandle =>
+        _borrowed != nint.Zero ? _borrowed : _cancellable is null ? nint.Zero : _cancellable.Handle;
 
     /// <summary>
     /// Builds the private <c>GCancellable</c> the operation watches and hooks
@@ -321,6 +365,17 @@ internal abstract class GioAsyncState<T> : GioAsyncState
     /// <param name="cancellationToken">The token the caller passed in.</param>
     protected GioAsyncState(Gst.GObject.Object? owner, CancellationToken cancellationToken)
         : base(owner, cancellationToken)
+    {
+    }
+
+    /// <summary>
+    /// Initialises the state of an operation that watches a
+    /// <c>GCancellable</c> the caller owns.
+    /// </summary>
+    /// <param name="owner">The wrapper to keep reachable, or <see langword="null"/>.</param>
+    /// <param name="cancellable">The token the caller passed in, which is borrowed.</param>
+    protected GioAsyncState(Gst.GObject.Object? owner, Cancellable cancellable)
+        : base(owner, cancellable)
     {
     }
 

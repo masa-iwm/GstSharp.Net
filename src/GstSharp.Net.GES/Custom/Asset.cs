@@ -36,7 +36,7 @@ public unsafe partial class Asset
     /// This is the call to use for the asset types that can only be built
     /// asynchronously, <see cref="GES.UriClip"/> among them, where the
     /// synchronous <see cref="Request"/> fails by construction. For a
-    /// <c>GESUriClip</c> in particular, <see cref="GES.UriClipAsset.NewAsync"/>
+    /// <c>GESUriClip</c> in particular, <see cref="GES.UriClipAsset.NewAsync(string, CancellationToken)"/>
     /// says the same thing with a typed result.
     /// </para>
     /// <para>
@@ -90,6 +90,75 @@ public unsafe partial class Asset
         string? id,
         CancellationToken cancellationToken = default) =>
         new RequestState(extractableType, id, cancellationToken).Start();
+
+    /// <summary>
+    /// Requests an asset with the given properties, watching a
+    /// <c>GCancellable</c> the caller already holds.
+    /// </summary>
+    /// <param name="extractableType">
+    /// The <c>GESExtractable</c> type the asset produces.
+    /// </param>
+    /// <param name="id">
+    /// The identifier of the asset, or <see langword="null"/> for the standard
+    /// identifier of the type — read the warning on
+    /// <see cref="RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>
+    /// before passing <see langword="null"/>.
+    /// </param>
+    /// <param name="cancellable">
+    /// The token the request watches. It is <em>borrowed</em>: the binding
+    /// takes a reference of its own for the duration of the request and
+    /// releases that reference when the request completes, but it never
+    /// cancels, resets or disposes the object. Cancelling the request is the
+    /// caller's own <see cref="Gst.Gio.Cancellable.Cancel"/>.
+    /// </param>
+    /// <returns>The requested asset.</returns>
+    /// <remarks>
+    /// <para>
+    /// This overload is for a caller who already has a <c>GCancellable</c> —
+    /// one that other Gio work of the application shares, say. A caller who has
+    /// a <see cref="CancellationToken"/> instead should use
+    /// <see cref="RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>,
+    /// which builds and owns the <c>GCancellable</c> itself.
+    /// </para>
+    /// <para>
+    /// Gio's rule about the object applies unchanged: a <c>GCancellable</c>
+    /// that has been cancelled is not reused for a new operation, because every
+    /// operation that watches it fails immediately. There is a
+    /// <see cref="Gst.Gio.Cancellable.Reset"/>, but it may only be called when
+    /// no operation is running; a fresh <see cref="Gst.Gio.Cancellable.New"/>
+    /// per operation is the simpler shape. Handing in one that is already
+    /// cancelled is well defined rather than an error: the callback still runs,
+    /// with <c>G_IO_ERROR_CANCELLED</c>, so the task is cancelled.
+    /// </para>
+    /// <para>
+    /// Everything else — the initialisation that must have run, the dispatcher
+    /// thread, the ownership of the result — is as
+    /// <see cref="RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>
+    /// documents it.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="cancellable"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="id"/> contains a null character.
+    /// </exception>
+    /// <exception cref="Gst.GLib.GException">
+    /// The asset could not be built.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// The request was cancelled. It carries no token: what cancelled it is the
+    /// caller's <c>GCancellable</c>, which is not a
+    /// <see cref="CancellationToken"/>.
+    /// </exception>
+    public static Task<GES.Asset> RequestAsync(
+        Gst.GObject.GType extractableType,
+        string? id,
+        Gst.Gio.Cancellable cancellable)
+    {
+        ArgumentNullException.ThrowIfNull(cancellable);
+        return new RequestState(extractableType, id, cancellable).Start();
+    }
 
     /// <summary>
     /// Extracts the object the asset describes, which is a new instance of the
@@ -187,7 +256,7 @@ public unsafe partial class Asset
     private static partial nint GesAssetRequestFinish(nint result, nint* error);
 
     /// <summary>
-    /// The state of one <see cref="RequestAsync"/>.
+    /// The state of one <see cref="RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
     /// There is no owner to keep reachable: <c>ges_asset_request_async</c> is a
@@ -210,6 +279,15 @@ public unsafe partial class Asset
             // than there is also what keeps the rejection of a string with a
             // null character a synchronous ArgumentException, which is what an
             // argument check should be.
+            _id = Gst.Interop.GMarshal.StringToUtf8Ptr(id);
+        }
+
+        internal RequestState(Gst.GObject.GType extractableType, string? id, Gst.Gio.Cancellable cancellable)
+            : base(owner: null, cancellable)
+        {
+            // Same reasoning as the constructor above: the type is unwrapped
+            // and the identifier is copied on the calling thread.
+            _extractableType = extractableType.Value;
             _id = Gst.Interop.GMarshal.StringToUtf8Ptr(id);
         }
 

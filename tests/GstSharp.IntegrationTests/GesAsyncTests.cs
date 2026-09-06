@@ -1,4 +1,5 @@
 using GES;
+using Gst.Gio;
 using Gst.GLib;
 using Gst.GObject;
 using Xunit;
@@ -57,7 +58,8 @@ public sealed class GesAsyncTests
     /// It is the same identifier the editing services would derive from the
     /// type, but <c>ges_asset_request_async</c> in 1.28.6 crashes on a
     /// <c>NULL</c> identifier once the asset is in its cache — see
-    /// <see cref="Asset.RequestAsync"/>, which documents the hazard.
+    /// <see cref="Asset.RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>,
+    /// which documents the hazard.
     /// </para>
     /// </remarks>
     [Fact]
@@ -175,6 +177,92 @@ public sealed class GesAsyncTests
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => request);
 
         Assert.Equal(source.Token, cancellation.CancellationToken);
+    }
+
+    /// <summary>
+    /// The <see cref="Cancellable"/> overload of the cancellation path: a
+    /// <c>GCancellable</c> the caller cancelled before the request was made
+    /// cancels the task, and the cancellation carries no token.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The token overload above says what the mapping is; this says that a
+    /// caller who owns the <c>GCancellable</c> gets the same mapping without a
+    /// <see cref="CancellationToken"/> anywhere in it, and that the object is
+    /// still the caller's afterwards. Nothing in the binding cancelled, reset
+    /// or disposed it: it is still usable, and still cancelled.
+    /// </para>
+    /// <para>
+    /// It is the URI request rather than the asset request for the reason the
+    /// test above gives: an asset request the cache can answer hands the asset
+    /// over regardless of the <c>GCancellable</c> it was given.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public async Task APreCancelledCancellableCancelsTheRequestWithNoToken()
+    {
+        GstGES.Initialize();
+
+        using Cancellable cancellable = Cancellable.New();
+        cancellable.Cancel();
+
+        string uri = $"file:///nonexistent-{Guid.NewGuid():N}.mp4";
+
+        Task<UriClipAsset> request = UriClipAsset.NewAsync(uri, cancellable);
+
+        await Settled(request);
+
+        Assert.True(request.IsCanceled, $"status={request.Status}, error={request.Exception?.InnerException}");
+
+        OperationCanceledException cancellation =
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => request);
+
+        Assert.Equal(CancellationToken.None, cancellation.CancellationToken);
+
+        // The caller's object came through the request untouched.
+        Assert.True(cancellable.IsCancelled);
+    }
+
+    /// <summary>
+    /// The success path of the <see cref="Cancellable"/> overload, and the
+    /// proof that the reference behind it is the binding's own: the caller
+    /// disposes the wrapper while the request is still in flight and the
+    /// request completes anyway.
+    /// </summary>
+    /// <remarks>
+    /// Disposing a wrapper drops the caller's reference to the
+    /// <c>GCancellable</c>. If the state read <c>Handle</c> when it started the
+    /// operation — which happens on another thread, after this method has
+    /// returned from the call — it would read a disposed wrapper. It takes its
+    /// own reference on this thread instead, which is what this measures.
+    /// </remarks>
+    [Fact]
+    public async Task ARequestWithACancellableThatIsDisposedEarlyStillCompletes()
+    {
+        GstGES.Initialize();
+
+        using (TestClip? clip = TestClip.New())
+        {
+            Assert.NotNull(clip);
+        }
+
+        GType testClip = GType.FromName("GESTestClip");
+        Assert.True(testClip.IsValid);
+
+        Cancellable cancellable = Cancellable.New();
+        Task<Asset> request = Asset.RequestAsync(testClip, "GESTestClip", cancellable);
+
+        // The caller is done with it as soon as the request is made, which is
+        // what "using var cancellable = Cancellable.New();" around an
+        // un-awaited request amounts to.
+        cancellable.Dispose();
+
+        await Settled(request);
+
+        using Asset asset = await request;
+
+        Assert.Equal(testClip, asset.ExtractableType);
+        Assert.Equal("GESTestClip", asset.Id);
     }
 
     /// <summary>
