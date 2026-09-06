@@ -354,6 +354,20 @@ internal static class SignalEmitter
                 writer.WriteLine("/// </remarks>");
             }
 
+            if (argument.Argument.Kind == ArgumentKind.ObjectPtrArray)
+            {
+                // The elements are read out of the container before the handler
+                // runs, so the array survives an emission that empties or frees
+                // its own the moment the handler returns.
+                writer.WriteLine("/// <remarks>");
+                writer.WriteLine("/// A snapshot: the elements are read out of the array the emitter passes");
+                writer.WriteLine("/// before the handler runs, and the library frees its own array when the");
+                writer.WriteLine("/// emission ends. The array here is the handler's own and may be kept; the");
+                writer.WriteLine("/// objects in it are the usual borrowed wrappers. An emission that carries");
+                writer.WriteLine("/// no array is the empty array.");
+                writer.WriteLine("/// </remarks>");
+            }
+
             if (argument.Argument.Kind == ArgumentKind.Strv)
             {
                 // The vector the emitter passes is read out into managed
@@ -684,6 +698,13 @@ internal static class SignalEmitter
             // handler would have to test for.
             ArgumentKind.Strv => "Gst.Interop.GMarshal.StrvToArray((nint)" + argument.Name
                 + ", free: false) ?? []",
+
+            // The container belongs to the emission, which may empty it or free
+            // it the moment the handler returns, so every element is read out
+            // into wrappers here and nothing of the container is retained. An
+            // emitter that passes none answers the empty array.
+            ArgumentKind.ObjectPtrArray => "Gst.GLib.PtrArray.ToArray<"
+                + type[..^2] + ">(" + argument.Name + ")",
 
             // The error belongs to the emission and is freed once it returns,
             // so the three fields are copied here and the pointer is never

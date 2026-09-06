@@ -4456,7 +4456,8 @@ internal sealed class MarshalPlanner
         // trampoline cannot see, or an element the runtime has no reader for.
         if (parameter.Type is GirArrayRef array)
         {
-            return PlanSignalStrvArgument(parameter, array, mapped, name, context);
+            return PlanSignalPtrArrayArgument(parameter, array, name, nullable, context)
+                ?? PlanSignalStrvArgument(parameter, array, mapped, name, context);
         }
 
         // The refusal that PlanParameter applies to the in parameter of a
@@ -4521,6 +4522,106 @@ internal sealed class MarshalPlanner
             IsNullable = argument.IsNullable,
             Doc = parameter.Doc,
         };
+    }
+
+    /// <summary>
+    /// Plans a <c>GPtrArray</c> argument of a signal, which is supported in the
+    /// one shape the runtime can read out of the two public fields of the
+    /// container: an array of GObjects the emission only lends.
+    /// </summary>
+    /// <param name="parameter">The gir parameter.</param>
+    /// <param name="array">The array the parameter declares.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="nullable">Whether the annotations allow the emission to pass none.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The plan, or <see langword="null"/> when the array is not this shape.</returns>
+    /// <remarks>
+    /// <para>
+    /// A <c>GPtrArray</c> states its own length, so it is the one container
+    /// besides a string vector that a handler can be handed without a length
+    /// parameter the trampoline cannot see. What is read is bounded to the
+    /// element the runtime has a reader for: a GObject, wrapped through the
+    /// interning table exactly as a plain handle argument is. A boxed, a mini
+    /// object or an opaque element has no such reader and keeps the signal
+    /// unbound.
+    /// </para>
+    /// <para>
+    /// Only <c>transfer-ownership="none"</c> is accepted. A handler owns
+    /// nothing it is passed, and there is no place in an emission that would
+    /// free a container it was given, so both <c>full</c> and
+    /// <c>container</c> stay refused.
+    /// </para>
+    /// <para>
+    /// What the handler sees is an array of its own, read out while the
+    /// emission still holds the container, so the null pointer needs no
+    /// spelling of its own: it arrives as the empty array and the argument is
+    /// not nullable whatever the annotation says.
+    /// </para>
+    /// </remarks>
+    private ArgumentPlan? PlanSignalPtrArrayArgument(
+        GirParameter parameter,
+        GirArrayRef array,
+        string name,
+        bool nullable,
+        PlanningContext context)
+    {
+        if (nullable || PtrArrayElementType(array, parameter.Transfer, GirTransfer.None, context) is not { } element)
+        {
+            return null;
+        }
+
+        return new ArgumentPlan
+        {
+            Source = parameter,
+            Kind = ArgumentKind.ObjectPtrArray,
+            Name = name,
+            PublicType = element + "[]",
+            RawType = "nint",
+            Direction = ArgumentDirection.In,
+            Transfer = GirTransfer.None,
+            IsNullable = false,
+            Doc = parameter.Doc,
+        };
+    }
+
+    /// <summary>
+    /// Returns the C# type of the elements of a <c>GPtrArray</c> the binding
+    /// can read, or <see langword="null"/> when it is not one.
+    /// </summary>
+    /// <param name="array">The array reference to test.</param>
+    /// <param name="transfer">The transfer the gir states.</param>
+    /// <param name="required">The transfer this direction accepts.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The element type, for example <c>GES.Track</c>.</returns>
+    private string? PtrArrayElementType(
+        GirArrayRef array,
+        GirTransfer transfer,
+        GirTransfer required,
+        PlanningContext context)
+    {
+        if (!string.Equals(array.Name, "GLib.PtrArray", StringComparison.Ordinal)
+            || transfer != required
+            || array.LengthParameterIndex is not null
+            || array.FixedSize is not null
+            || array.ElementType is not { } elementType)
+        {
+            return null;
+        }
+
+        MappedType mapped = _types.Map(elementType, context.Namespace);
+        ArgumentPlan? element = PlanScalar(
+            elementType,
+            mapped,
+            "element",
+            ArgumentDirection.In,
+            GirTransfer.None,
+            nullable: false,
+            context,
+            inbound: true);
+
+        return element is { Kind: ArgumentKind.Handle, Flavor: HandleFlavor.GObject }
+            ? element.PublicType
+            : null;
     }
 
     /// <summary>

@@ -864,6 +864,85 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
         }
     }
 
+    /// <summary>The arguments of the <c>group-removed</c> signal of <c>GESTimeline</c>.</summary>
+    public sealed class GroupRemovedSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="GroupRemovedSignalArgs"/> class.</summary>
+        /// <param name="group">The group that was removed from @timeline</param>
+        /// <param name="children">
+        /// A list
+        /// of #GESContainer-s that _were_ the children of the removed @group
+        /// </param>
+        internal GroupRemovedSignalArgs(GES.Group group, GES.Container[] children)
+        {
+            Group = group;
+            Children = children;
+        }
+
+        /// <summary>The group that was removed from @timeline</summary>
+        public GES.Group Group { get; }
+
+        /// <summary>
+        /// A list
+        /// of #GESContainer-s that _were_ the children of the removed @group
+        /// </summary>
+        /// <remarks>
+        /// A snapshot: the elements are read out of the array the emitter passes
+        /// before the handler runs, and the library frees its own array when the
+        /// emission ends. The array here is the handler's own and may be kept; the
+        /// objects in it are the usual borrowed wrappers. An emission that carries
+        /// no array is the empty array.
+        /// </remarks>
+        public GES.Container[] Children { get; }
+    }
+
+    /// <summary>
+    /// Will be emitted after the group is removed from the timeline through
+    /// `ges_container_ungroup`. Note that @group will no longer contain its
+    /// former children, these are held in @children.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Note that if a group is emptied, then it will no longer belong to the
+    /// timeline, but this signal will **not** be emitted in such a case.
+    /// </para>
+    /// </remarks>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<GES.Timeline.GroupRemovedSignalArgs> GroupRemoved
+    {
+        add => GES.SignalConnections.Add(this, "group-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&GroupRemovedTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "group-removed", value);
+    }
+
+    /// <summary>The native handler of the <c>group-removed</c> signal of <c>GESTimeline</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void GroupRemovedTrampoline(nint instance, nint group, nint children, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<GES.Timeline.GroupRemovedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            GES.Group groupValue = Gst.GObject.Object.FromNative<GES.Group>(group, Gst.Interop.Transfer.None)
+                ?? throw new InvalidOperationException("The group-removed signal of GESTimeline passed no group.");
+            GES.Container[] childrenValue = Gst.GLib.PtrArray.ToArray<GES.Container>(children);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.Timeline.GroupRemovedSignalArgs(groupValue, childrenValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The arguments of the <c>layer-added</c> signal of <c>GESTimeline</c>.</summary>
     public sealed class LayerAddedSignalArgs : System.EventArgs
     {

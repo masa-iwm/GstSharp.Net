@@ -504,7 +504,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 6)]
     [InlineData("GstPlay", 13)]
-    [InlineData("GES", 35)]
+    [InlineData("GES", 37)]
     public void TheSignalCensusIsStable(string module, int signals)
     {
         // The two signals whose C# name a method of the same class had taken
@@ -536,12 +536,15 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // A hundred and forty five signals are emitted over the seventeen
-        // modules. A hundred and forty one are events of a class; the
+        // A hundred and forty seven signals are emitted over the seventeen
+        // modules. A hundred and forty three are events of a class; the
         // remaining four belong to a gir interface and are a pair of extension
-        // methods instead. The editing services are thirty five of them, and all
-        // thirty five are events: the one signal of a GES interface,
+        // methods instead. The editing services are thirty seven of them, and
+        // all thirty seven are events: the one signal of a GES interface,
         // GESMetaContainer::notify-meta, carries a GValue and is not bound.
+        // Two of the thirty seven are the pointer array signals, GESLayer's
+        // active-changed and GESTimeline's group-removed, whose container is
+        // read out into an array of wrappers before the handler runs.
         // The six of the transcoder and the thirteen of the play are the
         // signals of GstTranscoderSignalAdapter and GstPlaySignalAdapter,
         // which are classes as well. The two of the RTP module are the
@@ -561,10 +564,10 @@ public sealed class SignalEmitterTests
         // the AddAllSchemas, AddSchema, RemoveAllSchemas and RemoveSchema
         // extensions of Gst.Tag.ITagXmpWriter, methods whose names the pattern
         // cannot tell from a subscription adder or remover.
-        Assert.Equal(141, events);
+        Assert.Equal(143, events);
         Assert.Equal(7, adders);
         Assert.Equal(6, removers);
-        Assert.Equal(145, trampolines);
+        Assert.Equal(147, trampolines);
 
         string[] withSignals =
         [

@@ -65,11 +65,9 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (12)
+### UnsupportedSignature (10)
 
-- `GES.Layer::active-changed`
 - `GES.MetaContainer::notify-meta`
-- `GES.Timeline::group-removed`
 - `GES.Timeline::select-tracks-for-object`
 - `ges_base_effect_set_time_translation_funcs`
 - `ges_command_line_formatter_get_help`

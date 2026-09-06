@@ -430,6 +430,77 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
         set => SetPriority(value);
     }
 
+    /// <summary>The arguments of the <c>active-changed</c> signal of <c>GESLayer</c>.</summary>
+    public sealed class ActiveChangedSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="ActiveChangedSignalArgs"/> class.</summary>
+        /// <param name="active">Whether @layer has been made active or de-active in the @tracks</param>
+        /// <param name="tracks">
+        /// A list of #GESTrack
+        /// which have been activated or deactivated
+        /// </param>
+        internal ActiveChangedSignalArgs(bool active, GES.Track[] tracks)
+        {
+            Active = active;
+            Tracks = tracks;
+        }
+
+        /// <summary>Whether @layer has been made active or de-active in the @tracks</summary>
+        public bool Active { get; }
+
+        /// <summary>
+        /// A list of #GESTrack
+        /// which have been activated or deactivated
+        /// </summary>
+        /// <remarks>
+        /// A snapshot: the elements are read out of the array the emitter passes
+        /// before the handler runs, and the library frees its own array when the
+        /// emission ends. The array here is the handler's own and may be kept; the
+        /// objects in it are the usual borrowed wrappers. An emission that carries
+        /// no array is the empty array.
+        /// </remarks>
+        public GES.Track[] Tracks { get; }
+    }
+
+    /// <summary>
+    /// Will be emitted whenever the layer is activated or deactivated
+    /// for some #GESTrack. See ges_layer_set_active_for_tracks().
+    /// </summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<GES.Layer.ActiveChangedSignalArgs> ActiveChanged
+    {
+        add => GES.SignalConnections.Add(this, "active-changed", (nint)(delegate* unmanaged[Cdecl]<nint, int, nint, nint, void>)&ActiveChangedTrampoline, value);
+        remove => GES.SignalConnections.Remove(this, "active-changed", value);
+    }
+
+    /// <summary>The native handler of the <c>active-changed</c> signal of <c>GESLayer</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void ActiveChangedTrampoline(nint instance, int active, nint tracks, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<GES.Layer.ActiveChangedSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            bool activeValue = active != 0;
+            GES.Track[] tracksValue = Gst.GLib.PtrArray.ToArray<GES.Track>(tracks);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new GES.Layer.ActiveChangedSignalArgs(activeValue, tracksValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The arguments of the <c>clip-added</c> signal of <c>GESLayer</c>.</summary>
     public sealed class ClipAddedSignalArgs : System.EventArgs
     {

@@ -110,6 +110,15 @@ internal enum ArgumentKind
     BorrowedGValue,
 
     /// <summary>
+    /// A <c>GPtrArray</c> of GObjects that a signal carries, read out into a
+    /// managed array of wrappers before the handler runs and built back into a
+    /// fresh array when a handler returns one. The eager copy is the contract:
+    /// the emitting library owns its array and may empty or free it the moment
+    /// the emission ends, so nothing of it is borrowed past the trampoline.
+    /// </summary>
+    ObjectPtrArray,
+
+    /// <summary>
     /// A <c>GError</c> the callee only borrows, projected onto
     /// <c>Gst.GLib.GException</c>. An <c>in</c> parameter is built into a
     /// temporary native error for the duration of the call; a borrowed return
