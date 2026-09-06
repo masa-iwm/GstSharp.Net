@@ -143,6 +143,45 @@ public sealed partial class Query
             ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
     }
 
+    /// <summary>
+    /// Creates a copy of this query.
+    /// </summary>
+    /// <returns>
+    /// The copy, which the caller owns, or <see langword="null"/> when the type
+    /// of the object has no copy function.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_query_copy</c>, hand written for the reason
+    /// <see cref="Gst.Buffer.Copy"/> is: the gir marks the function
+    /// <c>introspectable="0"</c>, so the generator skips it and no overlay can
+    /// bring it back. For C consumers it is a static inline function of
+    /// <c>gst/gstquery.h</c>, and the entry point called here is the
+    /// <c>gst_mini_object_copy</c> it forwards to, which the library exports as
+    /// a real symbol. That call answers NULL for a type that installed no copy
+    /// function, which a query never is; the nullable return states what the C
+    /// promises rather than a narrower promise this binding cannot take back.
+    /// </para>
+    /// <para>
+    /// The copy is a query of the same type carrying a copy of the structure of
+    /// the original rather than the same one (<c>_gst_query_copy</c>,
+    /// gstquery.c:204-217), which is what lets a query outlive the call it was
+    /// handed to. It holds the only reference to itself and is writable as a
+    /// mini object, so an answer may be written into the copy.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Query? Copy()
+    {
+        nint nativeResult = GstNative.MiniObjectCopy(Handle);
+
+        // The query has to outlive the call that reads it: reading Handle is
+        // the last use of this wrapper, and a finalizer that runs in between
+        // would release the query being copied.
+        GC.KeepAlive(this);
+        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>The <c>gst_query_new_custom</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_query_new_custom")]
     private static partial nint GstQueryNewCustom(int type, nint structure);

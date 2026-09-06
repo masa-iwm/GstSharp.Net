@@ -451,6 +451,13 @@ public sealed class SkipRulesTests
         // generated signature can name, so AppSink.PullObject and
         // AppSink.TryPullObject in src/GstSharp.Net.App/Custom read the GType
         // of the answer and let the type registry build the wrapper of it.
+        // gst_mini_object_copy is the newest of the four, and it is the entry
+        // point of four members at once: gst_event_copy, gst_sample_copy,
+        // gst_buffer_list_copy and gst_query_copy are static inline functions
+        // of the C headers that all forward to it, so Event.Copy, Sample.Copy,
+        // BufferList.Copy and Query.Copy in src/GstSharp.Net/Custom share the
+        // one exported symbol; the four inline names are listed beside it
+        // because the ledger names what a member binds, not what it imports.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
@@ -484,6 +491,7 @@ public sealed class SkipRulesTests
                 "gst_buffer_foreach_meta",
                 "gst_buffer_iterate_meta",
                 "gst_buffer_iterate_meta_filtered",
+                "gst_buffer_list_copy",
                 "gst_buffer_new_wrapped_full",
                 "gst_buffer_pool_set_config",
                 "gst_buffer_remove_meta",
@@ -495,6 +503,7 @@ public sealed class SkipRulesTests
                 "gst_element_post_message",
                 "gst_element_send_event",
                 "gst_encoding_container_profile_add_profile",
+                "gst_event_copy",
                 "gst_event_new_custom",
                 "gst_event_new_select_streams",
                 "gst_event_parse_select_streams",
@@ -515,6 +524,7 @@ public sealed class SkipRulesTests
                 "gst_meta_register",
                 "gst_meta_register_custom",
                 "gst_meta_serialize_simple",
+                "gst_mini_object_copy",
                 "gst_mini_object_get_qdata",
                 "gst_mini_object_is_writable",
                 "gst_mini_object_make_writable",
@@ -541,6 +551,7 @@ public sealed class SkipRulesTests
                 "gst_play_visualizations_free",
                 "gst_play_visualizations_get",
                 "gst_promise_reply",
+                "gst_query_copy",
                 "gst_query_new_custom",
                 "gst_query_parse_nth_allocation_param",
                 "gst_rtcp_packet_app_get_data",
@@ -553,6 +564,7 @@ public sealed class SkipRulesTests
                 "gst_rtsp_message_append_headers",
                 "gst_rtsp_mount_points_add_factory",
                 "gst_rtsp_transport_parse",
+                "gst_sample_copy",
                 "gst_structure_get_value",
                 "gst_structure_set_value",
                 "gst_tag_list_add_value",

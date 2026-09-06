@@ -85,7 +85,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (57)
+### HandBound (62)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_copy`
@@ -93,6 +93,7 @@ disappears shows up here as an added line.
 - `gst_buffer_foreach_meta`
 - `gst_buffer_iterate_meta`
 - `gst_buffer_iterate_meta_filtered`
+- `gst_buffer_list_copy`
 - `gst_buffer_new_wrapped_full`
 - `gst_buffer_pool_set_config`
 - `gst_buffer_remove_meta`
@@ -103,6 +104,7 @@ disappears shows up here as an added line.
 - `gst_element_factory_make_with_properties`
 - `gst_element_post_message`
 - `gst_element_send_event`
+- `gst_event_copy`
 - `gst_event_new_custom`
 - `gst_event_new_select_streams`
 - `gst_event_parse_select_streams`
@@ -122,6 +124,7 @@ disappears shows up here as an added line.
 - `gst_meta_register`
 - `gst_meta_register_custom`
 - `gst_meta_serialize_simple`
+- `gst_mini_object_copy`
 - `gst_mini_object_get_qdata`
 - `gst_mini_object_is_writable`
 - `gst_mini_object_make_writable`
@@ -134,8 +137,10 @@ disappears shows up here as an added line.
 - `gst_param_spec_array`
 - `gst_param_spec_fraction`
 - `gst_promise_reply`
+- `gst_query_copy`
 - `gst_query_new_custom`
 - `gst_query_parse_nth_allocation_param`
+- `gst_sample_copy`
 - `gst_structure_get_value`
 - `gst_structure_set_value`
 - `gst_tag_list_add_value`
@@ -275,10 +280,9 @@ disappears shows up here as an added line.
 - `gst_sample_is_writable`
 - `gst_tag_list_is_writable`
 
-### NotIntrospectable (117)
+### NotIntrospectable (112)
 
 - `gst_buffer_is_writable`
-- `gst_buffer_list_copy`
 - `gst_buffer_list_ref`
 - `gst_buffer_list_steal`
 - `gst_buffer_list_unref`
@@ -327,7 +331,6 @@ disappears shows up here as an added line.
 - `gst_element_decorate_stream_id_printf_valist`
 - `gst_element_factory_create_valist`
 - `gst_element_factory_make_valist`
-- `gst_event_copy`
 - `gst_event_ref`
 - `gst_event_replace`
 - `gst_event_steal`
@@ -353,7 +356,6 @@ disappears shows up here as an added line.
 - `gst_message_replace`
 - `gst_message_steal`
 - `gst_message_unref`
-- `gst_mini_object_copy`
 - `gst_mini_object_init`
 - `gst_mini_object_steal`
 - `gst_mini_object_weak_ref`
@@ -365,11 +367,9 @@ disappears shows up here as an added line.
 - `gst_pipeline_set_clock`
 - `gst_poll_new`
 - `gst_poll_new_timer`
-- `gst_query_copy`
 - `gst_query_replace`
 - `gst_query_steal`
 - `gst_query_unref`
-- `gst_sample_copy`
 - `gst_sample_ref`
 - `gst_sample_unref`
 - `gst_structure_get_valist`

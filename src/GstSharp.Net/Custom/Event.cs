@@ -293,6 +293,46 @@ public sealed unsafe partial class Event
         streamIds = ids;
     }
 
+    /// <summary>
+    /// Creates a copy of this event.
+    /// </summary>
+    /// <returns>
+    /// The copy, which the caller owns, or <see langword="null"/> when the type
+    /// of the object has no copy function.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_event_copy</c>, hand written for the reason
+    /// <see cref="Gst.Buffer.Copy"/> is: the gir marks the function
+    /// <c>introspectable="0"</c>, so the generator skips it and no overlay can
+    /// bring it back. For C consumers it is a static inline function of
+    /// <c>gst/gstevent.h</c>, and the entry point called here is the
+    /// <c>gst_mini_object_copy</c> it forwards to, which the library exports as
+    /// a real symbol. That call answers NULL for a type that installed no copy
+    /// function, which a event never is; the nullable return states what the C
+    /// promises rather than a narrower promise this binding cannot take back.
+    /// </para>
+    /// <para>
+    /// The copy is an event of the same type carrying the timestamp, the
+    /// sequence number and the running time offset of the original, and the
+    /// structure of the original is copied with it rather than shared
+    /// (<c>_gst_event_copy</c>, gstevent.c:268-292). The copy holds the only
+    /// reference to itself, so it is writable as a mini object where the
+    /// original, which is usually still travelling, is not.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Event? Copy()
+    {
+        nint nativeResult = GstNative.MiniObjectCopy(Handle);
+
+        // The event has to outlive the call that reads it: reading Handle is
+        // the last use of this wrapper, and a finalizer that runs in between
+        // would release the event being copied.
+        GC.KeepAlive(this);
+        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>The <c>gst_event_new_custom</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_event_new_custom")]
     private static partial nint GstEventNewCustom(int type, nint structure);

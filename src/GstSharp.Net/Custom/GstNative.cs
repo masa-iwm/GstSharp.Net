@@ -134,6 +134,27 @@ internal static unsafe partial class GstNative
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_make_writable")]
     internal static partial nint MiniObjectMakeWritable(nint miniObject);
 
+    /// <summary>
+    /// Creates a copy of a mini object, whatever its type is.
+    /// </summary>
+    /// <param name="miniObject">The object to copy.</param>
+    /// <returns>
+    /// The copy, which the caller owns, or <see cref="nint.Zero"/> when the
+    /// type of the object has no copy function.
+    /// </returns>
+    /// <remarks>
+    /// This is the exported entry point the per type copies of the headers
+    /// forward to: <c>gst_event_copy</c>, <c>gst_sample_copy</c>,
+    /// <c>gst_buffer_list_copy</c> and <c>gst_query_copy</c> are static inline
+    /// functions of the C headers, and the gir marks every one of them
+    /// <c>introspectable="0"</c>, so nothing generates them. The C dispatches
+    /// to the copy function the type installed and answers NULL when the type
+    /// installed none (gstminiobject.c:182-206); the object it answers carries
+    /// the <c>GType</c> of the original and starts unshared and unlocked.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_mini_object_copy")]
+    internal static partial nint MiniObjectCopy(nint miniObject);
+
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_get_qdata")]
     internal static partial nint MiniObjectGetQData(nint miniObject, uint quark);
 
