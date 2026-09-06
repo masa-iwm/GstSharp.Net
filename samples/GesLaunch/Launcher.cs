@@ -432,7 +432,7 @@ internal static class Launcher
     private static bool SetUserOptions(Timeline timeline, Options options)
     {
         // Before anything else, because the tracks the rest of this method
-        // works on are the ones it builds (ges-launcher.c:772-810).
+        // works on are the ones it builds (ges-launcher.c:773-810).
         if (options.ProfileFrom is string named && !RebuildTracksFrom(timeline, named))
         {
             return false;
@@ -687,7 +687,7 @@ internal static class Launcher
     /// <summary>
     /// Rebuilds the tracks of the timeline out of the streams of a named clip,
     /// which is the <c>--profile-from</c> branch of
-    /// <c>_timeline_set_user_options</c> at <c>ges-launcher.c:772-810</c>.
+    /// <c>_timeline_set_user_options</c> at <c>ges-launcher.c:773-810</c>.
     /// </summary>
     /// <param name="timeline">The timeline whose tracks are replaced.</param>
     /// <param name="name">The name the clip was given in the description.</param>
@@ -711,18 +711,23 @@ internal static class Launcher
         }
 
         // The discoverer information belongs to the asset, and the stream
-        // information objects belong to it in turn, so nothing here is
+        // information objects belong to it in turn, so none of those is
         // disposed; see docs/ownership.md on GObject wrappers.
         DiscovererInfo info = asset.GetInfo();
 
+        // The tracks, on the other hand, are built here, so they are disposed
+        // here: the track parameter of ges_timeline_add_track is transfer none
+        // and the timeline takes a reference of its own.
         for (int i = info.GetAudioStreams().Count; i > 0; i--)
         {
-            timeline.AddTrack(AudioTrack.New());
+            using Track track = AudioTrack.New();
+            timeline.AddTrack(track);
         }
 
         for (int i = info.GetVideoStreams().Count; i > 0; i--)
         {
-            timeline.AddTrack(VideoTrack.New());
+            using Track track = VideoTrack.New();
+            timeline.AddTrack(track);
         }
 
         return true;
@@ -781,7 +786,7 @@ internal static class Launcher
 
     /// <summary>
     /// Reads the encoding profile out of a named clip, which is
-    /// <c>_get_profile_from</c> at <c>ges-launcher.c:490-505</c>.
+    /// <c>_get_profile_from</c> at <c>ges-launcher.c:491-505</c>.
     /// </summary>
     /// <param name="timeline">The timeline the clip is on.</param>
     /// <param name="name">The name of the clip.</param>
@@ -885,7 +890,7 @@ internal static class Launcher
 
     /// <summary>
     /// Counts the audio and the video tracks of the timeline, which is
-    /// <c>_check_has_audio_video</c> at <c>ges-launcher.c:412-425</c>.
+    /// <c>_check_has_audio_video</c> at <c>ges-launcher.c:413-425</c>.
     /// </summary>
     /// <param name="timeline">The timeline to count.</param>
     /// <returns>How many tracks of each kind it has.</returns>

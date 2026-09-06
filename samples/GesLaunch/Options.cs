@@ -355,7 +355,8 @@ internal sealed class Options
         Console.WriteLine("  -f, --format <profile>     The serialized encoding profile to render with.");
         Console.WriteLine("  -e, --encoding-profile <n> The name of a profile the loaded project carries.");
         Console.WriteLine("      --profile-from <name>  Build the profile and the tracks from the named clip.");
-        Console.WriteLine("      --container-profile <p> Re-parent the profile tree into this muxer profile.");
+        Console.WriteLine("      --container-profile <p>");
+        Console.WriteLine("                             Re-parent the profile tree into this muxer profile.");
         Console.WriteLine("      --forward-tags         Forward the tags of the input files to the output.");
         Console.WriteLine("      --smart-rendering      Avoid reencoding; implies --disable-mixing. Without");
         Console.WriteLine("                             --format the profile comes from the discoverer");

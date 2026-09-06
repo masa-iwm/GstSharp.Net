@@ -49,6 +49,11 @@
 // the run did not finish within --timeout. Ctrl+C ends the run rather than the
 // process, so that the pipeline is back in NULL and a render is not truncated.
 //
+// Of the rendering options, --profile-from and --container-profile are ported
+// as they read: the first rebuilds the track topology out of the discoverer
+// information of a named clip and reads the encoding profile out of it, the
+// second re-parents the profile tree under a bare muxer profile.
+//
 // What is deliberately different from the C tool:
 //
 //   * --timeout <seconds> is not a ges-launch option. It bounds the load and
@@ -92,11 +97,6 @@
 //     type is registered on demand, so a transition clip is created first when
 //     the name is not known yet.
 //
-//   * --profile-from and --container-profile are ported as they read: the
-//     first rebuilds the track topology out of the discoverer information of
-//     a named clip and reads the encoding profile out of it, the second
-//     re-parents the profile tree under a bare muxer profile.
-//
 //   * get_smart_profile (ges-launcher.c:507-575), which --smart-rendering
 //     reaches when neither --format nor the project named a profile, picks the
 //     *least* common profile among the clips of the timeline, not the most
@@ -109,7 +109,11 @@
 //
 //   * --embed-nesteds disposes the sub project asset once the project has it.
 //     ges_project_add_asset takes a reference of its own, so the C tool leaks
-//     one reference per nested project by never giving its own back.
+//     one reference per nested project by never giving its own back. A nested
+//     project whose asset cannot be requested is reported on stderr and
+//     skipped; the C tool asks ges_asset_request for no error at all and hands
+//     the nothing it got back to ges_project_add_asset - a g_return_val_if_fail
+//     critical - before going on to the next clip all the same.
 //
 //   * Every run that renders prints one line saying which of --format, the
 //     project, --profile-from, smart rendering, the output file extension or
