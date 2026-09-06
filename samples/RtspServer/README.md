@@ -1,7 +1,8 @@
 # RtspServer
 
 The port of `gst-rtsp-server`'s `examples/test-launch.c`. It serves one mount
-point, `/test`, whose media is built from a `gst-launch` description, and it
+point, `/test` unless `--mount` says otherwise, whose media is built from a
+`gst-launch` description, and it
 demonstrates the shutdown order that `docs/ownership.md` describes under
 "RTSP server".
 
@@ -22,6 +23,8 @@ stream of the media.
 | `[launch line]` | the test tone above | The description every media is built from. |
 | `--port` | `8554` | The service to listen on. It is a string, so a name from the services database works too, and `0` lets the operating system pick a free port — the URL that is printed always names the port that was bound. |
 | `--address` | `0.0.0.0` | The address to listen on, as `test-launch.c` does. The default accepts connections from every interface; pass `127.0.0.1` to serve the loopback only. |
+| `--mount` | `/test` | The path the factory is mounted at, which is the path part of the URL that is served. It has to start with a slash. Upstream spells this `-m`/`--mount`; this sample has long options only. |
+| `--disable-rtcp` | off | Builds the media without RTCP, by calling `SetEnableRtcp(false)` on the factory before it is mounted. The binding mirrors the library's `enable-rtcp` property rather than an inverted name, so the flag is negated at the call. |
 | `--timeout` | `0` | How many seconds to serve. Zero, the default, serves until Ctrl-C. |
 | `--native-path`, `--flavor` | | Where to look for the native GStreamer, as in the other samples. |
 

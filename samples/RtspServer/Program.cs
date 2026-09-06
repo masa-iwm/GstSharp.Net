@@ -3,12 +3,22 @@
 // itself down in the documented order when it is asked to stop.
 //
 // Usage: RtspServer [<launch line>] [--port <port>] [--address <address>]
+//                   [--mount <path>] [--disable-rtcp]
 //                   [--native-path <directory>] [--flavor msvc|mingw]
 //                   [--timeout <seconds>]
 //
 // Without a launch line it serves a test tone, so that the sample runs on a
 // machine with no media on it. With --timeout 0, which is the default, it
 // serves until Ctrl-C.
+//
+// --mount and --disable-rtcp are the two options of test-launch.c that this
+// port was missing. Upstream spells the first one -m/--mount; this sample has
+// only long options, so only --mount is here. The path has to start with a
+// slash, because that is what a mount point is. --disable-rtcp is the same
+// name as upstream's and it is the same call, negated: the library property is
+// enable-rtcp, so the flag turns into SetEnableRtcp(false), and it is set
+// before the factory is mounted -- a factory that is already mounted can have
+// been asked for a media, and the setting is read when a media is built.
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -24,8 +34,8 @@ internal static class RtspServerSample
     /// <summary>The pipeline the mount point is built from by default.</summary>
     private const string DefaultLaunch = "( audiotestsrc ! audioconvert ! rtpL16pay name=pay0 pt=96 )";
 
-    /// <summary>The path the factory is mounted at.</summary>
-    private const string Mount = "/test";
+    /// <summary>The path the factory is mounted at unless --mount says otherwise.</summary>
+    private const string DefaultMount = "/test";
 
     /// <summary>How long the asynchronous half of the shutdown may take.</summary>
     private static readonly TimeSpan ShutdownDeadline = TimeSpan.FromSeconds(10);
@@ -60,6 +70,8 @@ internal static class RtspServerSample
             Console.WriteLine($"flavor:      {NativeLoader.ResolvedFlavor?.ToString() ?? "not applicable"}");
             Console.WriteLine($"directory:   {NativeLoader.ResolvedDirectory ?? "the process search path"}");
             Console.WriteLine($"launch:      {options.Launch}");
+            Console.WriteLine($"mount:       {options.Mount}");
+            Console.WriteLine($"rtcp:        {(options.DisableRtcp ? "disabled" : "enabled")}");
 
             // The server runs on a context of this sample's own rather than on
             // the default one, and this thread is what iterates it. That is
@@ -89,6 +101,17 @@ internal static class RtspServerSample
             factory.SetLaunch(options.Launch);
             factory.SetShared(true);
 
+            if (options.DisableRtcp)
+            {
+                // The C tool calls gst_rtsp_media_factory_set_enable_rtcp
+                // (factory, !disable_rtcp); the binding mirrors the library's
+                // enable-rtcp property rather than an inverted name, so the
+                // flag is negated here. It has to be set before the factory is
+                // mounted: every media the factory builds reads it, and a
+                // mounted factory can be asked for one at any moment.
+                factory.SetEnableRtcp(false);
+            }
+
             // Connected before the mount, the way test-launch.c connects its
             // own media-constructed handler. The
             // hand written AddFactory is what makes that hold: it mints the
@@ -96,7 +119,7 @@ internal static class RtspServerSample
             // handler with it - alive. See docs/ownership.md.
             factory.MediaConfigure += OnMediaConfigure;
 
-            mounts.AddFactory(Mount, factory);
+            mounts.AddFactory(options.Mount, factory);
 
             uint sourceId = server.Attach(context);
             if (sourceId == 0)
@@ -110,7 +133,7 @@ internal static class RtspServerSample
             string host = options.Address is "0.0.0.0" or "::" ? "127.0.0.1" : options.Address;
             Console.WriteLine(string.Create(
                 CultureInfo.InvariantCulture,
-                $"stream:      rtsp://{host}:{server.GetBoundPort()}{Mount}"));
+                $"stream:      rtsp://{host}:{server.GetBoundPort()}{options.Mount}"));
 
             return Serve(server, context, sourceId, options.Timeout);
         }
@@ -323,6 +346,12 @@ internal static class RtspServerSample
         /// <summary>Gets the address to listen on.</summary>
         internal string Address { get; private set; } = "0.0.0.0";
 
+        /// <summary>Gets the path the factory is mounted at.</summary>
+        internal string Mount { get; private set; } = DefaultMount;
+
+        /// <summary>Gets whether the media are built without RTCP.</summary>
+        internal bool DisableRtcp { get; private set; }
+
         /// <summary>Gets how long to serve, or zero to serve until Ctrl-C.</summary>
         internal TimeSpan Timeout { get; private set; }
 
@@ -350,6 +379,22 @@ internal static class RtspServerSample
 
                     case "--address":
                         options.Address = ValueOf(arguments, ref i);
+                        break;
+
+                    case "--mount":
+                        options.Mount = ValueOf(arguments, ref i);
+
+                        if (!options.Mount.StartsWith('/'))
+                        {
+                            throw new ArgumentException(
+                                $"\"{options.Mount}\" is not a mount point. It has to start with a slash.",
+                                nameof(arguments));
+                        }
+
+                        break;
+
+                    case "--disable-rtcp":
+                        options.DisableRtcp = true;
                         break;
 
                     case "--native-path":
