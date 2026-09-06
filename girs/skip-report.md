@@ -89,12 +89,13 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (48)
+### HandBound (52)
 
 - `gst_buffer_copy`
 - `gst_buffer_extract`
 - `gst_buffer_foreach_meta`
 - `gst_buffer_iterate_meta`
+- `gst_buffer_iterate_meta_filtered`
 - `gst_buffer_new_wrapped_full`
 - `gst_buffer_pool_set_config`
 - `gst_buffer_remove_meta`
@@ -119,6 +120,9 @@ disappears shows up here as an added line.
 - `gst_message_parse_property_notify`
 - `gst_message_parse_warning`
 - `gst_meta_api_type_aggregate_params`
+- `gst_meta_info_new`
+- `gst_meta_info_register`
+- `gst_meta_register`
 - `gst_meta_register_custom`
 - `gst_meta_serialize_simple`
 - `gst_mini_object_is_writable`
@@ -270,10 +274,9 @@ disappears shows up here as an added line.
 - `gst_sample_is_writable`
 - `gst_tag_list_is_writable`
 
-### NotIntrospectable (115)
+### NotIntrospectable (112)
 
 - `gst_buffer_is_writable`
-- `gst_buffer_iterate_meta_filtered`
 - `gst_buffer_list_copy`
 - `gst_buffer_list_ref`
 - `gst_buffer_list_steal`
@@ -349,8 +352,6 @@ disappears shows up here as an added line.
 - `gst_message_replace`
 - `gst_message_steal`
 - `gst_message_unref`
-- `gst_meta_info_new`
-- `gst_meta_register`
 - `gst_object_get_value_array`
 - `gst_object_ref_sink`
 - `gst_pad_create_stream_id_printf_valist`
@@ -388,7 +389,7 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (27)
+### OverlaySkip (26)
 
 - `gst_allocator_free`
 - `gst_buffer_pool_release_buffer`
@@ -402,7 +403,6 @@ disappears shows up here as an added line.
 - `gst_id_str_set_static_str_with_len`
 - `gst_iterator_new_list`
 - `gst_meta_api_type_set_params_aggregator`
-- `gst_meta_info_register`
 - `gst_mini_object_set_qdata`
 - `gst_plugin_feature_list_free`
 - `gst_plugin_list_free`
