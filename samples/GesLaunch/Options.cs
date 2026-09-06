@@ -346,7 +346,9 @@ internal sealed class Options
         Console.WriteLine("      --profile-from <name>  Build the profile and the tracks from the named clip.");
         Console.WriteLine("      --container-profile <p> Re-parent the profile tree into this muxer profile.");
         Console.WriteLine("      --forward-tags         Forward the tags of the input files to the output.");
-        Console.WriteLine("      --smart-rendering      Avoid reencoding; implies --disable-mixing.");
+        Console.WriteLine("      --smart-rendering      Avoid reencoding; implies --disable-mixing. Without");
+        Console.WriteLine("                             --format the profile comes from the discoverer");
+        Console.WriteLine("                             information of the clips of the timeline.");
         Console.WriteLine();
         Console.WriteLine("Playback options:");
         Console.WriteLine("  -v, --videosink <desc>     The video sink of the preview.");

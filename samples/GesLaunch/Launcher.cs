@@ -501,15 +501,16 @@ internal static class Launcher
 
     /// <summary>
     /// Decides between preview and render, which is
-    /// <c>_set_rendering_details</c> at <c>ges-launcher.c:589-747</c> without
-    /// the <c>get_smart_profile</c> attempt that <c>--smart-rendering</c> makes
-    /// before the file extension (<c>ges-launcher.c:507-575</c>); see the
-    /// header of Program.cs.
+    /// <c>_set_rendering_details</c> at <c>ges-launcher.c:589-747</c>.
     /// </summary>
     /// <param name="pipeline">The pipeline to configure.</param>
     /// <param name="project">The project, which may carry profiles of its own.</param>
     /// <param name="timeline">
-    /// The timeline, which <c>--profile-from</c> reads the named clip of.
+    /// The timeline, which <c>--profile-from</c> and the smart profile read the
+    /// clips and the tracks of. It has been through
+    /// <see cref="SetUserOptions"/> already, so the track counts the smart
+    /// profile compares against are the final ones, which is the order of the C
+    /// tool at <c>ges-launcher.c:932-937</c>.
     /// </param>
     /// <param name="options">The command line.</param>
     /// <returns><see langword="false"/> when there is nothing to render with.</returns>
@@ -570,11 +571,19 @@ internal static class Launcher
                 if (format is null)
                 {
                     // The chain of ges-launcher.c:628-638: the named clip
-                    // first, and only then the extension of the output file.
+                    // first, then the smart profile, and only then the
+                    // extension of the output file.
                     if (options.ProfileFrom is string named)
                     {
                         profile = created = ProfileFromNamedClip(timeline, named);
                         source = $"--profile-from {named}";
+                    }
+                    else if (options.SmartRendering)
+                    {
+                        profile = created = SmartProfile(timeline, out int candidates);
+                        source = string.Create(
+                            CultureInfo.InvariantCulture,
+                            $"smart rendering ({candidates} candidate profiles)");
                     }
 
                     if (profile is null)
@@ -734,6 +743,30 @@ internal static class Launcher
     }
 
     /// <summary>
+    /// Answers the asset of every uri clip on the timeline, which is
+    /// <c>_timeline_assets</c> at <c>ges-launcher.c:445-463</c>.
+    /// </summary>
+    /// <param name="timeline">The timeline to walk.</param>
+    /// <returns>The assets, in the order the C tool collects them.</returns>
+    private static List<UriClipAsset> TimelineAssets(Timeline timeline)
+    {
+        List<UriClipAsset> assets = [];
+
+        foreach (Layer layer in timeline.GetLayers())
+        {
+            foreach (Clip clip in layer.GetClips())
+            {
+                if (clip is UriClip && clip.GetAsset() is UriClipAsset asset)
+                {
+                    assets.Add(asset);
+                }
+            }
+        }
+
+        return assets;
+    }
+
+    /// <summary>
     /// Reads the encoding profile out of a named clip, which is
     /// <c>_get_profile_from</c> at <c>ges-launcher.c:490-505</c>.
     /// </summary>
@@ -749,6 +782,119 @@ internal static class Launcher
         AssetForNamedClip(timeline, name) is { } asset
             ? EncodingProfile.FromDiscoverer(asset.GetInfo())
             : null;
+
+    /// <summary>
+    /// Builds the encoding profile <c>--smart-rendering</c> renders with when
+    /// no format was named, which is <c>get_smart_profile</c> at
+    /// <c>ges-launcher.c:507-575</c>.
+    /// </summary>
+    /// <param name="timeline">The timeline whose clips are read.</param>
+    /// <param name="candidates">How many distinct profiles qualified.</param>
+    /// <returns>
+    /// The profile, which the caller owns, or <see langword="null"/> when no
+    /// clip of the timeline carries enough streams for its tracks.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// <b>The profile this picks is the least common one</b>, not the most
+    /// common one: <c>sort_encoding_profiles</c> (<c>ges-launcher.c:428-443</c>)
+    /// orders the candidates by how many assets carried them <i>ascending</i>,
+    /// and the C tool takes the head of that list. That reads like a bug and is
+    /// left alone here, because this is a port and not a rewrite.
+    /// </para>
+    /// <para>
+    /// The C tool keeps the count on the profile object itself, in a
+    /// <c>"__n_instances"</c> qdata (<c>ges-launcher.c:427</c>); the counts are
+    /// kept beside the profiles here instead, which needs no qdata primitive
+    /// and says the same thing.
+    /// </para>
+    /// <para>
+    /// The <c>--profile-from</c> re-check the C function opens with
+    /// (<c>ges-launcher.c:514-526</c>) is not ported: its only call site is the
+    /// <c>else if</c> of an <c>if (profile_from)</c>, so it is unreachable.
+    /// </para>
+    /// </remarks>
+    private static EncodingProfile? SmartProfile(Timeline timeline, out int candidates)
+    {
+        (int audio, int video) = TrackCounts(timeline);
+
+        List<(EncodingProfile Profile, int Count)> possible = [];
+
+        foreach (UriClipAsset asset in TimelineAssets(timeline))
+        {
+            DiscovererInfo info = asset.GetInfo();
+
+            // Enough streams of each kind to feed every track of that kind.
+            if (info.GetAudioStreams().Count < audio || info.GetVideoStreams().Count < video)
+            {
+                continue;
+            }
+
+            if (EncodingProfile.FromDiscoverer(info) is not { } built)
+            {
+                continue;
+            }
+
+            int known = possible.FindIndex(entry => entry.Profile.IsEqual(built));
+
+            if (known >= 0)
+            {
+                // The same profile a second time. The one just built is a
+                // duplicate nothing else holds, so it goes.
+                built.Dispose();
+                possible[known] = (possible[known].Profile, possible[known].Count + 1);
+                continue;
+            }
+
+            // Prepended, because the C tool prepends and then sorts with the
+            // stable sort of GLib, which leaves the last of a tie at the head.
+            possible.Insert(0, (built, 1));
+        }
+
+        candidates = possible.Count;
+
+        if (possible.Count == 0)
+        {
+            return null;
+        }
+
+        List<(EncodingProfile Profile, int Count)> sorted = [.. possible.OrderBy(entry => entry.Count)];
+
+        // Everything that was built here and not chosen is disposed, which is
+        // the g_list_free_full of ges-launcher.c:572.
+        for (int i = 1; i < sorted.Count; i++)
+        {
+            sorted[i].Profile.Dispose();
+        }
+
+        return sorted[0].Profile;
+    }
+
+    /// <summary>
+    /// Counts the audio and the video tracks of the timeline, which is
+    /// <c>_check_has_audio_video</c> at <c>ges-launcher.c:412-425</c>.
+    /// </summary>
+    /// <param name="timeline">The timeline to count.</param>
+    /// <returns>How many tracks of each kind it has.</returns>
+    private static (int Audio, int Video) TrackCounts(Timeline timeline)
+    {
+        int audio = 0;
+        int video = 0;
+
+        foreach (Track track in timeline.GetTracks())
+        {
+            if (track.TrackType == TrackType.Video)
+            {
+                video++;
+            }
+            else if (track.TrackType == TrackType.Audio)
+            {
+                audio++;
+            }
+        }
+
+        return (audio, video);
+    }
 
     /// <summary>
     /// Re-parents a profile tree into a container profile, which is the
