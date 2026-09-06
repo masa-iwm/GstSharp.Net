@@ -71,8 +71,8 @@ GstSharp.GioAsyncContext = Gst.GLib.MainContext.Default;
 ```
 
 The binding's thread is then never started — the property is read before the
-`Lazy` that would start it — and both halves of every operation run inside the
-application's own iteration. Three things are the application's part of the
+`Lazy` that would start it — and both halves of every operation run on the
+application's context. Three things are the application's part of the
 bargain:
 
 * **Iterate the context.** A context that is set here and never iterated is the

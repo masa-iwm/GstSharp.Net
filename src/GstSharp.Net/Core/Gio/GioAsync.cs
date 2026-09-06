@@ -110,6 +110,7 @@ internal abstract class GioAsyncState
 
     private Cancellable? _cancellable;
     private CancellationTokenRegistration _registration;
+    private Cancellable? _borrowedWrapper;
     private nint _borrowed;
     private nint _context;
 
@@ -138,18 +139,22 @@ internal abstract class GioAsyncState
     /// there is none.
     /// </param>
     /// <param name="cancellable">
-    /// The token the caller wants the operation to watch. It is borrowed: the
-    /// binding never cancels, resets or disposes it.
+    /// The <c>GCancellable</c> the caller wants the operation to watch. It is
+    /// borrowed: the binding never cancels, resets or disposes it.
     /// </param>
     /// <remarks>
-    /// The native reference is taken <em>here</em>, on the calling thread,
-    /// rather than read out of the wrapper when the operation starts. The
-    /// operation starts on another thread and completes on another thread
-    /// again, while a caller writing <c>using var cancellable =
-    /// Cancellable.New();</c> is writing ordinary code: reading
-    /// <c>Handle</c> later could therefore find a disposed wrapper. A borrowed
-    /// object that has to outlive the call it was passed to gets a reference of
-    /// its own, which is the same rule the rest of the binding follows.
+    /// The constructor only holds the wrapper. The native reference is taken in
+    /// <see cref="Post"/>, which still runs on the calling thread but is the
+    /// first point from which <see cref="Cleanup"/> is reached on every path:
+    /// taking it here would leak it when a subclass constructor throws after
+    /// chaining — an identifier with an embedded null character is exactly
+    /// that. Taking it on the calling thread rather than when the operation
+    /// starts is the part that matters, because the operation starts on another
+    /// thread, and a caller writing <c>using var cancellable =
+    /// Cancellable.New();</c> is writing ordinary code: reading <c>Handle</c>
+    /// later could find a disposed wrapper. A borrowed object that has to
+    /// outlive the call it was passed to gets a reference of its own, which is
+    /// the same rule the rest of the binding follows.
     /// </remarks>
     protected GioAsyncState(Gst.GObject.Object? owner, Cancellable cancellable)
     {
@@ -157,8 +162,7 @@ internal abstract class GioAsyncState
 
         _owner = owner;
         _token = default;
-        _borrowed = GObjectNative.ObjectRef(cancellable.Handle);
-        GC.KeepAlive(cancellable);
+        _borrowedWrapper = cancellable;
     }
 
     /// <summary>
@@ -192,6 +196,18 @@ internal abstract class GioAsyncState
 
         try
         {
+            // The reference of the state's own, taken on the calling thread
+            // while the caller's wrapper is certainly still alive. Exchanging
+            // the wrapper for null is what keeps it to one reference: a second
+            // hand over of the same state would otherwise take a second one,
+            // the same way Start is guarded against being called twice.
+            Cancellable? borrowed = Interlocked.Exchange(ref _borrowedWrapper, null);
+            if (borrowed is not null)
+            {
+                _borrowed = GObjectNative.ObjectRef(borrowed.Handle);
+                GC.KeepAlive(borrowed);
+            }
+
             AttachCancellation();
 
             // Which context the operation runs on is decided once, here, so
@@ -414,7 +430,9 @@ internal abstract class GioAsyncState<T> : GioAsyncState
     /// <c>GCancellable</c> the caller owns.
     /// </summary>
     /// <param name="owner">The wrapper to keep reachable, or <see langword="null"/>.</param>
-    /// <param name="cancellable">The token the caller passed in, which is borrowed.</param>
+    /// <param name="cancellable">
+    /// The <c>GCancellable</c> the caller passed in, which is borrowed.
+    /// </param>
     protected GioAsyncState(Gst.GObject.Object? owner, Cancellable cancellable)
         : base(owner, cancellable)
     {

@@ -226,17 +226,17 @@ public sealed class GesAsyncTests
     }
 
     /// <summary>
-    /// The success path of the <see cref="Cancellable"/> overload, and the
-    /// proof that the reference behind it is the binding's own: the caller
-    /// disposes the wrapper while the request is still in flight and the
-    /// request completes anyway.
+    /// The success path of the <see cref="Cancellable"/> overload: a request
+    /// that watches a <c>GCancellable</c> the caller owns answers the asset,
+    /// and the caller is free of the object as soon as the call returns.
     /// </summary>
     /// <remarks>
-    /// Disposing a wrapper drops the caller's reference to the
-    /// <c>GCancellable</c>. If the state read <c>Handle</c> when it started the
-    /// operation — which happens on another thread, after this method has
-    /// returned from the call — it would read a disposed wrapper. It takes its
-    /// own reference on this thread instead, which is what this measures.
+    /// The wrapper is disposed while the request is still in flight, and the
+    /// request completes anyway: the binding holds nothing the caller has to
+    /// keep alive for it. That is a positive statement rather than a proof of
+    /// the reference the state takes — <c>ges_asset_request_async</c> answers a
+    /// cached asset out of a <c>GTask</c> built with no <c>GCancellable</c> at
+    /// all, so it never touches the object either way.
     /// </remarks>
     [Fact]
     public async Task ARequestWithACancellableThatIsDisposedEarlyStillCompletes()

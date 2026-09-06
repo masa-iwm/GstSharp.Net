@@ -74,7 +74,8 @@ public unsafe partial class UriClipAsset
     /// </summary>
     /// <param name="uri">The URI of the file the asset describes.</param>
     /// <param name="cancellable">
-    /// The token the request watches. It is <em>borrowed</em>: the binding
+    /// The <c>GCancellable</c> the request watches. It is <em>borrowed</em>: the
+    /// binding
     /// takes a reference of its own for the duration of the request and
     /// releases that reference when the request completes, but it never
     /// cancels, resets or disposes the object. Abandoning the request is the
