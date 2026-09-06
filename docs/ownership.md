@@ -170,6 +170,57 @@ step is a use after free. `Buffer.ForeachMeta` is the way to remove while
 walking, because the library captures the successor of an item before it hands
 it to the function.
 
+### Authoring a metadata implementation
+
+`Gst.Meta.Register<T>` registers an implementation whose item is a `GstMeta`
+header followed by exactly one `T`, and `Gst.Meta.Payload<T>()` is how that `T`
+is reached again. `T` has to be `unmanaged`, and its alignment requirement must
+not exceed eight bytes: the payload starts at the size of the header rounded up
+to eight, and the library allocates an item with `g_malloc`, which promises
+nothing stronger.
+
+The registration is **for the life of the process**. The library keeps every
+implementation it registered in a table it only empties in `gst_deinit` and
+offers no way of taking one back, so the delegates handed to `Register<T>` are
+never released and whatever they capture is rooted for as long. A name is a
+`GType` name, so it can only be registered once: a second registration under the
+same name throws `InvalidOperationException`, and the implementation that owns
+the name is untouched by the refusal. Register once, at start-up, and keep the
+`Gst.MetaInfo` that comes back.
+
+What each delegate has to promise:
+
+* **`MetaInitFunction`** runs inside `Buffer.AddMeta`, on the item that was just
+  attached, with the `params` pointer of that call. The payload is zero filled
+  before it runs. Answering `false` makes `AddMeta` answer `null` and the
+  library frees the item **without calling the release delegate**, so an
+  initialisation that fails half way has to undo its own work itself.
+* **`MetaFreeFunction`** runs immediately before the item memory is freed, from
+  a buffer being finalised, from `RemoveMeta` and from a removal a
+  `ForeachMeta` walk honoured. The buffer wrapper it is handed is disposed when
+  the delegate returns — the buffer is being freed or has just lost the item, so
+  the delegate must not keep, reference or return it. The **item** wrapper is
+  detached when the delegate returns as well, so a caller that filed it away
+  meets `ObjectDisposedException` rather than freed memory.
+* **`MetaTransformFunction`** is called on the item of the **source** buffer and
+  has to add an item to the destination buffer itself; answering `false` is only
+  logged by the library and the copy goes on. A registration **without** a
+  transformation is not carried across a copy at all, which is what a null
+  `transform_func` means in C. A copy passes the quark of `"gst-copy"` and the
+  address of a `Gst.MetaTransformCopy`.
+* **`MetaSerializeFunction`** appends the payload through
+  `Gst.ByteArrayInterface.Append` and may write a version byte;
+  **`MetaDeserializeFunction`** reads it back, adds an item to the buffer it is
+  handed and answers that item. Both arrived in GStreamer 1.24.
+* **`MetaClearFunction`** is called only by `GstBufferPool`, when a buffer goes
+  back to its pool, and takes the buffer first, as it does in C.
+
+All six run on whatever thread touches the buffer, which is usually a streaming
+thread and never one the caller chose. An exception that escapes one of them is
+caught on the boundary and handed to `Gst.Interop.ExceptionTrap`, and the
+callback answers its own default — `false` for the initialisation, the
+transformation and the serialisation, nothing for the deserialisation.
+
 ## GObject wrappers
 
 A `GObject` wrapper is **interned**. Every lookup of the same native object
