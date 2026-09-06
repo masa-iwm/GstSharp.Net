@@ -440,6 +440,11 @@ public sealed class SkipRulesTests
         // construct only and write only, so no accessor of a wrapper can carry
         // it; Bus.New(bool) in src/GstSharp.Net/Custom gives it its value
         // while the bus is being built, which is the only moment there is.
+        // gst_rtsp_message_append_headers writes into a GString, which is a
+        // buffer of GLib the caller has to allocate and free and which no
+        // managed signature should carry; RTSPMessage.AppendHeaders in
+        // src/GstSharp.Net.Rtsp/Custom owns one for the length of the call and
+        // appends what it holds to a StringBuilder.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
@@ -537,6 +542,7 @@ public sealed class SkipRulesTests
                 "gst_rtp_hdrext_set_ntp_56",
                 "gst_rtp_hdrext_set_ntp_64",
                 "gst_rtp_source_meta_set_ssrc",
+                "gst_rtsp_message_append_headers",
                 "gst_rtsp_mount_points_add_factory",
                 "gst_rtsp_transport_parse",
                 "gst_structure_get_value",

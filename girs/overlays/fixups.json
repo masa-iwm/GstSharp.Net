@@ -300,6 +300,7 @@
     "gst_rtp_hdrext_set_ntp_56",
     "gst_rtp_hdrext_set_ntp_64",
     "gst_rtp_source_meta_set_ssrc",
+    "gst_rtsp_message_append_headers",
     "gst_rtsp_mount_points_add_factory",
     "gst_rtsp_transport_parse",
     "gst_structure_get_value",

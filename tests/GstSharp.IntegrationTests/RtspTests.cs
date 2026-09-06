@@ -116,6 +116,53 @@ public sealed class RtspTests
     }
 
     /// <summary>
+    /// The headers of a message are serialised into a
+    /// <see cref="System.Text.StringBuilder"/> in the form they take on the
+    /// wire.
+    /// </summary>
+    /// <remarks>
+    /// <c>gst_rtsp_message_append_headers</c> writes <c>Name: value</c> and a
+    /// CRLF per header and nothing else — no request line, no blank line
+    /// closing the block — so the whole of the output is the two headers below,
+    /// and what the builder already held is still in front of them.
+    /// </remarks>
+    [Fact]
+    public void TheHeadersOfARequestAreAppendedInTheirWireForm()
+    {
+        Assert.Equal(RTSPResult.Ok, RtspGlobal.RtspMessageNew(out RTSPMessage? message));
+        Assert.NotNull(message);
+
+        using (message)
+        {
+            Assert.Equal(
+                RTSPResult.Ok,
+                message.InitRequest(RTSPMethod.Options, "rtsp://host.example:8554/stream"));
+
+            System.Text.StringBuilder builder = new("OPTIONS rtsp://host.example:8554/stream RTSP/1.0\r\n");
+
+            // A message with no header appends nothing, and leaves what the
+            // builder held alone.
+            Assert.Equal(RTSPResult.Ok, message.AppendHeaders(builder));
+            Assert.Equal("OPTIONS rtsp://host.example:8554/stream RTSP/1.0\r\n", builder.ToString());
+
+            Assert.Equal(RTSPResult.Ok, message.AddHeader(RTSPHeaderField.Cseq, "1"));
+            Assert.Equal(RTSPResult.Ok, message.AddHeaderByName("User-Agent", "GstSharp.Net"));
+
+            Assert.Equal(RTSPResult.Ok, message.AppendHeaders(builder));
+
+            string text = builder.ToString();
+            Assert.Equal(
+                "OPTIONS rtsp://host.example:8554/stream RTSP/1.0\r\n"
+                + "CSeq: 1\r\n"
+                + "User-Agent: GstSharp.Net\r\n",
+                text);
+
+            // The null argument is refused before anything native happens.
+            Assert.Throws<ArgumentNullException>(() => message.AppendHeaders(null!));
+        }
+    }
+
+    /// <summary>
     /// The validation flags of a connection are written and read back through
     /// the hand written <see cref="TlsCertificateFlags"/>.
     /// </summary>

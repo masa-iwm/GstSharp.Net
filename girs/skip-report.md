@@ -891,8 +891,9 @@ disappears shows up here as an added line.
 
 ## GstRtsp
 
-### HandBound (1)
+### HandBound (2)
 
+- `gst_rtsp_message_append_headers`
 - `gst_rtsp_transport_parse`
 
 ### LifetimePrimitive (3)
@@ -924,7 +925,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_range_parse`
 - `gst_rtsp_transport_init`
 
-### UnsupportedSignature (13)
+### UnsupportedSignature (12)
 
 - `gst_rtsp_connection_connect`
 - `gst_rtsp_connection_connect_with_response`
@@ -936,7 +937,6 @@ disappears shows up here as an added line.
 - `gst_rtsp_connection_send_messages`
 - `gst_rtsp_connection_send_messages_usec`
 - `gst_rtsp_connection_write`
-- `gst_rtsp_message_append_headers`
 - `gst_rtsp_message_parse_auth_credentials`
 - `gst_rtsp_message_take_body`
 
