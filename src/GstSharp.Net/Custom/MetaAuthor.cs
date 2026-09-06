@@ -304,9 +304,14 @@ public sealed unsafe partial class Meta
         nint info = MetaInfoNew(api.Value, implScope.Pointer, (nuint)(PayloadOffset + payloadSize));
         if (info == 0)
         {
+            // The only way past the arguments this member itself builds is an
+            // API type of zero, which is what gst_meta_api_type_register
+            // answers for a name that was already taken. A clash on the
+            // implementation name is not seen here: it leaves the block with
+            // an invalid type and is answered by the registration below.
             throw new InvalidOperationException(
-                "gst_meta_info_new returned no value, so the metadata implementation was refused: the name is " +
-                "already taken by another type, or it is not a valid GType name.");
+                "gst_meta_info_new returned no value, so the metadata implementation was refused: the metadata " +
+                "API type is zero, which is what Meta.ApiTypeRegister answers for a name that is already taken.");
         }
 
         // The six function fields of an implementation block are written here,
@@ -354,7 +359,7 @@ public sealed unsafe partial class Meta
             // release here, and nothing was written to the registry either.
             throw new InvalidOperationException(
                 "gst_meta_info_register returned no value, so the metadata implementation was refused: the " +
-                "implementation name is already taken.");
+                "implementation name is already taken by another type, or it is not a valid GType name.");
         }
 
         MetaAuthorRegistry.Add(
