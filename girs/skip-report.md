@@ -85,7 +85,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (54)
+### HandBound (56)
 
 - `gst_buffer_copy`
 - `gst_buffer_extract`
@@ -121,9 +121,11 @@ disappears shows up here as an added line.
 - `gst_meta_register`
 - `gst_meta_register_custom`
 - `gst_meta_serialize_simple`
+- `gst_mini_object_get_qdata`
 - `gst_mini_object_is_writable`
 - `gst_mini_object_make_writable`
 - `gst_mini_object_ref`
+- `gst_mini_object_steal_qdata`
 - `gst_mini_object_unref`
 - `gst_pad_push_event`
 - `gst_pad_send_event`
@@ -433,7 +435,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (46)
+### UnsupportedSignature (44)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -454,11 +456,9 @@ disappears shows up here as an added line.
 - `gst_message_new_property_notify`
 - `gst_message_take`
 - `gst_mini_object_add_parent`
-- `gst_mini_object_get_qdata`
 - `gst_mini_object_lock`
 - `gst_mini_object_remove_parent`
 - `gst_mini_object_replace`
-- `gst_mini_object_steal_qdata`
 - `gst_mini_object_take`
 - `gst_mini_object_unlock`
 - `gst_object_get_g_value_array`

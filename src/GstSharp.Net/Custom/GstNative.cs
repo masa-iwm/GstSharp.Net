@@ -134,6 +134,12 @@ internal static unsafe partial class GstNative
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_make_writable")]
     internal static partial nint MiniObjectMakeWritable(nint miniObject);
 
+    [LibraryImport("Gst", EntryPoint = "gst_mini_object_get_qdata")]
+    internal static partial nint MiniObjectGetQData(nint miniObject, uint quark);
+
+    [LibraryImport("Gst", EntryPoint = "gst_mini_object_steal_qdata")]
+    internal static partial nint MiniObjectStealQData(nint miniObject, uint quark);
+
     /// <summary>
     /// Describes an element class, for the <c>class_init</c> of a managed
     /// subclass. The strings are copied by GStreamer.

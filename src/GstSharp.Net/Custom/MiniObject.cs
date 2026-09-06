@@ -177,6 +177,95 @@ public abstract class MiniObject : IDisposable
     }
 
     /// <summary>
+    /// Reads the pointer native code stored on the mini object under
+    /// <paramref name="quark"/>.
+    /// </summary>
+    /// <param name="quark">The key the pointer was stored under.</param>
+    /// <returns>
+    /// The stored pointer, or <see cref="nint.Zero"/> when nothing is stored
+    /// under <paramref name="quark"/>. Nothing stored is an ordinary answer,
+    /// not a failure.
+    /// </returns>
+    /// <remarks>
+    /// The pointer stays owned by the mini object: it is whatever native code
+    /// put there with <c>gst_mini_object_set_qdata</c>, together with the
+    /// destroy notification that will release it when the object is freed. The
+    /// binding does not expose the setter, so a pointer read here comes from
+    /// GStreamer itself or from a plugin, and what it points at — and how long
+    /// it lives — is that code's contract, not this one's.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="quark"/> is <see cref="Gst.GLib.Quark.Zero"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public nint GetQData(Gst.GLib.Quark quark)
+    {
+        // gst_mini_object_get_qdata guards quark > 0 and answers NULL with a
+        // GLib critical, which is a programming error rather than the empty
+        // entry that nint.Zero stands for. Refusing it here keeps the two
+        // apart.
+        ThrowIfQuarkIsZero(quark);
+
+        nint data = GstNative.MiniObjectGetQData(Handle, quark.Value);
+
+        // Reading Handle is the last use of this wrapper, so without this the
+        // collector may finalize it while the call is still running, which
+        // unrefs the object the call is reading.
+        GC.KeepAlive(this);
+        return data;
+    }
+
+    /// <summary>
+    /// Takes the pointer native code stored on the mini object under
+    /// <paramref name="quark"/> off the object.
+    /// </summary>
+    /// <param name="quark">The key the pointer was stored under.</param>
+    /// <returns>
+    /// The stored pointer, or <see cref="nint.Zero"/> when nothing was stored
+    /// under <paramref name="quark"/>. Nothing stored is an ordinary answer,
+    /// not a failure.
+    /// </returns>
+    /// <remarks>
+    /// Unlike <see cref="GetQData"/> this removes the entry, and with it the
+    /// destroy notification that was registered beside it: <b>the caller now
+    /// owns whatever was stored</b> and has to release it the way the code
+    /// that stored it documents. A pointer stolen and dropped is a leak, since
+    /// nothing will run the notification any more. The mini object answers
+    /// <see cref="nint.Zero"/> for the same quark afterwards.
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="quark"/> is <see cref="Gst.GLib.Quark.Zero"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public nint StealQData(Gst.GLib.Quark quark)
+    {
+        ThrowIfQuarkIsZero(quark);
+
+        nint data = GstNative.MiniObjectStealQData(Handle, quark.Value);
+        GC.KeepAlive(this);
+        return data;
+    }
+
+    /// <summary>
+    /// Refuses the quark that stands for no string, which the C calls answer
+    /// with a critical.
+    /// </summary>
+    /// <param name="quark">The quark to check.</param>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="quark"/> is <see cref="Gst.GLib.Quark.Zero"/>.
+    /// </exception>
+    private static void ThrowIfQuarkIsZero(Gst.GLib.Quark quark)
+    {
+        if (quark == Gst.GLib.Quark.Zero)
+        {
+            throw new ArgumentException(
+                "The zero quark names no string, and the quark keyed data of a mini object cannot be "
+                + "read under it. Intern a name with Gst.GLib.Quark.FromString first.",
+                nameof(quark));
+        }
+    }
+
+    /// <summary>
     /// Hands the reference of the wrapper to native code and detaches the
     /// wrapper, which is what a virtual method does with the mini object an
     /// override answered.

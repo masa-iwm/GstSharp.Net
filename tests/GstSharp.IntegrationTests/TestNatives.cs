@@ -136,6 +136,20 @@ internal static unsafe partial class TestNatives
     [LibraryImport("Gst", EntryPoint = "gst_mini_object_unref")]
     internal static partial void MiniObjectUnref(nint miniObject);
 
+    /// <summary>Stores a pointer on a mini object under a quark.</summary>
+    /// <param name="miniObject">The mini object to store on.</param>
+    /// <param name="quark">The key to store under.</param>
+    /// <param name="data">The pointer to store.</param>
+    /// <param name="destroy">The notification releasing it, or <c>0</c>.</param>
+    /// <remarks>
+    /// The binding reads and steals the quark keyed data but never writes it:
+    /// the setter takes a destroy notification whose lifetime belongs to
+    /// whoever stored the pointer, and that is native code. This import stands
+    /// in for the plugin that would have made the entry.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_mini_object_set_qdata")]
+    internal static partial void MiniObjectSetQData(nint miniObject, uint quark, nint data, nint destroy);
+
     /// <summary>
     /// Asks to be told when a mini object is destroyed, without holding a
     /// reference of its own.

@@ -431,6 +431,11 @@ public sealed class SkipRulesTests
         // src/GstSharp.Net/Custom writes by hand rather than generating: the
         // ledger had them under the catch all reason, which read as a gap
         // where there is a binding.
+        // gst_mini_object_get_qdata and gst_mini_object_steal_qdata are read
+        // and stolen by MiniObject.GetQData and MiniObject.StealQData in
+        // src/GstSharp.Net/Custom; the setter beside them stays skipped,
+        // because its destroy notification belongs to whoever stored the
+        // pointer and that is native code.
         Assert.Equal(
             [
                 "GstWebRTC.WebRTCDataChannel::on-message-data",
@@ -492,9 +497,11 @@ public sealed class SkipRulesTests
                 "gst_meta_register",
                 "gst_meta_register_custom",
                 "gst_meta_serialize_simple",
+                "gst_mini_object_get_qdata",
                 "gst_mini_object_is_writable",
                 "gst_mini_object_make_writable",
                 "gst_mini_object_ref",
+                "gst_mini_object_steal_qdata",
                 "gst_mini_object_unref",
                 "gst_pad_push_event",
                 "gst_pad_send_event",
