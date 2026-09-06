@@ -17,7 +17,7 @@ namespace GstSharp.Generator.Tests;
 public sealed class SkipReportDirectoryTests
 {
     [Fact]
-    public void GenerateWritesTheReportWhereReportDirSaysAndNowhereElse()
+    public void GenerateWritesTheReportWhereReportDirSays()
     {
         using GeneratorWorkspace workspace = new();
 

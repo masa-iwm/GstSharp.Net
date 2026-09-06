@@ -63,9 +63,9 @@ dotnet run --project generator/GstSharp.Generator -- verify --gir-dir girs --out
 ```
 
 `generate` also writes `skip-report.md`, which defaults to the `--gir-dir`
-directory: a run that emits into a scratch tree should pass `--report-dir` with
-the same path as `--out-dir` so that the committed `girs/skip-report.md` is left
-alone.
+directory: a `generate` run with a non-default `--out-dir` should pass
+`--report-dir` with the same path so that the committed `girs/skip-report.md`
+is left alone.
 
 Both verbs also look at what is in a `Generated` directory beside what the run
 wrote: `generate` deletes a committed source the generator no longer emits and
