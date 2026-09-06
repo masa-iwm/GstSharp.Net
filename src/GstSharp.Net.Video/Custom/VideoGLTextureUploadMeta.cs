@@ -37,9 +37,9 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     /// (<c>gstvideometa.h:341-343</c>).
     /// </para>
     /// <para>
-    /// No element of the GStreamer 1.28 tree implements the upload function,
-    /// so an item that arrives attached by a native element uploads through
-    /// whatever that element installed.
+    /// No element of the GStreamer 1.28 tree attaches this item; one that
+    /// arrives from out-of-tree native code uploads through whatever that
+    /// code installed.
     /// <see cref="Gst.Video.VideoGlobal.BufferAddVideoGLTextureUploadMeta"/> is
     /// the other way in: it attaches an item whose upload function is a managed
     /// <see cref="Gst.Video.VideoGLTextureUpload"/>, which this member then

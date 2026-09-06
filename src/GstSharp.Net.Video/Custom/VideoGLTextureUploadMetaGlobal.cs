@@ -70,9 +70,9 @@ public static unsafe partial class VideoGlobal
     /// carries the item. A copy of the buffer copies the item, and the copy
     /// takes a handle of its own to the same delegate
     /// (<c>gstvideometa.c:1197-1198</c>), which is why the copy and the free
-    /// are always passed together: a copy without a free would let two items
-    /// free the one handle they share, and a free without a copy would leak
-    /// every handle.
+    /// are always passed together: a copy without a free would leak the handle
+    /// every copy takes, and a free without a copy would let two items free
+    /// the one handle they share.
     /// </para>
     /// <para>
     /// A buffer somebody else holds is refused, which is a
@@ -93,8 +93,9 @@ public static unsafe partial class VideoGlobal
     /// <paramref name="buffer"/> or <paramref name="upload"/> is
     /// <see langword="null"/>.
     /// </exception>
-    /// <exception cref="ArgumentException">
-    /// <paramref name="textureType"/> is empty or holds more than four entries.
+    /// <exception cref="ArgumentException"><paramref name="textureType"/> is empty.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="textureType"/> holds more than four entries.
     /// </exception>
     /// <exception cref="ObjectDisposedException">The buffer wrapper was disposed.</exception>
     public static Gst.Video.VideoGLTextureUploadMeta? BufferAddVideoGLTextureUploadMeta(
@@ -106,12 +107,18 @@ public static unsafe partial class VideoGlobal
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentNullException.ThrowIfNull(upload);
 
-        if (textureType.IsEmpty || textureType.Length > Gst.Video.VideoGLTextureUploadMeta.MaxTextures)
+        if (textureType.IsEmpty)
         {
-            throw new ArgumentException(
+            throw new ArgumentException("An upload holds at least one texture; no texture type was given.", nameof(textureType));
+        }
+
+        if (textureType.Length > Gst.Video.VideoGLTextureUploadMeta.MaxTextures)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(textureType),
+                textureType.Length,
                 FormattableString.Invariant(
-                    $"An upload holds one to {Gst.Video.VideoGLTextureUploadMeta.MaxTextures} textures; {textureType.Length} type(s) were given."),
-                nameof(textureType));
+                    $"An upload holds at most {Gst.Video.VideoGLTextureUploadMeta.MaxTextures} textures."));
         }
 
         nint bufferHandle = buffer.Handle;

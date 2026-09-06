@@ -234,7 +234,7 @@ public sealed class VideoGLTextureUploadMetaTests
                 [],
                 upload));
 
-        Assert.Throws<ArgumentException>(
+        Assert.Throws<ArgumentOutOfRangeException>(
             "textureType",
             () => VideoGlobal.BufferAddVideoGLTextureUploadMeta(
                 buffer,
