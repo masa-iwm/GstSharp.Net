@@ -68,6 +68,118 @@ public unsafe partial class Bus
     private SyncSubscription? _syncSubscription;
 
     /// <summary>
+    /// Creates a bus, choosing whether it delivers messages asynchronously.
+    /// </summary>
+    /// <param name="enableAsync">
+    /// <see langword="true"/> for the ordinary bus, which queues what is posted
+    /// on it; <see langword="false"/> for one that serves synchronous handlers
+    /// only.
+    /// </param>
+    /// <returns>The new bus.</returns>
+    /// <remarks>
+    /// <para>
+    /// <c>enable-async</c> is construct only and write only, so it is neither a
+    /// property of the wrapper nor an argument of <c>gst_bus_new</c>: the only
+    /// moment it can be given a value is while the bus is being constructed,
+    /// which is what this overload does. <see cref="New()"/> is the same call
+    /// with the property left at its default, which is
+    /// <see langword="true"/>.
+    /// </para>
+    /// <para>
+    /// A bus built with <see langword="false"/> has no asynchronous delivery:
+    /// the queue exists, since <c>gst_bus_init</c> creates it whatever the
+    /// property says, but the <c>GstPoll</c> that signals it is never created,
+    /// and <c>gst_bus_post</c> keys on that. It still runs the synchronous
+    /// handler and still emits <c>sync-message</c>, and then <b>drops the
+    /// message</b> instead of queueing it, so nothing is ever pushed and
+    /// nothing is ever popped. That is the point of the option: an element
+    /// that only needs its own synchronous handler pays for no delivery
+    /// machinery.
+    /// </para>
+    /// <para>
+    /// What the rest of the surface then does is worth spelling out per
+    /// member, because <b>the binding cannot guard any of it</b>:
+    /// <c>enable-async</c> is write only, so a wrapper cannot ask a bus it was
+    /// handed how it was built, and every member that misbehaves below is a
+    /// generated one that no hand written override intercepts today. What
+    /// works is everything that never reaches for the <c>GstPoll</c> that was
+    /// not created: <see cref="Pop"/>, <see cref="PopFiltered"/>,
+    /// <see cref="Peek"/>, <see cref="HavePending"/> and
+    /// <see cref="SetFlushing"/>, which read the queue that exists and is
+    /// simply always empty; <see cref="SetSyncHandler(Gst.BusSyncHandler)"/>,
+    /// <see cref="ClearSyncHandler"/>, <see cref="SubscribeSyncDrop"/> and
+    /// <see cref="EnableSyncMessageEmission"/> with the
+    /// <see cref="SyncMessage"/> event it enables, which are the half of the
+    /// bus this option keeps and behave exactly as they do anywhere else; and
+    /// disposal.
+    /// </para>
+    /// <para>
+    /// <see cref="AddWatch"/>, <see cref="AddSignalWatch"/> and
+    /// <see cref="AddSignalWatchFull"/> install a source that never delivers
+    /// anything, and none of the three says so: the two signal watches answer
+    /// nothing at all, and <see cref="AddWatch"/> hands back the ordinary
+    /// non-zero source id. Of the entry points this binding reaches, none
+    /// carries the <c>bus-&gt;priv-&gt;poll != NULL</c> guard.
+    /// <c>gst_bus_create_watch</c> and <c>gst_bus_get_pollfd</c> do carry it,
+    /// and neither is bound; <c>gst_bus_add_watch_full</c> and
+    /// <c>gst_bus_add_signal_watch_full</c> reach
+    /// <c>gst_bus_create_watch_unlocked</c> instead, which guards only against
+    /// a second <c>GSource</c> and not against the missing poll, and which
+    /// hands the source the <c>GPollFD</c> of the bus, a structure
+    /// <c>gst_bus_constructed</c> fills only when the <c>GstPoll</c> is built.
+    /// The source therefore watches a <c>GPollFD</c> that was never filled,
+    /// over a queue nothing is ever pushed onto, so it has nothing to dispatch
+    /// and the <see cref="Message"/> event never fires.
+    /// </para>
+    /// <para>
+    /// <see cref="Poll"/> is that signal watch plus a nested main loop, so it
+    /// sees nothing either: given a timeout it answers <see langword="null"/>
+    /// when the timeout expires, and given <see cref="Gst.ClockTime.None"/> it
+    /// never returns at all. <see cref="TimedPop"/> and
+    /// <see cref="TimedPopFiltered"/> answer <see langword="null"/> with a
+    /// GLib critical for every timeout but zero, since
+    /// <c>gst_bus_timed_pop_filtered</c> guards
+    /// <c>timeout == 0 || bus-&gt;priv-&gt;poll != NULL</c>; a timeout of zero
+    /// is the non-blocking pop and works.
+    /// </para>
+    /// <para>
+    /// A bus built with <see langword="false"/> is therefore a bus for a
+    /// synchronous handler and the non-blocking pops, and for nothing else.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">GObject returned no instance.</exception>
+    public static Gst.Bus New(bool enableAsync)
+    {
+        // gst_bus_new is g_object_new plus a sink of the floating reference,
+        // and there is no _new_with_properties beside it, so the construct
+        // only property has to be given to GObject directly. The floating
+        // reference the constructor answers is what the wrapper sinks, which
+        // is the ownership gst_bus_new hands over as well.
+        System.Span<byte> buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope name = Gst.Interop.GMarshal.StackUtf8("enable-async", buffer);
+
+        Gst.GObject.Value value = Gst.GObject.Value.New(Gst.GObject.GType.Boolean);
+        try
+        {
+            value.SetBoolean(enableAsync);
+
+            byte* names = name.Pointer;
+            nint handle = Gst.Interop.GObjectNative.ObjectNewWithProperties(
+                GetGType(),
+                1,
+                &names,
+                &value.NativeValue);
+
+            return Gst.GObject.Object.FromNative<Gst.Bus>(handle, Gst.Interop.Transfer.Full)
+                ?? throw new InvalidOperationException("g_object_new_with_properties returned no bus.");
+        }
+        finally
+        {
+            value.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Installs the handler that sees every message in the thread that posts
     /// it, replacing the handler that is installed.
     /// </summary>

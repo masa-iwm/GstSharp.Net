@@ -436,8 +436,13 @@ public sealed class SkipRulesTests
         // src/GstSharp.Net/Custom; the setter beside them stays skipped,
         // because its destroy notification belongs to whoever stored the
         // pointer and that is native code.
+        // Gst.Bus:enable-async is the one property of the list. It is
+        // construct only and write only, so no accessor of a wrapper can carry
+        // it; Bus.New(bool) in src/GstSharp.Net/Custom gives it its value
+        // while the bus is being built, which is the only moment there is.
         Assert.Equal(
             [
+                "Gst.Bus:enable-async",
                 "GstWebRTC.WebRTCDataChannel::on-message-data",
                 "ges_asset_extract",
                 "ges_asset_request_async",

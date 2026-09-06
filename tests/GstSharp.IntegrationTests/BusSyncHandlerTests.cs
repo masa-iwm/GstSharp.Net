@@ -309,6 +309,52 @@ public sealed unsafe class BusSyncHandlerTests
     }
 
     /// <summary>
+    /// A bus built with <c>enable-async</c> off has no queue: its sync handler
+    /// still sees everything that is posted, and nothing is ever popped.
+    /// </summary>
+    /// <remarks>
+    /// The property is construct only and write only, so
+    /// <see cref="Bus.New(bool)"/> is the only way to reach it. What the bus
+    /// then does is gstbus.c: with no <c>priv->poll</c>, <c>gst_bus_post</c>
+    /// runs the sync handler, forces the reply to <c>GST_BUS_DROP</c> and
+    /// releases the message itself, so a <c>GST_BUS_PASS</c> that would
+    /// ordinarily queue the message drops it instead. The post still succeeds
+    /// — a bus without a queue is not a failing bus, it is a bus that only
+    /// serves handlers.
+    /// </remarks>
+    [Fact]
+    public void ABusWithoutTheAsyncQueueServesItsSyncHandlerAndNothingElse()
+    {
+        using Bus bus = Bus.New(enableAsync: false);
+
+        int seen = 0;
+        bus.SetSyncHandler((_, _) =>
+        {
+            Interlocked.Increment(ref seen);
+            return BusSyncReply.Pass;
+        });
+
+        try
+        {
+            Post(bus);
+
+            Assert.Equal(1, Volatile.Read(ref seen));
+
+            // Pass would have queued the message on an ordinary bus. Here
+            // there is nowhere to queue it.
+            Assert.Null(bus.Pop());
+
+            Post(bus);
+            Assert.Equal(2, Volatile.Read(ref seen));
+            Assert.Null(bus.Pop());
+        }
+        finally
+        {
+            bus.ClearSyncHandler();
+        }
+    }
+
+    /// <summary>
     /// A handler that throws is trapped, and the message it failed on still
     /// reaches the queue.
     /// </summary>
