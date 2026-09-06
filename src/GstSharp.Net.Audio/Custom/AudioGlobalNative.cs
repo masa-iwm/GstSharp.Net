@@ -7,12 +7,22 @@ namespace Gst.Audio;
 /// metadata glue needs.
 /// </summary>
 /// <remarks>
+/// <para>
 /// <c>gst_buffer_add_audio_meta</c> sizes its <c>offsets</c> array by
 /// <c>info-&gt;channels</c>, a field of another parameter, which no array
 /// annotation of the gir can express and which <c>arrayOverrides</c> cannot
 /// redirect to either — it only names another parameter. The entry point is on
 /// the skip list of <c>girs/overlays/fixups.json</c> for it and is imported
 /// here for <see cref="AudioGlobal.BufferAddAudioMeta(Gst.Buffer, Gst.Audio.AudioInfo, nuint, System.ReadOnlySpan{nuint})"/>.
+/// </para>
+/// <para>
+/// <c>gst_buffer_add_audio_downmix_meta</c> is not introspectable at all: its
+/// <c>matrix</c> is a <c>const gfloat**</c> row table the gir spells as an
+/// array of <c>gpointer</c> with no length, so nothing describes either
+/// dimension of it. It is imported here for
+/// <see cref="AudioGlobal.BufferAddAudioDownmixMeta"/>, which builds the row
+/// table from one row major span.
+/// </para>
 /// </remarks>
 internal static unsafe partial class AudioGlobalNative
 {
@@ -30,4 +40,24 @@ internal static unsafe partial class AudioGlobalNative
     /// </returns>
     [LibraryImport("GstAudio", EntryPoint = "gst_buffer_add_audio_meta")]
     internal static partial nint BufferAddAudioMeta(nint buffer, nint info, nuint samples, nuint* offsets);
+
+    /// <summary>Attaches a downmix matrix to a buffer.</summary>
+    /// <param name="buffer">The buffer, which must be writable.</param>
+    /// <param name="fromPosition">The channel positions of the source.</param>
+    /// <param name="fromChannels">How many entries <paramref name="fromPosition"/> has.</param>
+    /// <param name="toPosition">The channel positions of the destination.</param>
+    /// <param name="toChannels">How many entries <paramref name="toPosition"/> has.</param>
+    /// <param name="matrix">
+    /// A table of <paramref name="toChannels"/> row pointers, each addressing
+    /// <paramref name="fromChannels"/> coefficients.
+    /// </param>
+    /// <returns>The metadata item, which the buffer owns.</returns>
+    [LibraryImport("GstAudio", EntryPoint = "gst_buffer_add_audio_downmix_meta")]
+    internal static partial nint BufferAddAudioDownmixMeta(
+        nint buffer,
+        Gst.Audio.AudioChannelPosition* fromPosition,
+        int fromChannels,
+        Gst.Audio.AudioChannelPosition* toPosition,
+        int toChannels,
+        float** matrix);
 }

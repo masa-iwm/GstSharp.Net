@@ -594,12 +594,13 @@ disappears shows up here as an added line.
 
 ## GstAudio
 
-### HandBound (5)
+### HandBound (6)
 
 - `gst_audio_base_sink_set_custom_slaving_callback`
 - `gst_audio_buffer_map`
 - `gst_audio_buffer_unmap`
 - `gst_audio_ring_buffer_read`
+- `gst_buffer_add_audio_downmix_meta`
 - `gst_buffer_add_audio_meta`
 
 ### LifetimePrimitive (4)
@@ -634,7 +635,7 @@ disappears shows up here as an added line.
 - `gst_dsd_plane_offset_meta_get_info`
 - `gst_stream_volume_convert_volume`
 
-### NotIntrospectable (8)
+### NotIntrospectable (7)
 
 - `gst_audio_channel_mixer_new`
 - `gst_audio_channel_mixer_new_with_matrix`
@@ -643,7 +644,6 @@ disappears shows up here as an added line.
 - `gst_audio_quantize_new`
 - `gst_audio_quantize_samples`
 - `gst_audio_ring_buffer_set_callback`
-- `gst_buffer_add_audio_downmix_meta`
 
 ### OverlaySkip (5)
 
