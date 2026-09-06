@@ -258,8 +258,9 @@ sample says so and stops rather than reporting a transcoding failure.
 `GstPlay` takes a playlist of URIs or paths and these options of its own:
 `--volume <0..1>`, `--audiosink <factory>` and `--videosink <factory>`,
 `--visualization <name>` beside `--list-visualizations`, `--duration <seconds>`
-to bound an unattended run, and `--interactive` to read the keyboard (press `k`
-for the list of keys). Its header comment says which keys the C tool puts
+to bound an unattended run, `--shuffle` to reorder the playlist once before
+playback, and `--interactive` to read the keyboard (press `k` for the list of
+keys). Its header comment says which keys the C tool puts
 elsewhere and what it leaves out. Cycling tracks goes through the index-based
 setters, which upstream deprecated in 1.26 and the generator therefore marks
 `[Obsolete]`; they are the only ones that exist on the 1.24 floor, so the sample

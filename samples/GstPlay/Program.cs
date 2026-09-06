@@ -9,7 +9,8 @@
 //
 // Usage: GstPlay [<uri-or-file> ...] [--volume <0..1>] [--audiosink <factory>]
 //                [--videosink <factory>] [--visualization <name>]
-//                [--list-visualizations] [--duration <seconds>] [--interactive]
+//                [--list-visualizations] [--shuffle] [--duration <seconds>]
+//                [--interactive]
 //
 // Where this port differs from the C tool, and why:
 //
@@ -34,11 +35,16 @@
 //     terminal which reports no arrow keys can still reach both: + and - change
 //     the volume (arrows up and down in the C tool), , and . change the
 //     playback rate (- and + in the C tool), and 0 resets the rate to 1.0
-//     (seek to the beginning in the C tool). Press k for the list.
+//     (seek to the beginning in the C tool). d changes the playback direction,
+//     as it does in the C tool. Press k for the list.
 //
-//   * Trick modes, --shuffle, the "d" direction key and the plugin installer of
-//     the C tool are out of scope: the trick mode flags belong to the seek the
-//     play performs for itself, which the module does not expose.
+//   * --shuffle and the "d" direction key are ported. Trick modes (the "t" key)
+//     and the plugin installer of the C tool remain out of scope: GstPlay
+//     builds the flags of its own seek - FLUSH, ACCURATE from the config, and
+//     TRICKMODE whenever the rate is not 1.0 - and offers no way to add
+//     KEY_UNITS or NO_AUDIO, so the mode switch of the C tool cannot be
+//     expressed through the module without bypassing GstPlay's seek state
+//     machine.
 //
 //   * Only members that exist on GStreamer 1.24, the floor of this binding, are
 //     called. Six of them - the three index based track setters, the stream
@@ -110,6 +116,11 @@ internal static class Player
                 return 2;
             }
 
+            if (options.Shuffle)
+            {
+                Shuffle(options.Uris);
+            }
+
             // The play is this sample's own object and is disposed here. Its
             // message bus is not: that wrapper is interned and belongs to the
             // play, so it is left to the collector. See docs/ownership.md.
@@ -143,7 +154,27 @@ internal static class Player
         writer.WriteLine("Usage: GstPlay [<uri-or-file> ...] [--volume <0..1>]");
         writer.WriteLine("               [--audiosink <factory>] [--videosink <factory>]");
         writer.WriteLine("               [--visualization <name>] [--list-visualizations]");
-        writer.WriteLine("               [--duration <seconds>] [--interactive]");
+        writer.WriteLine("               [--shuffle] [--duration <seconds>] [--interactive]");
+    }
+
+    /// <summary>
+    /// Shuffles the playlist in place, the way the shuffle_uris of the C tool
+    /// does: one Fisher-Yates pass before anything is played.
+    /// </summary>
+    /// <param name="uris">The playlist to reorder.</param>
+    private static void Shuffle(List<string> uris)
+    {
+        if (uris.Count < 2)
+        {
+            return;
+        }
+
+        for (int i = uris.Count - 1; i >= 1; i--)
+        {
+            // The upper bound is exclusive, as it is in g_random_int_range.
+            int j = Random.Shared.Next(0, i + 1);
+            (uris[i], uris[j]) = (uris[j], uris[i]);
+        }
     }
 
     /// <summary>
@@ -748,6 +779,14 @@ internal static class Player
                     SetRate(1.0);
                     break;
 
+                case 'd':
+                    // play_set_relative_playback_rate (play, 0.0, TRUE) of the
+                    // C tool: the magnitude stays, the direction flips. The
+                    // module turns a rate below zero into a reverse seek of its
+                    // own, so nothing else is needed here.
+                    SetRate(-_play.Rate);
+                    break;
+
                 case 'k':
                 case 'K':
                     PrintKeyboardHelp();
@@ -934,6 +973,7 @@ internal static class Player
             Console.WriteLine("  m            toggle audio mute on/off");
             Console.WriteLine("  . / ,        increase/decrease the playback rate");
             Console.WriteLine("  0            reset the playback rate");
+            Console.WriteLine("  d            change the playback direction");
             Console.WriteLine("  a / v / s    change to the next audio/video/subtitle track");
             Console.WriteLine("  k            show these keyboard shortcuts");
         }
@@ -1007,6 +1047,9 @@ internal static class Player
         /// <summary>Gets whether the keyboard is read.</summary>
         internal bool Interactive { get; private set; }
 
+        /// <summary>Gets whether the playlist is shuffled before playback.</summary>
+        internal bool Shuffle { get; private set; }
+
         /// <summary>Gets how long the run may take, or zero for no bound.</summary>
         internal TimeSpan Duration { get; private set; }
 
@@ -1049,6 +1092,10 @@ internal static class Player
 
                     case "--interactive":
                         options.Interactive = true;
+                        break;
+
+                    case "--shuffle":
+                        options.Shuffle = true;
                         break;
 
                     case "--duration":
