@@ -153,6 +153,16 @@ field of every typed metadata structure, so `VideoMeta.FromMeta(meta)` hands out
 a second wrapper over the same address; both are alive exactly as long as the
 item is.
 
+An item that carries a **managed callback** owns the state of it, and the
+buffer owns the item. `VideoGlobal.BufferAddVideoGLTextureUploadMeta` is the one
+of those: the upload delegate is held by a `CallbackHandle` the library releases
+through the user data free the attach hands it, so the delegate stays reachable
+for as long as any buffer carries the item — including every copy, each of which
+takes a handle of its own to the same delegate. The caller keeps nothing alive.
+The one path native code never releases is the attach the library refuses, which
+is a shared buffer: it answers NULL before it stores the state, so the member
+releases the handle itself and answers `null`.
+
 `Buffer.IterateMeta` is **read only for the length of the enumeration**. The
 cursor of `gst_buffer_iterate_meta` is the metadata item itself, so removing one
 while the enumeration is open frees the node the cursor stands on and the next

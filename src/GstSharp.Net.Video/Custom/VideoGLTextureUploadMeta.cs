@@ -10,7 +10,7 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     /// <c>gst_video_gl_texture_upload_meta_upload</c> forwards to the upload
     /// function of the metadata item.
     /// </remarks>
-    private const int MaxTextures = 4;
+    internal const int MaxTextures = 4;
 
     /// <summary>
     /// Uploads the buffer that owns this metadata item into the textures whose
@@ -38,10 +38,12 @@ public sealed unsafe partial class VideoGLTextureUploadMeta
     /// </para>
     /// <para>
     /// No element of the GStreamer 1.28 tree implements the upload function,
-    /// and the call that attaches the metadata item takes a user data copy and
-    /// a user data free callback the gir gives no closure index, a shape this
-    /// binding does not bind, so an item can only reach managed code attached
-    /// to a buffer by a native element.
+    /// so an item that arrives attached by a native element uploads through
+    /// whatever that element installed.
+    /// <see cref="Gst.Video.VideoGlobal.BufferAddVideoGLTextureUploadMeta"/> is
+    /// the other way in: it attaches an item whose upload function is a managed
+    /// <see cref="Gst.Video.VideoGLTextureUpload"/>, which this member then
+    /// reaches.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">

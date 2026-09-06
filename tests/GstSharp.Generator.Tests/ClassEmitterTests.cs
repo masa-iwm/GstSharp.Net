@@ -604,7 +604,8 @@ public sealed class ClassEmitterTests
         // and in any module.
         Assert.Contains("### HandBound (48)\n", report, StringComparison.Ordinal);
         Assert.Contains(
-            "### HandBound (5)\n\n"
+            "### HandBound (6)\n\n"
+            + "- `gst_buffer_add_video_gl_texture_upload_meta`\n"
             + "- `gst_video_codec_frame_set_user_data`\n"
             + "- `gst_video_frame_map`\n"
             + "- `gst_video_frame_map_id`\n"
@@ -1039,7 +1040,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 2)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 5)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 7)]
-    [InlineData("GstVideo", 10, 0, 10, 0, 0, 0, 7)]
+    [InlineData("GstVideo", 9, 0, 10, 0, 0, 0, 8)]
     [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 2)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0, 3)]

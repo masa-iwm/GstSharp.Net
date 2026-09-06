@@ -1051,8 +1051,9 @@ disappears shows up here as an added line.
 
 ## GstVideo
 
-### HandBound (5)
+### HandBound (6)
 
+- `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_video_codec_frame_set_user_data`
 - `gst_video_frame_map`
 - `gst_video_frame_map_id`
@@ -1180,9 +1181,8 @@ disappears shows up here as an added line.
 - `gst_video_scaler_combine_packed_YUV`
 - `gst_video_scaler_new`
 
-### OverlaySkip (6)
+### OverlaySkip (5)
 
-- `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_video_blend_scale_linear_RGBA`
 - `gst_video_info_dma_drm_from_caps`
 - `gst_video_info_dma_drm_init`
