@@ -14,7 +14,7 @@ workflow. Jobs are split by what they need from the machine:
 | --- | --- | --- | --- |
 | `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, the proof that `GstSharp.Core.Tests` needs no installation, and the pack that validates the public surface against the published baseline |
 | `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader`, the only plugin set that can run the WebRTC tests, and the `linux-x64` NativeAOT gate |
-| `macos` | `macos-latest` | Homebrew | the macOS dylib path and the Homebrew directory of the planner |
+| `macos` | `macos-latest` | Homebrew | the macOS dylib path, the Homebrew directory of the planner, and the `osx-arm64` NativeAOT gate |
 | `windows-mingw` | `windows-latest` | MSYS2 | the MinGW file names and the MSYS2 / search-path branch of `NativeInstallPlanner` |
 | `windows-msvc-aot` | `windows-latest` | official installer | the MSVC file names, the environment-variable branch of the planner, and both NativeAOT gates |
 
@@ -220,22 +220,25 @@ compilation is the gate, execution is a local matter.
   published executable.
 
 The script is RID agnostic — the only thing it decides from `-Rid` is whether
-the file it runs ends in `.exe` — so the `linux` job runs the first gate as
-well:
+the file it runs ends in `.exe` — so the `linux` and `macos` jobs run the first
+gate as well, each for its own RID:
 
 ```
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
+./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid osx-arm64
 ```
 
-`pwsh` is on the ubuntu images and so is what ILC links with (`clang`, `zlib`),
-and the run half of the gate finds the library the job installed from apt;
-`AotSmoke` needs nothing beyond core, base, controller and `fakesink`. Only that
-one sample is gated there. The AppSinkSpans gate measures the GType registry
-under full trimming, which is a decision ILC makes from the same IL whatever the
-RID; what is genuinely per-RID is the compile, the native link and the load of a
-binary with no host beside it, and `AotSmoke` already covers those. A second ILC
-publish would roughly double the minutes the leg spends to repeat the first
-answer.
+`pwsh` is on the ubuntu and macOS images and so is what ILC links with (`clang`,
+`zlib`), and the run half of the gate finds the library the job installed —
+from apt on Linux, from Homebrew on macOS, in both cases through the ordinary
+probe of the loader with nothing passed to the published binary. `AotSmoke`
+needs nothing beyond core, base, audio, video, controller and `fakesink`. Only
+that one sample is gated on either of them. The AppSinkSpans gate measures the
+GType registry under full trimming, which is a decision ILC makes from the
+same IL whatever the RID; what is genuinely per-RID is the compile, the native
+link and the load of a binary with no host beside it, and `AotSmoke` already
+covers those. A second ILC publish would roughly double the minutes the leg
+spends to repeat the first answer.
 
 ## The surface check
 
@@ -393,7 +396,8 @@ deploy to.
   `main` red without a code change (NU1901-NU1904). The fix is to update the
   package; suppressing the audit would hide it everywhere.
 * **`macos-latest` is arm64.** Nothing in the binding is x64-specific, but the
-  ABI probes run against an arm64 GStreamer there, which is the point.
+  ABI probes run against an arm64 GStreamer there, which is the point, and the
+  NativeAOT gate of that job publishes for `osx-arm64` for the same reason.
 * **Windows AOT needs the MSVC toolchain.** The `windows-latest` image ships
   it; a self-hosted runner would need the C++ workload.
 
@@ -440,8 +444,9 @@ dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid win-x64
 ./eng/aot-gate.ps1 -Project samples/AppSinkSpans -Rid win-x64 -Property InvariantGlobalization=true -RunArguments '--mode','pull'
 
-# the AOT gate the linux job runs (from pwsh on a Linux machine)
+# the AOT gate the linux and macos jobs run (from pwsh on such a machine)
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
+./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid osx-arm64
 
 # what the release job packs (no push)
 dotnet pack GstSharp.Net.slnx --configuration Release --output artifacts/dist -p:Version=1.28.0-preview.1

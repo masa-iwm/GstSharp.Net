@@ -9,7 +9,8 @@
 #   linux             the Linux SONAME path of the native loader, the only
 #                     plugin set complete enough to run the WebRTC tests, and
 #                     the linux-x64 NativeAOT gate.
-#   macos             the macOS dylib path of the native loader.
+#   macos             the macOS dylib path of the native loader and the
+#                     osx-arm64 NativeAOT gate.
 #   windows-mingw     the MinGW flavor, found the way a developer with MSYS2
 #                     finds it: from the process search path, with no
 #                     environment variable to help it.
@@ -576,16 +577,18 @@ jobs:
       # images, and what ILC needs to link, clang and zlib, is preinstalled
       # there as well. The run half of the gate has a library to load because
       # this job installed one, and AotSmoke needs nothing beyond it: core,
-      # base, controller and the fakesink of the core elements.
+      # base, audio, video, controller and the fakesink of the core elements.
       #
       # Only AotSmoke is gated here, and not the AppSinkSpans gate the MSVC job
       # runs beside it. What the second gate measures is the GType registry
       # under full trimming, and that is a decision ILC makes from the same IL
       # on every RID; what is genuinely per-RID is loading and linking, which
       # AotSmoke covers — it initialises, resolves its own LibraryImport stubs,
-      # runs a pipeline of two managed subclasses and reaches into a second
-      # binding module. A second ILC publish would roughly double the minutes
-      # this leg spends to say that again.
+      # runs the managed subclasses of the sample — an element, a source and
+      # sink pair, an audio sink, a video sink, an audio encoder and an element
+      # an element factory made — and reaches into a second binding module. A
+      # second ILC publish would roughly double the minutes this leg spends to
+      # say that again.
       #
       # Last of the steps on purpose: an ILC publish takes minutes, and a plain
       # test or sample failure belongs on the log before it, not behind it.
@@ -742,12 +745,32 @@ jobs:
       - name: GstInspect against gst-inspect-1.0
         run: .github/scripts/gst-inspect-diff.sh
 
+      # The same gate as the Linux leg, for the third RID the binding claims;
+      # see the comments there for why only AotSmoke is gated outside the MSVC
+      # job. macos-latest is arm64, so the RID is osx-arm64, and eng/aot-gate.ps1
+      # needs nothing else: the only thing it decides from a RID is the .exe
+      # suffix of the file it runs. Nothing is passed to the published binary
+      # either, exactly as on the other legs — it finds the Homebrew library
+      # through the /opt/homebrew/lib directory of the planner, which is what
+      # every step above already relies on.
+      #
+      # Last of the steps on purpose: an ILC publish takes minutes, and a plain
+      # test or sample failure belongs on the log before it, not behind it.
+      - name: NativeAOT smoke (osx-arm64)
+        shell: pwsh
+        run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid osx-arm64
+
       - name: Upload test results
         if: ${{ failure() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: test-results-macos
-          path: artifacts/test-results
+          # artifacts/logs is where aot-gate.ps1 tees the publish output, so a
+          # failed AOT gate leaves the same artifact behind here as on the
+          # Linux and MSVC jobs.
+          path: |
+            artifacts/test-results
+            artifacts/logs
           if-no-files-found: ignore
           retention-days: 7
 
