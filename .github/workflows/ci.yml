@@ -385,11 +385,18 @@ jobs:
       # is what makes the line an exit code gate; the second line proves the
       # hand-written visualization enumeration on an installation that has the
       # bad plugins. playbin3 comes from gst-plugins-base, which this job
-      # installs.
+      # installs. The third run is the ported half of the C tool's options: the
+      # playlist file is written here, one comment line and one media file, and
+      # --flags asks the playbin for video, audio and the soft volume, which is
+      # the set that keeps playsink from logging a missing volume control with
+      # the fakesinks. The sample reads the flags property back and fails the
+      # run when what landed differs, so the line gates the by-name write.
       - name: GstPlay
         run: |
           dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink tutorial-media.ogg
           dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+          printf '# the sample skips this line and every blank one\n%s\n' tutorial-media.ogg > play-list.txt
+          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
 
       # The plain application sample: a pipeline built from a description and
       # driven from a polled bus, with no main loop and no signal handler
@@ -691,6 +698,8 @@ jobs:
         run: |
           dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
           dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+          printf '# the sample skips this line and every blank one\n%s\n' typefind-sample.wav > play-list.txt
+          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
 
       # Same run as the Linux leg; see the comments there.
       - name: PlaybinPlayer
@@ -850,9 +859,15 @@ jobs:
       # libgstplay-1.0-0.dll, the "lib" prefixed MinGW file name of the module,
       # is loaded outside the test suite.
       - name: GstPlay
+        # The runners default to pwsh on Windows, which only propagates the
+        # exit code of the last line; the first two runs would not gate. It is
+        # also what makes the printf below portable on this leg.
+        shell: bash
         run: |
           dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
           dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+          printf '# the sample skips this line and every blank one\n%s\n' typefind-sample.wav > play-list.txt
+          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
 
       # Same run as the Linux leg; see the comments there.
       - name: PlaybinPlayer

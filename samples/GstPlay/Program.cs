@@ -7,9 +7,10 @@
 // on a thread of its own and reports everything as a message on the API bus of
 // GetMessageBus.
 //
-// Usage: GstPlay [<uri-or-file> ...] [--volume <0..1>] [--audiosink <factory>]
-//                [--videosink <factory>] [--visualization <name>]
-//                [--list-visualizations] [--shuffle] [--duration <seconds>]
+// Usage: GstPlay [<uri-or-file> ...] [--playlist <file>] [--volume <0..1>]
+//                [--audiosink <factory>] [--videosink <factory>]
+//                [--visualization <name>] [--list-visualizations] [--shuffle]
+//                [--flags <spec>] [--wait-on-eos] [--duration <seconds>]
 //                [--interactive]
 //
 // Where this port differs from the C tool, and why:
@@ -45,6 +46,35 @@
 //     KEY_UNITS or NO_AUDIO, so the mode switch of the C tool cannot be
 //     expressed through the module without bypassing GstPlay's seek state
 //     machine.
+//
+//   * --playlist, --wait-on-eos and --flags are ported from the C tool. The
+//     first two are application state in gst-play.c as well and are the same
+//     here: the file is read into the playlist, one URI or path per line, and
+//     every entry is resolved the way a positional argument is. Upstream skips
+//     empty lines only; the reader here adds two things of its own, trimming
+//     each line and skipping one that starts with #. And --wait-on-eos keeps
+//     the last frame up instead of moving on, which is done here by handling
+//     the end of the stream by doing nothing at all. Because doing nothing at
+//     all would otherwise make an unattended run endless, --wait-on-eos is
+//     refused unless --duration or --interactive bounds it.
+//
+//   * --flags takes the spelling of the C tool -- '+'-joined nicks, or a plain
+//     or 0x integer -- and writes the "flags" property of the playbin that
+//     GetPipeline answers, by name, exactly the way --audiosink and --videosink
+//     write theirs. It is the initial value and not a lock: Gst.Play.Play
+//     rewrites that property itself whenever a track is enabled or disabled or
+//     a visualization is set, so a later key press or a --visualization can
+//     take back what was asked for here. The value that landed is read back and
+//     printed, so a run says what the playbin actually has.
+//
+//   * --gapless and --instant-uri are not ported. Both need the playbin driven
+//     directly: gapless is a handler on the about-to-finish signal of the
+//     playbin, and instant-uri is a playbin3 property that only means anything
+//     when the same pipeline is handed a new URI while it runs. Gst.Play.Play
+//     stops its pipeline inside gst_play_set_uri_internal before setting every
+//     new URI, so neither can take effect through this sample, whatever it
+//     wrote on the playbin. samples/PlaybinPlayer is where a playbin is driven
+//     directly.
 //
 //   * Only members that exist on GStreamer 1.24, the floor of this binding, are
 //     called. Six of them - the three index based track setters, the stream
@@ -151,10 +181,16 @@ internal static class Player
     /// <param name="writer">Where the text goes.</param>
     private static void PrintUsage(TextWriter writer)
     {
-        writer.WriteLine("Usage: GstPlay [<uri-or-file> ...] [--volume <0..1>]");
+        writer.WriteLine("Usage: GstPlay [<uri-or-file> ...] [--playlist <file>] [--volume <0..1>]");
         writer.WriteLine("               [--audiosink <factory>] [--videosink <factory>]");
         writer.WriteLine("               [--visualization <name>] [--list-visualizations]");
-        writer.WriteLine("               [--shuffle] [--duration <seconds>] [--interactive]");
+        writer.WriteLine("               [--shuffle] [--flags <spec>] [--wait-on-eos]");
+        writer.WriteLine("               [--duration <seconds>] [--interactive]");
+        writer.WriteLine();
+        writer.WriteLine("--flags takes '+'-joined nicks or a plain or 0x number. The nicks are");
+        writer.WriteLine("video, audio, text, vis, soft-volume, native-audio, native-video,");
+        writer.WriteLine("download, buffering, deinterlace, soft-colorbalance, force-filters");
+        writer.WriteLine("and force-sw-decoders.");
     }
 
     /// <summary>
@@ -229,16 +265,17 @@ internal static class Player
             }
         }
 
-        if (options.AudioSink is not null || options.VideoSink is not null)
+        if (options.AudioSink is not null || options.VideoSink is not null || options.Flags is not null)
         {
             // gst_play_get_pipeline answers the playbin the play drives, which
-            // is where gst-play-1.0 writes its two sink properties as well. The
-            // wrapper is the interned one of an object the play owns, so it is
-            // not disposed here; see docs/ownership.md.
+            // is where gst-play-1.0 writes its two sink properties and its
+            // flags as well. The wrapper is the interned one of an object the
+            // play owns, so it is not disposed here; see docs/ownership.md.
             Element pipeline = play.GetPipeline();
 
             SetSink(pipeline, "audio-sink", options.AudioSink);
             SetSink(pipeline, "video-sink", options.VideoSink);
+            SetFlags(pipeline, options.Flags);
         }
 
         if (options.Volume is { } volume)
@@ -281,6 +318,44 @@ internal static class Player
 
         pipeline.SetProperty(property, sink);
         Console.WriteLine($"{property}:  {factory}");
+    }
+
+    /// <summary>
+    /// Writes the <c>flags</c> property of the playbin, when the command line
+    /// asked for one, and reads back what landed there.
+    /// </summary>
+    /// <param name="pipeline">The playbin of the play.</param>
+    /// <param name="flags">The bitmask to write, or <see langword="null"/>.</param>
+    /// <remarks>
+    /// The property is a set of flags of the playback library's own,
+    /// GstPlayFlags, whose managed type no binding declares. Writing it by name
+    /// is the documented way to reach exactly that: the by-name setter looks the
+    /// specification up, sees a flags type and takes a plain number for it, so
+    /// there is nothing to deserialize here and no helper in the binding to add.
+    /// The read back is not decoration -- it is what says the write landed,
+    /// because a value GLib refuses is a console warning and not an error, so
+    /// a value that differs from the one asked for fails the run here.
+    /// </remarks>
+    private static void SetFlags(Element pipeline, uint? flags)
+    {
+        if (flags is not { } wanted)
+        {
+            return;
+        }
+
+        pipeline.SetProperty("flags", wanted);
+
+        uint actual = pipeline.GetProperty<uint>("flags");
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"flags:       asked for 0x{wanted:x}, the playbin has 0x{actual:x}"));
+
+        if (actual != wanted)
+        {
+            throw new InvalidOperationException(string.Create(
+                CultureInfo.InvariantCulture,
+                $"The playbin took 0x{actual:x} for the flags asked for as 0x{wanted:x}."));
+        }
     }
 
     /// <summary>
@@ -439,6 +514,21 @@ internal static class Player
 
                 case PlayMessage.EndOfStream:
                     Console.WriteLine("eos:         the end of the current item");
+
+                    if (_options.WaitOnEos)
+                    {
+                        // "Keep showing the last frame on EOS until quit or
+                        // playlist change command", as the C tool puts it. The
+                        // play reports Stopped at the end of the stream --
+                        // eos_cb posts END_OF_STREAM and changes its own state
+                        // (gstplay.c:1236) -- but it leaves its pipeline where
+                        // it is, which is what keeps the last frame up;
+                        // leaving it alone here keeps it that way. The run
+                        // ends when --duration runs out or a key says so.
+                        Console.WriteLine("waiting:     --wait-on-eos, so the last frame stays up");
+                        return true;
+                    }
+
                     return Advance(1);
 
                 case PlayMessage.Warning:
@@ -1050,6 +1140,18 @@ internal static class Player
         /// <summary>Gets whether the playlist is shuffled before playback.</summary>
         internal bool Shuffle { get; private set; }
 
+        /// <summary>
+        /// Gets the bitmask to write to the <c>flags</c> property of the
+        /// playbin before the first play, or <see langword="null"/>.
+        /// </summary>
+        internal uint? Flags { get; private set; }
+
+        /// <summary>
+        /// Gets whether the end of a stream leaves the last frame up instead of
+        /// moving on to the next item.
+        /// </summary>
+        internal bool WaitOnEos { get; private set; }
+
         /// <summary>Gets how long the run may take, or zero for no bound.</summary>
         internal TimeSpan Duration { get; private set; }
 
@@ -1098,6 +1200,18 @@ internal static class Player
                         options.Shuffle = true;
                         break;
 
+                    case "--playlist":
+                        options.ReadPlaylist(ValueOf(arguments, ref i));
+                        break;
+
+                    case "--flags":
+                        options.Flags = ParseFlags(ValueOf(arguments, ref i));
+                        break;
+
+                    case "--wait-on-eos":
+                        options.WaitOnEos = true;
+                        break;
+
                     case "--duration":
                         options.Duration = TimeSpan.FromSeconds(Math.Max(NumberOf(arguments, ref i), 0.0));
                         break;
@@ -1120,7 +1234,112 @@ internal static class Player
                 }
             }
 
+            if (options.WaitOnEos && !options.Help && options.Duration <= TimeSpan.Zero && !options.Interactive)
+            {
+                // Waiting at the end of the stream means never ending on its
+                // own, and a sample of this repository has to be able to run
+                // unattended. Either bound tells it when to stop.
+                throw new ArgumentException(
+                    "--wait-on-eos needs --duration or --interactive to end the run.",
+                    nameof(arguments));
+            }
+
             return options;
+        }
+
+        /// <summary>
+        /// Appends the entries of a playlist file to the playlist, in the order
+        /// the file names them.
+        /// </summary>
+        /// <param name="path">The file to read.</param>
+        /// <remarks>
+        /// One URI or path per line, as the C tool reads it, with two
+        /// additions: upstream (gst-play.c:1823-1830) splits on newlines and
+        /// skips empty lines only, while this reader also trims each line and
+        /// skips one whose first non-blank character is <c>#</c>. Every
+        /// entry is resolved exactly as a positional argument is, so a relative
+        /// path in the file is relative to the working directory of the process
+        /// rather than to the file.
+        /// </remarks>
+        /// <exception cref="ArgumentException">The file cannot be read, or an entry is neither a URI nor a path.</exception>
+        private void ReadPlaylist(string path)
+        {
+            string[] lines;
+
+            try
+            {
+                lines = File.ReadAllLines(path);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                throw new ArgumentException(
+                    $"The playlist \"{path}\" could not be read: {exception.Message}",
+                    nameof(path),
+                    exception);
+            }
+
+            foreach (string line in lines)
+            {
+                string entry = line.Trim();
+
+                if (entry.Length == 0 || entry.StartsWith('#'))
+                {
+                    continue;
+                }
+
+                Uris.Add(ToUri(entry));
+            }
+        }
+
+        /// <summary>
+        /// Reads what <c>--flags</c> was given, in the spelling of the C tool.
+        /// </summary>
+        /// <param name="value">A plain or <c>0x</c> number, or nicks joined by <c>+</c>.</param>
+        /// <returns>The bitmask to write to the playbin.</returns>
+        /// <exception cref="ArgumentException">A nick is not one of the playback flags.</exception>
+        private static uint ParseFlags(string value)
+        {
+            if (uint.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out uint plain))
+            {
+                return plain;
+            }
+
+            if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
+                && uint.TryParse(value.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out uint hex))
+            {
+                return hex;
+            }
+
+            uint flags = 0;
+
+            foreach (string nick in value.Split('+', StringSplitOptions.TrimEntries))
+            {
+                // The nicks and their values are the GstPlayFlags of
+                // gst-plugins-base, gst/playback/gstplay-enum.c. They are
+                // written out here because the managed type of a set of flags
+                // that belongs to a plugin library is not bound.
+                flags |= nick switch
+                {
+                    "video" => 0x001u,
+                    "audio" => 0x002u,
+                    "text" => 0x004u,
+                    "vis" => 0x008u,
+                    "soft-volume" => 0x010u,
+                    "native-audio" => 0x020u,
+                    "native-video" => 0x040u,
+                    "download" => 0x080u,
+                    "buffering" => 0x100u,
+                    "deinterlace" => 0x200u,
+                    "soft-colorbalance" => 0x400u,
+                    "force-filters" => 0x800u,
+                    "force-sw-decoders" => 0x1000u,
+                    _ => throw new ArgumentException(
+                        $"\"{nick}\" is not a playback flag. Try --help for the list.",
+                        nameof(value)),
+                };
+            }
+
+            return flags;
         }
 
         /// <summary>
