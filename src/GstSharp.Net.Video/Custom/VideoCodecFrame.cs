@@ -43,6 +43,106 @@ public sealed partial class VideoCodecFrame
         GC.KeepAlive(this);
     }
 
+    /// <summary>
+    /// Sets the buffer the codec produced for the frame, releasing the one
+    /// that was there.
+    /// </summary>
+    /// <param name="buffer">
+    /// The output buffer, whose reference the frame takes over, or
+    /// <see langword="null"/> to clear the field.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// This is the field a decoder or an encoder writes when it produced the
+    /// output itself rather than asking the base class for it.
+    /// <c>_gst_video_codec_frame_free</c> unrefs whatever is still there, so
+    /// the frame owns exactly one reference to it, and
+    /// <c>gst_video_decoder_finish_frame</c> reads a frame without an output
+    /// buffer as one that was skipped, which makes
+    /// <see langword="null"/> an ordinary value here.
+    /// </para>
+    /// <para>
+    /// Both <c>gst_video_decoder_allocate_output_frame</c> and
+    /// <c>gst_video_encoder_allocate_output_frame</c> refuse a frame whose
+    /// output buffer is already set and answer <c>GST_FLOW_ERROR</c>, so this
+    /// is the alternative to those calls and not a step before them. Finishing
+    /// the frame may make the buffer writable and put a different one in the
+    /// field, and <c>gst_video_encoder_finish_subframe</c> clears it, so read
+    /// the field back with <see cref="GetOutputBuffer"/> rather than assuming
+    /// what was set is still there; in subframe mode every subframe of a frame
+    /// shares the one output buffer.
+    /// </para>
+    /// <para>
+    /// The wrapper hands its reference over and is detached by the call: using
+    /// it afterwards throws. Read the field back with
+    /// <see cref="GetOutputBuffer"/> for a usable wrapper of the buffer.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">
+    /// The wrapper, or the wrapper of the buffer, was disposed.
+    /// </exception>
+    public unsafe void SetOutputBuffer(Gst.Buffer? buffer)
+    {
+        nint handle = Handle;
+        nint value = buffer is null ? nint.Zero : buffer.HandOver();
+        nint previous = ((VideoCodecFrameRaw*)handle)->OutputBuffer;
+        ((VideoCodecFrameRaw*)handle)->OutputBuffer = value;
+        GC.KeepAlive(this);
+
+        if (previous != nint.Zero)
+        {
+            Gst.GstNative.MiniObjectUnref(previous);
+        }
+    }
+
+    /// <summary>
+    /// Sets the buffer the frame was decoded or encoded from, releasing the
+    /// one that was there.
+    /// </summary>
+    /// <param name="buffer">
+    /// The input buffer, whose reference the frame takes over, or
+    /// <see langword="null"/> to clear the field.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// The base class assigns this field before it hands the frame to the
+    /// subclass — through <c>gst_video_decoder_replace_input_buffer</c>, which
+    /// unrefs what was there, and in <c>gst_video_encoder_new_frame</c> — and
+    /// in subframe mode it assigns it again for every subframe it delivers.
+    /// <c>_gst_video_codec_frame_free</c> unrefs whatever is still there, so
+    /// the frame owns exactly one reference to it.
+    /// </para>
+    /// <para>
+    /// This member is for replacing that buffer, not for clearing the field:
+    /// <c>gst_video_decoder_finish_frame</c> hands the input buffer to
+    /// <c>gst_buffer_foreach_meta</c> to copy the metas across, which is
+    /// enabled by the default <c>transform_meta</c>, and leaving the field
+    /// empty trips that call's guard with a critical warning. The encoder
+    /// checks the field before it goes the same way.
+    /// </para>
+    /// <para>
+    /// The wrapper hands its reference over and is detached by the call: using
+    /// it afterwards throws. Read the field back with
+    /// <see cref="GetInputBuffer"/> for a usable wrapper of the buffer.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">
+    /// The wrapper, or the wrapper of the buffer, was disposed.
+    /// </exception>
+    public unsafe void SetInputBuffer(Gst.Buffer? buffer)
+    {
+        nint handle = Handle;
+        nint value = buffer is null ? nint.Zero : buffer.HandOver();
+        nint previous = ((VideoCodecFrameRaw*)handle)->InputBuffer;
+        ((VideoCodecFrameRaw*)handle)->InputBuffer = value;
+        GC.KeepAlive(this);
+
+        if (previous != nint.Zero)
+        {
+            Gst.GstNative.MiniObjectUnref(previous);
+        }
+    }
+
     /// <summary>Takes a wrapper of this frame that its caller owns.</summary>
     /// <returns>
     /// A wrapper holding its own reference to the same frame, which its owner

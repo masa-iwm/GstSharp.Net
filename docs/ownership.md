@@ -538,6 +538,19 @@ has taken the buffer out of itself.
   next negotiation, or the last state unref (`gstvideodecoder.c:4517`,
   `:4533`).
 
+The setters of those fields — `BaseParseFrame.SetBuffer()` and
+`SetOutBuffer()`, `VideoCodecFrame.SetInputBuffer()` and `SetOutputBuffer()`,
+`VideoCodecState.SetCaps()` and `SetAllocationCaps()` — go the other way and
+**take** the reference of the wrapper they are given, exactly as a call that
+consumes its argument does, and unref the value that was in the field, which is
+what `gst_buffer_replace` and `gst_caps_replace` do in C. An owned wrapper is
+detached by the call and throws when it is used afterwards; a borrowed one — a
+vfunc argument — owns no reference to hand over, so it stays usable and the
+setter mints a reference for the field instead. Passing `null` clears the field
+the same way. To keep a usable wrapper of what was set, read the field back
+with the matching getter after the call, which hands out a reference of its
+own.
+
 ## Calls that consume their argument
 
 A call whose C function takes ownership of a parameter

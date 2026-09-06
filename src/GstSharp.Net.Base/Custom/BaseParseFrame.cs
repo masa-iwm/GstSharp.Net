@@ -24,6 +24,56 @@ public sealed partial class BaseParseFrame
     }
 
     /// <summary>
+    /// Sets the buffer the frame was cut from, releasing the one that was
+    /// there.
+    /// </summary>
+    /// <param name="buffer">
+    /// The input buffer, whose reference the frame takes over, or
+    /// <see langword="null"/> to clear the field.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// This is the buffer the base class handed the parser to work on.
+    /// <c>gst_base_parse_frame_free</c> unrefs whatever is still there, so the
+    /// frame owns exactly one reference to it, and
+    /// <c>gst_base_parse_finish_frame</c> puts the output buffer back into this
+    /// field.
+    /// </para>
+    /// <para>
+    /// Clearing the field is what <c>gst_aac_parse_pre_push_frame</c> does
+    /// after it has moved the buffer into the output buffer: the field is
+    /// dereferenced unguarded once <c>handle_frame</c> returns having neither
+    /// finished nor skipped anything, where the base class reads the DISCONT
+    /// flag off it, and by <c>gst_base_parse_frame_copy</c>, while both
+    /// <c>gst_base_parse_finish_frame</c> and <c>gst_base_parse_push_frame</c>
+    /// refuse a frame without one. A <c>pre_push_frame</c> override that has
+    /// written <see cref="SetOutBuffer"/> is therefore the one place where
+    /// clearing it is safe.
+    /// </para>
+    /// <para>
+    /// The wrapper hands its reference over and is detached by the call: using
+    /// it afterwards throws. Read the field back with <see cref="GetBuffer"/>
+    /// for a usable wrapper of the buffer.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">
+    /// The wrapper, or the wrapper of the buffer, was disposed.
+    /// </exception>
+    public unsafe void SetBuffer(Gst.Buffer? buffer)
+    {
+        nint handle = Handle;
+        nint value = buffer is null ? nint.Zero : buffer.HandOver();
+        nint previous = ((BaseParseFrameRaw*)handle)->Buffer;
+        ((BaseParseFrameRaw*)handle)->Buffer = value;
+        GC.KeepAlive(this);
+
+        if (previous != nint.Zero)
+        {
+            Gst.GstNative.MiniObjectUnref(previous);
+        }
+    }
+
+    /// <summary>
     /// Sets the buffer the parser produced for the frame, releasing the one
     /// that was there.
     /// </summary>
@@ -41,8 +91,8 @@ public sealed partial class BaseParseFrame
     /// </para>
     /// <para>
     /// The wrapper hands its reference over and is detached by the call: using
-    /// it afterwards throws. Reference the buffer first to keep a usable
-    /// wrapper of it.
+    /// it afterwards throws. Read the field back with <see cref="GetOutBuffer"/>
+    /// for a usable wrapper of the buffer.
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">
