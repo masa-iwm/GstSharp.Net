@@ -92,22 +92,33 @@
 //     type is registered on demand, so a transition clip is created first when
 //     the name is not known yet.
 //
+//   * --profile-from and --container-profile are ported as they read: the
+//     first rebuilds the track topology out of the discoverer information of
+//     a named clip and reads the encoding profile out of it, the second
+//     re-parents the profile tree under a bare muxer profile.
+//
+//   * get_smart_profile (ges-launcher.c:507-575), which --smart-rendering
+//     reaches when neither --format nor the project named a profile, picks the
+//     *least* common profile among the clips of the timeline, not the most
+//     common one: sort_encoding_profiles orders the candidates by how many
+//     clips carried them ascending and the C tool takes the head of that list.
+//     This port keeps that, because it is a port; what it does not keep is the
+//     "__n_instances" qdata the C counts with - the counts are held beside the
+//     profiles here - nor the --profile-from re-check the function opens with,
+//     which its only call site makes unreachable.
+//
+//   * --embed-nesteds disposes the sub project asset once the project has it.
+//     ges_project_add_asset takes a reference of its own, so the C tool leaks
+//     one reference per nested project by never giving its own back.
+//
+//   * Every run that renders prints one line saying which of --format, the
+//     project, --profile-from, smart rendering, the output file extension or
+//     the theora+vorbis default chose the encoding profile, and a save with
+//     --embed-nesteds prints how many nested projects were embedded. The C tool
+//     prints neither; here they are what makes a CI step a gate, because every
+//     one of those paths ends in a rendered file all the same.
+//
 // What is not ported:
-//
-//   * --profile-from and --container-profile. The first rebuilds the track
-//     topology out of the discoverer information of a named clip and the second
-//     re-parents the profile tree (ges-launcher.c:773-811, 660-710); both are
-//     fully bound and both are a feature of their own rather than of this port.
-//
-//   * get_smart_profile (ges-launcher.c:508-577, called from :628-636), which
-//     is what --smart-rendering without --format tries before the extension of
-//     the output file: it reads the discoverer info of the uri clip assets of
-//     the timeline, turns the ones with enough streams for the tracks into a
-//     profile with gst_encoding_profile_from_discoverer and picks one of those.
-//     Same discoverer-driven class as --profile-from above, so this port goes
-//     straight to the extension.
-//
-//   * --embed-nesteds, which pulls nested timelines into the saved project.
 //
 //   * --set-scenario, --set-test-file, --enable-validate and
 //     --inspect-action-type: they are GstValidate, which has no module in this

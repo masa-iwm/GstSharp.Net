@@ -451,6 +451,44 @@ jobs:
           dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-render.ogg" +test-clip snow d=1.0
           dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-render.ogg
 
+      # The three paths that pick an encoding profile without --format, all of
+      # them chained after the render step above because two of them need a
+      # real, discoverable file and ges-render.ogg is the only one any leg
+      # produces. Every one of these paths ends in an ogg, so the file existing
+      # proves nothing: what makes each step a gate is the line the sample
+      # prints saying which path answered, which is grepped for below. The
+      # default shell of a run: step is "bash -e" without pipefail, so each of
+      # them turns pipefail on: piping the sample into tee would otherwise
+      # hide its exit code, and a run that timed out after printing the line
+      # would pass the grep with a truncated file.
+      - name: GesLaunch (container profile)
+        run: |
+          set -o pipefail
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-container.ogg" -f "application/ogg:video/x-theora:audio/x-vorbis" --container-profile "application/ogg" +test-clip snow d=1.0 | tee ges-container.log
+          grep -q -- "Re-parented the encoding profile into --container-profile application/ogg" ges-container.log
+          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-container.ogg
+
+      # --profile-from also rebuilds the track topology out of the discoverer
+      # information of the named clip, so a run that picked the profile some
+      # other way would have rendered from the wrong tracks as well.
+      - name: GesLaunch (profile from a named clip)
+        run: |
+          set -o pipefail
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-profile-from.ogg" --profile-from src +clip "file://$PWD/ges-render.ogg" name=src d=1.0 | tee ges-profile-from.log
+          grep -q -- "Encoding profile from: --profile-from src" ges-profile-from.log
+          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-profile-from.ogg
+
+      # Smart rendering with neither --format nor a project profile, which is
+      # the get_smart_profile path. The candidate count in the line is part of
+      # the gate: a run that found no candidate would fall back to the file
+      # extension and still write an ogg.
+      - name: GesLaunch (smart rendering profile)
+        run: |
+          set -o pipefail
+          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --smart-rendering -o "file://$PWD/ges-smart.ogg" +clip "file://$PWD/ges-render.ogg" d=1.0 | tee ges-smart.log
+          grep -q -- "Encoding profile from: smart rendering (1 candidate profiles)" ges-smart.log
+          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-smart.ogg
+
       # The inspect-lite port, run the two ways it can be run. The census walks
       # the whole registry and needs no plugin in particular; the element page
       # is asked for fakesink, which is in the core elements every leg has, and
