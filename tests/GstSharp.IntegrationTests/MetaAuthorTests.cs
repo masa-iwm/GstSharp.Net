@@ -215,12 +215,16 @@ public sealed class MetaAuthorTests
     /// </summary>
     /// <remarks>
     /// <b>This test is noisy on purpose.</b> Registering an existing GType name
-    /// makes GLib print a warning, which <c>gst_meta_info_new</c> leaves to
-    /// GLib rather than repeating; the block it still answers carries an invalid
-    /// type, and <c>gst_meta_info_register</c> then refuses it without a word.
-    /// That one warning is the library reporting the refusal this test is about;
-    /// it does not end the process, and the assertions below are what the test
-    /// measures.
+    /// makes GLib print one CRITICAL - the <c>g_return_val_if_fail</c> at the
+    /// head of <c>g_pointer_type_register_static</c> - which
+    /// <c>gst_meta_info_new</c> leaves to GLib rather than repeating; the block
+    /// it still answers carries an invalid type, and
+    /// <c>gst_meta_info_register</c> then refuses it without a word. That single
+    /// message is the library reporting the refusal this test is about, and the
+    /// assertions below are what the test measures. A CRITICAL does not end the
+    /// process on its own, so the run continues past it; under
+    /// <c>G_DEBUG=fatal-criticals</c> it would abort the whole test process, and
+    /// this test cannot pass in such a run.
     /// </remarks>
     [Fact]
     public void ADuplicateImplementationNameIsRefused()
@@ -239,6 +243,14 @@ public sealed class MetaAuthorTests
         Meta item = Assert.IsType<Meta>(buffer.AddMeta(registration.Info, 0));
         item.Payload<Pair>().First = 3;
         Assert.Equal(3, Assert.IsType<Meta>(buffer.GetMeta(registration.Api)).Payload<Pair>().First);
+
+        // A registration made after the refusal works, including its payload:
+        // the entry the refused call took back was its own, and the block this
+        // one is given may well be the address the refused one was freed from.
+        Registration later = Register("GstSharpTestMetaGAfterRefusal");
+        Meta laterItem = Assert.IsType<Meta>(buffer.AddMeta(later.Info, 0));
+        laterItem.Payload<Pair>().Second = 5;
+        Assert.Equal(5, Assert.IsType<Meta>(buffer.GetMeta(later.Api)).Payload<Pair>().Second);
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -245,8 +246,18 @@ internal static class MetaAuthorRegistry
         Entries[info] = registration;
 
     /// <summary>Takes an entry back after the library refused its block.</summary>
+    /// <remarks>
+    /// The entry is removed only when it is still the one that was filed: the
+    /// refused block has been freed by the library before this is called, so the
+    /// allocator can hand the same address to a registration on another thread,
+    /// which files its own entry under it. Comparing the value - reference
+    /// equality, since a registration is a class and each one is a distinct
+    /// instance - leaves that entry alone.
+    /// </remarks>
     /// <param name="info">The block, which the library has freed.</param>
-    internal static void Remove(nint info) => Entries.TryRemove(info, out _);
+    /// <param name="registration">The entry that was filed for that block.</param>
+    internal static void Remove(nint info, MetaAuthorRegistration registration) =>
+        Entries.TryRemove(new KeyValuePair<nint, MetaAuthorRegistration>(info, registration));
 
     /// <summary>Looks an implementation block up.</summary>
     /// <param name="info">The implementation block, or <c>0</c>.</param>
@@ -419,27 +430,32 @@ public sealed unsafe partial class Meta
         // answer back. The key is exact, because gst_meta_info_register answers
         // the very pointer it was handed and an item stores that pointer in its
         // info field.
-        MetaAuthorRegistry.Add(
-            info,
-            new MetaAuthorRegistration
-            {
-                PayloadType = typeof(T),
-                PayloadSize = payloadSize,
-                Init = init,
-                Free = free,
-                Transform = transform,
-                Serialize = serialize,
-                Deserialize = deserialize,
-                Clear = clear,
-            });
+        MetaAuthorRegistration registration = new()
+        {
+            PayloadType = typeof(T),
+            PayloadSize = payloadSize,
+            Init = init,
+            Free = free,
+            Transform = transform,
+            Serialize = serialize,
+            Deserialize = deserialize,
+            Clear = clear,
+        };
+
+        MetaAuthorRegistry.Add(info, registration);
 
         nint registered = MetaInfoRegister(info);
         if (registered == 0)
         {
             // The library freed the block on this path, so there is nothing to
             // release here; the entry is taken back so that a later block at the
-            // same address does not inherit this registration.
-            MetaAuthorRegistry.Remove(info);
+            // same address does not inherit this registration. The removal names
+            // the registration as well as the address, because the block is
+            // already back with the allocator by now: a Register on another
+            // thread can be handed the same address and file its own entry under
+            // it before this line runs, and a removal that only named the address
+            // would delete that thread's entry instead of this one.
+            MetaAuthorRegistry.Remove(info, registration);
             throw new InvalidOperationException(
                 "gst_meta_info_register returned no value, so the metadata implementation was refused: the " +
                 "implementation name is already taken by another type, or it is not a valid GType name.");
@@ -758,8 +774,10 @@ public sealed unsafe partial class Meta
     /// generator never sees it and no overlay can bring it back; its sibling
     /// <c>gst_meta_info_register</c> takes the block <c>transfer full</c> and
     /// would be generated as a method of an opaque record that managed code
-    /// cannot construct, which is why both are on the skip and hand bound lists
-    /// of <c>girs/overlays/fixups.json</c> and imported here instead. Together
+    /// cannot construct, which is why it is on the skip list of
+    /// <c>girs/overlays/fixups.json</c>. Both are on the hand bound list of that
+    /// file - the one that is never generated needs no skip entry - and are
+    /// imported here instead. Together
     /// they are a superset of <c>gst_meta_register</c>, which is hand bound as
     /// well and which nothing imports: the three callbacks it takes are the
     /// three oldest of the six this pair can write.
