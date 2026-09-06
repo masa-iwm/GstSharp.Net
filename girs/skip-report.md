@@ -270,7 +270,7 @@ disappears shows up here as an added line.
 - `gst_sample_is_writable`
 - `gst_tag_list_is_writable`
 
-### NotIntrospectable (112)
+### NotIntrospectable (117)
 
 - `gst_buffer_is_writable`
 - `gst_buffer_list_copy`
@@ -348,6 +348,11 @@ disappears shows up here as an added line.
 - `gst_message_replace`
 - `gst_message_steal`
 - `gst_message_unref`
+- `gst_mini_object_copy`
+- `gst_mini_object_init`
+- `gst_mini_object_steal`
+- `gst_mini_object_weak_ref`
+- `gst_mini_object_weak_unref`
 - `gst_object_get_value_array`
 - `gst_object_ref_sink`
 - `gst_pad_create_stream_id_printf_valist`
@@ -426,7 +431,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (53)
+### UnsupportedSignature (48)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_list_foreach`
@@ -447,18 +452,13 @@ disappears shows up here as an added line.
 - `gst_message_new_property_notify`
 - `gst_message_take`
 - `gst_mini_object_add_parent`
-- `gst_mini_object_copy`
 - `gst_mini_object_get_qdata`
-- `gst_mini_object_init`
 - `gst_mini_object_lock`
 - `gst_mini_object_remove_parent`
 - `gst_mini_object_replace`
-- `gst_mini_object_steal`
 - `gst_mini_object_steal_qdata`
 - `gst_mini_object_take`
 - `gst_mini_object_unlock`
-- `gst_mini_object_weak_ref`
-- `gst_mini_object_weak_unref`
 - `gst_object_get_g_value_array`
 - `gst_object_replace`
 - `gst_pad_sticky_events_foreach`

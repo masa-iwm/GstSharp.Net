@@ -218,7 +218,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 112, 53, 10)]
+    [InlineData("Gst", 1, 90, 53, 117, 48, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 4, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 2, 1)]
     [InlineData("GstAudio", 0, 22, 0, 7, 4, 0)]

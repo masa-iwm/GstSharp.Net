@@ -870,14 +870,28 @@ internal sealed class RecordEmitter
                 record.Constructors.Concat(record.Methods).Concat(record.Functions))
             {
                 // Nothing of a hand written wrapper is planned, so no member
-                // reaches a rule of its own. The overlays are still asked,
-                // because an entry that names one of these symbols is a
-                // decision that was taken about it, and the ledger says so
-                // rather than filing every member of the record under the
-                // catch all reason.
-                SkipReason reason = _skipRules.GetSkipReason(callable) == SkipReason.OverlaySkip
-                    ? SkipReason.OverlaySkip
-                    : SkipReason.UnsupportedSignature;
+                // reaches a rule of its own. The rules are still asked,
+                // because whatever they say about a symbol is a fact about
+                // that symbol and not about the wrapper: a member that is
+                // introspectable="0" or named by an overlay is filed under
+                // that reason instead of the catch all one, so the ledger
+                // keeps measuring real gaps. Only a member the rules would
+                // have let through falls back to the catch all reason: it is
+                // generatable and still absent, because nothing emits it.
+                //
+                // ShadowedBy and MovedTo are the two answers that must not be
+                // passed through, because neither says the symbol is absent:
+                // both say it is emitted under another declaration, and of a
+                // hand written record nothing is emitted at all. Filing a
+                // member under one of them would put a claim in the ledger
+                // that is false, and it would cost the entry its HandBound
+                // promotion, which EmissionCensus withholds from exactly
+                // those two reasons.
+                SkipReason reason = _skipRules.GetSkipReason(callable);
+                if (reason is SkipReason.None or SkipReason.ShadowedBy or SkipReason.MovedTo)
+                {
+                    reason = SkipReason.UnsupportedSignature;
+                }
 
                 _census.Skipped(
                     module.GirNamespace,
