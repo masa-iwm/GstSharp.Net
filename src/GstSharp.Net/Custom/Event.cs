@@ -309,14 +309,14 @@ public sealed unsafe partial class Event
     /// <c>gst/gstevent.h</c>, and the entry point called here is the
     /// <c>gst_mini_object_copy</c> it forwards to, which the library exports as
     /// a real symbol. That call answers NULL for a type that installed no copy
-    /// function, which a event never is; the nullable return states what the C
+    /// function, which an event never is; the nullable return states what the C
     /// promises rather than a narrower promise this binding cannot take back.
     /// </para>
     /// <para>
     /// The copy is an event of the same type carrying the timestamp, the
     /// sequence number and the running time offset of the original, and the
     /// structure of the original is copied with it rather than shared
-    /// (<c>_gst_event_copy</c>, gstevent.c:268-292). The copy holds the only
+    /// (<c>_gst_event_copy</c>, gstevent.c:268-294). The copy holds the only
     /// reference to itself, so it is writable as a mini object where the
     /// original, which is usually still travelling, is not.
     /// </para>

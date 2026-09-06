@@ -35,10 +35,10 @@ public sealed partial class Sample
     /// original by reference and its segment by value, and the structure of
     /// extra information is copied with it (<c>_gst_sample_copy</c>,
     /// gstsample.c:62-77, over <c>gst_sample_new</c>, gstsample.c:126-174).
-    /// Nothing the sample points at is duplicated, so this is cheap however
-    /// large the frame is; the copy holds the only reference to itself and is
-    /// therefore writable as a mini object, while the buffer it shares with the
-    /// original is not.
+    /// Neither the buffer, the caps nor the buffer list is duplicated, so the
+    /// copy is cheap however large the frame is; the copy holds the only
+    /// reference to itself and is therefore writable as a mini object, while
+    /// the buffer it shares with the original is not.
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>

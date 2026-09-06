@@ -265,15 +265,18 @@ public unsafe partial class AppSink
     /// <para>
     /// The answer is a <see cref="Gst.Sample"/> for a buffer or a buffer list
     /// and a <see cref="Gst.Event"/> for every serialized event except the end
-    /// of the stream: stream-start, caps, segment, tag, gap, a custom event.
-    /// Which of the two it is, is decided at run time, so the caller matches on
-    /// the type it is handed.
+    /// of the stream, among them stream-start, caps, segment, tag, gap and a
+    /// serialized custom event. Which of the two it is, is decided at run time,
+    /// so the caller matches on the type it is handed.
     /// </para>
     /// <para>
     /// The answer is <see langword="null"/> when the sink is not started, that
     /// is when it sits in the READY or the NULL state, and when the stream has
-    /// ended. The end of the stream is never queued as an event, so
-    /// <see cref="IsEos"/> is what tells the two apart.
+    /// ended. The end of the stream is never queued as an event;
+    /// <see cref="IsEos"/> answers <see langword="true"/> once it has been
+    /// reached and also for a sink that is not started, so a null answer always
+    /// comes with <see cref="IsEos"/> true and it is the state of the sink that
+    /// tells a stopped sink from an ended stream.
     /// </para>
     /// <para>
     /// The queue read here is the one <see cref="PullSample"/> and
@@ -311,15 +314,19 @@ public unsafe partial class AppSink
     /// <para>
     /// The answer is a <see cref="Gst.Sample"/> for a buffer or a buffer list
     /// and a <see cref="Gst.Event"/> for every serialized event except the end
-    /// of the stream: stream-start, caps, segment, tag, gap, a custom event.
-    /// Which of the two it is, is decided at run time, so the caller matches on
-    /// the type it is handed.
+    /// of the stream, among them stream-start, caps, segment, tag, gap and a
+    /// serialized custom event. Which of the two it is, is decided at run time,
+    /// so the caller matches on the type it is handed.
     /// </para>
     /// <para>
     /// The answer is <see langword="null"/> when the sink is not started, that
     /// is when it sits in the READY or the NULL state, when the stream has
     /// ended, and when the timeout expired. The end of the stream is never
-    /// queued as an event, so <see cref="IsEos"/> is what tells those apart.
+    /// queued as an event; <see cref="IsEos"/> answers <see langword="true"/>
+    /// once it has been reached and also for a sink that is not started, so a
+    /// null answer with <see cref="IsEos"/> false is the timeout and nothing
+    /// else, and the state of the sink tells a stopped sink from an ended
+    /// stream.
     /// </para>
     /// <para>
     /// The queue read here is the one <see cref="PullSample"/> and
@@ -383,7 +390,7 @@ public unsafe partial class AppSink
             // released here rather than leaked.
             Gst.GstNative.MiniObjectUnref(handle);
             throw new InvalidOperationException(
-                $"gst_app_sink_pull_object answered an object of type {type.Name}, which this binding does not wrap.");
+                $"The appsink answered an object of type {type.Name}, which this binding does not wrap.");
         }
 
         if (wrapper is Gst.MiniObject miniObject)
@@ -395,7 +402,7 @@ public unsafe partial class AppSink
         // releases it; the handle must not be unreffed a second time.
         (wrapper as IDisposable)?.Dispose();
         throw new InvalidOperationException(
-            $"gst_app_sink_pull_object answered an object of type {type.Name}, which this binding wraps as something that is not a mini object.");
+            $"The appsink answered an object of type {type.Name}, which this binding wraps as something that is not a mini object.");
     }
 
     /// <summary>The <c>gst_app_sink_pull_object</c> entry point.</summary>

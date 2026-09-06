@@ -146,8 +146,13 @@ internal static unsafe partial class GstNative
     /// This is the exported entry point the per type copies of the headers
     /// forward to: <c>gst_event_copy</c>, <c>gst_sample_copy</c>,
     /// <c>gst_buffer_list_copy</c> and <c>gst_query_copy</c> are static inline
-    /// functions of the C headers, and the gir marks every one of them
-    /// <c>introspectable="0"</c>, so nothing generates them. The C dispatches
+    /// functions of the C headers that the library exports as real symbols as
+    /// well (gstevent.c:2508, gstsample.c:476, gstbufferlist.c:607,
+    /// gstquery.c:2830), each a one-line forward to this entry point, and the
+    /// gir marks every one of them <c>introspectable="0"</c>, so nothing
+    /// generates them. Importing the four would work, but this one import
+    /// serves all four members, because the copy it answers carries the type of
+    /// the original. The C dispatches
     /// to the copy function the type installed and answers NULL when the type
     /// installed none (gstminiobject.c:182-206); the object it answers carries
     /// the <c>GType</c> of the original and starts unshared and unlocked.
