@@ -353,6 +353,14 @@ public sealed class VirtualOverlayDiagnosticTests
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
         Assert.Contains("Gst.Gadget::polish", error.Message, StringComparison.Ordinal);
         Assert.Contains("bool", error.Message, StringComparison.Ordinal);
+
+        // And the slot is dropped rather than written and complained about: the
+        // result the test holds is the one the command line would have
+        // persisted, had it been willing to persist anything at all.
+        Assert.DoesNotContain(
+            "OnPolish",
+            run.File("Subclassing/Gadget.Subclass.cs"),
+            StringComparison.Ordinal);
     }
 
     private static FixtureRun Run(string body, string fixups, bool allowErrors = false)

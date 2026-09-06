@@ -226,34 +226,10 @@ internal sealed class VfuncEmitter
             TypeKind.GObjectClass,
             ModuleMap.ClrNamespaceOf(ns.Name) + "." + model.Owner.Name);
 
-        List<VirtualMethodPlan> plans = [];
-        foreach (ClassStructMember slot in model.Slots)
-        {
-            GirVirtualMethod method = slot.Method!;
-            string key = model.KeyOf(method.Name);
-            if (_overlays.IsVirtualSkipped(key))
-            {
-                _census.SkippedVirtual(module.GirNamespace, key, _overlays.VirtualSkipReason(key));
-                continue;
-            }
-
-            VirtualMethodPlan? plan = _planner.PlanVirtualMethod(
-                method,
-                ClassStructEmitter.MemberNameOf(slot.Field),
-                context,
-                out string reason);
-
-            if (plan is null)
-            {
-                _census.SkippedVirtual(module.GirNamespace, key, reason);
-                continue;
-            }
-
-            plans.Add(plan);
-            _census.Emitted(module.GirNamespace, Category);
-        }
-
-        HashSet<string> mine = new(StringComparer.Ordinal);
+        // What the ancestors emitted is read before the first slot is planned,
+        // because a slot the checks below refuse is dropped from the file and
+        // from the count in the same place: emission and census then agree on
+        // what the run produced, whatever the diagnostics say.
         HashSet<string> inherited = new(StringComparer.Ordinal);
         for (ClassStructModel? parent = model.Parent; parent is not null; parent = parent.Parent)
         {
@@ -279,13 +255,49 @@ internal sealed class VfuncEmitter
             }
         }
 
+        List<VirtualMethodPlan> plans = [];
+        foreach (ClassStructMember slot in model.Slots)
+        {
+            GirVirtualMethod method = slot.Method!;
+            string key = model.KeyOf(method.Name);
+            if (_overlays.IsVirtualSkipped(key))
+            {
+                _census.SkippedVirtual(module.GirNamespace, key, _overlays.VirtualSkipReason(key));
+                continue;
+            }
+
+            VirtualMethodPlan? plan = _planner.PlanVirtualMethod(
+                method,
+                ClassStructEmitter.MemberNameOf(slot.Field),
+                context,
+                out string reason);
+
+            if (plan is null)
+            {
+                _census.SkippedVirtual(module.GirNamespace, key, reason);
+                continue;
+            }
+
+            // Both are asked before either answer is read, so a slot that is
+            // wrong twice is reported twice rather than only for the first
+            // reason found.
+            bool collides = ReportReturnTypeCollision(model, plan, inherited);
+            bool undocumented = ReportUndocumentedBorrow(model, plan);
+            if (collides || undocumented)
+            {
+                continue;
+            }
+
+            plans.Add(plan);
+            _census.Emitted(module.GirNamespace, Category);
+        }
+
+        HashSet<string> mine = new(StringComparer.Ordinal);
         foreach (VirtualMethodPlan plan in plans)
         {
             _ = mine.Add(plan.Name);
             _ = mine.Add(SignatureOf(plan));
             _ = mine.Add(AnsweredSignatureOf(plan));
-            ReportReturnTypeCollision(model, plan, inherited);
-            ReportUndocumentedBorrow(model, plan);
         }
 
         _emittedSlots[model.QualifiedName] = mine;
@@ -745,14 +757,19 @@ internal sealed class VfuncEmitter
     /// <param name="model">The class being emitted.</param>
     /// <param name="plan">The slot being emitted.</param>
     /// <param name="inherited">The signatures the ancestors of the class emitted.</param>
-    private void ReportReturnTypeCollision(
+    /// <returns>
+    /// <see langword="true"/> when the slot collides, in which case the caller
+    /// leaves it out of the file and out of the census: the member the run
+    /// refuses to ship is a member the run does not count either.
+    /// </returns>
+    private bool ReportReturnTypeCollision(
         ClassStructModel model,
         VirtualMethodPlan plan,
         HashSet<string> inherited)
     {
         if (!inherited.Contains(SignatureOf(plan)) || inherited.Contains(AnsweredSignatureOf(plan)))
         {
-            return;
+            return false;
         }
 
         string prefix = SignatureOf(plan) + " : ";
@@ -771,6 +788,7 @@ internal sealed class VfuncEmitter
             + $"'{ReturnType(plan)}', which hides an inherited member of the same parameters answering "
             + $"'{answered}'. A managed name cannot carry both; skip the slot through 'skipVirtuals' or "
             + "give it a name of its own.");
+        return true;
     }
 
     /// <summary>
@@ -789,11 +807,17 @@ internal sealed class VfuncEmitter
     /// over remarks that say nothing, so the run stops until the sentence is
     /// written.
     /// </remarks>
-    private void ReportUndocumentedBorrow(ClassStructModel model, VirtualMethodPlan plan)
+    /// <returns>
+    /// <see langword="true"/> when the note is missing, in which case the
+    /// caller leaves the slot out of the file and out of the census - the same
+    /// treatment the return type collision gets, for the same reason: a member
+    /// the run refuses to ship is not a member it counts.
+    /// </returns>
+    private bool ReportUndocumentedBorrow(ClassStructModel model, VirtualMethodPlan plan)
     {
         if (plan.ReturnBucket != VfuncReturnBucket.BorrowedHandle || plan.DocNote is not null)
         {
-            return;
+            return false;
         }
 
         _diagnostics.Error(
@@ -801,6 +825,7 @@ internal sealed class VfuncEmitter
             $"The slot '{model.KeyOf(plan.Method.Name)}' answers a borrowed handle and carries no "
             + "'vfuncDocNotes' entry. The generated note says the base class takes a reference of its own; "
             + "state in that entry which call site does, and what the override owes it.");
+        return true;
     }
 
     private static string SignatureOf(VirtualMethodPlan plan)

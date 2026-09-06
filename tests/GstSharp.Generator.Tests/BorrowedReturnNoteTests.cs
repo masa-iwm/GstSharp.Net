@@ -71,6 +71,14 @@ public sealed class BorrowedReturnNoteTests
 
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
         Assert.Contains("Gst.Widget::create_part", error.Message, StringComparison.Ordinal);
+
+        // The note is the one sentence that says what the override owes the
+        // borrowed answer, so the member waits for it: the slot is left out of
+        // the file and out of the census rather than shipped undocumented.
+        Assert.DoesNotContain(
+            "OnCreatePart",
+            run.File("Subclassing/Widget.Subclass.cs"),
+            StringComparison.Ordinal);
     }
 
     [Fact]

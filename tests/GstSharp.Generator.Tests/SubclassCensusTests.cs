@@ -17,7 +17,7 @@ namespace GstSharp.Generator.Tests;
 public sealed class SubclassCensusTests
 {
     private static readonly Lazy<GenerationResult> LazyGenerated = new(
-        static () => GenerationPipeline.Run(GirFixture.GirDirectory),
+        static () => GirFixture.RunWithoutErrors(),
         isThreadSafe: true);
 
     private static GenerationResult Generated => LazyGenerated.Value;

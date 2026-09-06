@@ -1,5 +1,7 @@
+using GstSharp.Generator.Emit;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
+using Xunit;
 
 namespace GstSharp.Generator.Tests;
 
@@ -29,6 +31,27 @@ internal static class GirFixture
 
     /// <summary>Gets the loaded overlays.</summary>
     internal static Overlays Overlays => LazyOverlays.Value;
+
+    /// <summary>
+    /// Runs the generator over the vendored gir files and refuses a run that
+    /// reported an error.
+    /// </summary>
+    /// <returns>The result of the run.</returns>
+    /// <remarks>
+    /// The command line reports the diagnostics and stops before it writes or
+    /// compares anything when one of them is an error, and a fixture run does
+    /// the same unless the test asked for the errors. A census counting a
+    /// result nobody would have accepted is a census of members that do not
+    /// ship, so the tests reading the real corpus in memory take the same gate.
+    /// </remarks>
+    internal static GenerationResult RunWithoutErrors()
+    {
+        GenerationResult result = GenerationPipeline.Run(GirDirectory);
+        Assert.All(
+            result.Diagnostics,
+            static diagnostic => Assert.NotEqual(DiagnosticSeverity.Error, diagnostic.Severity));
+        return result;
+    }
 
     /// <summary>Gets a loaded namespace by name.</summary>
     /// <param name="name">The gir namespace name.</param>

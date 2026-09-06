@@ -93,6 +93,21 @@ public sealed class VirtualMethodRenameTests
         Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0040");
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
         Assert.Contains("Gst.Gadget::polish", error.Message, StringComparison.Ordinal);
+
+        // The diagnostic is not advice the emitter then ignores: the slot it
+        // names is left out of the file it would have hidden a member in, so
+        // the in-memory result a test reads holds what the command line would
+        // have been willing to write.
+        string gadget = run.File("Subclassing/Gadget.Subclass.cs");
+        Assert.DoesNotContain("OnPolish", gadget, StringComparison.Ordinal);
+        Assert.DoesNotContain("ChainUpPolish", gadget, StringComparison.Ordinal);
+        Assert.DoesNotContain("PolishOverride", gadget, StringComparison.Ordinal);
+
+        // The member it would have hidden is the one that stays.
+        Assert.Contains(
+            "OnPolish",
+            run.File("Subclassing/Widget.Subclass.cs"),
+            StringComparison.Ordinal);
     }
 
     /// <summary>
