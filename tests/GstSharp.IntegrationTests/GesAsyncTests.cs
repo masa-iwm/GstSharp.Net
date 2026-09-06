@@ -1,3 +1,5 @@
+extern alias gstsharp;
+
 using GES;
 using Gst.Gio;
 using Gst.GLib;
@@ -263,6 +265,90 @@ public sealed class GesAsyncTests
 
         Assert.Equal(testClip, asset.ExtractableType);
         Assert.Equal("GESTestClip", asset.Id);
+    }
+
+    /// <summary>
+    /// The dispatcher opt out: an operation started while
+    /// <c>GstSharp.GioAsyncContext</c> names a context runs on that context and
+    /// nowhere else, and completes only because this test iterates it.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This test is deliberately <em>synchronous</em>: there is no
+    /// <c>await</c> anywhere in it. A context may only be iterated by the
+    /// thread that owns it, and the push and the pop of the thread default
+    /// have to pair on one thread; an <c>await</c> would hand the rest of the
+    /// method to another thread, which would then block on the ownership this
+    /// thread holds. So the wait is an explicit iteration loop.
+    /// </para>
+    /// <para>
+    /// The test never makes the context thread default on itself, and that
+    /// omission is the point. Iterating a context owns it but does not make it
+    /// thread default, so a <c>GTask</c> started inside the iteration would
+    /// capture the global default context and its callback would never arrive
+    /// here. The binding pushes the context around the native call itself; a
+    /// build that did not would hang this test until the deadline.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void AnOperationRunsOnTheContextTheApplicationChose()
+    {
+        GstGES.Initialize();
+
+        using (TestClip? clip = TestClip.New())
+        {
+            Assert.NotNull(clip);
+        }
+
+        GType testClip = GType.FromName("GESTestClip");
+        Assert.True(testClip.IsValid);
+
+        MainContext context = MainContext.New();
+        try
+        {
+            gstsharp::GstSharp.GioAsyncContext = context;
+
+            Task<Asset> request = Asset.RequestAsync(testClip, "GESTestClip");
+
+            // Nothing has iterated the context, so nothing has run: neither the
+            // start of the operation nor its callback. This is the hang the
+            // opt out hands to the application, observed on purpose.
+            Thread.Sleep(300);
+            Assert.False(request.IsCompleted);
+
+            long deadline = Environment.TickCount64 + (long)Patience.TotalMilliseconds;
+            while (!request.IsCompleted && Environment.TickCount64 < deadline)
+            {
+                context.Iteration(mayBlock: false);
+                Thread.Sleep(10);
+            }
+
+            Assert.True(
+                request.IsCompleted,
+                $"The request did not complete within {Patience} of iterating the chosen context.");
+
+            // Reading the result of a task that is already complete blocks on
+            // nothing; the analyzer cannot see the assertion above, and this
+            // method must not await for the reason its remarks give.
+#pragma warning disable xUnit1031 // Test methods should not use blocking task operations
+            using Asset asset = request.Result;
+#pragma warning restore xUnit1031
+
+            Assert.Equal(testClip, asset.ExtractableType);
+            Assert.Equal("GESTestClip", asset.Id);
+
+            // The push and the pop paired: the iterating thread is where the
+            // binding pushed the context, and it left nothing behind.
+            Assert.Null(MainContext.ThreadDefault);
+        }
+        finally
+        {
+            // Clearing the property before disposing the context is the
+            // contract the documentation states, and it is what leaves the
+            // process as the other tests in this class expect it.
+            gstsharp::GstSharp.GioAsyncContext = null;
+            context.Dispose();
+        }
     }
 
     /// <summary>

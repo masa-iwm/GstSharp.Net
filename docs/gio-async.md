@@ -61,6 +61,47 @@ So the binding owns a context rather than documenting a requirement:
   User code can neither stall the dispatcher nor re-enter the binding from
   inside it.
 
+### Opting out: `GstSharp.GioAsyncContext`
+
+An application that already runs a GLib main loop can have the binding start
+its operations on that loop's context instead:
+
+```csharp
+GstSharp.GioAsyncContext = Gst.GLib.MainContext.Default;
+```
+
+The binding's thread is then never started — the property is read before the
+`Lazy` that would start it — and both halves of every operation run inside the
+application's own iteration. Three things are the application's part of the
+bargain:
+
+* **Iterate the context.** A context that is set here and never iterated is the
+  same hang the dispatcher exists to prevent. The difference is that this one is
+  an explicit choice, so it is a contract rather than a trap.
+* **Nothing else.** In particular the iterating thread does not have to have
+  pushed the context as its thread default. `g_main_context_invoke_full` runs the
+  function synchronously only when the target context is the caller's own
+  thread-default (or the global default) *and* can be acquired; in every other
+  case it attaches an idle source, which runs inside somebody's iteration
+  (`gmain.c`, `g_main_context_invoke_full`). A thread that iterates a context
+  owns it during the dispatch but has not necessarily made it thread default, so
+  the `GTask` would capture the global default context and its callback would
+  never arrive. The binding closes that by bracketing the native `*_async` call
+  with `g_main_context_push_thread_default` / `pop_thread_default` of the target
+  context, on the thread the call is made on: a thread that already owns the
+  context may acquire it again, so this is legal there and a no-op in effect on
+  the binding's own dispatcher thread.
+* **Clear it before disposing the context.** The property is what keeps the
+  `MainContext` reachable; set it back to `null` first. An operation already
+  under way holds a reference of its own for its whole duration, so it cannot be
+  pulled out from under one.
+
+The value is read once per operation, when the operation starts, so it can be
+set and cleared at any time and operations already running are unaffected. And
+continuations are unaffected too: every completion source still uses
+`RunContinuationsAsynchronously`, so user code never runs inline inside the
+application's main loop iteration.
+
 ### Why the operation is not merely bracketed on the calling thread
 
 The obvious alternative is to leave the call on the caller's thread and wrap it
@@ -300,8 +341,9 @@ because none of them is visible from the signature:
 
 * which initialisation must have run first (`GstGES.Initialize` for the two GES
   methods);
-* that the operation runs on the binding's dispatcher thread, and that the
-  application therefore needs no main loop;
+* that the operation runs on the binding's dispatcher thread unless the
+  application named a context of its own through `GstSharp.GioAsyncContext`,
+  and that it therefore needs no main loop by default;
 * whether the returned wrapper is owned;
 * for a `Cancellable` overload, that the object is borrowed and that the
   cancellation it produces carries no token.
@@ -328,8 +370,5 @@ need it most.
   the whole surface would need either a gir refresh or name convention matching.
   The state-subclass-per-operation shape above is what a generator would emit
   well, so this is a question of when, not whether.
-* **No dispatcher opt out.** An application that does run a GLib main loop still
-  gets the binding's thread. An option to suppress it is a later design; the
-  cost today is one idle thread.
 * **`GstPromise` is not this.** The WebRTC promise machinery is a separate
   pattern and is not part of this contract.

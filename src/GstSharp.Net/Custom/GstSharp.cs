@@ -26,6 +26,7 @@ public static class GstSharp
     private static bool _appliedSkipNativeInit;
     private static string[]? _appliedInitArgs;
     private static Gst.Version _version;
+    private static MainContext? _gioAsyncContext;
 
     /// <summary>
     /// Raised for every exception that was caught on a native callback
@@ -99,6 +100,55 @@ public static class GstSharp
                 return _version;
             }
         }
+    }
+
+    /// <summary>
+    /// Gets or sets the main context that asynchronous Gio operations of the
+    /// binding are started on, or <see langword="null"/> — the default — to let
+    /// the binding run a context and a thread of its own.
+    /// </summary>
+    /// <value>
+    /// The context the application iterates, or <see langword="null"/> for the
+    /// binding's own dispatcher.
+    /// </value>
+    /// <remarks>
+    /// <para>
+    /// By default the binding starts a background thread on the first
+    /// asynchronous call and iterates a private context on it, because a
+    /// <c>GTask</c> callback that nobody iterates a context for is never
+    /// delivered and the returned task hangs forever. An application that
+    /// already runs a GLib main loop can point that machinery at its own
+    /// context instead, and the binding's thread is then never started. See
+    /// <c>docs/gio-async.md</c>.
+    /// </para>
+    /// <para>
+    /// <strong>Iterating the context is then the application's job.</strong>
+    /// A context that is set here and never iterated is exactly the hang the
+    /// dispatcher exists to prevent — with the difference that this is an
+    /// explicit choice. The binding pushes the context as the thread default
+    /// around the native call it makes on it, so the operation captures the
+    /// context whether or not the iterating thread pushed it; what it cannot do
+    /// is iterate it.
+    /// </para>
+    /// <para>
+    /// The value is read once, when an operation starts, so it may be set and
+    /// cleared at any time and operations already running are unaffected. Set
+    /// it back to <see langword="null"/> before disposing the context: the
+    /// binding holds the reference for the whole of an operation, but the
+    /// property itself is what keeps the context reachable afterwards.
+    /// </para>
+    /// <para>
+    /// Continuations of the returned tasks still never run inside a GLib
+    /// dispatch frame: every completion source is built with
+    /// <see cref="System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously"/>,
+    /// so user code cannot stall the application's main loop from inside the
+    /// callback either.
+    /// </para>
+    /// </remarks>
+    public static MainContext? GioAsyncContext
+    {
+        get => Volatile.Read(ref _gioAsyncContext);
+        set => Volatile.Write(ref _gioAsyncContext, value);
     }
 
     /// <summary>

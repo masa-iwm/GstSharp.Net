@@ -111,6 +111,7 @@ internal abstract class GioAsyncState
     private Cancellable? _cancellable;
     private CancellationTokenRegistration _registration;
     private nint _borrowed;
+    private nint _context;
 
     /// <summary>
     /// Initialises the state of an operation.
@@ -192,7 +193,20 @@ internal abstract class GioAsyncState
         try
         {
             AttachCancellation();
-            GioAsyncDispatcher.Post(GioAsync.Starter, handle.UserData);
+
+            // Which context the operation runs on is decided once, here, so
+            // that changing GstSharp.GioAsyncContext cannot move an operation
+            // that is already under way. The reference is the state's own: the
+            // handle is used again when the operation starts, on another
+            // thread, and the application may have let go of its wrapper by
+            // then. It has to be in place before the hand over, because
+            // g_main_context_invoke_full runs the function synchronously when
+            // the calling thread already owns the context.
+            MainContext target = GioAsyncDispatcher.Target;
+            _context = GLibNative.MainContextRef(target.Handle);
+            GC.KeepAlive(target);
+
+            GioAsyncDispatcher.Post(_context, GioAsync.Starter, handle.UserData);
             posted = true;
         }
         finally
@@ -221,7 +235,28 @@ internal abstract class GioAsyncState
     {
         try
         {
-            Invoke(CancellableHandle, userData);
+            // A GTask captures whatever context is thread default here, and
+            // this is not necessarily a thread that pushed one: an application
+            // that iterates its own context through GstSharp.GioAsyncContext
+            // owns the context inside the iteration without having made it
+            // thread default, and the operation would then capture the global
+            // default one and never be delivered. Pushing is legal on this
+            // thread precisely because it is the thread that owns the context
+            // right now — the assertion of g_main_context_push_thread_default
+            // fires only when somebody else owns it. On the binding's own
+            // dispatcher thread the push is a no-op in effect, and doing it
+            // unconditionally is what keeps this one path rather than two.
+            nint context = _context;
+            GLibNative.MainContextPushThreadDefault(context);
+
+            try
+            {
+                Invoke(CancellableHandle, userData);
+            }
+            finally
+            {
+                GLibNative.MainContextPopThreadDefault(context);
+            }
         }
         catch (Exception exception)
         {
@@ -281,6 +316,12 @@ internal abstract class GioAsyncState
         if (borrowed != nint.Zero)
         {
             GObjectNative.ObjectUnref(borrowed);
+        }
+
+        nint context = Interlocked.Exchange(ref _context, nint.Zero);
+        if (context != nint.Zero)
+        {
+            GLibNative.MainContextUnref(context);
         }
 
         // The wrapper had to stay reachable for the whole operation, not just

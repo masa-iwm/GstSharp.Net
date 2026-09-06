@@ -47,10 +47,12 @@ public unsafe partial class Asset
     /// <para>
     /// The request is made, and its callback runs, on the dispatcher thread of
     /// the binding — a thread the binding owns and iterates a private main
-    /// context on, so the application needs no main loop of its own.
-    /// Continuations of the returned task never run there; they are scheduled,
-    /// so nothing user code does can stall the dispatcher. See
-    /// <c>docs/gio-async.md</c>.
+    /// context on, so the application needs no main loop of its own. An
+    /// application that has one may say so through
+    /// <see cref="GstSharp.GioAsyncContext"/>, in which case both halves run on
+    /// the context it named instead. Either way, continuations of the returned
+    /// task never run there; they are scheduled, so nothing user code does can
+    /// stall the loop. See <c>docs/gio-async.md</c>.
     /// </para>
     /// <para>
     /// The returned wrapper is owned: it holds a reference of its own and is

@@ -58,6 +58,14 @@ namespace Gst.Gio;
 /// </description></item>
 /// </list>
 /// <para>
+/// An application that runs a GLib main loop of its own can opt out by setting
+/// <c>GstSharp.GioAsyncContext</c>, in which case operations are posted to that
+/// context and none of the above is started. Iterating that context is then the
+/// application's job; the push and pop of the thread default around the native
+/// call, which <c>GioAsyncState.StartHere</c> does, is what makes the operation
+/// capture it regardless of what the iterating thread pushed.
+/// </para>
+/// <para>
 /// See <c>docs/gio-async.md</c> for the whole shape, of which this is one
 /// half.
 /// </para>
@@ -73,9 +81,22 @@ internal static unsafe class GioAsyncDispatcher
     internal static MainContext Context => Dispatcher.Value;
 
     /// <summary>
-    /// Runs <paramref name="function"/> on the dispatcher thread, with
+    /// Gets the context the next operation is started on: the one the
+    /// application chose through <c>GstSharp.GioAsyncContext</c>, or the
+    /// binding's own.
+    /// </summary>
+    /// <remarks>
+    /// The fallback is behind <c>??</c> deliberately: an application that
+    /// chose a context of its own never evaluates <see cref="Context"/>, so
+    /// the dispatcher thread is never started.
+    /// </remarks>
+    internal static MainContext Target => global::GstSharp.GioAsyncContext ?? Context;
+
+    /// <summary>
+    /// Runs <paramref name="function"/> on <paramref name="context"/>, with
     /// <paramref name="data"/> as its argument.
     /// </summary>
+    /// <param name="context">The context to run it on.</param>
     /// <param name="function">The function to run. It runs exactly once.</param>
     /// <param name="data">What to pass to it.</param>
     /// <remarks>
@@ -87,8 +108,8 @@ internal static unsafe class GioAsyncDispatcher
     /// operation, which releases it from its callback or from its own failure
     /// path, and a notify here would release it a second time.
     /// </remarks>
-    internal static void Post(delegate* unmanaged[Cdecl]<nint, int> function, nint data) =>
-        GLibNative.MainContextInvokeFull(Context.Handle, GLibNative.PriorityDefault, function, data, null);
+    internal static void Post(nint context, delegate* unmanaged[Cdecl]<nint, int> function, nint data) =>
+        GLibNative.MainContextInvokeFull(context, GLibNative.PriorityDefault, function, data, null);
 
     private static MainContext Start()
     {
