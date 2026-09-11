@@ -1057,6 +1057,38 @@ consumed the list all the same. The objects the caller passed keep their own
 references and stay usable; a buffer handed to `SetHeaders` is simply no longer
 writable, because the encoder now holds a reference to it as well.
 
+## Tables a call is given or answers
+
+A `GHashTable` of string keys reads as a dictionary on both sides, and neither
+side of it follows the list rule above.
+
+A table a call is **given** — `Uri.SetQueryTable` — is an
+`IReadOnlyDictionary<string, string?>?`, and `null` and an empty dictionary are
+two different arguments: the first takes the query out of the URI and the second
+gives it a query with no keys at all. The binding copies the entries into a
+native table built for that one call, hands it over, and drops its own reference
+when the call returns, including when it throws. That reference is the only one
+the binding holds; a callee that keeps the table takes one of its own first, as
+`gst_uri_set_query_table` does, so the table goes on living inside the URI while
+the dictionary the caller passed is theirs to change or drop straight away. A
+value of `null` is a key that stands in the query string with no `=` after it,
+which is a state C keeps apart from an empty value; a `null` key is refused with
+`ArgumentException`.
+
+A table a call **answers** — `Uri.GetQueryTable`, `Uri.GetMediaFragmentTable`,
+`TrackElement.GetAllControlBindings` — is a `Dictionary<K, V>` and always a
+snapshot, never a live view: C hands out the table it keeps, and the binding
+copies every entry out before the member returns. Editing the dictionary
+afterwards changes nothing, and two calls answer two independent dictionaries.
+A table of strings is answered as `Dictionary<string, string?>?`, where `null`
+is the absence of a table and an empty dictionary a table with no entries, and
+the reference the call transferred is released once the copy is made. A table of
+GObjects is answered as `Dictionary<string, T>`, never `null`, and its values
+follow the GObject rule above: each is an interned wrapper holding a reference of
+its own, so it is the very instance the single-key member answers and the caller
+does not dispose it. The order of the entries is the order GLib iterates its
+table in and is not specified.
+
 ## Callbacks and the state they carry
 
 A callback that is handed to native code is a `GCHandle` on a delegate, and the

@@ -183,6 +183,21 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// ges_track_element_set_control_source(), and their values are the
     /// corresponding created #GstControlBinding.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The dictionary is a snapshot of the table the element keeps
+    /// (ges-track-element.c:1253-1274), so a binding added or removed afterwards does not
+    /// change it. Every key is the child property name exactly as it was given to
+    /// SetControlSource, which GES stores without normalising it
+    /// (ges-track-element.c:1961-1969): the plain form, alpha, and the qualified one,
+    /// GstFramePositioner::alpha, can both appear in one table (the positioner is the child a
+    /// GES video source resolves alpha to; ges/gstframepositioner.c:614). The bindings belong
+    /// to the objects they were installed on and the wrappers are interned, so they are the
+    /// very instances GetControlBinding answers and must not be disposed. An element that
+    /// carries no binding answers an empty dictionary rather than nothing, because the table is
+    /// created in the instance initializer (ges-track-element.c:515-516).
+    /// </para>
+    /// </remarks>
     /// <returns>
     /// A
     /// hash table containing all child-property-name/control-binding pairs

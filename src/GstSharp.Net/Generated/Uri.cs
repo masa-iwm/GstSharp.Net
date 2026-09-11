@@ -203,6 +203,16 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// </summary>
     /// <remarks>
     /// <para>See more about Media Fragments URI 1.0 (W3C) at https://www.w3.org/TR/media-frags/</para>
+    /// <para>
+    /// The table is parsed afresh on every call out of the fragment of the URI and is kept
+    /// nowhere (gsturi.c:2979-3008): the fragment is split at every &amp; and each part at its
+    /// first =, and both halves are percent decoded, so the last of two entries with the same
+    /// key wins. The dictionary is therefore a value of its own, and editing it does not touch
+    /// the URI. A key that carries no = has a null value and one written as key= has an empty
+    /// one. A URI without a fragment answers nothing, while one whose fragment is empty answers
+    /// an empty dictionary. The order of the entries is the iteration order of the table GLib
+    /// built and is not specified.
+    /// </para>
     /// </remarks>
     /// <returns>
     /// The
@@ -348,6 +358,17 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// no longer required. Modifying this hash table will modify the query in the
     /// URI.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The dictionary is a snapshot. C hands out the live query table of the URI
+    /// (gsturi.c:2733-2759) and this copies it, so editing the dictionary does not change the
+    /// URI: SetQueryTable is what writes a whole table back. A key that stands in the query
+    /// without an = has a null value and one written as key= has an empty one, which is the
+    /// difference the query string keeps. A URI without a query answers nothing, while one
+    /// whose query is empty answers an empty dictionary. The order of the entries is the
+    /// iteration order of the table GLib built and is not specified.
+    /// </para>
+    /// </remarks>
     /// <returns>
     /// The query
     ///          hash table from the URI.
@@ -707,6 +728,20 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// reference to the new one is used instead. A value if %NULL for @query_table
     /// will remove the query string from the URI.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The entries are copied into a table of its own that the URI keeps and goes on editing
+    /// (gsturi.c:2761-2797), so the dictionary may be changed or dropped afterwards without
+    /// affecting the URI. A null dictionary takes the query out of the URI, while an empty one
+    /// gives it a query with no keys at all. A null value produces a key that stands in the
+    /// query string with no = after it. The values are typed string? because of that key, and
+    /// IReadOnlyDictionary&lt;TKey, TValue&gt; is invariant in TValue, so a
+    /// Dictionary&lt;string, string&gt; does not convert to one: declare the dictionary as
+    /// Dictionary&lt;string, string?&gt;, or write ! at the call site, which is sound because
+    /// the call only reads what it is given. The call answers false, after a GLib critical,
+    /// when the URI is not writable, which is what a URI that is shared is.
+    /// </para>
+    /// </remarks>
     /// <param name="queryTable">
     /// The new
     ///               query table to use.
