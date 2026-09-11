@@ -171,7 +171,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 35, 49, 5, 39, 18, 1445, 29, 23, 71)]
+    [InlineData("Gst", 35, 49, 5, 39, 18, 1448, 29, 23, 71)]
     [InlineData("GstBase", 11, 4, 0, 7, 0, 176, 31, 2, 10)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 1, 2, 212, 33, 0, 48)]
@@ -187,7 +187,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
     [InlineData("GstPlay", 8, 1, 1, 0, 5, 120, 17, 13, 0)]
-    [InlineData("GES", 56, 2, 2, 0, 3, 383, 77, 39, 7)]
+    [InlineData("GES", 56, 2, 2, 0, 3, 384, 77, 39, 7)]
     public void TheEmissionCensusIsStable(
         string module,
         int classes,
@@ -218,7 +218,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 112, 42, 10)]
+    [InlineData("Gst", 1, 90, 53, 112, 39, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 3, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 0, 1)]
     [InlineData("GstAudio", 0, 22, 0, 7, 3, 0)]
@@ -234,7 +234,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 7, 0, 0, 0, 0)]
     [InlineData("GstPlay", 0, 23, 0, 0, 0, 0)]
-    [InlineData("GES", 6, 3, 4, 10, 6, 2)]
+    [InlineData("GES", 6, 3, 4, 10, 5, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,

@@ -289,9 +289,14 @@ internal sealed class TypeMap
             element = Map(type.InnerTypes[1], context);
         }
 
+        // The table projection is the base shape and not the last word: a table
+        // the planner accepts gets its public type spelled there, because the
+        // value of a table of strings is nullable however the gir spells it and
+        // a table a call is given reads as an IReadOnlyDictionary. What is left
+        // here is what a table that is not planned is reported as.
         string publicType = kind switch
         {
-            MarshalKind.GHashTable => $"System.Collections.Generic.IDictionary<{key?.PublicType ?? NativeInt}, {element?.PublicType ?? NativeInt}>",
+            MarshalKind.GHashTable => $"System.Collections.Generic.Dictionary<{key?.PublicType ?? NativeInt}, {element?.PublicType ?? NativeInt}>",
             MarshalKind.GByteArray => "byte[]",
             _ => $"System.Collections.Generic.IReadOnlyList<{element?.PublicType ?? NativeInt}>",
         };

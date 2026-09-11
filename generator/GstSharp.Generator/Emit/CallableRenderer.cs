@@ -249,6 +249,22 @@ internal static class CallableRenderer
     ];
 
     /// <summary>
+    /// The note of a table a call is given. It says the three things the
+    /// signature does not: the entries are copied, a null value is a key that
+    /// carries none, and an absent table is not an empty one — the opposite of
+    /// the rule a list follows, where the two are the same argument.
+    /// </summary>
+    private static readonly string[] BorrowedTableNote =
+    [
+        "The entries are copied into a native table that is built for the call and",
+        "released when it returns. A callee that keeps the table takes a reference of",
+        "its own first, so the dictionary may be changed or dropped afterwards without",
+        "affecting what the call kept. A null value is a key that carries no value at",
+        "all, which is a state C spells, and a null dictionary is not an empty one:",
+        "the first is the absence of a table and the second a table with no entries.",
+    ];
+
+    /// <summary>
     /// What the documentation of a <c>ToString</c> that the C side may answer
     /// <c>NULL</c> to says, because the member hands out the empty string
     /// rather than a null reference.
@@ -730,6 +746,7 @@ internal static class CallableRenderer
             ArgumentKind.ListIn => argument.Transfer == GirTransfer.Full
                 ? ConsumedListNote
                 : BorrowedListNote,
+            ArgumentKind.HashTableIn => BorrowedTableNote,
             _ => null,
         };
     }
@@ -2442,6 +2459,7 @@ internal static class CallableRenderer
             case ArgumentKind.ConsumedHandle:
             case ArgumentKind.Strv when argument.Direction == ArgumentDirection.In:
             case ArgumentKind.ListIn when argument.Direction == ArgumentDirection.In:
+            case ArgumentKind.HashTableIn when argument.Direction == ArgumentDirection.In:
                 if (!argument.IsNullable)
                 {
                     writer.WriteLine("ArgumentNullException.ThrowIfNull(" + name + ");");
@@ -2841,6 +2859,16 @@ internal static class CallableRenderer
                     + name + ", singly: " + (argument.IsSinglyLinked ? "true" : "false") + ");");
                 return;
 
+            // The table, and the UTF-8 copy of every key and every value in it,
+            // belong to the scope, which releases the reference it holds when
+            // the call returns and when it throws. A callee that keeps the
+            // table takes a reference of its own before that happens.
+            case ArgumentKind.HashTableIn:
+                writer.WriteLine(
+                    "using Gst.Interop.HashTableScope " + name
+                    + "Scope = Gst.Interop.HashTableMarshal.Alloc(" + name + ");");
+                return;
+
             // The consumed half: one value is minted per element and the whole
             // list is handed over, so nothing is released here or afterwards.
             case ArgumentKind.ListIn:
@@ -3023,6 +3051,9 @@ internal static class CallableRenderer
 
             case ArgumentKind.ListIn:
                 return name + "Owned";
+
+            case ArgumentKind.HashTableIn:
+                return name + "Scope.Handle";
 
             case ArgumentKind.Utf8Owned:
                 return name + "Native";
@@ -3308,6 +3339,14 @@ internal static class CallableRenderer
             return;
         }
 
+        if (value.Kind == ArgumentKind.HashTableReturn)
+        {
+            WriteHashTableConversion(writer, value, converted);
+            WriteKeepAlive(writer, plan);
+            writer.WriteLine("return " + converted + ";");
+            return;
+        }
+
         ArgumentPlan projection = new()
         {
             Kind = value.Kind,
@@ -3429,6 +3468,38 @@ internal static class CallableRenderer
         writer.CloseBlock();
         writer.CloseBlock();
         writer.WriteLine();
+    }
+
+    /// <summary>
+    /// Writes the materialization of a <c>GHashTable</c> a call answered, up to
+    /// but not including the <c>return</c> of the dictionary it built.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="value">The return value being projected.</param>
+    /// <param name="target">The local the dictionary is built into.</param>
+    /// <remarks>
+    /// One call each way, because the copy and the release belong together: a
+    /// table of strings comes with the reference the call handed over and is
+    /// released as soon as its entries have been read, while a table of
+    /// GObjects stays the library's and is only read. The wrapper of a value is
+    /// built by the very expression a list of the same element type uses, so an
+    /// element is interned once however it was reached.
+    /// </remarks>
+    private static void WriteHashTableConversion(CodeWriter writer, ReturnPlan value, string target)
+    {
+        if (value.ElementKind == ArgumentKind.Utf8)
+        {
+            writer.WriteLine(
+                value.PublicType + " " + target + " = Gst.Interop.HashTableMarshal.ToStringDictionary("
+                + ResultLocal + ", unref: " + (value.Transfer == GirTransfer.None ? "false" : "true") + ");");
+            return;
+        }
+
+        string elementType = value.ElementType!;
+        writer.WriteLine(
+            value.PublicType + " " + target + " = Gst.Interop.HashTableMarshal.ToObjectDictionary<"
+            + elementType + ">(" + ResultLocal + ", static " + ItemLocal + " => "
+            + HandleConversion(value.Flavor, elementType, ItemLocal, GirTransfer.None) + ");");
     }
 
     /// <summary>

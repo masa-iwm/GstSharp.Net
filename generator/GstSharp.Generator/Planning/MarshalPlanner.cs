@@ -848,7 +848,9 @@ internal sealed class MarshalPlanner
     /// borrowed string (<see cref="ArgumentKind.Utf8"/>) both refuse an
     /// embedded NUL; a string vector (<see cref="ArgumentKind.Strv"/>) and
     /// either shape of list (<see cref="ArgumentKind.ListIn"/>) refuse a null
-    /// element as well. Minting a reference for a consumed handle and
+    /// element as well, and so does a table of strings
+    /// (<see cref="ArgumentKind.HashTableIn"/>). Minting a reference for a
+    /// consumed handle and
     /// allocating the storage of a caller allocated out read the locals the
     /// second phase produced and call into C, so neither of them can throw, and
     /// everything else the third phase writes is an assignment.
@@ -897,7 +899,7 @@ internal sealed class MarshalPlanner
     private static bool ThrowsInPrologue(ArgumentPlan argument) =>
         argument.Direction == ArgumentDirection.In
         && argument.Kind is ArgumentKind.Utf8 or ArgumentKind.Utf8Owned or ArgumentKind.Strv
-            or ArgumentKind.ListIn;
+            or ArgumentKind.ListIn or ArgumentKind.HashTableIn;
 
     /// <summary>
     /// Records why the callable that is being planned is rejected. The rules
@@ -2631,6 +2633,18 @@ internal sealed class MarshalPlanner
                     isReturn,
                     callerAllocates);
 
+            case MarshalKind.GHashTable:
+                return PlanHashTableArgument(
+                    type,
+                    mapped,
+                    name,
+                    direction,
+                    transfer,
+                    nullable,
+                    isReturn,
+                    callerAllocates,
+                    inbound);
+
             default:
                 return null;
         }
@@ -3567,6 +3581,14 @@ internal sealed class MarshalPlanner
             return PlanListReturn(value, mapped, transfer);
         }
 
+        // And beside it, for the same reason: a gir may spell a GHashTable as
+        // an <array name="GLib.HashTable"> with the key and the value as its
+        // two inner types.
+        if (mapped.Kind == MarshalKind.GHashTable)
+        {
+            return PlanHashTableReturn(value, mapped, transfer);
+        }
+
         if (effective is GirArrayRef array)
         {
             if (mapped.ElementType is not { } element)
@@ -3977,6 +3999,207 @@ internal sealed class MarshalPlanner
             ElementType = element.PublicType,
             ElementKind = elementKind,
             IsSinglyLinked = mapped.Kind == MarshalKind.GSList,
+        };
+    }
+
+    /// <summary>
+    /// Plans a <c>GHashTable</c> that a call hands back, copied entry by entry
+    /// into a dictionary.
+    /// </summary>
+    /// <param name="value">The gir return value.</param>
+    /// <param name="mapped">Its mapping, whose key and value types carry the payload.</param>
+    /// <param name="transfer">What the call transfers along with the table.</param>
+    /// <returns>The plan, or <see langword="null"/> when the shape is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// The key is a string and nothing else. A table of another key type has no
+    /// projection here — <c>g_str_hash</c> is the only hash the binding hands
+    /// GLib, and a key that is not a string is a pointer whose meaning only the
+    /// library that built the table knows.
+    /// </para>
+    /// <para>
+    /// The value decides the rest, and with it the ownership. A table of
+    /// strings is only accepted where the call hands its reference over
+    /// (<c>full</c>): the copy is made and the reference is released at once,
+    /// which is the one shape that keeps the mini object contract of
+    /// <c>gst_uri_get_query_table</c> — it answers the live internal table of a
+    /// URI that may be shared, and a table that stayed reachable would let
+    /// managed code edit a value C considers immutable. A table of GObjects is
+    /// only accepted where the library keeps owning it (<c>none</c>), which is
+    /// what <c>ges_track_element_get_all_control_bindings</c> answers: the
+    /// wrappers take a reference each and the table itself is left alone.
+    /// <c>container</c>, and either transfer with the other value type, has no
+    /// case in the seventeen modules and is refused; a synthetic fixture is
+    /// what keeps that refusal honest.
+    /// </para>
+    /// <para>
+    /// The public type is spelled here rather than taken from
+    /// <paramref name="mapped"/>, because the value of a table of strings is
+    /// nullable however the gir spells it: a <c>NULL</c> value is how C writes
+    /// a query key that carries no value, and a projection that could not
+    /// express one would lose the difference between <c>?a</c> and <c>?a=</c>.
+    /// A table of GObjects has no such state — the one member that answers one
+    /// inserts a validated binding — so its values are not nullable, and an
+    /// entry that carries none is refused at run time rather than hidden.
+    /// </para>
+    /// <para>
+    /// The nullability of the table itself is decided the same way, by the
+    /// shape rather than by the gir, and it takes precedence over both the
+    /// annotation and an <c>annotationOverrides</c> correction of it. The two
+    /// runtime helpers each answer one thing: the one that reads a table of
+    /// strings answers <see langword="null"/> for an absent table, so the
+    /// member is nullable however the gir spells it, and the one that reads a
+    /// table of GObjects never answers <see langword="null"/>, so the member is
+    /// not. Following the gir instead would emit a member whose declared type
+    /// the helper cannot fill — a non-nullable local assigned a nullable
+    /// answer, which this repository compiles as an error — or one whose
+    /// callers test for a null a caller can never be handed. This is what
+    /// <see cref="PlanListReturn"/> does with the same reasoning.
+    /// </para>
+    /// </remarks>
+    private ReturnPlan? PlanHashTableReturn(GirReturnValue value, MappedType mapped, GirTransfer transfer)
+    {
+        if (mapped.KeyType is not { Kind: MarshalKind.Utf8String }
+            || mapped.ElementType is not { } element)
+        {
+            return null;
+        }
+
+        ArgumentKind elementKind;
+        HandleFlavor flavor = HandleFlavor.None;
+        string elementType;
+        bool nullable;
+
+        switch (element.Kind)
+        {
+            case MarshalKind.Utf8String when transfer is GirTransfer.Full:
+                elementKind = ArgumentKind.Utf8;
+                elementType = element.PublicType + "?";
+                nullable = true;
+                break;
+
+            case MarshalKind.GObject when transfer == GirTransfer.None:
+                if (element.Symbol is not { } symbol
+                    || !IsEmitted(symbol)
+                    || UnusableTypes.Contains(element.PublicType))
+                {
+                    return null;
+                }
+
+                elementKind = ArgumentKind.Handle;
+                flavor = HandleFlavor.GObject;
+                elementType = element.PublicType;
+                nullable = false;
+                break;
+
+            default:
+                return null;
+        }
+
+        string publicType = "System.Collections.Generic.Dictionary<string, " + elementType + ">";
+        return new ReturnPlan
+        {
+            Kind = ArgumentKind.HashTableReturn,
+            PublicType = nullable ? publicType + "?" : publicType,
+            RawType = NativeInt,
+            Transfer = transfer,
+            ElementType = elementType,
+            ElementKind = elementKind,
+            Flavor = flavor,
+            IsNullable = nullable,
+            Doc = ReturnDoc(value, transfer),
+        };
+    }
+
+    /// <summary>
+    /// Plans a <c>GHashTable</c> that a call is given, the mirror of
+    /// <see cref="PlanHashTableReturn"/>.
+    /// </summary>
+    /// <param name="type">The gir type reference, whose C type tells a table from its address.</param>
+    /// <param name="mapped">Its mapping, whose key and value types carry the payload.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="direction">How the argument is passed.</param>
+    /// <param name="transfer">What the call takes over along with the table.</param>
+    /// <param name="nullable">Whether the table may be null.</param>
+    /// <param name="isReturn">Whether the value is the return value of the callable.</param>
+    /// <param name="callerAllocates">Whether the caller provides the storage of an out parameter.</param>
+    /// <param name="inbound">Whether the argument is one the binding is handed.</param>
+    /// <returns>The plan, or <see langword="null"/> when the shape is not supported.</returns>
+    /// <remarks>
+    /// <para>
+    /// There is exactly one shape: a borrowed table (<c>none</c>) of strings
+    /// that is built for the call and released when it returns. A callee that
+    /// keeps such a table takes a reference of its own first, which is what
+    /// <c>gst_uri_set_query_table</c> does, so releasing ours straight away is
+    /// right whether the callee kept it or not. <c>full</c> and
+    /// <c>container</c> are refused: a table handed over would go on being
+    /// edited by the callee with no managed owner left to state the shape of
+    /// its entries.
+    /// </para>
+    /// <para>
+    /// Only the <c>in</c> direction of a call this binding makes is planned. An
+    /// out or an inout table comes back through the address of the caller's own
+    /// variable, which is a different marshaller altogether, and a table an
+    /// <paramref name="inbound"/> position is handed — a callback, a signal
+    /// handler or a virtual method slot — is refused outright: that direction
+    /// is the return side projection, and the one real case of it in the
+    /// corpus, <c>GESBaseEffectTimeTranslationFunc</c>, carries <c>GValue</c>
+    /// values this does not read anyway.
+    /// </para>
+    /// <para>
+    /// The public type is an <c>IReadOnlyDictionary</c> rather than the
+    /// sequence of pairs a list argument takes, because a dictionary makes a
+    /// duplicate key impossible by construction and a query table has no
+    /// meaning for one. Its value is nullable for the reason
+    /// <see cref="PlanHashTableReturn"/> states: a caller must be able to ask
+    /// for a query key that carries no value.
+    /// </para>
+    /// </remarks>
+    private ArgumentPlan? PlanHashTableArgument(
+        GirTypeRef type,
+        MappedType mapped,
+        string name,
+        ArgumentDirection direction,
+        GirTransfer transfer,
+        bool nullable,
+        bool isReturn,
+        bool callerAllocates,
+        bool inbound)
+    {
+        if (direction != ArgumentDirection.In || isReturn || callerAllocates || inbound)
+        {
+            return null;
+        }
+
+        if (type.CType?.EndsWith("**", StringComparison.Ordinal) ?? false)
+        {
+            return null;
+        }
+
+        if (transfer != GirTransfer.None)
+        {
+            return null;
+        }
+
+        if (mapped.KeyType is not { Kind: MarshalKind.Utf8String }
+            || mapped.ElementType is not { Kind: MarshalKind.Utf8String } element)
+        {
+            return null;
+        }
+
+        string elementType = element.PublicType + "?";
+        string publicType = "System.Collections.Generic.IReadOnlyDictionary<string, " + elementType + ">";
+        return new ArgumentPlan
+        {
+            Kind = ArgumentKind.HashTableIn,
+            Name = name,
+            PublicType = nullable ? publicType + "?" : publicType,
+            RawType = NativeInt,
+            Direction = direction,
+            Transfer = transfer,
+            IsNullable = nullable,
+            ElementType = elementType,
+            ElementKind = ArgumentKind.Utf8,
         };
     }
 

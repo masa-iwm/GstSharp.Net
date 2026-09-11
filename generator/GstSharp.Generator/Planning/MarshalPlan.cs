@@ -204,6 +204,25 @@ internal enum ArgumentKind
     /// </summary>
     GListReturn,
 
+    /// <summary>
+    /// A <c>GHashTable</c> of string keys that a call is given, built out of an
+    /// <c>IReadOnlyDictionary</c> for the length of that one call. Only the
+    /// borrowed shape exists: the table is built into a scope that releases the
+    /// reference it holds when the call returns, and a callee that keeps the
+    /// table — <c>gst_uri_set_query_table</c> is the only one — takes a
+    /// reference of its own before that happens.
+    /// </summary>
+    HashTableIn,
+
+    /// <summary>
+    /// A <c>GHashTable</c> of string keys that a call returned, copied entry by
+    /// entry into a dictionary. The value projection is carried by
+    /// <see cref="ReturnPlan.ElementKind"/> and <see cref="ReturnPlan.Flavor"/>,
+    /// and <see cref="ReturnPlan.Transfer"/> says whether the reference the call
+    /// handed over is released once the copy has been made.
+    /// </summary>
+    HashTableReturn,
+
     /// <summary>A managed callback handed to native code.</summary>
     Callback,
 
@@ -444,7 +463,8 @@ internal sealed record ArgumentPlan
 
     /// <summary>
     /// Gets how one element of a container is marshalled. Only
-    /// <see cref="ArgumentKind.ListIn"/> sets it, to
+    /// <see cref="ArgumentKind.ListIn"/> and
+    /// <see cref="ArgumentKind.HashTableIn"/> set it, to
     /// <see cref="ArgumentKind.Handle"/> or <see cref="ArgumentKind.Utf8"/>.
     /// </summary>
     internal ArgumentKind ElementKind { get; init; }
@@ -551,7 +571,8 @@ internal sealed class ReturnPlan
 
     /// <summary>
     /// Gets how one element of a container is marshalled. Only
-    /// <see cref="ArgumentKind.GListReturn"/> sets it, to
+    /// <see cref="ArgumentKind.GListReturn"/> and
+    /// <see cref="ArgumentKind.HashTableReturn"/> set it, to
     /// <see cref="ArgumentKind.Handle"/> or <see cref="ArgumentKind.Utf8"/>.
     /// </summary>
     internal ArgumentKind ElementKind { get; init; }

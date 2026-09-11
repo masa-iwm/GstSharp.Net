@@ -175,6 +175,27 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
         return result;
     }
 
+    /// <summary>
+    /// Get all the control bindings that have been created for the children
+    /// properties of the track element using
+    /// ges_track_element_set_control_source(). The keys used in the returned
+    /// hash table are the child property names that were passed to
+    /// ges_track_element_set_control_source(), and their values are the
+    /// corresponding created #GstControlBinding.
+    /// </summary>
+    /// <returns>
+    /// A
+    /// hash table containing all child-property-name/control-binding pairs
+    /// for @trackelement.
+    /// </returns>
+    public System.Collections.Generic.Dictionary<string, Gst.ControlBinding> GetAllControlBindings()
+    {
+        nint nativeResult = GesTrackElementGetAllControlBindings(Handle);
+        System.Collections.Generic.Dictionary<string, Gst.ControlBinding> result = Gst.Interop.HashTableMarshal.ToObjectDictionary<Gst.ControlBinding>(nativeResult, static nativeItem => Gst.GObject.Object.FromNative<Gst.ControlBinding>(nativeItem, Gst.Interop.Transfer.None));
+        System.GC.KeepAlive(this);
+        return result;
+    }
+
     /// <summary>Gets #GESTrackElement:auto-clamp-control-sources.</summary>
     /// <returns>
     /// Whether the control sources for the child properties of
@@ -633,6 +654,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// <summary>The <c>ges_track_element_edit</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_element_edit")]
     private static partial int GesTrackElementEdit(nint @object, nint layers, int mode, int edge, ulong position);
+
+    /// <summary>The <c>ges_track_element_get_all_control_bindings</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_track_element_get_all_control_bindings")]
+    private static partial nint GesTrackElementGetAllControlBindings(nint trackelement);
 
     /// <summary>The <c>ges_track_element_get_auto_clamp_control_sources</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_element_get_auto_clamp_control_sources")]

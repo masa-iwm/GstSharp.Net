@@ -66,14 +66,13 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (6)
+### UnsupportedSignature (5)
 
 - `ges_base_effect_set_time_translation_funcs`
 - `ges_command_line_formatter_get_help`
 - `ges_init_check`
 - `ges_meta_container_foreach`
 - `ges_meta_container_set_meta`
-- `ges_track_element_get_all_control_bindings`
 
 ### VarArgs (4)
 
@@ -436,7 +435,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (42)
+### UnsupportedSignature (39)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
@@ -474,9 +473,6 @@ disappears shows up here as an added line.
 - `gst_task_set_enter_callback`
 - `gst_task_set_leave_callback`
 - `gst_task_set_lock`
-- `gst_uri_get_media_fragment_table`
-- `gst_uri_get_query_table`
-- `gst_uri_set_query_table`
 - `gst_value_array_append_and_take_value`
 - `gst_value_list_append_and_take_value`
 - `gst_value_unique_list_append_and_take_value`
