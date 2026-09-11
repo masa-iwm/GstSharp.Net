@@ -54,7 +54,9 @@ public partial class Object
     /// which is how the enumeration of a plugin, whose managed type no binding
     /// declares, is written — and an object, a boxed value or a mini object
     /// accepts its wrapper, of which the value takes a copy, so the caller stays
-    /// the owner of what it holds.
+    /// the owner of what it holds. A <c>GST_TYPE_FRACTION</c> property, such as
+    /// the <c>output-buffer-duration-fraction</c> of an audio mixer, accepts a
+    /// <see cref="Gst.Fraction"/> and stores it reduced.
     /// </para>
     /// <para>
     /// <b>A property that cannot be written is refused here rather than in

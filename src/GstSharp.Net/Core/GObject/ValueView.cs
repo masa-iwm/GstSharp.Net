@@ -206,8 +206,8 @@ public readonly ref struct ValueView
     /// </summary>
     /// <returns>
     /// The content: a primitive for the numeric types, a <see cref="string"/>,
-    /// an <see cref="Object"/> wrapper, or the raw pointer for boxed, parameter,
-    /// variant and pointer types.
+    /// an <see cref="Object"/> wrapper, a <see cref="Gst.Fraction"/>, or the raw
+    /// pointer for boxed, parameter, variant and pointer types.
     /// </returns>
     /// <exception cref="NotSupportedException">
     /// The fundamental type of the value has no accessor here.

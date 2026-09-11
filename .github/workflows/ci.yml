@@ -215,7 +215,8 @@ jobs:
       # factories listed here are the ones the tests gate on with RequiresElementFact
       # that only a plugin set this leg installs on purpose provides — three for WebRTC,
       # audiomixer for the only boxed valued property the integration suite
-      # writes, theoraenc and vorbisenc for the two encoders whose set_headers
+      # writes and for the one fraction valued property beside it,
+      # theoraenc and vorbisenc for the two encoders whose set_headers
       # hands a list over, theoradec for the decoder the VideoCodecFrame
       # user data tests borrow a frame from, uritranscodebin with
       # transcodebin for the transcode plugin the GstTranscoder tests build

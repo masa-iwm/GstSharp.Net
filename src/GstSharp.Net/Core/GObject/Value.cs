@@ -410,7 +410,7 @@ public struct Value : IDisposable
     /// <remarks>
     /// The three terms GStreamer refuses are refused here, because
     /// <c>gst_value_set_fraction</c> reports them with a critical and a write
-    /// that never happens (<c>gstvalue.c:3079-3082</c>), leaving the value at
+    /// that never happens (<c>gstvalue.c:7695-7698</c>), leaving the value at
     /// whatever it held before. What is stored is the reduced pair:
     /// <c>2/100</c> reads back as <c>1/50</c>.
     /// </remarks>
