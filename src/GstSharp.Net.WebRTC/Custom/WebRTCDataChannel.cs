@@ -14,10 +14,10 @@ namespace Gst.WebRTC;
 /// what <c>webrtcbin</c> does with an empty block rather than because of the
 /// marshalling: it reads the data pointer out of the block and refuses a null
 /// one with a critical and a <see langword="false"/> that carries no error,
-/// and every empty block GLib builds has a null data pointer. The two
-/// overloads below answer an empty message the way the library documents it —
-/// with no block at all — and they answer a channel that is not open, which
-/// the C dereferences null for.
+/// and every empty block <c>g_bytes_new</c> builds — which is every block this
+/// binding builds — has a null data pointer. The method below answers an empty
+/// message the way the library documents it — with no block at all — and it
+/// answers a channel that is not open, which the C dereferences null for.
 /// </remarks>
 public abstract unsafe partial class WebRTCDataChannel
 {
@@ -140,93 +140,18 @@ public abstract unsafe partial class WebRTCDataChannel
         // wrapper throws without allocating one that nothing would free.
         nint channel = Handle;
 
-        // See the remarks: an empty message is the null GBytes and not a block
-        // of length zero, so nothing is allocated for one.
-        using Gst.GLib.Bytes? bytes = data.IsEmpty ? null : Gst.GLib.Bytes.New(data);
-
-        return Send(channel, bytes?.Handle ?? nint.Zero);
-    }
-
-    /// <summary>
-    /// Sends a binary message over the channel.
-    /// </summary>
-    /// <param name="data">
-    /// The block to send, or <see langword="null"/> for a message with no
-    /// payload. The block is borrowed for the call: the channel takes a
-    /// reference of its own for as long as the message is queued, and the
-    /// caller keeps the wrapper and disposes it as usual.
-    /// </param>
-    /// <returns>
-    /// <see langword="true"/> when the channel was open and the message was
-    /// queued.
-    /// </returns>
-    /// <remarks>
-    /// <para>
-    /// This is the overload that sends a block the caller already holds — one
-    /// that <see cref="Gst.GLib.Bytes.New(ReadOnlySpan{byte})"/> built, or one
-    /// that arrived on the <see cref="OnMessageData"/> event — without the copy
-    /// that the span overload makes. Everything the span overload documents
-    /// about the state of the channel, the thread it may be called from and
-    /// the exception a refused message raises holds here as well.
-    /// </para>
-    /// <para>
-    /// <b>An empty block is sent as no block at all.</b>
-    /// <c>SendData((Gst.GLib.Bytes?)null)</c>,
-    /// <c>SendData(Gst.GLib.Bytes.New(ReadOnlySpan&lt;byte&gt;.Empty))</c> and
-    /// <c>SendData(ReadOnlySpan&lt;byte&gt;.Empty)</c> all send the same empty
-    /// message. The library has no other way to send one: the data pointer of
-    /// an empty block is null, and the branch that reads it refuses a null
-    /// pointer with a critical and a <see langword="false"/> that sets no
-    /// error, while the null block is the case it builds an empty buffer for.
-    /// </para>
-    /// <para>
-    /// The block is not copied on the way out. <c>webrtcbin</c> wraps the very
-    /// memory of the block in the buffer it pushes and holds a reference of its
-    /// own until that buffer is released, so the bytes must not be assumed to
-    /// have been consumed when the call returns — which costs nothing here,
-    /// because a <c>GBytes</c> is immutable.
-    /// </para>
-    /// </remarks>
-    /// <exception cref="Gst.GLib.GException">The channel refused the message.</exception>
-    /// <exception cref="ObjectDisposedException">
-    /// The wrapper of the channel, or the one of the block, was disposed.
-    /// </exception>
-    public bool SendData(Gst.GLib.Bytes? data)
-    {
-        // As above: the handle of the channel is read first, so that a disposed
-        // wrapper throws before anything else is looked at.
-        nint channel = Handle;
-
-        // Reading the size is also what makes a disposed block throw here
-        // rather than pass a released handle to the library.
-        nint block = data is null || data.Size == 0 ? nint.Zero : data.Handle;
-
-        bool sent = Send(channel, block);
-
-        // The handle was read out of the wrapper, so nothing else keeps the
-        // block alive across the call.
-        GC.KeepAlive(data);
-        return sent;
-    }
-
-    /// <summary>
-    /// Sends the message both overloads build, over
-    /// <c>gst_webrtc_data_channel_send_data_full</c>.
-    /// </summary>
-    /// <param name="channel">The handle of this channel, read by the caller.</param>
-    /// <param name="data">The <c>GBytes</c> to send, or <c>0</c> for an empty message.</param>
-    /// <returns><see langword="true"/> when the message was queued.</returns>
-    private bool Send(nint channel, nint data)
-    {
-        // See the remarks of the span overload: the library crashes rather than
-        // refusing here.
+        // See the remarks: the library crashes rather than refusing here.
         if (ReadyState != Gst.WebRTC.WebRTCDataChannelState.Open)
         {
             return false;
         }
 
+        // See the remarks: an empty message is the null GBytes and not a block
+        // of length zero, so nothing is allocated for one.
+        using Gst.GLib.Bytes? bytes = data.IsEmpty ? null : Gst.GLib.Bytes.New(data);
+
         nint errorNative = 0;
-        int sent = GstWebrtcDataChannelSendDataFull(channel, data, &errorNative);
+        int sent = GstWebrtcDataChannelSendDataFull(channel, bytes?.Handle ?? nint.Zero, &errorNative);
 
         // The handle was read before the call, so nothing keeps this wrapper
         // alive across it on its own.
