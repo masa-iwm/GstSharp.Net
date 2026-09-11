@@ -65,16 +65,14 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (8)
+### UnsupportedSignature (6)
 
 - `ges_base_effect_set_time_translation_funcs`
 - `ges_command_line_formatter_get_help`
 - `ges_init_check`
 - `ges_meta_container_foreach`
 - `ges_meta_container_set_meta`
-- `ges_timeline_element_list_children_properties`
 - `ges_track_element_get_all_control_bindings`
-- `ges_track_element_list_children_properties`
 
 ### VarArgs (4)
 

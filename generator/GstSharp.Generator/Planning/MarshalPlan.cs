@@ -167,6 +167,20 @@ internal enum ArgumentKind
     Strv,
 
     /// <summary>
+    /// A counted block of <c>GParamSpec*</c> that a call produces, read out
+    /// into an array of wrappers one element at a time. It is a kind of its own
+    /// rather than an <see cref="ArrayOut"/> of a handle element, because the
+    /// block an <see cref="ArrayOut"/> describes is copied as memory: every
+    /// slot here is a pointer that has to be wrapped by
+    /// <c>ParamSpec.FromNative</c>, which picks the derived class that matches
+    /// <c>G_PARAM_SPEC_TYPE</c>. The two halves of the transfer are read apart:
+    /// <c>full</c> hands every element over, <c>container</c> and <c>none</c>
+    /// leave the elements with their owner and the wrapper takes a reference of
+    /// its own, and the block itself is freed unless the library keeps it.
+    /// </summary>
+    ParamSpecArray,
+
+    /// <summary>
     /// A <c>GList</c> or a <c>GSList</c> that a call is given, built out of an
     /// <c>IEnumerable</c> of the element type. It has exactly two shapes, which
     /// <see cref="ArgumentPlan.Transfer"/> tells apart. A <em>borrowed</em>

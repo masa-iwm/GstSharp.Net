@@ -461,6 +461,40 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         return result;
     }
 
+    /// <summary>
+    /// Get a list of children properties of the element, which is a list of
+    /// all the specifications passed to
+    /// ges_timeline_element_add_child_property().
+    /// </summary>
+    /// <returns>
+    /// The specifications the call answers.
+    /// Every specification is the caller's to dispose: a <c>ParamSpec</c> wrapper
+    /// owns a reference and has no finalizer, so a block that is dropped without
+    /// being disposed leaks one reference per element. The array is never
+    /// <see langword="null"/> — a call that answers nothing reads as the empty
+    /// array — and every element is the derived wrapper that matches its
+    /// <c>G_PARAM_SPEC_TYPE</c>, a <c>Gst.ParamSpecFraction</c> among them.
+    /// </returns>
+    public Gst.GObject.ParamSpec[] ListChildrenProperties()
+    {
+        uint nPropertiesNative = default;
+        nint nativeResult = GesTimelineElementListChildrenProperties(Handle, &nPropertiesNative);
+        Gst.GObject.ParamSpec[] result = [];
+        if (nativeResult != 0)
+        {
+            result = new Gst.GObject.ParamSpec[(int)nPropertiesNative];
+            for (int index = 0; index < result.Length; index++)
+            {
+                result[index] = Gst.GObject.ParamSpec.FromNative(((nint*)nativeResult)[index], Gst.Interop.Transfer.Full);
+            }
+
+            Gst.Interop.GMarshal.Free(nativeResult);
+        }
+
+        System.GC.KeepAlive(this);
+        return result;
+    }
+
     /// <summary>Looks up a child property of the element.</summary>
     /// <remarks>
     /// <para>
@@ -1286,6 +1320,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// <summary>The <c>ges_timeline_element_get_track_types</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_get_track_types")]
     private static partial int GesTimelineElementGetTrackTypes(nint self);
+
+    /// <summary>The <c>ges_timeline_element_list_children_properties</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_timeline_element_list_children_properties")]
+    private static partial nint GesTimelineElementListChildrenProperties(nint self, uint* nProperties);
 
     /// <summary>The <c>ges_timeline_element_lookup_child</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_timeline_element_lookup_child")]

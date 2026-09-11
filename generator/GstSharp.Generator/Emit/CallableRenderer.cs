@@ -83,6 +83,9 @@ internal static class CallableRenderer
     /// <summary>The local that holds one adopted element of a returned list.</summary>
     private const string ElementLocal = "adopted";
 
+    /// <summary>The loop variable that walks a counted block of parameter specifications.</summary>
+    private const string IndexLocal = "index";
+
     /// <summary>
     /// What the documentation of a returned wrapper says about its ownership,
     /// which the gir does not describe.
@@ -92,6 +95,27 @@ internal static class CallableRenderer
         "The wrapper owns a reference of its own, which is a copy for a boxed type:",
         "dispose it when you are done, and note that changes made to a copy of a",
         "boxed value are not written back.",
+    ];
+
+    /// <summary>
+    /// What the documentation of a counted block of parameter specifications
+    /// says about the array it is read out into, none of which the gir
+    /// describes: it documents a C function whose caller holds pointers. It
+    /// replaces the gir text rather than following it, because the gir answers
+    /// NULL when something went wrong and the member never does.
+    /// </summary>
+    /// <remarks>
+    /// The sentence the note follows is written at the call site, because the
+    /// gir text it replaces is the only text the writer escapes.
+    /// </remarks>
+    private static readonly string[] ParamSpecArrayNote =
+    [
+        "Every specification is the caller's to dispose: a <c>ParamSpec</c> wrapper",
+        "owns a reference and has no finalizer, so a block that is dropped without",
+        "being disposed leaks one reference per element. The array is never",
+        "<see langword=\"null\"/> — a call that answers nothing reads as the empty",
+        "array — and every element is the derived wrapper that matches its",
+        "<c>G_PARAM_SPEC_TYPE</c>, a <c>Gst.ParamSpecFraction</c> among them.",
     ];
 
     /// <summary>
@@ -622,21 +646,27 @@ internal static class CallableRenderer
 
         if (!plan.Return.IsVoid)
         {
-            // The note of an adopt in place member replaces the gir text
-            // rather than following it. The gir describes the pointer the C
-            // function answers, which may be a different object; the member
-            // answers this wrapper. Written one after the other the two read as
-            // a contradiction, so only the one that describes the member is
-            // kept.
+            // The note of an adopt in place member, and the note of a counted
+            // block of parameter specifications, replace the gir text rather
+            // than following it. The gir describes the pointer the C function
+            // answers - which may be a different object, or NULL when something
+            // went wrong - and the member answers this wrapper, or an array
+            // that is never null. Written one after the other the two read as a
+            // contradiction, so only the one that describes the member is kept.
             bool adoptsInPlace = plan.InstanceConsumption == InstanceConsumption.InPlace;
+            bool answersBlock = plan.Return.Kind == ArgumentKind.ParamSpecArray;
             IReadOnlyList<string>? returnNote = plan.ReturnsEmptyOnNull
                 ? EmptyStringNote
                 : adoptsInPlace
                     ? null
-                    : AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return);
+                    : answersBlock
+                        ? ParamSpecArrayNote
+                        : AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return);
             XmlDocWriter.WriteReturns(
                 writer,
-                adoptsInPlace ? string.Join('\n', AdoptedInPlaceNote) : plan.Return.Doc,
+                adoptsInPlace
+                    ? string.Join('\n', AdoptedInPlaceNote)
+                    : answersBlock ? "The specifications the call answers." : plan.Return.Doc,
                 "The result of <c>" + cType + "</c>.",
                 returnNote);
         }
@@ -3262,6 +3292,14 @@ internal static class CallableRenderer
             return;
         }
 
+        if (value.Kind == ArgumentKind.ParamSpecArray)
+        {
+            WriteParamSpecArrayConversion(writer, plan, value, converted);
+            WriteKeepAlive(writer, plan);
+            writer.WriteLine("return " + converted + ";");
+            return;
+        }
+
         if (value.Kind == ArgumentKind.GListReturn)
         {
             WriteListConversion(writer, value, converted);
@@ -3389,6 +3427,65 @@ internal static class CallableRenderer
         writer.OpenBlock();
         writer.WriteLine(target + ".Add(" + ElementLocal + ");");
         writer.CloseBlock();
+        writer.CloseBlock();
+        writer.WriteLine();
+    }
+
+    /// <summary>
+    /// Writes the materialization of a counted block of <c>GParamSpec*</c>, up
+    /// to but not including the <c>return</c> of the array it built.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The call, which the counting argument is read off.</param>
+    /// <param name="value">The return value being projected.</param>
+    /// <param name="target">The local the array is built into.</param>
+    /// <remarks>
+    /// <para>
+    /// Every slot of the block is a pointer of its own, so the elements are
+    /// wrapped one at a time rather than copied as memory: the factory of the
+    /// runtime picks the derived class that matches <c>G_PARAM_SPEC_TYPE</c>,
+    /// which a block copy would lose.
+    /// </para>
+    /// <para>
+    /// The two halves of the transfer are read apart. Under <c>full</c> the
+    /// call hands one reference per element over and the wrappers adopt them;
+    /// under <c>container</c> and <c>none</c> the elements stay with their
+    /// owner and every wrapper takes a reference of its own. The block itself
+    /// is freed unless the library keeps owning it. A <c>NULL</c> block and a
+    /// count of zero are the same answer — no specifications — and both read as
+    /// the empty array, which is why the member never answers
+    /// <see langword="null"/>.
+    /// </para>
+    /// </remarks>
+    private static void WriteParamSpecArrayConversion(
+        CodeWriter writer,
+        MarshalPlan plan,
+        ReturnPlan value,
+        string target)
+    {
+        string elementType = value.ElementType!;
+        string count = "(int)" + plan.Arguments[value.LengthArgument ?? 0].Name + "Native";
+        GirTransfer elementTransfer = value.Transfer is GirTransfer.Full or GirTransfer.Floating
+            ? GirTransfer.Full
+            : GirTransfer.None;
+
+        writer.WriteLine(elementType + "[] " + target + " = [];");
+        writer.WriteLine("if (" + ResultLocal + " != 0)");
+        writer.OpenBlock();
+        writer.WriteLine(target + " = new " + elementType + "[" + count + "];");
+        writer.WriteLine("for (int " + IndexLocal + " = 0; " + IndexLocal + " < " + target + ".Length; "
+            + IndexLocal + "++)");
+        writer.OpenBlock();
+        writer.WriteLine(
+            target + "[" + IndexLocal + "] = " + elementType + ".FromNative(((nint*)" + ResultLocal + ")["
+            + IndexLocal + "], " + TransferLiteral(elementTransfer) + ");");
+        writer.CloseBlock();
+        if (value.Transfer != GirTransfer.None)
+        {
+            writer.WriteLine();
+            writer.WriteLine("Gst.Interop.GMarshal.Free(" + ResultLocal + ");");
+        }
+
         writer.CloseBlock();
         writer.WriteLine();
     }

@@ -327,6 +327,40 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     }
 
     /// <summary>
+    /// Gets an array of #GParamSpec* for all configurable properties of the
+    /// children of @object.
+    /// </summary>
+    /// <returns>
+    /// The specifications the call answers.
+    /// Every specification is the caller's to dispose: a <c>ParamSpec</c> wrapper
+    /// owns a reference and has no finalizer, so a block that is dropped without
+    /// being disposed leaks one reference per element. The array is never
+    /// <see langword="null"/> — a call that answers nothing reads as the empty
+    /// array — and every element is the derived wrapper that matches its
+    /// <c>G_PARAM_SPEC_TYPE</c>, a <c>Gst.ParamSpecFraction</c> among them.
+    /// </returns>
+    [Obsolete("Use #ges_timeline_element_list_children_properties")]
+    public new Gst.GObject.ParamSpec[] ListChildrenProperties()
+    {
+        uint nPropertiesNative = default;
+        nint nativeResult = GesTrackElementListChildrenProperties(Handle, &nPropertiesNative);
+        Gst.GObject.ParamSpec[] result = [];
+        if (nativeResult != 0)
+        {
+            result = new Gst.GObject.ParamSpec[(int)nPropertiesNative];
+            for (int index = 0; index < result.Length; index++)
+            {
+                result[index] = Gst.GObject.ParamSpec.FromNative(((nint*)nativeResult)[index], Gst.Interop.Transfer.Full);
+            }
+
+            Gst.Interop.GMarshal.Free(nativeResult);
+        }
+
+        System.GC.KeepAlive(this);
+        return result;
+    }
+
+    /// <summary>
     /// Removes the #GstControlBinding that was created for the specified child
     /// property of the track element using
     /// ges_track_element_set_control_source(). The given @property_name must
@@ -673,6 +707,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     /// <summary>The <c>ges_track_element_is_core</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_element_is_core")]
     private static partial int GesTrackElementIsCore(nint @object);
+
+    /// <summary>The <c>ges_track_element_list_children_properties</c> entry point.</summary>
+    [LibraryImport("GES", EntryPoint = "ges_track_element_list_children_properties")]
+    private static partial nint GesTrackElementListChildrenProperties(nint @object, uint* nProperties);
 
     /// <summary>The <c>ges_track_element_remove_control_binding</c> entry point.</summary>
     [LibraryImport("GES", EntryPoint = "ges_track_element_remove_control_binding")]

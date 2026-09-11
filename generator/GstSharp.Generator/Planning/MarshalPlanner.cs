@@ -245,6 +245,12 @@ internal sealed class MarshalPlanner
     private const string ParamSpecType = "GObject.ParamSpec";
 
     /// <summary>
+    /// The managed name of the parameter specification wrapper, which the
+    /// element of a counted block of them is named by.
+    /// </summary>
+    private const string ParamSpecPublicType = "Gst.GObject.ParamSpec";
+
+    /// <summary>
     /// Handles of the hand written runtime that generated code may refer to even
     /// though their module is not generated.
     /// </summary>
@@ -3578,6 +3584,32 @@ internal sealed class MarshalPlanner
                     RawType = NativeInt,
                     Transfer = transfer,
                     IsNullable = true,
+                    Doc = ReturnDoc(value, transfer),
+                };
+            }
+
+            // A counted block of parameter specifications is read out one
+            // pointer at a time, so it is planned beside the blittable blocks
+            // rather than through their element gate: the memory an
+            // ArrayElementType names is copied as it stands, and a
+            // GParamSpec* has to be wrapped by the factory that picks its
+            // derived class. Only the return position is planned this way -
+            // an argument of the shape stays refused, because nothing in the
+            // corpus asks for one.
+            if (element.Kind == MarshalKind.Fundamental
+                && element.Symbol is { QualifiedName: ParamSpecType }
+                && !array.IsZeroTerminated
+                && array.LengthParameterIndex is int specifications)
+            {
+                return new ReturnPlan
+                {
+                    Kind = ArgumentKind.ParamSpecArray,
+                    PublicType = ParamSpecPublicType + "[]",
+                    RawType = NativeInt,
+                    Transfer = transfer,
+                    ElementType = ParamSpecPublicType,
+                    LengthArgument = specifications + offset,
+                    Flavor = HandleFlavor.ParamSpec,
                     Doc = ReturnDoc(value, transfer),
                 };
             }
