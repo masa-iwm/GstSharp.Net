@@ -51,6 +51,88 @@ public unsafe partial class Adapter
     public MapScope Map(nuint size) => new(this, size);
 
     /// <summary>
+    /// Copies <paramref name="size"/> bytes of the adapter into a block of
+    /// their own.
+    /// </summary>
+    /// <param name="offset">Where in the adapter the copy starts.</param>
+    /// <param name="size">The number of bytes to copy.</param>
+    /// <returns>
+    /// The copy, which the caller owns and disposes. It is independent of the
+    /// adapter: flushing, clearing or pushing into the adapter afterwards does
+    /// not touch it.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_adapter_copy_bytes</c>, the copying counterpart of
+    /// <see cref="Map(nuint)"/>: the mapping borrows the memory of the adapter
+    /// and has to be released before the next call on it, while this allocates
+    /// and copies and has no such rule. Copying is also what makes an offset
+    /// possible at all — a mapping always starts at the front.
+    /// </para>
+    /// <para>
+    /// <b>The range is checked here rather than by the library.</b> The C
+    /// raises a critical for a size of zero and another one for a range the
+    /// adapter does not hold, and neither stops it: the first answers an empty
+    /// block and the second hands out the block it allocated without ever
+    /// copying into it, which is uninitialised memory of the requested length.
+    /// A size of zero is answered with an empty block of our own, and a range
+    /// the adapter does not hold with
+    /// <see cref="ArgumentOutOfRangeException"/>. The sum is compared without
+    /// forming it, so that an offset near <see cref="nuint.MaxValue"/> is
+    /// refused rather than wrapping around into a range that looks valid.
+    /// </para>
+    /// <para>
+    /// A <c>GstAdapter</c> is not thread safe, so reading
+    /// <see cref="Available"/> and then copying is only as racy as the C call
+    /// itself: every call on one adapter has to be serialised by the caller,
+    /// and nothing may push into it or flush it between the two.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The adapter does not hold <paramref name="size"/> bytes from
+    /// <paramref name="offset"/> on.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.GLib.Bytes Copy(nuint offset, nuint size)
+    {
+        // The handle is read first, so that a disposed wrapper throws before
+        // anything is allocated.
+        nint adapter = Handle;
+
+        if (size == 0)
+        {
+            // See the remarks: the C answers an empty block and a critical.
+            return Gst.GLib.Bytes.New(ReadOnlySpan<byte>.Empty);
+        }
+
+        nuint available = Available();
+        if (size > available)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(size),
+                size,
+                $"The adapter holds {available} bytes.");
+        }
+
+        if (offset > available - size)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(offset),
+                offset,
+                $"The adapter holds {available} bytes, and {size} of them are asked for.");
+        }
+
+        nint nativeResult = AdapterNative.CopyBytes(adapter, offset, size);
+
+        // The handle was read before the call, so nothing keeps this wrapper
+        // alive across it on its own.
+        GC.KeepAlive(this);
+
+        return Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_adapter_copy_bytes returned no value.");
+    }
+
+    /// <summary>
     /// An adapter whose bytes are mapped into one contiguous block, and the span
     /// over that block.
     /// </summary>

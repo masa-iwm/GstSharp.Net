@@ -49,4 +49,21 @@ internal static partial class AdapterNative
     /// <param name="adapter">The adapter that was mapped.</param>
     [LibraryImport("GstBase", EntryPoint = "gst_adapter_unmap")]
     internal static partial void Unmap(nint adapter);
+
+    /// <summary>
+    /// Copies bytes out of an adapter into a new <c>GBytes</c>.
+    /// </summary>
+    /// <param name="adapter">The adapter to read.</param>
+    /// <param name="offset">Where in the adapter the copy starts.</param>
+    /// <param name="size">How many bytes to copy.</param>
+    /// <returns>The block, which the caller owns.</returns>
+    /// <remarks>
+    /// On the skip list as well, and for a third reason: the C validates
+    /// nothing it cannot recover from. A size of zero raises a critical and a
+    /// range the adapter does not hold raises one too and hands out the
+    /// uninitialised block it allocated all the same, so
+    /// <see cref="Adapter.Copy"/> answers both cases before the call.
+    /// </remarks>
+    [LibraryImport("GstBase", EntryPoint = "gst_adapter_copy_bytes")]
+    internal static partial nint CopyBytes(nint adapter, nuint offset, nuint size);
 }

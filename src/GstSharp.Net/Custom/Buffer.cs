@@ -77,6 +77,66 @@ public sealed partial class Buffer
     }
 
     /// <summary>
+    /// Creates a buffer over the memory of a block of bytes, without copying
+    /// it.
+    /// </summary>
+    /// <param name="bytes">The block to wrap.</param>
+    /// <returns>The buffer, which the caller owns and disposes.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_buffer_new_wrapped_bytes</c>, and it is zero copy: the
+    /// buffer addresses the very memory of the block. Nothing of the caller's
+    /// has to be kept alive for it, unlike
+    /// <see cref="NewWrappedFull(Gst.MemoryFlags, nint, nuint, nuint, nuint, Action?)"/>,
+    /// because the buffer takes a reference of the block and gives it back when
+    /// the memory is released. The wrapper may be disposed as soon as this
+    /// returns; the buffer still reads.
+    /// </para>
+    /// <para>
+    /// The memory carries <see cref="Gst.MemoryFlags.Readonly"/>, which is what
+    /// the immutability of a block means to a pipeline: an element that needs
+    /// to write has to copy first, and
+    /// <see cref="Gst.Buffer.MakeWritable"/> answers a buffer over a copy of
+    /// the bytes rather than over these.
+    /// </para>
+    /// <para>
+    /// <b>An empty block answers an empty buffer without calling the
+    /// library.</b> The C reads the data pointer of the block and refuses a
+    /// null one with a critical and no buffer at all, and a null pointer is
+    /// what every empty block carries: <c>g_bytes_new</c> discards the pointer
+    /// it is given whenever the size is zero. An empty block therefore has no
+    /// memory to wrap, and the buffer that wraps nothing is the empty one,
+    /// which is why this is hand written rather than generated.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="bytes"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ObjectDisposedException">The wrapper of the block was disposed.</exception>
+    public static Gst.Buffer NewWrappedBytes(Gst.GLib.Bytes bytes)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+
+        // The handle is read first, so that a disposed wrapper throws before
+        // anything is allocated.
+        nint block = bytes.Handle;
+
+        if (bytes.Size == 0)
+        {
+            // See the remarks: the C refuses the null data pointer of an empty
+            // block, and an empty buffer is what wrapping one means.
+            return Gst.Buffer.New();
+        }
+
+        nint nativeResult = BufferNative.NewWrappedBytes(block);
+
+        // The handle was read out of the wrapper, so nothing else keeps the
+        // block alive across the call that takes its reference.
+        GC.KeepAlive(bytes);
+
+        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_buffer_new_wrapped_bytes returned no value.");
+    }
+
+    /// <summary>
     /// Sets the presentation timestamp of the buffer.
     /// </summary>
     /// <param name="pts">

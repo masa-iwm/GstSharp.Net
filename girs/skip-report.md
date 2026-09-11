@@ -85,7 +85,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (62)
+### HandBound (63)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_copy`
@@ -94,6 +94,7 @@ disappears shows up here as an added line.
 - `gst_buffer_iterate_meta`
 - `gst_buffer_iterate_meta_filtered`
 - `gst_buffer_list_copy`
+- `gst_buffer_new_wrapped_bytes`
 - `gst_buffer_new_wrapped_full`
 - `gst_buffer_pool_set_config`
 - `gst_buffer_remove_meta`
@@ -395,10 +396,9 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (27)
+### OverlaySkip (26)
 
 - `gst_allocator_free`
-- `gst_buffer_new_wrapped_bytes`
 - `gst_buffer_pool_release_buffer`
 - `gst_caps_features_add_static_str`
 - `gst_caps_features_new_single_static_str`
@@ -655,8 +655,9 @@ disappears shows up here as an added line.
 
 ## GstBase
 
-### HandBound (2)
+### HandBound (3)
 
+- `gst_adapter_copy_bytes`
 - `gst_adapter_map`
 - `gst_adapter_unmap`
 
@@ -704,9 +705,8 @@ disappears shows up here as an added line.
 - `gst_type_find_data_get_typefind`
 - `gst_type_find_data_new`
 
-### OverlaySkip (3)
+### OverlaySkip (2)
 
-- `gst_adapter_copy_bytes`
 - `gst_adapter_take`
 - `gst_collect_pads_add_pad`
 

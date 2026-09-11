@@ -161,4 +161,21 @@ internal static unsafe partial class BufferNative
     /// </remarks>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_iterate_meta")]
     internal static partial nint IterateMeta(nint buffer, ref nint state);
+
+    /// <summary>
+    /// Creates a buffer over the memory of a <c>GBytes</c>, taking a reference
+    /// of the block.
+    /// </summary>
+    /// <param name="bytes">The block to wrap, whose data must not be null.</param>
+    /// <returns>The new buffer, or <c>0</c> when the block has no data.</returns>
+    /// <remarks>
+    /// The entry point is on the skip list of
+    /// <c>girs/overlays/fixups.json</c>, and in its <c>handBound</c> array
+    /// beside it, for the reason the paragraph on <c>gst_buffer_map</c> above
+    /// describes: the generated member would be correct for every block but the
+    /// empty one, and the empty one is the block a caller builds from an empty
+    /// span. <see cref="Gst.Buffer.NewWrappedBytes"/> is the member.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_buffer_new_wrapped_bytes")]
+    internal static partial nint NewWrappedBytes(nint bytes);
 }
