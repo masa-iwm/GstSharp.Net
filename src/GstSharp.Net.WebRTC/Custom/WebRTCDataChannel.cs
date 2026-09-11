@@ -102,6 +102,35 @@ public abstract unsafe partial class WebRTCDataChannel
     /// being fragmented; that is the exception below, and its message is the
     /// one the library wrote.
     /// </para>
+    /// <para>
+    /// <b>Receiving is the generated <see cref="OnMessageData"/> event, and a
+    /// handler of it does not run where this call does.</b> <c>webrtcbin</c>
+    /// does not emit the signal where it read the message: it wraps the
+    /// received bytes and queues the emission on the main context of the
+    /// thread it starts for the peer connection, and the handler is called
+    /// from there. That is the thread the state changes and the promise
+    /// replies of the same connection are delivered on, so a handler that
+    /// blocks holds all of them up, and it is never the thread that added the
+    /// handler. That is the contract of <c>webrtcbin</c> rather than of this
+    /// class: a channel some other element implements emits wherever its
+    /// implementation calls <c>gst_webrtc_data_channel_on_message_data</c>. An
+    /// exception that leaves the handler does not cross the native frame
+    /// either — it is reported through
+    /// <see cref="Gst.Interop.ExceptionTrap"/> and the emission continues.
+    /// </para>
+    /// <para>
+    /// The block such a handler is handed is borrowed for the duration of the
+    /// call and released when the handler returns, which is the rule the
+    /// message of a <see cref="Gst.BusSyncHandler"/> follows for the same
+    /// reason: the signal borrows the block from the channel, so the wrapper
+    /// around it can only borrow as well. It is not the handler's to dispose
+    /// and not the handler's to keep. Reading it inside the handler is what it
+    /// is for, and anything that outlives the handler has to be a copy, which
+    /// <see cref="Gst.GLib.Bytes.ToArray"/> makes; using the wrapper
+    /// afterwards throws <see cref="ObjectDisposedException"/>, and a span
+    /// <see cref="Gst.GLib.Bytes.GetData"/> handed out inside the handler
+    /// points at memory that is gone by then.
+    /// </para>
     /// </remarks>
     /// <exception cref="Gst.GLib.GException">The channel refused the message.</exception>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
