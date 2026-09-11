@@ -522,6 +522,11 @@ public unsafe partial class TimelineElement
     /// should still call the default implementation to get the full list, and
     /// then edit its content.
     /// </summary>
+    /// <remarks>
+    /// <para>The block is sorted by property name by the caller of the slot
+    /// (ges-timeline-element.c:2260), so the order an override answers in is not the order a
+    /// reader sees.</para>
+    /// </remarks>
     /// <returns>
     /// What <c>list_children_properties</c> answers.
     /// The array is consumed: one reference per element is handed to the caller and
@@ -549,6 +554,13 @@ public unsafe partial class TimelineElement
     /// type "TypeName", if it was given) will be passed to @child, and the
     /// registered specification of this property will be passed to @pspec.
     /// </para>
+    /// <para>Both out parameters are owned by the caller on the true path and left untouched on the
+    /// false one (ges-timeline-element.c:257-289): the caller unreferences the child and the
+    /// specification unconditionally once the answer is true
+    /// (ges-timeline-element.c:2022-2023), so neither may be null there - an override that
+    /// leaves one empty is reported through the exception trap and the slot answers false
+    /// instead. The child may be the element itself, which is what the registration allows
+    /// (ges-timeline-element.c:909-910).</para>
     /// </remarks>
     /// <param name="propName">The <c>propName</c> argument.</param>
     /// <param name="child">
@@ -584,6 +596,13 @@ public unsafe partial class TimelineElement
     /// @pspec on @child to @value. Default implementation will use
     /// g_object_set_property().
     /// </summary>
+    /// <remarks>
+    /// <para>The element this runs on may be the owner of an inherited child property rather than the
+    /// element the public call named (ges-timeline-element.c:821-823). The value may arrive as
+    /// a string for a specification of another type as well, because the by name setters go
+    /// through gst_util_set_object_arg (ges-timeline-element.c:204-212): read the type of the
+    /// value before a typed getter, or chain up, which handles that case.</para>
+    /// </remarks>
     /// <param name="child">
     /// The <c>child</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
@@ -841,6 +860,11 @@ public unsafe partial class TimelineElement
     }
 
     /// <summary>Runs the implementation of <c>list_children_properties</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>The block is sorted by property name by the caller of the slot
+    /// (ges-timeline-element.c:2260), so the order an override answers in is not the order a
+    /// reader sees.</para>
+    /// </remarks>
     /// <returns>
     /// What <c>list_children_properties</c> answers.
     /// The array is consumed: one reference per element is handed to the caller and
@@ -870,6 +894,15 @@ public unsafe partial class TimelineElement
     }
 
     /// <summary>Runs the implementation of <c>lookup_child</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>Both out parameters are owned by the caller on the true path and left untouched on the
+    /// false one (ges-timeline-element.c:257-289): the caller unreferences the child and the
+    /// specification unconditionally once the answer is true
+    /// (ges-timeline-element.c:2022-2023), so neither may be null there - an override that
+    /// leaves one empty is reported through the exception trap and the slot answers false
+    /// instead. The child may be the element itself, which is what the registration allows
+    /// (ges-timeline-element.c:909-910).</para>
+    /// </remarks>
     /// <param name="propName">The <c>propName</c> argument.</param>
     /// <param name="child">
     /// The <c>child</c> argument.
@@ -911,6 +944,13 @@ public unsafe partial class TimelineElement
     }
 
     /// <summary>Runs the implementation of <c>set_child_property</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>The element this runs on may be the owner of an inherited child property rather than the
+    /// element the public call named (ges-timeline-element.c:821-823). The value may arrive as
+    /// a string for a specification of another type as well, because the by name setters go
+    /// through gst_util_set_object_arg (ges-timeline-element.c:204-212): read the type of the
+    /// value before a typed getter, or chain up, which handles that case.</para>
+    /// </remarks>
     /// <param name="child">
     /// The <c>child</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
