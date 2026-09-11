@@ -117,10 +117,21 @@ internal sealed class AnnotationOverride
 /// <remarks>
 /// <para>
 /// Every field corrects an attribute of the <c>&lt;array&gt;</c> element and
-/// nothing else: this never promotes a bare pointer into an array, because the
-/// decision that a pointer is one is exactly the decision a binding must not
-/// invent. An entry on a parameter the gir does not spell as an array is
+/// nothing else: this does not promote a bare pointer into an array, because
+/// the decision that a pointer is one is exactly the decision a binding must
+/// not invent. An entry on a parameter the gir does not spell as an array is
 /// reported as GEN0020 and ignored.
+/// </para>
+/// <para>
+/// The return value of a <em>virtual method</em> is the one exception, and only
+/// for an entry that states <c>elementType</c> and <c>length</c> together. A
+/// slot is a C function pointer rather than a callable the gir annotates, so a
+/// class struct field upstream marks <c>introspectable="0"</c> carries no
+/// <c>&lt;array&gt;</c> to correct at all — the return of
+/// <c>GESTimelineElementClass::list_children_properties</c> is spelled as one
+/// <c>GObject.ParamSpec</c> with a <c>GParamSpec**</c> <c>c:type</c>. An entry
+/// that names both halves describes the array in full instead of letting the
+/// applier infer one.
 /// </para>
 /// <para>
 /// <c>length</c> and <c>fixedSize</c> are mutually exclusive in GIR, so an

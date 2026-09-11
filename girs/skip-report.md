@@ -1220,7 +1220,7 @@ disappears shows up here as an added line.
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
-## Virtuals (20)
+## Virtuals (17)
 
 The class struct slots of a subclassable class that carry no `OnX` member, with
 the reason. `UnsupportedSignature` is the planner refusing a shape and
@@ -1229,14 +1229,11 @@ method to pair it with; every other reason is the statement of an overlay
 entry. The mirror still lays every slot out, so what is listed here is the
 managed surface and not the ABI.
 
-### GES (13)
+### GES (10)
 
 - `GES.AudioSource::create_source` — OpaqueSlot
 - `GES.Clip::create_track_elements` — the slot answers a GList whose container the caller takes, which the reverse planner has no bucket for; the C default implementation wraps create_track_element (ges-clip.c:2796-2808), so a managed clip that implements create_track_element already behaves the way this slot would make it behave
 - `GES.Container::group` — OpaqueSlot
-- `GES.TimelineElement::list_children_properties` — UnsupportedSignature
-- `GES.TimelineElement::lookup_child` — UnsupportedSignature
-- `GES.TimelineElement::set_child_property` — UnsupportedSignature
 - `GES.TimelineElement::set_child_property_full` — the slot is throws="1" and PlanVirtualMethod refuses every throwing slot outright (MarshalPlanner.cs:4941-4945): carrying a GError back out of a managed override is a contract of its own that no slot of the corpus has yet, and the base class falls back to set_child_property when the slot is NULL (ges-timeline-element.c:828-836), so OnSetChildProperty is reached from every public setter in the meantime
 - `GES.TrackElement::list_children_properties` — the deprecated slot (Deprecated: 1.14) is dead: nothing in the 1.28 tree assigns it and nothing calls through it (the only list_children_properties slot ges reads is the timeline-element one, ges-timeline-element.c:650), so an override of it would never run
 - `GES.TrackElement::lookup_child` — the deprecated slot (Deprecated: 1.14) is assigned once, to a forwarder onto the timeline-element slot (ges-track-element.c:137-143, :497), and no code in ges calls through it; an OnLookupChild on the track element mirror would also hide the live inherited one, which is the steering hazard the deprecated method twin is skipped for

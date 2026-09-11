@@ -209,6 +209,14 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_param_spec_get_default_value")]
     internal static partial GValueNative* ParamSpecGetDefaultValue(nint pspec);
 
+    /// <summary>
+    /// References a specification without settling a floating one, which is
+    /// what a trampoline mints for a caller that takes over one reference of a
+    /// specification a managed override already holds.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_param_spec_ref")]
+    internal static partial nint ParamSpecRef(nint pspec);
+
     [LibraryImport("GObject", EntryPoint = "g_param_spec_ref_sink")]
     internal static partial nint ParamSpecRefSink(nint pspec);
 

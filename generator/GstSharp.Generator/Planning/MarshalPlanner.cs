@@ -1478,11 +1478,16 @@ internal sealed class MarshalPlanner
     private GirArrayRef? EffectiveArrayOf(GirCallable callable) =>
         EffectiveArray(
             callable.ReturnValue.Type,
-            AnnotationKeyOf(callable) is { } identifier ? identifier + "#return" : null);
+            AnnotationKeyOf(callable) is { } identifier ? identifier + "#return" : null,
+            promotable: callable is GirVirtualMethod);
 
     /// <summary>Applies an array correction to one gir type reference.</summary>
     /// <param name="type">The declared type of the parameter or return value.</param>
     /// <param name="key">The overlay key it is addressed by, if it has one.</param>
+    /// <param name="promotable">
+    /// Whether a correction may state that the declared type is an array after
+    /// all, which only the return value of a virtual method may be.
+    /// </param>
     /// <returns>The corrected array, or <see langword="null"/> when there is none.</returns>
     /// <remarks>
     /// <para>
@@ -1492,12 +1497,24 @@ internal sealed class MarshalPlanner
     /// the entry is reported as stale because nothing consumed it.
     /// </para>
     /// <para>
+    /// The one exception is the return value of a virtual method, and it exists
+    /// because a slot has no annotation to correct: a class struct field is a C
+    /// function pointer, so a gir that marks the slot
+    /// <c>introspectable="0"</c> — which is what upstream does for
+    /// <c>GESTimelineElementClass::list_children_properties</c> — spells the
+    /// return as the bare element type its <c>c:type</c> stars, with no
+    /// <c>&lt;array&gt;</c>, no length and no transfer. The correction is only
+    /// read when it states the element type and the counting parameter
+    /// together, so what it promotes is an array the entry describes in full
+    /// and never one the applier inferred.
+    /// </para>
+    /// <para>
     /// <c>length</c> and <c>fixed-size</c> are mutually exclusive in GIR, so an
     /// entry that states one clears the other. Everything else the correction
     /// leaves unsaid is carried over from the declared array.
     /// </para>
     /// </remarks>
-    private GirArrayRef? EffectiveArray(GirTypeRef type, string? key)
+    private GirArrayRef? EffectiveArray(GirTypeRef type, string? key, bool promotable = false)
     {
         GirArrayRef? array = type as GirArrayRef;
         if (key is null || _overlays.GetArrayOverride(key) is not { } correction)
@@ -1507,7 +1524,19 @@ internal sealed class MarshalPlanner
 
         if (array is null)
         {
-            return null;
+            if (!promotable || correction is not { ElementType: { }, Length: not null })
+            {
+                return null;
+            }
+
+            array = new GirArrayRef
+            {
+                Name = type.Name,
+                CType = type.CType,
+                IsVarArgs = type.IsVarArgs,
+                IsZeroTerminated = false,
+                InnerTypes = [type],
+            };
         }
 
         _consumedArrayOverrides.Add(key);
@@ -5003,18 +5032,29 @@ internal sealed class MarshalPlanner
             }
         }
 
+        // The block a slot answers is counted by one of its own parameters,
+        // which is part of the slot and not of the managed override: the array
+        // the override answers carries its length in itself.
+        int? answeredCount = EffectiveArrayOf(method) is { LengthParameterIndex: int answered }
+            && answered >= 0
+            && answered < method.Parameters.Count
+                ? answered
+                : null;
+
         List<VfuncArgument> arguments = [];
         for (int index = 0; index < method.Parameters.Count; index++)
         {
             GirParameter parameter = method.Parameters[index];
-            VfuncArgument? argument = counts.ContainsKey(index)
-                ? PlanVirtualMethodCount(overlayKey, parameter, counts[index], context)
-                : PlanVirtualMethodArgument(
-                    overlayKey,
-                    parameter,
-                    arguments,
-                    context,
-                    ref reason);
+            VfuncArgument? argument = index == answeredCount
+                ? PlanVirtualMethodAnsweredCount(overlayKey, parameter, context)
+                : counts.ContainsKey(index)
+                    ? PlanVirtualMethodCount(overlayKey, parameter, counts[index], context)
+                    : PlanVirtualMethodArgument(
+                        overlayKey,
+                        parameter,
+                        arguments,
+                        context,
+                        ref reason);
 
             if (argument is null || !taken.Add(argument.Argument.Name))
             {
@@ -5146,6 +5186,28 @@ internal sealed class MarshalPlanner
                 argument, mapped, direction, transfer, identity, parameter.IsOptional, planned, ref reason);
         }
 
+        // A GValue a slot is handed points into storage its caller owns and
+        // keeps, which is the shape a callback is handed one in: it is
+        // projected onto the read only view rather than onto the owning value
+        // struct. The gir of GESTimelineElementClass::set_child_property
+        // spells the pointer without const, and every C caller of the slot
+        // hands it a const GValue* it casts (ges-timeline-element.c:244,
+        // :833-834), so the view is what the contract is.
+        if (argument.Kind == ArgumentKind.GValue)
+        {
+            return new VfuncArgument(
+                new ArgumentPlan
+                {
+                    Source = parameter,
+                    Kind = ArgumentKind.BorrowedGValue,
+                    Name = name,
+                    PublicType = "Gst.GObject.ValueView",
+                    RawType = "Gst.GObject.GValueNative*",
+                    Direction = ArgumentDirection.In,
+                },
+                VfuncBucket.BorrowValueView);
+        }
+
         VfuncBucket? bucket = argument.Kind switch
         {
             ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
@@ -5181,6 +5243,14 @@ internal sealed class MarshalPlanner
                 // free - which the trampoline invalidates when the call returns.
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed => VfuncBucket.BorrowBoxed,
                 HandleFlavor.Wrapper => VfuncBucket.BorrowWrapper,
+
+                // A specification the slot is lent is wrapped for the duration
+                // of the call and disposed when the override returns: the
+                // wrapper takes a reference of its own - the constructor of
+                // every ParamSpec wrapper sinks - and nothing else would give
+                // that reference back, because a GParamSpec wrapper has no
+                // finalizer.
+                HandleFlavor.ParamSpec => VfuncBucket.BorrowParamSpec,
 
                 // An opaque record has no ownership at all - its wrapper only
                 // holds the pointer - so lending one is the whole projection.
@@ -5303,6 +5373,57 @@ internal sealed class MarshalPlanner
             : null;
     }
 
+    /// <summary>Plans the parameter a slot writes the length of its answer into.</summary>
+    /// <param name="overlayKey">The key the overlays address the slot by.</param>
+    /// <param name="parameter">The counting parameter.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <returns>The argument, or <see langword="null"/> when it is not a plain count out.</returns>
+    /// <remarks>
+    /// It is the other half of a counted block the slot answers, and it is
+    /// hidden from the managed override for the same reason the counting
+    /// parameter of a span is: the array carries its own length. The direction
+    /// has to be <c>out</c>, which the gir of a slot upstream marked
+    /// <c>introspectable="0"</c> does not say - the overlays correct it.
+    /// </remarks>
+    private VfuncArgument? PlanVirtualMethodAnsweredCount(
+        string overlayKey,
+        GirParameter parameter,
+        PlanningContext context)
+    {
+        AnnotationOverride? correction = AnnotationOverrideFor(overlayKey + "#" + parameter.Name);
+        ArgumentDirection direction = parameter.Direction switch
+        {
+            GirDirection.Out => ArgumentDirection.Out,
+            GirDirection.InOut => ArgumentDirection.Ref,
+            _ => ArgumentDirection.In,
+        };
+
+        if (ParseDirection(correction?.Direction) is { } corrected)
+        {
+            direction = corrected;
+        }
+
+        if (direction != ArgumentDirection.Out)
+        {
+            return null;
+        }
+
+        MappedType mapped = _types.Map(parameter.Type, context.Namespace);
+        ArgumentPlan? argument = PlanScalar(
+            parameter.Type,
+            mapped,
+            _names.VirtualMethodParameterName(overlayKey, parameter.Name ?? "length"),
+            ArgumentDirection.Out,
+            GirTransfer.None,
+            nullable: false,
+            context,
+            inbound: true);
+
+        return argument is { Kind: ArgumentKind.Value }
+            ? new VfuncArgument(argument, VfuncBucket.AnsweredCount)
+            : null;
+    }
+
     /// <summary>Plans an argument the slot produces or replaces.</summary>
     /// <param name="argument">The marshalling the scalar planner produced.</param>
     /// <param name="mapped">The projection of the gir type.</param>
@@ -5339,9 +5460,16 @@ internal sealed class MarshalPlanner
         // A produced handle is spelled as a consumed one when the gir calls the
         // parameter inout and transfer full, which is the same projection an
         // in parameter the call takes over gets.
+        // A parameter specification joins the two families: the runtime has a
+        // minting function for it as well (g_param_spec_ref), and the wrapper
+        // it is minted from is consumed - handed over and disposed - because a
+        // GParamSpec wrapper has no finalizer to fall back on.
+        bool specification = mapped.Kind == MarshalKind.Fundamental
+            && mapped.Symbol is { QualifiedName: ParamSpecType };
+
         if (argument.Kind is not (ArgumentKind.Handle or ArgumentKind.ConsumedHandle)
             || transfer != GirTransfer.Full
-            || mapped.Kind is not (MarshalKind.MiniObject or MarshalKind.GObject))
+            || (mapped.Kind is not (MarshalKind.MiniObject or MarshalKind.GObject) && !specification))
         {
             return null;
         }
@@ -5410,6 +5538,34 @@ internal sealed class MarshalPlanner
         }
 
         GirTransfer transfer = TransferOf(method);
+
+        // A counted block of parameter specifications is the one array a slot
+        // answers. It is read off the effective array, which for a slot the gir
+        // marks introspectable="0" is the one the overlays state: the C
+        // implementation writes a g_new'd block of referenced specifications
+        // and the count beside it (ges-timeline-element.c:293-310), and that is
+        // a full transfer of both halves.
+        if (EffectiveArrayOf(method) is { LengthParameterIndex: not null } answered
+            && !answered.IsZeroTerminated
+            && answered.FixedSize is null
+            && transfer == GirTransfer.Full
+            && _types.Map(answered, context.Namespace).ElementType is
+                { Kind: MarshalKind.Fundamental, Symbol.QualifiedName: ParamSpecType })
+        {
+            return (
+                new ReturnPlan
+                {
+                    Kind = ArgumentKind.ParamSpecArray,
+                    PublicType = ParamSpecPublicType + "[]",
+                    RawType = NativeInt,
+                    Transfer = transfer,
+                    ElementType = ParamSpecPublicType,
+                    Flavor = HandleFlavor.ParamSpec,
+                    Doc = ReturnDoc(value, transfer),
+                },
+                VfuncReturnBucket.ParamSpecArray);
+        }
+
         ArgumentPlan? scalar = PlanScalar(
             value.Type,
             mapped,

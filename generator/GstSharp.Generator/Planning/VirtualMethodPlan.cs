@@ -94,6 +94,33 @@ internal enum VfuncBucket
     /// count in its length.
     /// </summary>
     SpanCount,
+
+    /// <summary>
+    /// The parameter a slot writes the length of the block it answers into. It
+    /// is hidden from the managed override for the same reason
+    /// <see cref="SpanCount"/> is — the array carries its own length — and it
+    /// is zeroed before anything else happens, so that every failure path of
+    /// the trampoline leaves the NULL block and the count of zero the caller
+    /// of the slot reads as "no elements".
+    /// </summary>
+    AnsweredCount,
+
+    /// <summary>
+    /// A parameter specification the slot is lent, wrapped for the duration of
+    /// the call. The wrapper takes a reference of its own — the constructor of
+    /// a <c>ParamSpec</c> sinks what it is handed — and is disposed when the
+    /// override returns, which is the only leak free shape: the wrapper has no
+    /// finalizer to give that reference back later.
+    /// </summary>
+    BorrowParamSpec,
+
+    /// <summary>
+    /// A <c>GValue</c> the slot is handed, projected onto the read only
+    /// <c>Gst.GObject.ValueView</c>. Nothing is allocated and nothing is
+    /// released: the storage belongs to the caller of the slot, and the view is
+    /// a <c>ref struct</c> the compiler keeps from outliving the call.
+    /// </summary>
+    BorrowValueView,
 }
 
 /// <summary>
@@ -118,6 +145,17 @@ internal enum VfuncReturnBucket
     /// wrapper the override answered.
     /// </summary>
     BorrowedHandle,
+
+    /// <summary>
+    /// A counted block of parameter specifications the caller takes over: the
+    /// trampoline allocates the block, references every element into it and
+    /// writes the count beside it. The wrappers the override answered are
+    /// consumed — disposed once their reference has been taken — because a
+    /// <c>ParamSpec</c> wrapper has no finalizer and the override handed them
+    /// over. An answer of nothing is the NULL block and the count of zero,
+    /// which is what the C default answers for an element with no children.
+    /// </summary>
+    ParamSpecArray,
 }
 
 /// <summary>One argument of a virtual method.</summary>

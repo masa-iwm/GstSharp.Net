@@ -833,7 +833,7 @@ internal sealed class VfuncEmitter
         List<string> parts = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket == VfuncBucket.SpanCount)
+            if (argument.Bucket is VfuncBucket.SpanCount or VfuncBucket.AnsweredCount)
             {
                 continue;
             }
@@ -969,8 +969,21 @@ internal sealed class VfuncEmitter
                     raw.Add("&" + local);
                     break;
                 case VfuncBucket.OutScalar:
+                case VfuncBucket.AnsweredCount:
                     writer.WriteLine(value.RawType.TrimEnd('*') + " " + local + " = default;");
                     raw.Add("&" + local);
+                    break;
+
+                // The parent slot is handed a value of its own rather than the
+                // storage behind the view: a view has no pointer to hand on,
+                // and the slot below only reads what it is given
+                // (ges-timeline-element.c:204-212).
+                case VfuncBucket.BorrowValueView:
+                    writer.WriteLine(
+                        "using Gst.GObject.Value " + value.Name + "Copy = " + value.Name + ".ToValue();");
+                    writer.WriteLine(
+                        value.RawType + " " + local + " = &" + value.Name + "Copy.NativeValue;");
+                    raw.Add(local);
                     break;
                 case VfuncBucket.OutHandle:
                     writer.WriteLine("nint " + local + " = nint.Zero;");
@@ -1033,6 +1046,11 @@ internal sealed class VfuncEmitter
         if (plan.Return.IsVoid)
         {
             writer.WriteLine(call + ";");
+        }
+        else if (AnswersBlock(plan))
+        {
+            writer.WriteLine("nint resultNative = " + call + ";");
+            WriteChainedBlock(writer, plan, "resultNative", "result");
         }
         else if (AnswersHandle(plan))
         {
@@ -1128,7 +1146,8 @@ internal sealed class VfuncEmitter
         {
             if (argument.Bucket is VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject
                 or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed
-                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
+                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque
+                or VfuncBucket.BorrowParamSpec)
             {
                 writer.WriteLine("GC.KeepAlive(" + argument.Argument.Name + ");");
             }
@@ -1158,7 +1177,7 @@ internal sealed class VfuncEmitter
             arguments.Add(argument.Argument.Name);
         }
 
-        bool raw = AnswersHandle(plan);
+        bool raw = AnswersRaw(plan);
         writer.WriteLine(
             "private static " + (raw ? plan.Return.RawType : ReturnType(plan)) + " ChainUp" + plan.Name + "("
             + string.Join(", ", parameters) + ")");
@@ -1228,6 +1247,23 @@ internal sealed class VfuncEmitter
             }
         }
 
+        // The count of a block the parent slot cannot answer is zero, and it is
+        // written before the branch returns the NULL block beside it: that pair
+        // is what the C wrapper writes for a class with no implementation
+        // (ges-timeline-element.c:2251-2256).
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            if (argument.Bucket != VfuncBucket.AnsweredCount)
+            {
+                continue;
+            }
+
+            writer.WriteLine("if (" + argument.Argument.Name + " != null)");
+            writer.OpenBlock();
+            writer.WriteLine("*" + argument.Argument.Name + " = 0;");
+            writer.CloseBlock();
+        }
+
         foreach (VfuncArgument argument in plan.Arguments)
         {
             if (argument.Bucket is not (VfuncBucket.OutHandle or VfuncBucket.OutScalar))
@@ -1260,6 +1296,10 @@ internal sealed class VfuncEmitter
         if (plan.Return.IsVoid)
         {
             writer.WriteLine("return;");
+        }
+        else if (AnswersBlock(plan))
+        {
+            writer.WriteLine("return nint.Zero;");
         }
         else if (plan.NullSlotDefault is { } expression)
         {
@@ -1302,6 +1342,26 @@ internal sealed class VfuncEmitter
         writer.WriteLine(
             "private static " + rawReturn + " " + plan.Name + "Trampoline(" + string.Join(", ", parameters) + ")");
         writer.OpenBlock();
+
+        // The count of the block is zeroed before anything that can fail, so
+        // that every path out of the trampoline - no managed instance, an
+        // override that threw, an override that answered nothing - leaves the
+        // NULL block and the count of zero beside each other, which is the pair
+        // the caller of the slot reads as "no elements".
+        foreach (VfuncArgument counted in plan.Arguments)
+        {
+            if (counted.Bucket != VfuncBucket.AnsweredCount)
+            {
+                continue;
+            }
+
+            writer.WriteLine("if (" + counted.Argument.Name + " != null)");
+            writer.OpenBlock();
+            writer.WriteLine("*" + counted.Argument.Name + " = 0;");
+            writer.CloseBlock();
+            writer.WriteLine();
+        }
+
         writer.WriteLine("try");
         writer.OpenBlock();
         writer.WriteLine(
@@ -1345,11 +1405,12 @@ internal sealed class VfuncEmitter
             writer.WriteLine(fallback + ";");
             writer.WriteLine("return;");
         }
-        else if (AnswersHandle(plan))
+        else if (AnswersRaw(plan))
         {
             // No wrapper is built here: the answer of the parent slot is
             // already what the caller of the slot expects, with the reference
-            // count the parent left behind.
+            // count the parent left behind. A block travels the same way, with
+            // the count the parent wrote through the pointer it was handed.
             writer.WriteLine("return " + fallback + ";");
         }
         else
@@ -1405,6 +1466,21 @@ internal sealed class VfuncEmitter
             switch (argument.Bucket)
             {
                 case VfuncBucket.Cast:
+                    // A string the gir does not call nullable is one the
+                    // override is promised: the trap reports the promise the
+                    // caller of the slot broke rather than handing the override
+                    // a null it never declared.
+                    if (value.Kind == ArgumentKind.Utf8 && !value.PublicType.EndsWith('?'))
+                    {
+                        writer.WriteLine(
+                            value.PublicType + " " + local + " = " + FromNativeScalar(value, value.Name));
+                        writer.WriteLine(
+                            "    ?? throw new InvalidOperationException(\"" + plan.Method.Name
+                            + " passed no " + DocName(value.Name) + ".\");");
+                        call.Add(local);
+                        break;
+                    }
+
                     call.Add(FromNativeScalar(value, value.Name));
                     break;
                 case VfuncBucket.BorrowGObject:
@@ -1445,6 +1521,31 @@ internal sealed class VfuncEmitter
                     call.Add(local);
                     break;
                 case VfuncBucket.SpanCount:
+                case VfuncBucket.AnsweredCount:
+                    break;
+
+                // The wrapper takes a reference of its own and gives it back
+                // when the override returns: a GParamSpec wrapper has no
+                // finalizer, so the using scope is the only shape that cannot
+                // leak the reference its constructor sinks.
+                case VfuncBucket.BorrowParamSpec:
+                    writer.WriteLine(
+                        "using " + Nullable(value.PublicType) + " " + local + " = " + value.Name
+                        + " == nint.Zero ? null : " + Bare(value.PublicType) + ".FromNative(" + value.Name
+                        + ", Gst.Interop.Transfer.None);");
+                    call.Add(NullAssert(value, local));
+                    break;
+
+                // Nothing is allocated and nothing is released: the storage
+                // belongs to the caller of the slot, and the view is a ref
+                // struct the compiler keeps from outliving the call.
+                case VfuncBucket.BorrowValueView:
+                    writer.WriteLine(value.PublicType + " " + local + " = " + value.Name + " != null");
+                    writer.WriteLine("    ? new " + value.PublicType + "(ref *" + value.Name + ")");
+                    writer.WriteLine(
+                        "    : throw new InvalidOperationException(\"" + plan.Method.Name
+                        + " passed no " + DocName(value.Name) + ".\");");
+                    call.Add(local);
                     break;
                 case VfuncBucket.Adopt:
                     writer.WriteLine(
@@ -1531,18 +1632,82 @@ internal sealed class VfuncEmitter
             }
         }
 
-        bool guarded = false;
+        bool handles = false;
         foreach (VfuncArgument argument in produced)
         {
-            guarded |= argument.Bucket is VfuncBucket.OutHandle or VfuncBucket.InOutHandle;
+            handles |= argument.Bucket is VfuncBucket.OutHandle or VfuncBucket.InOutHandle;
         }
 
-        guarded &= string.Equals(Bare(plan.Return.PublicType), "Gst.FlowReturn", StringComparison.Ordinal);
+        // A slot that answers a flow return fills its out parameters on the Ok
+        // path only, and one that answers a gboolean fills them on the true
+        // path only: the caller of the second reads and releases what it finds
+        // there when the answer is true and leaves the storage alone otherwise
+        // (ges-timeline-element.c:257-289, :2022-2023). Everything the caller
+        // never releases - a scalar - is written whatever the answer was, which
+        // is what the branch below the guard does.
+        string returnType = Bare(plan.Return.PublicType);
+        string? guard = handles && string.Equals(returnType, "Gst.FlowReturn", StringComparison.Ordinal)
+            ? "result == Gst.FlowReturn.Ok"
+            : handles && string.Equals(returnType, "bool", StringComparison.Ordinal)
+                ? "result"
+                : null;
+
+        bool guarded = guard is not null;
         if (guarded)
         {
             writer.WriteLine();
-            writer.WriteLine("if (result == Gst.FlowReturn.Ok)");
+            writer.WriteLine("if (" + guard + ")");
             writer.OpenBlock();
+        }
+
+        // A caller of a gboolean slot dereferences what it finds on the true
+        // path without testing it, so an override that answered true and left
+        // an out empty is reported rather than written out: the trap answers
+        // false for the slot and the storage stays untouched.
+        if (string.Equals(returnType, "bool", StringComparison.Ordinal))
+        {
+            foreach (VfuncArgument argument in produced)
+            {
+                if (argument.Bucket != VfuncBucket.OutHandle)
+                {
+                    continue;
+                }
+
+                writer.WriteLine("if (" + argument.Argument.Name + "Value is null)");
+                writer.OpenBlock();
+                writer.WriteLine("throw new InvalidOperationException(");
+                writer.WriteLine(
+                    "    \"On" + plan.Name + " answered true without a " + DocName(argument.Argument.Name)
+                    + ", which " + plan.Method.Name + " does not allow.\");");
+                writer.CloseBlock();
+                writer.WriteLine();
+            }
+        }
+
+        // Every handle the guarded write back needs is read before the first
+        // store. Reading one throws when the override answered a wrapper it had
+        // already disposed - or listed the same wrapper twice, the second read
+        // coming after the first Dispose - and a throw between two stores would
+        // leave the caller with one field written and a reference nobody
+        // releases. With the reads ahead of every store the trap answers the
+        // failure with the storage untouched, which is what the caller of such
+        // a slot expects (ges-timeline-element.c:257-289).
+        bool hoisted = false;
+        if (guarded)
+        {
+            foreach (VfuncArgument argument in produced)
+            {
+                if (argument.Bucket is not (VfuncBucket.OutHandle or VfuncBucket.InOutHandle))
+                {
+                    continue;
+                }
+
+                hoisted = true;
+                string local = argument.Argument.Name + "Value";
+                writer.WriteLine(
+                    "nint " + argument.Argument.Name + "Handle = " + local + " is null ? nint.Zero : "
+                    + local + ".Handle;");
+            }
         }
 
         foreach (VfuncArgument argument in produced)
@@ -1554,7 +1719,7 @@ internal sealed class VfuncEmitter
 
             if (!guarded || argument.Bucket != VfuncBucket.OutScalar)
             {
-                WriteWriteBack(writer, argument);
+                WriteWriteBack(writer, argument, hoisted);
             }
         }
 
@@ -1565,7 +1730,7 @@ internal sealed class VfuncEmitter
             {
                 if (argument.Bucket == VfuncBucket.OutScalar)
                 {
-                    WriteWriteBack(writer, argument);
+                    WriteWriteBack(writer, argument, hoisted);
                 }
             }
         }
@@ -1593,7 +1758,19 @@ internal sealed class VfuncEmitter
             string name = argument.Argument.Name;
             if (argument.Bucket != VfuncBucket.InOutHandOver)
             {
-                writer.WriteLine(name + "Value?.Dispose();");
+                // The wrapper of a produced GObject is interned and keeps a
+                // reference of its own, and an override is free to answer one
+                // it holds - the element itself, among others - so disposing it
+                // here would take a live wrapper away from managed code. Every
+                // other produced wrapper is consumed: the reference the caller
+                // takes over was minted from it, and nothing else would give
+                // the one it owns back.
+                if (argument.Bucket != VfuncBucket.OutHandle
+                    || argument.Argument.Flavor != HandleFlavor.GObject)
+                {
+                    writer.WriteLine(name + "Value?.Dispose();");
+                }
+
                 continue;
             }
 
@@ -1630,6 +1807,12 @@ internal sealed class VfuncEmitter
     /// <param name="expression">The managed value.</param>
     private static void WriteAnswer(CodeWriter writer, VirtualMethodPlan plan, string expression, string local)
     {
+        if (plan.ReturnBucket is VfuncReturnBucket.ParamSpecArray)
+        {
+            WriteAnsweredBlock(writer, plan, expression, local);
+            return;
+        }
+
         if (plan.ReturnBucket is VfuncReturnBucket.Cast)
         {
             writer.WriteLine("return " + ToNativeReturn(plan, expression) + ";");
@@ -1655,7 +1838,137 @@ internal sealed class VfuncEmitter
         writer.WriteLine("return " + ToNativeReturn(plan, local) + ";");
     }
 
-    private static void WriteWriteBack(CodeWriter writer, VfuncArgument argument)
+    /// <summary>
+    /// Writes the block a slot answers: the array the override handed back,
+    /// turned into the memory the caller of the slot takes over.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The slot being written.</param>
+    /// <param name="expression">The managed value.</param>
+    /// <param name="local">The local the array is read into.</param>
+    /// <remarks>
+    /// <para>
+    /// The elements are validated and their handles read before anything is
+    /// allocated, so that an override that answered an entry of nothing - or a
+    /// wrapper it had already disposed, or the same wrapper twice, whose second
+    /// handle is read after the first <c>Dispose</c> - leaves no half filled
+    /// block behind: the exception reaches the trap with the count still zero
+    /// and the answer still NULL. The block itself is allocated the way the C
+    /// default allocates it, because the caller frees it with <c>g_free</c>.
+    /// </para>
+    /// <para>
+    /// The wrappers are consumed. One reference per element is minted for the
+    /// caller and the wrapper is disposed right after, which is the only shape
+    /// that balances: a <c>ParamSpec</c> wrapper has no finalizer, and the
+    /// override handed the array over.
+    /// </para>
+    /// </remarks>
+    private static void WriteAnsweredBlock(
+        CodeWriter writer,
+        VirtualMethodPlan plan,
+        string expression,
+        string local)
+    {
+        string element = Bare(plan.Return.ElementType ?? plan.Return.PublicType);
+        string count = AnsweredCountOf(plan);
+        string countType = CountTypeOf(plan);
+
+        writer.WriteLine(ReturnType(plan) + " " + local + " = " + expression + ";");
+        writer.WriteLine("if (" + local + " is not { Length: > 0 })");
+        writer.OpenBlock();
+        writer.WriteLine("return nint.Zero;");
+        writer.CloseBlock();
+        writer.WriteLine();
+        string handles = local + "Handles";
+        writer.WriteLine("nint[] " + handles + " = new nint[" + local + ".Length];");
+        writer.WriteLine("for (int index = 0; index < " + local + ".Length; index++)");
+        writer.OpenBlock();
+        writer.WriteLine(element + " specification = " + local + "[index];");
+        writer.WriteLine("if (specification is null)");
+        writer.OpenBlock();
+        writer.WriteLine("throw new InvalidOperationException(");
+        writer.WriteLine(
+            "    \"On" + plan.Name + " answered a block with an empty entry, which "
+            + plan.Method.Name + " does not allow.\");");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine(handles + "[index] = specification.Handle;");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine(
+            "nint block = Gst.Interop.GMarshal.Malloc0((nuint)" + local
+            + ".Length * (nuint)sizeof(nint));");
+        writer.WriteLine("for (int index = 0; index < " + local + ".Length; index++)");
+        writer.OpenBlock();
+        writer.WriteLine(
+            "((nint*)block)[index] = Gst.Interop.GObjectNative.ParamSpecRef(" + handles + "[index]);");
+        writer.WriteLine(local + "[index].Dispose();");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine("if (" + count + " != null)");
+        writer.OpenBlock();
+        writer.WriteLine("*" + count + " = (" + countType + ")" + local + ".Length;");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine("return block;");
+    }
+
+    /// <summary>
+    /// Writes the array a chain-up reads out of the block the parent slot
+    /// answered, up to but not including the <c>return</c> of it.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The slot being written.</param>
+    /// <param name="source">The local holding the block.</param>
+    /// <param name="target">The local the array is built into.</param>
+    /// <remarks>
+    /// The parent slot hands one reference per element over and the block
+    /// itself is the caller's to free, so every element is adopted and the
+    /// memory released. A parent that answered nothing is the empty array: an
+    /// element with no child properties is the ordinary case, not a failure.
+    /// </remarks>
+    private static void WriteChainedBlock(
+        CodeWriter writer,
+        VirtualMethodPlan plan,
+        string source,
+        string target)
+    {
+        string element = Bare(plan.Return.ElementType ?? plan.Return.PublicType);
+        string count = AnsweredCountOf(plan) + "Native";
+
+        writer.WriteLine(ReturnType(plan) + " " + target + " = [];");
+        writer.WriteLine("if (" + source + " != nint.Zero)");
+        writer.OpenBlock();
+        writer.WriteLine(target + " = new " + element + "[(int)" + count + "];");
+        writer.WriteLine("for (int index = 0; index < " + target + ".Length; index++)");
+        writer.OpenBlock();
+        writer.WriteLine(
+            target + "[index] = " + element + ".FromNative(((nint*)" + source
+            + ")[index], Gst.Interop.Transfer.Full);");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine("Gst.Interop.GMarshal.Free(" + source + ");");
+        writer.CloseBlock();
+        writer.WriteLine();
+    }
+
+    /// <summary>The unsigned type the count of a block is written as.</summary>
+    /// <param name="plan">The slot.</param>
+    /// <returns>The C# spelling of the count, without its star.</returns>
+    private static string CountTypeOf(VirtualMethodPlan plan)
+    {
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            if (argument.Bucket == VfuncBucket.AnsweredCount)
+            {
+                return argument.Argument.RawType.TrimEnd('*');
+            }
+        }
+
+        return "uint";
+    }
+
+    private static void WriteWriteBack(CodeWriter writer, VfuncArgument argument, bool hoisted)
     {
         ArgumentPlan value = argument.Argument;
         string local = value.Name + "Value";
@@ -1684,8 +1997,15 @@ internal sealed class VfuncEmitter
         }
 
         string handle = value.Name + "Handle";
-        writer.WriteLine(
-            "nint " + handle + " = " + local + " is null ? nint.Zero : " + local + ".Handle;");
+
+        // The handle of a guarded write back was read before the first store,
+        // so that a wrapper the override had already disposed is refused with
+        // nothing written yet; here only the reference is left to mint.
+        if (!hoisted)
+        {
+            writer.WriteLine(
+                "nint " + handle + " = " + local + " is null ? nint.Zero : " + local + ".Handle;");
+        }
 
         string reference = argument.IdentityReference ?? (value.Name + "Entry");
         string condition = argument.IsIdentity
@@ -1750,7 +2070,7 @@ internal sealed class VfuncEmitter
     {
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket == VfuncBucket.SpanCount)
+            if (argument.Bucket is VfuncBucket.SpanCount or VfuncBucket.AnsweredCount)
             {
                 continue;
             }
@@ -1793,6 +2113,13 @@ internal sealed class VfuncEmitter
             case VfuncReturnBucket.BorrowedHandle:
                 note.Add("No reference is added on the way out: the base class takes one of its own");
                 note.Add("from the answer, which the remarks describe. Keep no extra reference to it.");
+                break;
+            case VfuncReturnBucket.ParamSpecArray:
+                note.Add("The array is consumed: one reference per element is handed to the caller and");
+                note.Add("every wrapper is disposed right after, because a ParamSpec wrapper has no");
+                note.Add("finalizer. Re-wrap a specification with ParamSpec.FromNative(handle,");
+                note.Add("Transfer.None) to keep it across calls. An element with no child properties");
+                note.Add("answers the empty array; nothing here is ever null.");
                 break;
             default:
                 break;
@@ -1871,10 +2198,32 @@ internal sealed class VfuncEmitter
                 note.Add("The override takes ownership of it: chain up to hand it on, or it is");
                 note.Add("released when the override returns. Copy it to keep it beyond the call.");
                 break;
+            case VfuncBucket.OutHandle when argument.Argument.Flavor == HandleFlavor.ParamSpec:
+                note.Add("The specification you leave here is handed to the caller with one added");
+                note.Add("reference and the wrapper is disposed right after, because a ParamSpec");
+                note.Add("wrapper has no finalizer: re-wrap it with ParamSpec.FromNative(handle,");
+                note.Add("Transfer.None) to keep one across calls. It must not be null when the");
+                note.Add("override answers true.");
+                break;
             case VfuncBucket.OutHandle:
             case VfuncBucket.InOutHandle:
                 note.Add("What the override leaves here is handed to the caller with one added");
                 note.Add("reference; the wrapper keeps its own.");
+                break;
+
+            case VfuncBucket.BorrowParamSpec:
+                note.Add("The caller lends this for the duration of the call: the wrapper takes a");
+                note.Add("reference of its own and gives it back when the override returns, so keep");
+                note.Add("nothing beyond the call - re-wrap it with ParamSpec.FromNative(pspec.Handle,");
+                note.Add("Transfer.None) to hold one afterwards.");
+                break;
+
+            case VfuncBucket.BorrowValueView:
+                note.Add("The view points at storage the caller of the slot owns and is only valid");
+                note.Add("while the call runs; ToValue() copies what it holds. The value may arrive as");
+                note.Add("a string for a specification of another type - the by name setters go");
+                note.Add("through gst_util_set_object_arg - so read its Type before a typed getter, or");
+                note.Add("chain up, which handles that case.");
                 break;
 
             case VfuncBucket.InOutHandOver:
@@ -1902,7 +2251,7 @@ internal sealed class VfuncEmitter
         List<string> parts = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket == VfuncBucket.SpanCount)
+            if (argument.Bucket is VfuncBucket.SpanCount or VfuncBucket.AnsweredCount)
             {
                 continue;
             }
@@ -1918,7 +2267,7 @@ internal sealed class VfuncEmitter
         List<string> parts = [];
         foreach (VfuncArgument argument in plan.Arguments)
         {
-            if (argument.Bucket == VfuncBucket.SpanCount)
+            if (argument.Bucket is VfuncBucket.SpanCount or VfuncBucket.AnsweredCount)
             {
                 continue;
             }
@@ -1941,11 +2290,45 @@ internal sealed class VfuncEmitter
         plan.ReturnBucket is VfuncReturnBucket.OwnedGObject or VfuncReturnBucket.OwnedMiniObject
             or VfuncReturnBucket.BorrowedHandle;
 
+    /// <summary>
+    /// Whether the value a slot answers is a counted block of parameter
+    /// specifications, which travels as the pointer to that block.
+    /// </summary>
+    /// <param name="plan">The slot.</param>
+    /// <returns>Whether the answer is a block.</returns>
+    private static bool AnswersBlock(VirtualMethodPlan plan) =>
+        plan.ReturnBucket == VfuncReturnBucket.ParamSpecArray;
+
+    /// <summary>
+    /// Whether the static chain-up hands the answer of the parent slot on
+    /// unchanged, which every answer that is a pointer does.
+    /// </summary>
+    /// <param name="plan">The slot.</param>
+    /// <returns>Whether the answer crosses raw.</returns>
+    private static bool AnswersRaw(VirtualMethodPlan plan) => AnswersHandle(plan) || AnswersBlock(plan);
+
+    /// <summary>The name of the local a chain-up reads the length of the answer out of.</summary>
+    /// <param name="plan">The slot.</param>
+    /// <returns>The name, or <c>"count"</c> when the slot answers no block.</returns>
+    private static string AnsweredCountOf(VirtualMethodPlan plan)
+    {
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            if (argument.Bucket == VfuncBucket.AnsweredCount)
+            {
+                return argument.Argument.Name;
+            }
+        }
+
+        return "count";
+    }
+
     /// <summary>The C# type the managed members of a slot answer.</summary>
     /// <param name="plan">The slot.</param>
     /// <returns>The type, which is nullable for every handle a slot may leave NULL.</returns>
     private static string ReturnType(VirtualMethodPlan plan) =>
         plan.ReturnBucket is VfuncReturnBucket.Void or VfuncReturnBucket.Cast
+            or VfuncReturnBucket.ParamSpecArray
             ? plan.Return.PublicType
             : plan.NonNullReturn is null
                 ? Nullable(plan.Return.PublicType)
@@ -1969,7 +2352,7 @@ internal sealed class VfuncEmitter
     private static bool NeedsNullCheck(VfuncArgument argument) =>
         argument.Bucket is VfuncBucket.Adopt or VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject
             or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper
-            or VfuncBucket.BorrowOpaque
+            or VfuncBucket.BorrowOpaque or VfuncBucket.BorrowParamSpec
         && !argument.Argument.PublicType.EndsWith('?');
 
     private static string FunctionPointerType(VirtualMethodPlan plan)
@@ -1990,7 +2373,8 @@ internal sealed class VfuncEmitter
         return argument.Bucket switch
         {
             VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject or VfuncBucket.BorrowMiniObject
-                or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque =>
+                or VfuncBucket.BorrowBoxed or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque
+                or VfuncBucket.BorrowParamSpec =>
                 value.PublicType.EndsWith('?')
                     ? value.Name + " is null ? nint.Zero : " + value.Name + ".Handle"
                     : value.Name + ".Handle",
@@ -2083,10 +2467,16 @@ internal sealed class VfuncEmitter
         _ => source,
     };
 
-    private static string MintExpression(ArgumentPlan value, string handle) =>
-        value.Flavor == HandleFlavor.GObject
-            ? "Gst.Interop.GObjectNative.ObjectRef(" + handle + ")"
-            : "Gst.GstNative.MiniObjectRef(" + handle + ")";
+    private static string MintExpression(ArgumentPlan value, string handle) => value.Flavor switch
+    {
+        HandleFlavor.GObject => "Gst.Interop.GObjectNative.ObjectRef(" + handle + ")",
+
+        // A specification is referenced plainly rather than ref sunk: the
+        // wrapper the override answered already sank the one it holds, and a
+        // second sink would take a reference nobody gives back.
+        HandleFlavor.ParamSpec => "Gst.Interop.GObjectNative.ParamSpecRef(" + handle + ")",
+        _ => "Gst.GstNative.MiniObjectRef(" + handle + ")",
+    };
 
     private static string ReleaseExpression(ArgumentPlan value, string handle, bool boxed = false) =>
         boxed

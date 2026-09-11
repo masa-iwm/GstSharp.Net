@@ -46,7 +46,7 @@ public sealed class SubclassCensusTests
     [InlineData("GstTag", 0, 0)]
     [InlineData("GstTranscoder", 0, 0)]
     [InlineData("GstPlay", 0, 0)]
-    [InlineData("GES", 8, 23)]
+    [InlineData("GES", 8, 26)]
     public void TheSubclassingCensusIsStable(string module, int classStructs, int vfuncs)
     {
         EmissionCensus census = Generated.Census;
@@ -56,11 +56,11 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: thirty mirrors and two hundred and forty two slots,
+    /// The run as a whole: thirty mirrors and two hundred and forty five slots,
     /// the numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsThirtyMirrorsAndTwoHundredAndFortyTwoSlots()
+    public void TheRunEmitsThirtyMirrorsAndTwoHundredAndFortyFiveSlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -72,7 +72,7 @@ public sealed class SubclassCensusTests
         }
 
         Assert.Equal(30, mirrors);
-        Assert.Equal(242, slots);
+        Assert.Equal(245, slots);
     }
 
     /// <summary>
@@ -129,16 +129,12 @@ public sealed class SubclassCensusTests
             + "through it; an OnLookupChild on the track element mirror would also hide the live "
             + "inherited one, which is the steering hazard the deprecated method twin is skipped for";
         const string Opaque = "OpaqueSlot";
-        const string Unsupported = "UnsupportedSignature";
         Assert.Equal(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["GES.AudioSource::create_source"] = Opaque,
                 ["GES.Clip::create_track_elements"] = GListReturn,
                 ["GES.Container::group"] = Opaque,
-                ["GES.TimelineElement::list_children_properties"] = Unsupported,
-                ["GES.TimelineElement::lookup_child"] = Unsupported,
-                ["GES.TimelineElement::set_child_property"] = Unsupported,
                 ["GES.TimelineElement::set_child_property_full"] = ThrowingSlot,
                 ["GES.TrackElement::list_children_properties"] = DeadListSlot,
                 ["GES.TrackElement::lookup_child"] = DeadLookupSlot,
@@ -149,6 +145,6 @@ public sealed class SubclassCensusTests
             },
             census.SkippedVirtuals("GES"));
 
-        Assert.Equal(20, census.SkippedVirtualCount());
+        Assert.Equal(17, census.SkippedVirtualCount());
     }
 }

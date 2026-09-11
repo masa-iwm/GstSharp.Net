@@ -140,6 +140,24 @@ public unsafe partial class TimelineElement
         (nint)(delegate* unmanaged[Cdecl]<nint, nint, ulong, nint>)&PasteTrampoline);
 
     /// <summary>
+    /// Gets the declaration of <c>GESTimelineElement.list_children_properties</c>, for a subclass that
+    /// overrides <see cref="OnListChildrenProperties"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride ListChildrenPropertiesOverride { get; } = new(
+        &GetGType,
+        GES.TimelineElementClassRaw.ListChildrenPropertiesOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, uint*, nint>)&ListChildrenPropertiesTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GESTimelineElement.lookup_child</c>, for a subclass that
+    /// overrides <see cref="OnLookupChild"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride LookupChildOverride { get; } = new(
+        &GetGType,
+        GES.TimelineElementClassRaw.LookupChildOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, byte*, nint*, nint*, int>)&LookupChildTrampoline);
+
+    /// <summary>
     /// Gets the declaration of <c>GESTimelineElement.get_track_types</c>, for a subclass that
     /// overrides <see cref="OnGetTrackTypes"/>.
     /// </summary>
@@ -147,6 +165,15 @@ public unsafe partial class TimelineElement
         &GetGType,
         GES.TimelineElementClassRaw.GetTrackTypesOffset,
         (nint)(delegate* unmanaged[Cdecl]<nint, int>)&GetTrackTypesTrampoline);
+
+    /// <summary>
+    /// Gets the declaration of <c>GESTimelineElement.set_child_property</c>, for a subclass that
+    /// overrides <see cref="OnSetChildProperty"/>.
+    /// </summary>
+    public static Gst.GObject.VfuncOverride SetChildPropertyOverride { get; } = new(
+        &GetGType,
+        GES.TimelineElementClassRaw.SetChildPropertyOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, Gst.GObject.GValueNative*, void>)&SetChildPropertyTrampoline);
 
     /// <summary>
     /// Gets the declaration of <c>GESTimelineElement.get_layer_priority</c>, for a subclass that
@@ -489,12 +516,96 @@ public unsafe partial class TimelineElement
         ChainUpPaste(refElement, pastePosition);
 
     /// <summary>
+    /// List the children properties that have been
+    /// registered for the element. The default implementation is able to fetch
+    /// all of these, so should be sufficient. If you overwrite this, you
+    /// should still call the default implementation to get the full list, and
+    /// then edit its content.
+    /// </summary>
+    /// <returns>
+    /// What <c>list_children_properties</c> answers.
+    /// The array is consumed: one reference per element is handed to the caller and
+    /// every wrapper is disposed right after, because a ParamSpec wrapper has no
+    /// finalizer. Re-wrap a specification with ParamSpec.FromNative(handle,
+    /// Transfer.None) to keep it across calls. An element with no child properties
+    /// answers the empty array; nothing here is ever null.
+    /// </returns>
+    protected virtual Gst.GObject.ParamSpec[] OnListChildrenProperties() =>
+        ChainUpListChildrenProperties();
+
+    /// <summary>Looks up a child property of the element.</summary>
+    /// <remarks>
+    /// <para>
+    /// @prop_name can either be in the format "prop-name" or
+    /// "TypeName::prop-name", where "prop-name" is the name of the property
+    /// to look up (as used in g_object_get()), and "TypeName" is the type name
+    /// of the child (as returned by G_OBJECT_TYPE_NAME()). The latter format is
+    /// useful when two children of different types share the same property
+    /// name.
+    /// </para>
+    /// <para>
+    /// The first child found with the given "prop-name" property that was
+    /// registered with ges_timeline_element_add_child_property() (and of the
+    /// type "TypeName", if it was given) will be passed to @child, and the
+    /// registered specification of this property will be passed to @pspec.
+    /// </para>
+    /// </remarks>
+    /// <param name="propName">The <c>propName</c> argument.</param>
+    /// <param name="child">
+    /// The <c>child</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <param name="pspec">
+    /// The <c>pspec</c> argument.
+    /// The specification you leave here is handed to the caller with one added
+    /// reference and the wrapper is disposed right after, because a ParamSpec
+    /// wrapper has no finalizer: re-wrap it with ParamSpec.FromNative(handle,
+    /// Transfer.None) to keep one across calls. It must not be null when the
+    /// override answers true.
+    /// </param>
+    /// <returns>
+    /// %TRUE if a child corresponding to the property was found, in
+    /// which case @child and @pspec are set.
+    /// </returns>
+    protected virtual bool OnLookupChild(string propName, out Gst.GObject.Object? child, out Gst.GObject.ParamSpec? pspec) =>
+        ChainUpLookupChild(propName, out child, out pspec);
+
+    /// <summary>
     /// Gets the track types that the element can interact with, i.e. the type
     /// of #GESTrack it can exist in, or will create #GESTrackElement-s for.
     /// </summary>
     /// <returns>The track types that @self supports.</returns>
     protected virtual GES.TrackType OnGetTrackTypes() =>
         ChainUpGetTrackTypes();
+
+    /// <summary>
+    /// Method for setting the child property given by
+    /// @pspec on @child to @value. Default implementation will use
+    /// g_object_set_property().
+    /// </summary>
+    /// <param name="child">
+    /// The <c>child</c> argument.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
+    /// </param>
+    /// <param name="pspec">
+    /// The <c>pspec</c> argument.
+    /// The caller lends this for the duration of the call: the wrapper takes a
+    /// reference of its own and gives it back when the override returns, so keep
+    /// nothing beyond the call - re-wrap it with ParamSpec.FromNative(pspec.Handle,
+    /// Transfer.None) to hold one afterwards.
+    /// </param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The view points at storage the caller of the slot owns and is only valid
+    /// while the call runs; ToValue() copies what it holds. The value may arrive as
+    /// a string for a specification of another type - the by name setters go
+    /// through gst_util_set_object_arg - so read its Type before a typed getter, or
+    /// chain up, which handles that case.
+    /// </param>
+    protected virtual void OnSetChildProperty(Gst.GObject.Object child, Gst.GObject.ParamSpec pspec, Gst.GObject.ValueView value) =>
+        ChainUpSetChildProperty(child, pspec, value);
 
     /// <summary>
     /// Gets the priority of the layer the element is in. A #GESGroup may span
@@ -729,6 +840,67 @@ public unsafe partial class TimelineElement
         return result;
     }
 
+    /// <summary>Runs the implementation of <c>list_children_properties</c> below the managed override.</summary>
+    /// <returns>
+    /// What <c>list_children_properties</c> answers.
+    /// The array is consumed: one reference per element is handed to the caller and
+    /// every wrapper is disposed right after, because a ParamSpec wrapper has no
+    /// finalizer. Re-wrap a specification with ParamSpec.FromNative(handle,
+    /// Transfer.None) to keep it across calls. An element with no child properties
+    /// answers the empty array; nothing here is ever null.
+    /// </returns>
+    protected Gst.GObject.ParamSpec[] ChainUpListChildrenProperties()
+    {
+        uint nPropertiesNative = default;
+        nint resultNative = ChainUpListChildrenProperties(Handle, &nPropertiesNative);
+        Gst.GObject.ParamSpec[] result = [];
+        if (resultNative != nint.Zero)
+        {
+            result = new Gst.GObject.ParamSpec[(int)nPropertiesNative];
+            for (int index = 0; index < result.Length; index++)
+            {
+                result[index] = Gst.GObject.ParamSpec.FromNative(((nint*)resultNative)[index], Gst.Interop.Transfer.Full);
+            }
+
+            Gst.Interop.GMarshal.Free(resultNative);
+        }
+
+        GC.KeepAlive(this);
+        return result;
+    }
+
+    /// <summary>Runs the implementation of <c>lookup_child</c> below the managed override.</summary>
+    /// <param name="propName">The <c>propName</c> argument.</param>
+    /// <param name="child">
+    /// The <c>child</c> argument.
+    /// What the override leaves here is handed to the caller with one added
+    /// reference; the wrapper keeps its own.
+    /// </param>
+    /// <param name="pspec">
+    /// The <c>pspec</c> argument.
+    /// The specification you leave here is handed to the caller with one added
+    /// reference and the wrapper is disposed right after, because a ParamSpec
+    /// wrapper has no finalizer: re-wrap it with ParamSpec.FromNative(handle,
+    /// Transfer.None) to keep one across calls. It must not be null when the
+    /// override answers true.
+    /// </param>
+    /// <returns>
+    /// %TRUE if a child corresponding to the property was found, in
+    /// which case @child and @pspec are set.
+    /// </returns>
+    protected bool ChainUpLookupChild(string propName, out Gst.GObject.Object? child, out Gst.GObject.ParamSpec? pspec)
+    {
+        System.Span<byte> propNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope propNameScope = Gst.Interop.GMarshal.StackUtf8(propName, propNameBuffer);
+        nint childNative = nint.Zero;
+        nint pspecNative = nint.Zero;
+        bool result = ChainUpLookupChild(Handle, propNameScope.Pointer, &childNative, &pspecNative);
+        child = childNative == nint.Zero ? null : Gst.GObject.Object.FromNative<Gst.GObject.Object>(childNative, Gst.Interop.Transfer.Full);
+        pspec = pspecNative == nint.Zero ? null : Gst.GObject.ParamSpec.FromNative(pspecNative, Gst.Interop.Transfer.Full);
+        GC.KeepAlive(this);
+        return result;
+    }
+
     /// <summary>Runs the implementation of <c>get_track_types</c> below the managed override.</summary>
     /// <returns>The track types that @self supports.</returns>
     protected GES.TrackType ChainUpGetTrackTypes()
@@ -736,6 +908,39 @@ public unsafe partial class TimelineElement
         GES.TrackType result = ChainUpGetTrackTypes(Handle);
         GC.KeepAlive(this);
         return result;
+    }
+
+    /// <summary>Runs the implementation of <c>set_child_property</c> below the managed override.</summary>
+    /// <param name="child">
+    /// The <c>child</c> argument.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
+    /// </param>
+    /// <param name="pspec">
+    /// The <c>pspec</c> argument.
+    /// The caller lends this for the duration of the call: the wrapper takes a
+    /// reference of its own and gives it back when the override returns, so keep
+    /// nothing beyond the call - re-wrap it with ParamSpec.FromNative(pspec.Handle,
+    /// Transfer.None) to hold one afterwards.
+    /// </param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The view points at storage the caller of the slot owns and is only valid
+    /// while the call runs; ToValue() copies what it holds. The value may arrive as
+    /// a string for a specification of another type - the by name setters go
+    /// through gst_util_set_object_arg - so read its Type before a typed getter, or
+    /// chain up, which handles that case.
+    /// </param>
+    protected void ChainUpSetChildProperty(Gst.GObject.Object child, Gst.GObject.ParamSpec pspec, Gst.GObject.ValueView value)
+    {
+        ArgumentNullException.ThrowIfNull(child);
+        ArgumentNullException.ThrowIfNull(pspec);
+        using Gst.GObject.Value valueCopy = value.ToValue();
+        Gst.GObject.GValueNative* valueNative = &valueCopy.NativeValue;
+        ChainUpSetChildProperty(Handle, child.Handle, pspec.Handle, valueNative);
+        GC.KeepAlive(this);
+        GC.KeepAlive(child);
+        GC.KeepAlive(pspec);
     }
 
     /// <summary>Runs the implementation of <c>get_layer_priority</c> below the managed override.</summary>
@@ -951,6 +1156,44 @@ public unsafe partial class TimelineElement
         return slot(self, refElement, pastePosition);
     }
 
+    private static nint ChainUpListChildrenProperties(nint self, uint* nProperties)
+    {
+        delegate* unmanaged[Cdecl]<nint, uint*, nint> slot =
+            (delegate* unmanaged[Cdecl]<nint, uint*, nint>)ParentClassOf(self)->ListChildrenProperties;
+
+        if (slot is null)
+        {
+            if (nProperties != null)
+            {
+                *nProperties = 0;
+            }
+            return nint.Zero;
+        }
+
+        return slot(self, nProperties);
+    }
+
+    private static bool ChainUpLookupChild(nint self, byte* propName, nint* child, nint* pspec)
+    {
+        delegate* unmanaged[Cdecl]<nint, byte*, nint*, nint*, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, byte*, nint*, nint*, int>)ParentClassOf(self)->LookupChild;
+
+        if (slot is null)
+        {
+            if (child != null)
+            {
+                *child = default;
+            }
+            if (pspec != null)
+            {
+                *pspec = default;
+            }
+            return false;
+        }
+
+        return slot(self, propName, child, pspec) != 0;
+    }
+
     private static GES.TrackType ChainUpGetTrackTypes(nint self)
     {
         delegate* unmanaged[Cdecl]<nint, int> slot =
@@ -963,6 +1206,19 @@ public unsafe partial class TimelineElement
         }
 
         return (GES.TrackType)slot(self);
+    }
+
+    private static void ChainUpSetChildProperty(nint self, nint child, nint pspec, Gst.GObject.GValueNative* value)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, Gst.GObject.GValueNative*, void> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, Gst.GObject.GValueNative*, void>)ParentClassOf(self)->SetChildProperty;
+
+        if (slot is null)
+        {
+            return;
+        }
+
+        slot(self, child, pspec, value);
     }
 
     private static uint ChainUpGetLayerPriority(nint self)
@@ -1261,6 +1517,127 @@ public unsafe partial class TimelineElement
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static nint ListChildrenPropertiesTrampoline(nint self, uint* nProperties)
+    {
+        if (nProperties != null)
+        {
+            *nProperties = 0;
+        }
+
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not TimelineElement managed)
+            {
+                return ChainUpListChildrenProperties(self, nProperties);
+            }
+
+            Gst.GObject.ParamSpec[] result = managed.OnListChildrenProperties();
+            if (result is not { Length: > 0 })
+            {
+                return nint.Zero;
+            }
+
+            nint[] resultHandles = new nint[result.Length];
+            for (int index = 0; index < result.Length; index++)
+            {
+                Gst.GObject.ParamSpec specification = result[index];
+                if (specification is null)
+                {
+                    throw new InvalidOperationException(
+                        "OnListChildrenProperties answered a block with an empty entry, which list_children_properties does not allow.");
+                }
+
+                resultHandles[index] = specification.Handle;
+            }
+
+            nint block = Gst.Interop.GMarshal.Malloc0((nuint)result.Length * (nuint)sizeof(nint));
+            for (int index = 0; index < result.Length; index++)
+            {
+                ((nint*)block)[index] = Gst.Interop.GObjectNative.ParamSpecRef(resultHandles[index]);
+                result[index].Dispose();
+            }
+
+            if (nProperties != null)
+            {
+                *nProperties = (uint)result.Length;
+            }
+
+            return block;
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int LookupChildTrampoline(nint self, byte* propName, nint* child, nint* pspec)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not TimelineElement managed)
+            {
+                return (ChainUpLookupChild(self, propName, child, pspec)) ? 1 : 0;
+            }
+
+            string propNameValue = Gst.Interop.GMarshal.PtrToStringUtf8((nint)propName)
+                ?? throw new InvalidOperationException("lookup_child passed no propName.");
+            Gst.GObject.Object? childValue = null;
+            Gst.GObject.ParamSpec? pspecValue = null;
+
+            try
+            {
+                bool result = managed.OnLookupChild(propNameValue, out childValue, out pspecValue);
+
+                if (result)
+                {
+                    if (childValue is null)
+                    {
+                        throw new InvalidOperationException(
+                            "OnLookupChild answered true without a child, which lookup_child does not allow.");
+                    }
+
+                    if (pspecValue is null)
+                    {
+                        throw new InvalidOperationException(
+                            "OnLookupChild answered true without a pspec, which lookup_child does not allow.");
+                    }
+
+                    nint childHandle = childValue is null ? nint.Zero : childValue.Handle;
+                    nint pspecHandle = pspecValue is null ? nint.Zero : pspecValue.Handle;
+                    if (child != null)
+                    {
+                        if (childHandle != nint.Zero)
+                        {
+                            Gst.Interop.GObjectNative.ObjectRef(childHandle);
+                        }
+                        *child = childHandle;
+                    }
+                    if (pspec != null)
+                    {
+                        if (pspecHandle != nint.Zero)
+                        {
+                            Gst.Interop.GObjectNative.ParamSpecRef(pspecHandle);
+                        }
+                        *pspec = pspecHandle;
+                    }
+                }
+                return (result) ? 1 : 0;
+            }
+            finally
+            {
+                pspecValue?.Dispose();
+            }
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static int GetTrackTypesTrampoline(nint self)
     {
         try
@@ -1276,6 +1653,30 @@ public unsafe partial class TimelineElement
         {
             Gst.Interop.ExceptionTrap.Report(exception);
             return default;
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void SetChildPropertyTrampoline(nint self, nint child, nint pspec, Gst.GObject.GValueNative* value)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not TimelineElement managed)
+            {
+                ChainUpSetChildProperty(self, child, pspec, value);
+                return;
+            }
+
+            Gst.GObject.Object? childValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(child, Gst.Interop.Transfer.None);
+            using Gst.GObject.ParamSpec? pspecValue = pspec == nint.Zero ? null : Gst.GObject.ParamSpec.FromNative(pspec, Gst.Interop.Transfer.None);
+            Gst.GObject.ValueView valueValue = value != null
+                ? new Gst.GObject.ValueView(ref *value)
+                : throw new InvalidOperationException("set_child_property passed no value.");
+            managed.OnSetChildProperty(childValue!, pspecValue!, valueValue);
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
         }
     }
 
