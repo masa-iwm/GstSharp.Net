@@ -1724,7 +1724,7 @@ public sealed class MarshalPlannerTests
     public void AParameterNamedResultDoesNotShadowTheLocalTheReturnIsHoistedInto()
     {
         // Every member that carries a barrier hoists its answer into a local
-        // before the barrier, and that local is called result. Four gir
+        // before the barrier, and that local is called result. Five gir
         // parameters are called result already, and a refresh that puts one on
         // a member with a barrier must not be a build break: the local takes
         // another name, and the parameter keeps the one the gir gave it -
