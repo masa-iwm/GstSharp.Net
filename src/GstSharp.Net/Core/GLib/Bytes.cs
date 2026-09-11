@@ -24,6 +24,17 @@ namespace Gst.GLib;
 /// equivalents that work on the span.
 /// </para>
 /// <para>
+/// The generated surface hands these out and takes them like any other
+/// wrapper of the runtime. <c>GLib.Bytes</c> is a row of the runtime type
+/// table of the planner, beside <c>GLib.DateTime</c>, so a <c>GBytes</c>
+/// argument is borrowed as the handle of the wrapper, a returned one is
+/// adopted with the reference the call transferred, and a signal that carries
+/// one lends it to the handler for the length of the emission. What a
+/// generated member does not do is answer the preconditions of the C: the
+/// three calls whose empty block or whose range the library refuses are hand
+/// written in the <c>Custom</c> folder of their module.
+/// </para>
+/// <para>
 /// The type is not in the <c>GType</c> registry, so
 /// <see cref="Gst.GObject.Value.GetBoxed{T}"/> does not build one. Nothing
 /// hands a <c>GBytes</c> out inside a <c>GValue</c> today: the one signal that

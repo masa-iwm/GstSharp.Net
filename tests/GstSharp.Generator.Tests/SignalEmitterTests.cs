@@ -495,7 +495,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstVideo", 2)]
     [InlineData("GstPbutils", 5)]
     [InlineData("GstSdp", 0)]
-    [InlineData("GstWebRTC", 7)]
+    [InlineData("GstWebRTC", 8)]
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
     [InlineData("GstRtp", 2)]
@@ -515,8 +515,9 @@ public sealed class SignalEmitterTests
         // The nine action signals of GstApp are not events: they are the call
         // API of GstAppSrc and GstAppSink, which is already bound as methods.
         // Four of the twelve signals of GstWebRTC are action signals as well,
-        // and the one that carries a GLib.Bytes is not bound at all, which
-        // leaves the seven that are counted here.
+        // which leaves the eight that are counted here; on-message-data is one
+        // of them since the planner learned to marshal a GLib.Bytes, and it
+        // was the one signal of the corpus that used to be hand written.
         Assert.Equal(signals, Generated.Census.EmittedCount(module, "signal"));
         Assert.DoesNotContain(Generated.Diagnostics, diagnostic => diagnostic.Code == "GEN0011");
     }
@@ -536,8 +537,8 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // A hundred and forty nine signals are emitted over the seventeen
-        // modules. A hundred and forty four are events of a class; the
+        // A hundred and fifty signals are emitted over the seventeen
+        // modules. A hundred and forty five are events of a class; the
         // remaining five belong to a gir interface and are a pair of extension
         // methods instead. The editing services are thirty nine of them:
         // thirty eight events and the one signal of a GES interface,
@@ -567,10 +568,10 @@ public sealed class SignalEmitterTests
         // the AddAllSchemas, AddSchema, RemoveAllSchemas and RemoveSchema
         // extensions of Gst.Tag.ITagXmpWriter, methods whose names the pattern
         // cannot tell from a subscription adder or remover.
-        Assert.Equal(144, events);
+        Assert.Equal(145, events);
         Assert.Equal(8, adders);
         Assert.Equal(7, removers);
-        Assert.Equal(149, trampolines);
+        Assert.Equal(150, trampolines);
 
         string[] withSignals =
         [

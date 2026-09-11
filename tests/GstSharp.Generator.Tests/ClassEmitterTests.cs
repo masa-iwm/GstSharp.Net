@@ -177,11 +177,11 @@ public sealed class ClassEmitterTests
     [InlineData("GstAudio", 14, 17, 1, 1, 2, 212, 32, 0, 48)]
     [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 122)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
-    [InlineData("GstSdp", 1, 21, 0, 0, 0, 164, 0, 0, 51)]
-    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 7, 21)]
+    [InlineData("GstSdp", 1, 21, 0, 0, 0, 166, 0, 0, 51)]
+    [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 8, 21)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 4)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 28)]
-    [InlineData("GstRtp", 5, 5, 0, 0, 0, 184, 21, 2, 9)]
+    [InlineData("GstRtp", 5, 5, 0, 0, 0, 187, 21, 2, 9)]
     [InlineData("GstRtspServer", 19, 6, 0, 8, 0, 384, 58, 41, 21)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 2, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
@@ -218,17 +218,17 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 112, 43, 10)]
-    [InlineData("GstBase", 0, 11, 0, 20, 4, 0)]
+    [InlineData("Gst", 1, 90, 53, 112, 42, 10)]
+    [InlineData("GstBase", 0, 11, 0, 20, 3, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 0, 1)]
     [InlineData("GstAudio", 0, 22, 0, 7, 4, 0)]
     [InlineData("GstVideo", 0, 96, 1, 6, 5, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 2, 0)]
-    [InlineData("GstSdp", 0, 8, 0, 0, 6, 0)]
-    [InlineData("GstWebRTC", 0, 2, 0, 0, 3, 0)]
+    [InlineData("GstSdp", 0, 8, 0, 0, 4, 0)]
+    [InlineData("GstWebRTC", 0, 2, 0, 0, 2, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 0, 13, 0, 0, 12, 0)]
-    [InlineData("GstRtp", 0, 24, 1, 2, 8, 0)]
+    [InlineData("GstRtp", 2, 24, 1, 0, 5, 0)]
     [InlineData("GstRtspServer", 2, 1, 1, 3, 14, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
@@ -573,10 +573,12 @@ public sealed class ClassEmitterTests
             guards += file.Content.Split("// The call failed and transferred a value all the same.").Length - 1;
         }
 
-        // Thirteen since the RTSP server landed: RTSPServer.CreateSocket takes
-        // a GError and answers a GSocket it owns, which is the transferred
-        // handle shape.
-        Assert.Equal(13, guards);
+        // Fifteen since the GBytes bridge landed: the thirteen of before -
+        // RTSPServer.CreateSocket among them, which takes a GError and answers
+        // a GSocket it owns - plus MIKEYMessage.NewFromBytes and
+        // MIKEYMessage.ToBytes, which throw and own the message and the block
+        // they answer.
+        Assert.Equal(15, guards);
     }
 
     [Fact]
@@ -593,7 +595,7 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (26)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (27)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
         // The hand bound ledger takes precedence over the reason that kept a
@@ -1036,14 +1038,14 @@ public sealed class ClassEmitterTests
     /// than under the reason that kept them out of the emitters, which is why the overlay skips of a module
     /// fall by the number of its hand bound entries that reach the census through the skip list.</param>
     [Theory]
-    [InlineData("Gst", 27, 0, 21, 0, 0, 5, 65)]
-    [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 2)]
+    [InlineData("Gst", 28, 0, 21, 0, 0, 5, 65)]
+    [InlineData("GstBase", 3, 0, 4, 0, 0, 2, 2)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 7)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 7)]
     [InlineData("GstVideo", 9, 0, 10, 0, 0, 0, 8)]
     [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 2)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 0)]
-    [InlineData("GstWebRTC", 0, 0, 4, 0, 4, 0, 3)]
+    [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0, 2)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 3)]
     [InlineData("GstRtp", 0, 0, 0, 0, 4, 0, 8)]

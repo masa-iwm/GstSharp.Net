@@ -120,6 +120,28 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
             ?? throw new InvalidOperationException("gst_mikey_message_new returned no value.");
     }
 
+    /// <summary>Make a new #GstMIKEYMessage from @bytes.</summary>
+    /// <param name="bytes">a #GBytes</param>
+    /// <param name="info">a #GstMIKEYDecryptInfo</param>
+    /// <returns>a new #GstMIKEYMessage</returns>
+    /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
+    public static Gst.Sdp.MIKEYMessage? NewFromBytes(Gst.GLib.Bytes bytes, Gst.Sdp.MIKEYDecryptInfo? info)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        nint errorNative = 0;
+        nint nativeResult = GstMikeyMessageNewFromBytes(bytes.Handle, info is null ? 0 : info.Handle, &errorNative);
+        System.GC.KeepAlive(bytes);
+        System.GC.KeepAlive(info);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
+        }
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        return Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+    }
+
     /// <summary>
     /// Makes mikey message including:
     ///  - Security Policy Payload
@@ -150,13 +172,12 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// @error will be set.
     /// </returns>
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
-    public static Gst.Sdp.MIKEYMessage NewFromData(System.ReadOnlySpan<byte> data, Gst.Sdp.MIKEYDecryptInfo info)
+    public static Gst.Sdp.MIKEYMessage NewFromData(System.ReadOnlySpan<byte> data, Gst.Sdp.MIKEYDecryptInfo? info)
     {
-        ArgumentNullException.ThrowIfNull(info);
         nint errorNative = 0;
         fixed (byte* dataPointer = data)
         {
-            nint nativeResult = GstMikeyMessageNewFromData(dataPointer, (nuint)data.Length, info.Handle, &errorNative);
+            nint nativeResult = GstMikeyMessageNewFromData(dataPointer, (nuint)data.Length, info is null ? 0 : info.Handle, &errorNative);
             System.GC.KeepAlive(info);
             if (errorNative != 0 && nativeResult != 0)
             {
@@ -478,6 +499,27 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         return nativeResult != 0;
     }
 
+    /// <summary>Convert @msg to a #GBytes.</summary>
+    /// <param name="info">a #GstMIKEYEncryptInfo</param>
+    /// <returns>a new #GBytes for @msg.</returns>
+    /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
+    public Gst.GLib.Bytes ToBytes(Gst.Sdp.MIKEYEncryptInfo? info)
+    {
+        nint errorNative = 0;
+        nint nativeResult = GstMikeyMessageToBytes(Handle, info is null ? 0 : info.Handle, &errorNative);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(info);
+        if (errorNative != 0 && nativeResult != 0)
+        {
+            // The call failed and transferred a value all the same. The throw
+            // below puts it out of reach, so it is released rather than leaked.
+            Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
+        }
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        return Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_mikey_message_to_bytes returned no value.");
+    }
+
     /// <summary>The <c>gst_mikey_message_to_caps</c> function.</summary>
     /// <param name="caps">
     /// a #GstCaps to be filled with SRTP parameters (srtp/srtcp cipher, authorization, key data)
@@ -495,6 +537,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// <summary>The <c>gst_mikey_message_new</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_new")]
     private static partial nint GstMikeyMessageNew();
+
+    /// <summary>The <c>gst_mikey_message_new_from_bytes</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_new_from_bytes")]
+    private static partial nint GstMikeyMessageNewFromBytes(nint bytes, nint info, nint* error);
 
     /// <summary>The <c>gst_mikey_message_new_from_caps</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_new_from_caps")]
@@ -575,6 +621,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// <summary>The <c>gst_mikey_message_set_info</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_set_info")]
     private static partial int GstMikeyMessageSetInfo(nint msg, byte version, int type, int v, int prfFunc, uint cSBId, int mapType);
+
+    /// <summary>The <c>gst_mikey_message_to_bytes</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_to_bytes")]
+    private static partial nint GstMikeyMessageToBytes(nint msg, nint info, nint* error);
 
     /// <summary>The <c>gst_mikey_message_to_caps</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_to_caps")]

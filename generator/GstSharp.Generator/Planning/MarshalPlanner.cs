@@ -274,6 +274,7 @@ internal sealed class MarshalPlanner
         ["GObject.ValueArray"] = new("Gst.GObject.ValueArray", HandleFlavor.Wrapper),
         [ParamSpecType] = new("Gst.GObject.ParamSpec", HandleFlavor.ParamSpec),
         ["GLib.DateTime"] = new("Gst.GLib.DateTime", HandleFlavor.Wrapper),
+        ["GLib.Bytes"] = new("Gst.GLib.Bytes", HandleFlavor.Wrapper),
 
         // The one consumer in the vendored girs is
         // gst_transcoder_get_signal_adapter, which takes a nullable const

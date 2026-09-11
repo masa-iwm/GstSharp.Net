@@ -252,6 +252,15 @@ public sealed class SkipRulesTests
         // handed, and the generated shape would dispose the wrapper whose
         // signal handlers the caller has just attached; it is hand written in
         // src/GstSharp.Net.RtspServer/Custom.
+        // The GBytes group is four entries, and none of them is a marshalling
+        // gap: the planner marshals a GLib.Bytes in every position.
+        // gst_buffer_new_wrapped_bytes and gst_webrtc_data_channel_send_data_full
+        // refuse the null data pointer that every empty block carries, with a
+        // critical and no error, and gst_adapter_copy_bytes answers a range the
+        // adapter does not hold with uninitialised memory, so all three are
+        // hand written with the empty and the out of range case answered before
+        // the call. gst_webrtc_data_channel_send_data is the deprecated twin of
+        // the send that reports its failure and is not bound at all.
         Assert.Equal(
             [
                 "Gst.BusSyncHandler",
@@ -278,6 +287,7 @@ public sealed class SkipRulesTests
                 "ges_timeline_element_get_child_property",
                 "ges_timeline_element_set_child_property",
                 "ges_track_element_lookup_child",
+                "gst_adapter_copy_bytes",
                 "gst_adapter_map",
                 "gst_adapter_take",
                 "gst_adapter_unmap",
@@ -297,6 +307,7 @@ public sealed class SkipRulesTests
                 "gst_buffer_add_video_gl_texture_upload_meta",
                 "gst_buffer_extract",
                 "gst_buffer_foreach_meta",
+                "gst_buffer_new_wrapped_bytes",
                 "gst_buffer_new_wrapped_full",
                 "gst_buffer_pool_release_buffer",
                 "gst_buffer_pool_set_config",
@@ -402,6 +413,8 @@ public sealed class SkipRulesTests
                 "gst_video_info_dma_drm_init",
                 "gst_video_info_from_caps",
                 "gst_video_info_init",
+                "gst_webrtc_data_channel_send_data",
+                "gst_webrtc_data_channel_send_data_full",
                 "gst_webrtc_session_description_new",
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
@@ -461,7 +474,6 @@ public sealed class SkipRulesTests
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
-                "GstWebRTC.WebRTCDataChannel::on-message-data",
                 "ges_asset_extract",
                 "ges_asset_request_async",
                 "ges_asset_request_finish",
@@ -703,9 +715,10 @@ public sealed class SkipRulesTests
     {
         // A signal has no c:identifier, so the ledger names it the way the
         // census and the skip report print it. GstWebRTCDataChannel's
-        // on-message-data is the entry this exists for: its argument is a
-        // GBytes, which the signal planner has no rule for, and the event, its
-        // arguments class and its trampoline are written by hand instead.
+        // on-message-data was the entry this exists for, until the planner
+        // learned to marshal the GBytes it carries and the signal became a
+        // generated one; the mechanism is kept alive by this fixture, because
+        // the ledger has to be able to name the next hand bound signal.
         // Without the entry the signal is a plain gap, filed under the reason
         // that says the planner has no rule for it.
         FixtureRun before = RunWithOverlay("{}", SignalBody);

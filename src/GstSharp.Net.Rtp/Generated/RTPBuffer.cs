@@ -189,6 +189,39 @@ public unsafe partial struct RTPBuffer
     }
 
     /// <summary>
+    /// Similar to gst_rtp_buffer_get_extension_data, but more suitable for language
+    /// bindings usage. @bits will contain the extension 16 bits of custom data and
+    /// the extension data (not including the extension header) is placed in a new
+    /// #GBytes structure.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If @rtp did not contain an extension, this function will return %NULL, with
+    /// @bits unchanged. If there is an extension header but no extension data then
+    /// an empty #GBytes will be returned.
+    /// </para>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <param name="bits">location for header bits</param>
+    /// <returns>
+    /// A new #GBytes if an extension header was present
+    /// and %NULL otherwise.
+    /// </returns>
+    public Gst.GLib.Bytes? GetExtensionData(out ushort bits)
+    {
+        ushort bitsNative = default;
+        fixed (Gst.Rtp.RTPBuffer* self = &this)
+        {
+            nint nativeResult = GstRtpBufferGetExtensionBytes(self, &bitsNative);
+            bits = bitsNative;
+            return Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        }
+    }
+
+    /// <summary>
     /// Parses RFC 5285 style header extensions with a one byte header. It will
     /// return the nth extension with the requested id.
     /// </summary>
@@ -343,6 +376,27 @@ public unsafe partial struct RTPBuffer
             nint nativeResult = GstRtpBufferGetPayloadBuffer(self);
             return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
                 ?? throw new InvalidOperationException("gst_rtp_buffer_get_payload_buffer returned no value.");
+        }
+    }
+
+    /// <summary>
+    /// Similar to gst_rtp_buffer_get_payload, but more suitable for language
+    /// bindings usage. The return value is a pointer to a #GBytes structure
+    /// containing the payload data in @rtp.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates this instance; call it on a variable, not on a copy returned by a
+    /// property.
+    /// </para>
+    /// </remarks>
+    /// <returns>A new #GBytes containing the payload data in @rtp.</returns>
+    public Gst.GLib.Bytes? GetPayload()
+    {
+        fixed (Gst.Rtp.RTPBuffer* self = &this)
+        {
+            nint nativeResult = GstRtpBufferGetPayloadBytes(self);
+            return Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         }
     }
 
@@ -830,6 +884,34 @@ public unsafe partial struct RTPBuffer
         return nativeResult;
     }
 
+    /// <summary>
+    /// Similar to gst_rtp_buffer_get_extension_onebyte_header, but working
+    /// on the #GBytes you get from gst_rtp_buffer_get_extension_bytes.
+    /// Parses RFC 5285 style header extensions with a one byte header. It will
+    /// return the nth extension with the requested id.
+    /// </summary>
+    /// <param name="bytes">#GBytes</param>
+    /// <param name="bitPattern">The bit-pattern. Anything but 0xBEDE is rejected.</param>
+    /// <param name="id">The ID of the header extension to be read (between 1 and 14).</param>
+    /// <param name="nth">Read the nth extension packet with the requested ID</param>
+    /// <param name="data">  location for data</param>
+    /// <returns>TRUE if @bytes had the requested header extension</returns>
+    public static bool GetExtensionOnebyteHeaderFromBytes(Gst.GLib.Bytes bytes, ushort bitPattern, byte id, uint nth, out byte[]? data)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        nint dataNative = default;
+        uint sizeNative = default;
+        int nativeResult = GstRtpBufferGetExtensionOnebyteHeaderFromBytes(bytes.Handle, bitPattern, id, nth, &dataNative, &sizeNative);
+        System.GC.KeepAlive(bytes);
+        data = null;
+        if (dataNative != 0)
+        {
+            data = new byte[(int)sizeNative];
+            new System.ReadOnlySpan<byte>((void*)dataNative, (int)sizeNative).CopyTo(data);
+        }
+        return nativeResult != 0;
+    }
+
     /// <summary>Map the contents of @buffer into @rtp.</summary>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="flags">#GstMapFlags</param>
@@ -921,6 +1003,10 @@ public unsafe partial struct RTPBuffer
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_get_extension")]
     private static partial int GstRtpBufferGetExtension(Gst.Rtp.RTPBuffer* rtp);
 
+    /// <summary>The <c>gst_rtp_buffer_get_extension_bytes</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_get_extension_bytes")]
+    private static partial nint GstRtpBufferGetExtensionBytes(Gst.Rtp.RTPBuffer* rtp, ushort* bits);
+
     /// <summary>The <c>gst_rtp_buffer_get_extension_onebyte_header</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_get_extension_onebyte_header")]
     private static partial int GstRtpBufferGetExtensionOnebyteHeader(Gst.Rtp.RTPBuffer* rtp, byte id, uint nth, nint* data, uint* size);
@@ -948,6 +1034,10 @@ public unsafe partial struct RTPBuffer
     /// <summary>The <c>gst_rtp_buffer_get_payload_buffer</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_get_payload_buffer")]
     private static partial nint GstRtpBufferGetPayloadBuffer(Gst.Rtp.RTPBuffer* rtp);
+
+    /// <summary>The <c>gst_rtp_buffer_get_payload_bytes</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_get_payload_bytes")]
+    private static partial nint GstRtpBufferGetPayloadBytes(Gst.Rtp.RTPBuffer* rtp);
 
     /// <summary>The <c>gst_rtp_buffer_get_payload_len</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_get_payload_len")]
@@ -1060,6 +1150,10 @@ public unsafe partial struct RTPBuffer
     /// <summary>The <c>gst_rtp_buffer_ext_timestamp</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_ext_timestamp")]
     private static partial ulong GstRtpBufferExtTimestamp(ulong* exttimestamp, uint timestamp);
+
+    /// <summary>The <c>gst_rtp_buffer_get_extension_onebyte_header_from_bytes</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_get_extension_onebyte_header_from_bytes")]
+    private static partial int GstRtpBufferGetExtensionOnebyteHeaderFromBytes(nint bytes, ushort bitPattern, byte id, uint nth, nint* data, uint* size);
 
     /// <summary>The <c>gst_rtp_buffer_map</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtp_buffer_map")]

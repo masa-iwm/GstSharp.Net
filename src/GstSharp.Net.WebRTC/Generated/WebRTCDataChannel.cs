@@ -427,6 +427,60 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
         }
     }
 
+    /// <summary>The arguments of the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    public sealed class OnMessageDataSignalArgs : System.EventArgs
+    {
+        /// <summary>Initializes a new instance of the <see cref="OnMessageDataSignalArgs"/> class.</summary>
+        /// <param name="data">a #GBytes of the data received</param>
+        internal OnMessageDataSignalArgs(Gst.GLib.Bytes? data)
+        {
+            Data = data;
+        }
+
+        /// <summary>a #GBytes of the data received</summary>
+        /// <remarks>
+        /// The value is only valid while the handler runs: the wrapper is disposed
+        /// once it returns. Read out of it what is needed, or copy it where the
+        /// type offers a copy.
+        /// </remarks>
+        public Gst.GLib.Bytes? Data { get; }
+    }
+
+    /// <summary>Raised for the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    /// <remarks>
+    /// The handler is remembered on the wrapper it was added to and has to be
+    /// removed from that same instance. Looking the object up again normally
+    /// hands the same wrapper out, but one that was disposed in between is
+    /// replaced by a new one, which knows nothing of the handler.
+    /// </remarks>
+    public event System.EventHandler<Gst.WebRTC.WebRTCDataChannel.OnMessageDataSignalArgs> OnMessageData
+    {
+        add => Gst.WebRTC.SignalConnections.Add(this, "on-message-data", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&OnMessageDataTrampoline, value);
+        remove => Gst.WebRTC.SignalConnections.Remove(this, "on-message-data", value);
+    }
+
+    /// <summary>The native handler of the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    private static void OnMessageDataTrampoline(nint instance, nint data, nint userData)
+    {
+        try
+        {
+            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.WebRTC.WebRTCDataChannel.OnMessageDataSignalArgs>>(userData) is not { } handler)
+            {
+                return;
+            }
+
+            using Gst.GLib.Bytes? dataValue = Gst.GLib.Bytes.FromNative(data, Gst.Interop.Transfer.None);
+            handler(
+                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
+                new Gst.WebRTC.WebRTCDataChannel.OnMessageDataSignalArgs(dataValue));
+        }
+        catch (Exception exception)
+        {
+            Gst.Interop.ExceptionTrap.Report(exception);
+        }
+    }
+
     /// <summary>The arguments of the <c>on-message-string</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
     public sealed class OnMessageStringSignalArgs : System.EventArgs
     {

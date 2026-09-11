@@ -378,11 +378,13 @@ internal sealed class SurfaceBuilder
 
             // The gir pairs a function that language bindings cannot use with
             // the one it shadows: gst_adapter_copy is shadowed by
-            // gst_adapter_copy_bytes, which returns a GBytes that this
-            // milestone cannot marshal. Skipping both leaves neither, so the
-            // shadowed declaration is retried under the clean name once the
-            // shadowing one is known not to bind. Every other rule still
-            // applies to it, so one that is introspectable="0" stays out.
+            // gst_adapter_copy_bytes, which the overlays skip because the C
+            // answers a range the adapter does not hold with uninitialised
+            // memory, so the pair is hand written instead. Skipping both leaves
+            // neither, so the shadowed declaration is retried under the clean
+            // name once the shadowing one is known not to bind. Every other
+            // rule still applies to it, so one that is introspectable="0" stays
+            // out - which is what both halves of this very pair are.
             if (plan is null && reason == SkipReason.ShadowedBy && !ShadowingBinds(callable, form))
             {
                 plan = _planner.TryPlan(callable, form, context, out reason, ignoreShadowedBy: true);

@@ -1,20 +1,23 @@
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Gst.WebRTC;
 
 /// <content>
-/// The binary half of a data channel, which the generator skips because both
-/// ends of it carry a <c>GBytes</c>.
+/// The send half of the binary side of a data channel, which the generator
+/// skips because the C refuses the block an empty message would be built from.
 /// </content>
 /// <remarks>
-/// A data channel speaks two kinds of message, a string one and a binary one,
-/// and the generated surface covers only the string one:
-/// <c>gst_webrtc_data_channel_send_data_full</c> takes a <c>GBytes</c> and
-/// <c>on-message-data</c> delivers one, and the planner emits neither. An
-/// application could open a channel, send text and receive text, and had no way
-/// to move a byte. The two members here close that, over the
-/// <see cref="Gst.GLib.Bytes"/> wrapper of the runtime.
+/// The receiving half is generated: <c>on-message-data</c> carries a
+/// <c>GBytes</c>, which the planner marshals like every other wrapper of the
+/// runtime, so the event and its arguments come out of
+/// <c>Generated/WebRTCDataChannel.cs</c>. The send half stays here because of
+/// what <c>webrtcbin</c> does with an empty block rather than because of the
+/// marshalling: it reads the data pointer out of the block and refuses a null
+/// one with a critical and a <see langword="false"/> that carries no error,
+/// and every empty block GLib builds has a null data pointer. The two
+/// overloads below answer an empty message the way the library documents it —
+/// with no block at all — and they answer a channel that is not open, which
+/// the C dereferences null for.
 /// </remarks>
 public abstract unsafe partial class WebRTCDataChannel
 {
@@ -108,18 +111,93 @@ public abstract unsafe partial class WebRTCDataChannel
         // wrapper throws without allocating one that nothing would free.
         nint channel = Handle;
 
-        // See the remarks: the library crashes rather than refusing here.
+        // See the remarks: an empty message is the null GBytes and not a block
+        // of length zero, so nothing is allocated for one.
+        using Gst.GLib.Bytes? bytes = data.IsEmpty ? null : Gst.GLib.Bytes.New(data);
+
+        return Send(channel, bytes?.Handle ?? nint.Zero);
+    }
+
+    /// <summary>
+    /// Sends a binary message over the channel.
+    /// </summary>
+    /// <param name="data">
+    /// The block to send, or <see langword="null"/> for a message with no
+    /// payload. The block is borrowed for the call: the channel takes a
+    /// reference of its own for as long as the message is queued, and the
+    /// caller keeps the wrapper and disposes it as usual.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the channel was open and the message was
+    /// queued.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the overload that sends a block the caller already holds — one
+    /// that <see cref="Gst.GLib.Bytes.New(ReadOnlySpan{byte})"/> built, or one
+    /// that arrived on the <see cref="OnMessageData"/> event — without the copy
+    /// that the span overload makes. Everything the span overload documents
+    /// about the state of the channel, the thread it may be called from and
+    /// the exception a refused message raises holds here as well.
+    /// </para>
+    /// <para>
+    /// <b>An empty block is sent as no block at all.</b>
+    /// <c>SendData((Gst.GLib.Bytes?)null)</c>,
+    /// <c>SendData(Gst.GLib.Bytes.New(ReadOnlySpan&lt;byte&gt;.Empty))</c> and
+    /// <c>SendData(ReadOnlySpan&lt;byte&gt;.Empty)</c> all send the same empty
+    /// message. The library has no other way to send one: the data pointer of
+    /// an empty block is null, and the branch that reads it refuses a null
+    /// pointer with a critical and a <see langword="false"/> that sets no
+    /// error, while the null block is the case it builds an empty buffer for.
+    /// </para>
+    /// <para>
+    /// The block is not copied on the way out. <c>webrtcbin</c> wraps the very
+    /// memory of the block in the buffer it pushes and holds a reference of its
+    /// own until that buffer is released, so the bytes must not be assumed to
+    /// have been consumed when the call returns — which costs nothing here,
+    /// because a <c>GBytes</c> is immutable.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="Gst.GLib.GException">The channel refused the message.</exception>
+    /// <exception cref="ObjectDisposedException">
+    /// The wrapper of the channel, or the one of the block, was disposed.
+    /// </exception>
+    public bool SendData(Gst.GLib.Bytes? data)
+    {
+        // As above: the handle of the channel is read first, so that a disposed
+        // wrapper throws before anything else is looked at.
+        nint channel = Handle;
+
+        // Reading the size is also what makes a disposed block throw here
+        // rather than pass a released handle to the library.
+        nint block = data is null || data.Size == 0 ? nint.Zero : data.Handle;
+
+        bool sent = Send(channel, block);
+
+        // The handle was read out of the wrapper, so nothing else keeps the
+        // block alive across the call.
+        GC.KeepAlive(data);
+        return sent;
+    }
+
+    /// <summary>
+    /// Sends the message both overloads build, over
+    /// <c>gst_webrtc_data_channel_send_data_full</c>.
+    /// </summary>
+    /// <param name="channel">The handle of this channel, read by the caller.</param>
+    /// <param name="data">The <c>GBytes</c> to send, or <c>0</c> for an empty message.</param>
+    /// <returns><see langword="true"/> when the message was queued.</returns>
+    private bool Send(nint channel, nint data)
+    {
+        // See the remarks of the span overload: the library crashes rather than
+        // refusing here.
         if (ReadyState != Gst.WebRTC.WebRTCDataChannelState.Open)
         {
             return false;
         }
 
-        // See the remarks: an empty message is the null GBytes and not a block
-        // of length zero, so nothing is allocated for one.
-        using Gst.GLib.Bytes? bytes = data.IsEmpty ? null : Gst.GLib.Bytes.New(data);
-
         nint errorNative = 0;
-        int sent = GstWebrtcDataChannelSendDataFull(channel, bytes?.Handle ?? nint.Zero, &errorNative);
+        int sent = GstWebrtcDataChannelSendDataFull(channel, data, &errorNative);
 
         // The handle was read before the call, so nothing keeps this wrapper
         // alive across it on its own.
@@ -127,120 +205,6 @@ public abstract unsafe partial class WebRTCDataChannel
 
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return sent != 0;
-    }
-
-    /// <summary>The arguments of the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
-    public sealed class OnMessageDataSignalArgs : System.EventArgs
-    {
-        /// <summary>Initializes a new instance of the <see cref="OnMessageDataSignalArgs"/> class.</summary>
-        /// <param name="data">The bytes that were received.</param>
-        internal OnMessageDataSignalArgs(Gst.GLib.Bytes? data)
-        {
-            Data = data;
-        }
-
-        /// <summary>
-        /// Gets the bytes that were received, or <see langword="null"/> for a
-        /// message that carried none.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// <b>The block belongs to the binding and is released when the handler
-        /// returns.</b> It is not the handler's to dispose and not the
-        /// handler's to keep: reading it inside the handler is what it is for,
-        /// and anything that outlives the handler has to be a copy, which
-        /// <see cref="Gst.GLib.Bytes.ToArray"/> makes. Using it afterwards
-        /// throws <see cref="ObjectDisposedException"/>, and the span of
-        /// <see cref="Gst.GLib.Bytes.GetData"/> taken inside the handler points
-        /// at memory that is gone by then.
-        /// </para>
-        /// <para>
-        /// This is the rule <see cref="Gst.BusSyncHandler"/> follows for the
-        /// message it is handed, and for the same reason: the signal borrows
-        /// the block from the channel, so the wrapper around it can only borrow
-        /// as well.
-        /// </para>
-        /// </remarks>
-        public Gst.GLib.Bytes? Data { get; }
-    }
-
-    /// <summary>Raised for the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
-    /// <remarks>
-    /// <para>
-    /// <b>The handler runs on the peer connection thread of <c>webrtcbin</c>,
-    /// not on a streaming thread.</b> The element does not emit the signal
-    /// where it read the message: it wraps the received bytes and queues the
-    /// emission on the main context of the thread it starts for the
-    /// connection, and the handler is called from there. That is the thread
-    /// the state changes and the promise replies of the same connection are
-    /// delivered on, so a handler that blocks holds all of them up, and it is
-    /// never the thread that added the handler. That is the contract of
-    /// <c>webrtcbin</c> rather than of this class: a channel some other
-    /// element implements emits wherever its implementation calls
-    /// <c>gst_webrtc_data_channel_on_message_data</c>.
-    /// </para>
-    /// <para>
-    /// An exception that leaves the handler does not cross the native frame:
-    /// it is reported through <see cref="Gst.Interop.ExceptionTrap"/> and the
-    /// emission continues.
-    /// </para>
-    /// <para>
-    /// The handler is remembered on the wrapper it was added to and has to be
-    /// removed from that same instance, exactly as for a generated event.
-    /// Looking the object up again normally hands the same wrapper out, but one
-    /// that was disposed in between is replaced by a new one, which knows
-    /// nothing of the handler.
-    /// </para>
-    /// </remarks>
-    public event System.EventHandler<Gst.WebRTC.WebRTCDataChannel.OnMessageDataSignalArgs> OnMessageData
-    {
-        add => Gst.WebRTC.SignalConnections.Add(
-            this,
-            "on-message-data",
-            (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&OnMessageDataTrampoline,
-            value);
-
-        remove => Gst.WebRTC.SignalConnections.Remove(this, "on-message-data", value);
-    }
-
-    /// <summary>The native handler of the <c>on-message-data</c> signal of <c>GstWebRTCDataChannel</c>.</summary>
-    /// <param name="instance">The channel that received the message.</param>
-    /// <param name="data">The <c>GBytes</c> of the message, borrowed from the channel.</param>
-    /// <param name="userData">The <c>GCHandle</c> of the managed handler.</param>
-    /// <remarks>
-    /// The trampoline is written by hand for one reason: the argument is a
-    /// <c>GBytes</c>, which the marshalling planner has no plan for, so the
-    /// signal emitter skips the signal. Everything else follows the shape of
-    /// the generated ones — the state of the handler is read out of the
-    /// <c>GCHandle</c>, the instance is wrapped borrowed, and an exception is
-    /// trapped rather than thrown across the frame.
-    /// </remarks>
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static void OnMessageDataTrampoline(nint instance, nint data, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle
-                    .GetState<System.EventHandler<Gst.WebRTC.WebRTCDataChannel.OnMessageDataSignalArgs>>(userData)
-                is not { } handler)
-            {
-                return;
-            }
-
-            // The signal borrows the block, so the wrapper takes a reference of
-            // its own and gives it back when the handler returns. Nothing the
-            // handler kept of it is valid afterwards, which is what the
-            // documentation of the argument says.
-            using Gst.GLib.Bytes? dataValue = Gst.GLib.Bytes.FromNative(data, Gst.Interop.Transfer.None);
-
-            handler(
-                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
-                new Gst.WebRTC.WebRTCDataChannel.OnMessageDataSignalArgs(dataValue));
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-        }
     }
 
     /// <summary>The <c>gst_webrtc_data_channel_send_data_full</c> entry point.</summary>

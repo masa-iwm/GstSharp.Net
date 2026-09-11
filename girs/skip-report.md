@@ -395,9 +395,10 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (26)
+### OverlaySkip (27)
 
 - `gst_allocator_free`
+- `gst_buffer_new_wrapped_bytes`
 - `gst_buffer_pool_release_buffer`
 - `gst_caps_features_add_static_str`
 - `gst_caps_features_new_single_static_str`
@@ -436,13 +437,12 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (43)
+### UnsupportedSignature (42)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
 - `gst_buffer_list_take`
 - `gst_buffer_new_wrapped`
-- `gst_buffer_new_wrapped_bytes`
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
 - `gst_context_replace`
@@ -704,8 +704,9 @@ disappears shows up here as an added line.
 - `gst_type_find_data_get_typefind`
 - `gst_type_find_data_new`
 
-### OverlaySkip (2)
+### OverlaySkip (3)
 
+- `gst_adapter_copy_bytes`
 - `gst_adapter_take`
 - `gst_collect_pads_add_pad`
 
@@ -714,9 +715,8 @@ disappears shows up here as an added line.
 - `GstBase.BaseSink:last-sample`
 - `GstBase.BaseSink:stats`
 
-### UnsupportedSignature (4)
+### UnsupportedSignature (3)
 
-- `gst_adapter_copy_bytes`
 - `gst_base_sink_do_preroll`
 - `gst_type_find_helper_get_range`
 - `gst_type_find_helper_get_range_full`
@@ -866,18 +866,15 @@ disappears shows up here as an added line.
 - `gst_rtp_payload_info_for_pt`
 - `gst_rtp_source_meta_get_info`
 
-### NotIntrospectable (2)
+### ShadowedBy (2)
 
 - `gst_rtp_buffer_get_extension_data`
 - `gst_rtp_buffer_get_payload`
 
-### UnsupportedSignature (8)
+### UnsupportedSignature (5)
 
 - `GstRtp.RTPBaseDepayload:extensions`
 - `GstRtp.RTPBasePayload:extensions`
-- `gst_rtp_buffer_get_extension_bytes`
-- `gst_rtp_buffer_get_extension_onebyte_header_from_bytes`
-- `gst_rtp_buffer_get_payload_bytes`
 - `gst_rtp_buffer_new_take_data`
 - `gst_rtp_payload_info_for_name`
 - `gst_rtp_payload_info_for_pt`
@@ -1014,12 +1011,10 @@ disappears shows up here as an added line.
 - `gst_sdp_media_init`
 - `gst_sdp_message_init`
 
-### UnsupportedSignature (6)
+### UnsupportedSignature (4)
 
 - `gst_mikey_message_add_t`
 - `gst_mikey_message_get_cs_srtp`
-- `gst_mikey_message_new_from_bytes`
-- `gst_mikey_message_to_bytes`
 - `gst_mikey_payload_sp_get_param`
 - `gst_mikey_payload_t_set`
 
@@ -1201,9 +1196,8 @@ disappears shows up here as an added line.
 - `GstWebRTC.WebRTCDataChannel::send-string`
 - `GstWebRTC.WebRTCICE::add-local-ip-address`
 
-### HandBound (3)
+### HandBound (2)
 
-- `GstWebRTC.WebRTCDataChannel::on-message-data`
 - `gst_webrtc_data_channel_send_data_full`
 - `gst_webrtc_session_description_new`
 
@@ -1219,9 +1213,12 @@ disappears shows up here as an added line.
 - `gst_webrtc_error_quark`
 - `gst_webrtc_sdp_type_to_string`
 
-### UnsupportedSignature (3)
+### OverlaySkip (1)
 
 - `gst_webrtc_data_channel_send_data`
+
+### UnsupportedSignature (2)
+
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
 
