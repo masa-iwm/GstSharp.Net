@@ -509,9 +509,9 @@ public unsafe partial class BaseParse
         ArgumentNullException.ThrowIfNull(frame);
         int skipsizeNative = default;
         Gst.FlowReturn result = ChainUpHandleFrame(Handle, frame.Handle, &skipsizeNative);
+        skipsize = skipsizeNative;
         GC.KeepAlive(this);
         GC.KeepAlive(frame);
-        skipsize = skipsizeNative;
         return result;
     }
 
@@ -545,8 +545,8 @@ public unsafe partial class BaseParse
     {
         long destValueNative = default;
         bool result = ChainUpConvert(Handle, (int)srcFormat, srcValue, (int)destFormat, &destValueNative);
-        GC.KeepAlive(this);
         destValue = destValueNative;
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -564,8 +564,8 @@ public unsafe partial class BaseParse
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSinkEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -583,8 +583,8 @@ public unsafe partial class BaseParse
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSrcEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 

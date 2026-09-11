@@ -554,9 +554,9 @@ public unsafe partial class Element
         int stateNative = default;
         int pendingNative = default;
         Gst.StateChangeReturn result = ChainUpGetState(Handle, &stateNative, &pendingNative, timeout.Nanoseconds);
-        GC.KeepAlive(this);
         state = (Gst.State)stateNative;
         pending = (Gst.State)pendingNative;
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -654,8 +654,8 @@ public unsafe partial class Element
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSendEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -691,8 +691,8 @@ public unsafe partial class Element
         nint messageNative = message.Handle;
         Gst.GstNative.MiniObjectRef(messageNative);
         bool result = ChainUpPostMessage(instance, messageNative);
-        GC.KeepAlive(this);
         message.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 

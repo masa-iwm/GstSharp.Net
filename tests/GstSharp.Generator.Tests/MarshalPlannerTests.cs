@@ -1720,6 +1720,41 @@ public sealed class MarshalPlannerTests
             StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void AParameterNamedResultDoesNotShadowTheLocalTheReturnIsHoistedInto()
+    {
+        // Every member that carries a barrier hoists its answer into a local
+        // before the barrier, and that local is called result. Four gir
+        // parameters are called result already, and a refresh that puts one on
+        // a member with a barrier must not be a build break: the local takes
+        // another name, and the parameter keeps the one the gir gave it -
+        // renaming that would break a caller that passes it by name.
+        FixtureRun run = Fixture.Run(
+            """
+                <class name="Widget" c:type="GstWidget" parent="GObject.InitiallyUnowned" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type">
+                  <method name="describe" c:identifier="gst_widget_describe">
+                    <return-value transfer-ownership="none">
+                      <type name="utf8" c:type="const gchar*"/>
+                    </return-value>
+                    <parameters>
+                      <instance-parameter name="widget" transfer-ownership="none">
+                        <type name="Widget" c:type="GstWidget*"/>
+                      </instance-parameter>
+                      <parameter name="result" transfer-ownership="none">
+                        <type name="gint" c:type="gint"/>
+                      </parameter>
+                    </parameters>
+                  </method>
+                </class>
+            """);
+
+        string source = run.File("Widget.cs");
+
+        Assert.Contains("public string Describe(int result)", source, StringComparison.Ordinal);
+        Assert.Contains("string callResult = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)", source, StringComparison.Ordinal);
+        Assert.Contains("System.GC.KeepAlive(this);\n        return callResult;", source, StringComparison.Ordinal);
+    }
+
     /// <summary>Runs the fixture with a hand written <c>fixups.json</c>.</summary>
     /// <param name="fixups">The content of <c>fixups.json</c>.</param>
     /// <returns>The run.</returns>

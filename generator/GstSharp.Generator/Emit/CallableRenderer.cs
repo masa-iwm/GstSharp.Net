@@ -2196,6 +2196,47 @@ internal static class CallableRenderer
         && !argument.IsHidden;
 
     /// <summary>
+    /// Returns the name of the local a converted return value is hoisted into.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns><c>result</c>, or a name no parameter of the member carries.</returns>
+    /// <remarks>
+    /// <para>
+    /// Every member that carries a barrier, and every member that converts an
+    /// array or a list, declares this local, so a gir parameter of the same
+    /// name would be shadowed and the emitted member would not compile. Five
+    /// parameters are called <c>result</c> today
+    /// (<c>gst_query_parse_accept_caps_result</c>,
+    /// <c>gst_query_set_accept_caps_result</c>, <c>gst_video_center_rect</c>,
+    /// <c>gst_video_sink_center_rect</c> and <c>gst_rtsp_strresult</c>); none
+    /// of them is on a member that declares the local, and a gir refresh that
+    /// adds one must not be a build break.
+    /// </para>
+    /// <para>
+    /// The other direction - refusing the member, which is how the trampoline
+    /// locals of a signal and the <c>result</c>, <c>parent</c> and <c>slot</c>
+    /// of a virtual method are reserved - would take a member off the public
+    /// surface, and that is a change the compatibility promise does not allow.
+    /// A local is private to the body, so renaming it costs nothing.
+    /// </para>
+    /// </remarks>
+    private static string ConvertedLocalFor(MarshalPlan plan)
+    {
+        string candidate = ConvertedLocal;
+        for (int attempt = 0; Taken(candidate); attempt++)
+        {
+            candidate = attempt == 0
+                ? "callResult"
+                : "callResult" + attempt.ToString(CultureInfo.InvariantCulture);
+        }
+
+        return candidate;
+
+        bool Taken(string name) =>
+            plan.Arguments.Any(argument => string.Equals(argument.Name, name, StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// Disposes every consumed argument, right after the call.
     /// </summary>
     /// <param name="writer">The target writer.</param>
@@ -3184,6 +3225,7 @@ internal static class CallableRenderer
     {
         ReturnPlan value = plan.Return;
         bool barriers = HasKeepAlive(plan);
+        string converted = ConvertedLocalFor(plan);
         if (value.IsVoid)
         {
             WriteKeepAlive(writer, plan);
@@ -3212,26 +3254,26 @@ internal static class CallableRenderer
                 ResultLocal,
                 value.LengthArgument,
                 value.Transfer,
-                target: ConvertedLocal,
+                target: converted,
                 declare: true,
                 fixedLength: value.FixedLength);
             WriteKeepAlive(writer, plan);
-            writer.WriteLine("return " + ConvertedLocal + ";");
+            writer.WriteLine("return " + converted + ";");
             return;
         }
 
         if (value.Kind == ArgumentKind.GListReturn)
         {
-            WriteListConversion(writer, value);
+            WriteListConversion(writer, value, converted);
             WriteKeepAlive(writer, plan);
-            writer.WriteLine("return " + ConvertedLocal + ";");
+            writer.WriteLine("return " + converted + ";");
             return;
         }
 
         ArgumentPlan projection = new()
         {
             Kind = value.Kind,
-            Name = ConvertedLocal,
+            Name = converted,
             PublicType = value.PublicType,
             RawType = value.RawType,
             Transfer = value.Transfer,
@@ -3254,10 +3296,10 @@ internal static class CallableRenderer
             }
 
             writer.WriteLine(
-                TrimNullable(value.PublicType) + " " + ConvertedLocal + " = " + expression
+                TrimNullable(value.PublicType) + " " + converted + " = " + expression
                 + " ?? string.Empty;");
             WriteKeepAlive(writer, plan);
-            writer.WriteLine("return " + ConvertedLocal + ";");
+            writer.WriteLine("return " + converted + ";");
             return;
         }
 
@@ -3277,9 +3319,9 @@ internal static class CallableRenderer
                 return;
             }
 
-            writer.WriteLine(value.PublicType + " " + ConvertedLocal + " = " + expression + ";");
+            writer.WriteLine(value.PublicType + " " + converted + " = " + expression + ";");
             WriteKeepAlive(writer, plan);
-            writer.WriteLine("return " + ConvertedLocal + ";");
+            writer.WriteLine("return " + converted + ";");
             return;
         }
 
@@ -3291,11 +3333,11 @@ internal static class CallableRenderer
             return;
         }
 
-        writer.WriteLine(TrimNullable(value.PublicType) + " " + ConvertedLocal + " = " + expression);
+        writer.WriteLine(TrimNullable(value.PublicType) + " " + converted + " = " + expression);
         writer.WriteLine(
             "    ?? throw new InvalidOperationException(\"" + plan.EntryPoint + " returned no value.\");");
         WriteKeepAlive(writer, plan);
-        writer.WriteLine("return " + ConvertedLocal + ";");
+        writer.WriteLine("return " + converted + ";");
     }
 
     /// <summary>
@@ -3325,7 +3367,7 @@ internal static class CallableRenderer
     /// member never returns <see langword="null"/>.
     /// </para>
     /// </remarks>
-    private static void WriteListConversion(CodeWriter writer, ReturnPlan value)
+    private static void WriteListConversion(CodeWriter writer, ReturnPlan value, string target)
     {
         string elementType = value.ElementType!;
         GirTransfer elementTransfer = value.Transfer is GirTransfer.Full or GirTransfer.Floating
@@ -3339,13 +3381,13 @@ internal static class CallableRenderer
         writer.WriteLine(
             "nint[] " + ItemsLocal + " = Gst.Interop.GListMarshal." + collect + "(" + ResultLocal + ");");
         writer.WriteLine(
-            "System.Collections.Generic.List<" + elementType + "> " + ConvertedLocal
+            "System.Collections.Generic.List<" + elementType + "> " + target
             + " = new(" + ItemsLocal + ".Length);");
         writer.WriteLine("foreach (nint " + ItemLocal + " in " + ItemsLocal + ")");
         writer.OpenBlock();
         writer.WriteLine("if (" + ItemLocal + " != 0 && " + conversion + " is { } " + ElementLocal + ")");
         writer.OpenBlock();
-        writer.WriteLine(ConvertedLocal + ".Add(" + ElementLocal + ");");
+        writer.WriteLine(target + ".Add(" + ElementLocal + ");");
         writer.CloseBlock();
         writer.CloseBlock();
         writer.WriteLine();

@@ -220,8 +220,8 @@ public unsafe partial class PushSrc
     {
         nint bufferNative = nint.Zero;
         Gst.FlowReturn result = ChainUpCreate(Handle, &bufferNative);
-        GC.KeepAlive(this);
         buffer = bufferNative == nint.Zero ? null : Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -236,8 +236,8 @@ public unsafe partial class PushSrc
     {
         nint bufNative = nint.Zero;
         Gst.FlowReturn result = ChainUpAlloc(Handle, &bufNative);
-        GC.KeepAlive(this);
         buf = bufNative == nint.Zero ? null : Gst.Buffer.FromNative(bufNative, Gst.Interop.Transfer.Full);
+        GC.KeepAlive(this);
         return result;
     }
 

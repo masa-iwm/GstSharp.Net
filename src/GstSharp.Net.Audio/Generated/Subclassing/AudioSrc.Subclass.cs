@@ -367,8 +367,8 @@ public unsafe partial class AudioSrc
         {
             ulong timestampNative = default;
             uint result = ChainUpRead(Handle, dataNative, checked((uint)data.Length), &timestampNative);
-            GC.KeepAlive(this);
             timestamp = new Gst.ClockTime(timestampNative);
+            GC.KeepAlive(this);
             return result;
         }
     }

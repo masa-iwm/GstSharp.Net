@@ -752,9 +752,9 @@ public unsafe partial class BaseTransform
         Gst.Caps result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException(
                 "fixate_caps answered null below the managed override.");
+        othercaps.Dispose();
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
-        othercaps.Dispose();
         return result;
     }
 
@@ -892,10 +892,10 @@ public unsafe partial class BaseTransform
         ArgumentNullException.ThrowIfNull(othercaps);
         nuint othersizeNative = default;
         bool result = ChainUpTransformSize(Handle, (int)direction, caps.Handle, size, othercaps.Handle, &othersizeNative);
+        othersize = othersizeNative;
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
         GC.KeepAlive(othercaps);
-        othersize = othersizeNative;
         return result;
     }
 
@@ -911,9 +911,9 @@ public unsafe partial class BaseTransform
         ArgumentNullException.ThrowIfNull(caps);
         nuint sizeNative = default;
         bool result = ChainUpGetUnitSize(Handle, caps.Handle, &sizeNative);
+        size = sizeNative;
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
-        size = sizeNative;
         return result;
     }
 
@@ -949,8 +949,8 @@ public unsafe partial class BaseTransform
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSinkEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -968,8 +968,8 @@ public unsafe partial class BaseTransform
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSrcEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -996,9 +996,9 @@ public unsafe partial class BaseTransform
         ArgumentNullException.ThrowIfNull(input);
         nint outbufNative = nint.Zero;
         Gst.FlowReturn result = ChainUpPrepareOutputBuffer(Handle, input.Handle, &outbufNative);
+        outbuf = outbufNative == nint.Zero ? null : outbufNative == input.Handle ? input : Gst.Buffer.FromNative(outbufNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(input);
-        outbuf = outbufNative == nint.Zero ? null : outbufNative == input.Handle ? input : Gst.Buffer.FromNative(outbufNative, Gst.Interop.Transfer.Full);
         return result;
     }
 
@@ -1121,8 +1121,8 @@ public unsafe partial class BaseTransform
         nint inputNative = input.Handle;
         Gst.GstNative.MiniObjectRef(inputNative);
         Gst.FlowReturn result = ChainUpSubmitInputBuffer(instance, isDiscont ? 1 : 0, inputNative);
-        GC.KeepAlive(this);
         input.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -1137,8 +1137,8 @@ public unsafe partial class BaseTransform
     {
         nint outbufNative = nint.Zero;
         Gst.FlowReturn result = ChainUpGenerateOutput(Handle, &outbufNative);
-        GC.KeepAlive(this);
         outbuf = outbufNative == nint.Zero ? null : Gst.Buffer.FromNative(outbufNative, Gst.Interop.Transfer.Full);
+        GC.KeepAlive(this);
         return result;
     }
 

@@ -639,8 +639,8 @@ public unsafe partial class AudioEncoder
 
         nint bufferNative = buffer is null ? nint.Zero : buffer.HandOver();
         Gst.FlowReturn result = ChainUpPrePush(instance, &bufferNative);
-        GC.KeepAlive(this);
         buffer = bufferNative == nint.Zero ? null : Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -658,8 +658,8 @@ public unsafe partial class AudioEncoder
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSinkEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -677,8 +677,8 @@ public unsafe partial class AudioEncoder
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSrcEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 

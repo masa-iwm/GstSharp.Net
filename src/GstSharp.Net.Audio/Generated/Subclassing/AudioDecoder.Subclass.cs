@@ -629,10 +629,10 @@ public unsafe partial class AudioDecoder
         int offsetNative = default;
         int lengthNative = default;
         Gst.FlowReturn result = ChainUpParse(Handle, adapter.Handle, &offsetNative, &lengthNative);
-        GC.KeepAlive(this);
-        GC.KeepAlive(adapter);
         offset = offsetNative;
         length = lengthNative;
+        GC.KeepAlive(this);
+        GC.KeepAlive(adapter);
         return result;
     }
 
@@ -682,8 +682,8 @@ public unsafe partial class AudioDecoder
 
         nint bufferNative = buffer is null ? nint.Zero : buffer.HandOver();
         Gst.FlowReturn result = ChainUpPrePush(instance, &bufferNative);
-        GC.KeepAlive(this);
         buffer = bufferNative == nint.Zero ? null : Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -701,8 +701,8 @@ public unsafe partial class AudioDecoder
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSinkEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -720,8 +720,8 @@ public unsafe partial class AudioDecoder
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSrcEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 

@@ -259,8 +259,8 @@ public unsafe partial class Bin
         nint messageNative = message.Handle;
         Gst.GstNative.MiniObjectRef(messageNative);
         ChainUpHandleMessage(instance, messageNative);
-        GC.KeepAlive(this);
         message.Dispose();
+        GC.KeepAlive(this);
     }
 
     /// <summary>Runs the implementation of <c>do_latency</c> below the managed override.</summary>

@@ -558,8 +558,8 @@ public unsafe partial class BaseSink
         Gst.GstNative.MiniObjectRef(capsNative);
         nint resultNative = ChainUpFixate(instance, capsNative);
         Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
-        GC.KeepAlive(this);
         caps.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -586,10 +586,10 @@ public unsafe partial class BaseSink
         ulong startNative = default;
         ulong endNative = default;
         ChainUpGetTimes(Handle, buffer.Handle, &startNative, &endNative);
-        GC.KeepAlive(this);
-        GC.KeepAlive(buffer);
         start = new Gst.ClockTime(startNative);
         end = new Gst.ClockTime(endNative);
+        GC.KeepAlive(this);
+        GC.KeepAlive(buffer);
     }
 
     /// <summary>Runs the implementation of <c>propose_allocation</c> below the managed override.</summary>
@@ -678,8 +678,8 @@ public unsafe partial class BaseSink
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 

@@ -764,9 +764,9 @@ public unsafe partial class TimelineElement
         int framerateNNative = default;
         int framerateDNative = default;
         bool result = ChainUpGetNaturalFramerate(Handle, &framerateNNative, &framerateDNative);
-        GC.KeepAlive(this);
         framerateN = framerateNNative;
         framerateD = framerateDNative;
+        GC.KeepAlive(this);
         return result;
     }
 

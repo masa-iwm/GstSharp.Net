@@ -600,8 +600,8 @@ public unsafe partial class BaseSrc
         Gst.GstNative.MiniObjectRef(capsNative);
         nint resultNative = ChainUpFixate(instance, capsNative);
         Gst.Caps? result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full);
-        GC.KeepAlive(this);
         caps.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -666,10 +666,10 @@ public unsafe partial class BaseSrc
         ulong startNative = default;
         ulong endNative = default;
         ChainUpGetTimes(Handle, buffer.Handle, &startNative, &endNative);
-        GC.KeepAlive(this);
-        GC.KeepAlive(buffer);
         start = new Gst.ClockTime(startNative);
         end = new Gst.ClockTime(endNative);
+        GC.KeepAlive(this);
+        GC.KeepAlive(buffer);
     }
 
     /// <summary>Runs the implementation of <c>get_size</c> below the managed override.</summary>
@@ -679,8 +679,8 @@ public unsafe partial class BaseSrc
     {
         ulong sizeNative = default;
         bool result = ChainUpGetSize(Handle, &sizeNative);
-        GC.KeepAlive(this);
         size = sizeNative;
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -814,12 +814,12 @@ public unsafe partial class BaseSrc
         nint bufNative = buf is null ? nint.Zero : buf.Handle;
         nint bufEntry = bufNative;
         Gst.FlowReturn result = ChainUpCreate(Handle, offset, size, &bufNative);
-        GC.KeepAlive(this);
         if (bufNative != bufEntry)
         {
             buf?.Dispose();
             buf = bufNative == nint.Zero ? null : Gst.Buffer.FromNative(bufNative, Gst.Interop.Transfer.Full);
         }
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -836,8 +836,8 @@ public unsafe partial class BaseSrc
     {
         nint bufNative = nint.Zero;
         Gst.FlowReturn result = ChainUpAlloc(Handle, offset, size, &bufNative);
-        GC.KeepAlive(this);
         buf = bufNative == nint.Zero ? null : Gst.Buffer.FromNative(bufNative, Gst.Interop.Transfer.Full);
+        GC.KeepAlive(this);
         return result;
     }
 

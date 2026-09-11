@@ -1055,17 +1055,6 @@ internal sealed class VfuncEmitter
             writer.WriteLine(ReturnType(plan) + " result = " + call + ";");
         }
 
-        writer.WriteLine("GC.KeepAlive(this);");
-        foreach (VfuncArgument argument in plan.Arguments)
-        {
-            if (argument.Bucket is VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject
-                or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed
-                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
-            {
-                writer.WriteLine("GC.KeepAlive(" + argument.Argument.Name + ");");
-            }
-        }
-
         foreach (VfuncArgument argument in plan.Arguments)
         {
             ArgumentPlan value = argument.Argument;
@@ -1126,6 +1115,22 @@ internal sealed class VfuncEmitter
                     break;
                 default:
                     break;
+            }
+        }
+
+        // The barriers are the last statements of the body, after every
+        // argument epilogue and after the answer has been converted into a
+        // local: an epilogue reads the handles the parent slot left behind,
+        // and those can name memory the instance or a borrowed argument owns.
+        // This is the rule the outbound direction follows in CallableRenderer.
+        writer.WriteLine("GC.KeepAlive(this);");
+        foreach (VfuncArgument argument in plan.Arguments)
+        {
+            if (argument.Bucket is VfuncBucket.BorrowGObject or VfuncBucket.SiblingGObject
+                or VfuncBucket.BorrowMiniObject or VfuncBucket.BorrowBoxed
+                or VfuncBucket.BorrowWrapper or VfuncBucket.BorrowOpaque)
+            {
+                writer.WriteLine("GC.KeepAlive(" + argument.Argument.Name + ");");
             }
         }
 

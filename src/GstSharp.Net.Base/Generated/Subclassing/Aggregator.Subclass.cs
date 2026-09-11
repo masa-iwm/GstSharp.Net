@@ -771,9 +771,9 @@ public unsafe partial class Aggregator
         Gst.GstNative.MiniObjectRef(bufNative);
         nint resultNative = ChainUpClip(instance, aggregatorPad.Handle, bufNative);
         Gst.Buffer? result = Gst.Buffer.FromNative(resultNative, Gst.Interop.Transfer.Full);
+        buf.Dispose();
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
-        buf.Dispose();
         return result;
     }
 
@@ -791,8 +791,8 @@ public unsafe partial class Aggregator
         nint bufferNative = buffer.Handle;
         Gst.GstNative.MiniObjectRef(bufferNative);
         Gst.FlowReturn result = ChainUpFinishBuffer(instance, bufferNative);
-        GC.KeepAlive(this);
         buffer.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -816,9 +816,9 @@ public unsafe partial class Aggregator
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSinkEvent(instance, aggregatorPad.Handle, @eventNative);
+        @event.Dispose();
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
-        @event.Dispose();
         return result;
     }
 
@@ -858,8 +858,8 @@ public unsafe partial class Aggregator
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         bool result = ChainUpSrcEvent(instance, @eventNative);
-        GC.KeepAlive(this);
         @event.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -983,9 +983,9 @@ public unsafe partial class Aggregator
         ArgumentNullException.ThrowIfNull(caps);
         nint retNative = nint.Zero;
         Gst.FlowReturn result = ChainUpUpdateSrcCaps(Handle, caps.Handle, &retNative);
+        ret = retNative == nint.Zero ? null : Gst.Caps.FromNative(retNative, Gst.Interop.Transfer.Full);
         GC.KeepAlive(this);
         GC.KeepAlive(caps);
-        ret = retNative == nint.Zero ? null : Gst.Caps.FromNative(retNative, Gst.Interop.Transfer.Full);
         return result;
     }
 
@@ -1014,8 +1014,8 @@ public unsafe partial class Aggregator
         Gst.Caps result = Gst.Caps.FromNative(resultNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException(
                 "fixate_src_caps answered null below the managed override.");
-        GC.KeepAlive(this);
         caps.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
@@ -1105,9 +1105,9 @@ public unsafe partial class Aggregator
         nint @eventNative = @event.Handle;
         Gst.GstNative.MiniObjectRef(@eventNative);
         Gst.FlowReturn result = ChainUpSinkEventPreQueue(instance, aggregatorPad.Handle, @eventNative);
+        @event.Dispose();
         GC.KeepAlive(this);
         GC.KeepAlive(aggregatorPad);
-        @event.Dispose();
         return result;
     }
 
@@ -1147,8 +1147,8 @@ public unsafe partial class Aggregator
         nint bufferlistNative = bufferlist.Handle;
         Gst.GstNative.MiniObjectRef(bufferlistNative);
         Gst.FlowReturn result = ChainUpFinishBufferList(instance, bufferlistNative);
-        GC.KeepAlive(this);
         bufferlist.Dispose();
+        GC.KeepAlive(this);
         return result;
     }
 
