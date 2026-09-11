@@ -182,7 +182,7 @@ public sealed class UriTableTests
     /// one the compiler reports as CS8620, a nullability warning that this
     /// repository compiles as an error. Passing one takes a <c>!</c>, which is
     /// what the line below spells and what the documentation of the member
-    /// leaves to the caller.
+    /// tells the caller.
     /// </remarks>
     [Fact]
     public void ADictionaryOfNullableValuesIsAcceptedAsItStands()

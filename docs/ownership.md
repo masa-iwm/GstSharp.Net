@@ -1077,8 +1077,9 @@ which is a state C keeps apart from an empty value; a `null` key is refused with
 
 A table a call **answers** — `Uri.GetQueryTable`, `Uri.GetMediaFragmentTable`,
 `TrackElement.GetAllControlBindings` — is a `Dictionary<K, V>` and always a
-snapshot, never a live view: C hands out the table it keeps, and the binding
-copies every entry out before the member returns. Editing the dictionary
+snapshot, never a live view: C hands out the table it keeps (or, for the media
+fragment, one it builds for the call), and the binding copies every entry out
+before the member returns. Editing the dictionary
 afterwards changes nothing, and two calls answer two independent dictionaries.
 A table of strings is answered as `Dictionary<string, string?>?`, where `null`
 is the absence of a table and an empty dictionary a table with no entries, and
