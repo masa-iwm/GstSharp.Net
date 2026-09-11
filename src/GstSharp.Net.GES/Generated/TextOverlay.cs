@@ -66,8 +66,9 @@ public unsafe partial class TextOverlay : GES.Operation, GES.IExtractable, GES.I
     public string? GetFontDesc()
     {
         nint nativeResult = GesTextOverlayGetFontDesc(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the horizontal aligment used by @source.</summary>
@@ -75,8 +76,9 @@ public unsafe partial class TextOverlay : GES.Operation, GES.IExtractable, GES.I
     public GES.TextHAlign GetHalignment()
     {
         int nativeResult = GesTextOverlayGetHalignment(Handle);
+        GES.TextHAlign result = (GES.TextHAlign)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TextHAlign)nativeResult;
+        return result;
     }
 
     /// <summary>Get the text currently set on @source.</summary>
@@ -84,8 +86,9 @@ public unsafe partial class TextOverlay : GES.Operation, GES.IExtractable, GES.I
     public string? GetText()
     {
         nint nativeResult = GesTextOverlayGetText(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the vertical aligment used by @source.</summary>
@@ -93,8 +96,9 @@ public unsafe partial class TextOverlay : GES.Operation, GES.IExtractable, GES.I
     public GES.TextVAlign GetValignment()
     {
         int nativeResult = GesTextOverlayGetValignment(Handle);
+        GES.TextVAlign result = (GES.TextVAlign)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TextVAlign)nativeResult;
+        return result;
     }
 
     /// <summary>Get the horizontal position used by @source.</summary>

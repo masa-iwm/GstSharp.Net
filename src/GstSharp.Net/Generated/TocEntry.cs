@@ -64,8 +64,9 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public Gst.TocEntryType GetEntryType()
     {
         int nativeResult = GstTocEntryGetEntryType(Handle);
+        Gst.TocEntryType result = (Gst.TocEntryType)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.TocEntryType)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -91,10 +92,11 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
         int loopTypeNative = default;
         int repeatCountNative = default;
         int nativeResult = GstTocEntryGetLoop(Handle, &loopTypeNative, &repeatCountNative);
-        System.GC.KeepAlive(this);
         loopType = (Gst.TocLoopType)loopTypeNative;
         repeatCount = repeatCountNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the parent #GstTocEntry of @entry.</summary>
@@ -107,8 +109,9 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public Gst.TocEntry? GetParent()
     {
         nint nativeResult = GstTocEntryGetParent(Handle);
+        Gst.TocEntry? result = Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -132,10 +135,11 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
         long startNative = default;
         long stopNative = default;
         int nativeResult = GstTocEntryGetStartStopTimes(Handle, &startNative, &stopNative);
-        System.GC.KeepAlive(this);
         start = startNative;
         stop = stopNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the sub-entries of @entry.</summary>
@@ -143,7 +147,6 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public System.Collections.Generic.IReadOnlyList<Gst.TocEntry> GetSubEntries()
     {
         nint nativeResult = GstTocEntryGetSubEntries(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.TocEntry> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -154,6 +157,7 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -167,8 +171,9 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstTocEntryGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the parent #GstToc of @entry.</summary>
@@ -181,8 +186,9 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public Gst.Toc? GetToc()
     {
         nint nativeResult = GstTocEntryGetToc(Handle);
+        Gst.Toc? result = Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the UID of @entry.</summary>
@@ -190,9 +196,10 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public string GetUid()
     {
         nint nativeResult = GstTocEntryGetUid(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_toc_entry_get_uid returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_toc_entry_is_alternative</c> function.</summary>
@@ -200,8 +207,9 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public bool IsAlternative()
     {
         int nativeResult = GstTocEntryIsAlternative(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_toc_entry_is_sequence</c> function.</summary>
@@ -209,8 +217,9 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
     public bool IsSequence()
     {
         int nativeResult = GstTocEntryIsSequence(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Merge @tags into the existing tags of @entry using @mode.</summary>
@@ -267,8 +276,8 @@ public sealed unsafe partial class TocEntry : Gst.GObject.Boxed
         nint tagsNative = tags is null ? 0 : tags.Handle;
         nint tagsOwned = tags is null ? 0 : Gst.GstNative.MiniObjectRef(tagsNative);
         GstTocEntrySetTags(instanceHandle, tagsOwned);
-        System.GC.KeepAlive(this);
         tags?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_toc_entry_new</c> entry point.</summary>

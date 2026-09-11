@@ -117,8 +117,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GstSdpMediaAddAttribute(Handle, keyScope.Pointer, valueScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add the bandwidth information with @bwtype and @bandwidth to @media.</summary>
@@ -131,8 +132,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> bwtypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope bwtypeScope = Gst.Interop.GMarshal.StackUtf8(bwtype, bwtypeBuffer);
         int nativeResult = GstSdpMediaAddBandwidth(Handle, bwtypeScope.Pointer, bandwidth);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add the given connection parameters to @media.</summary>
@@ -157,8 +159,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> addressBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope addressScope = Gst.Interop.GMarshal.StackUtf8(address, addressBuffer);
         int nativeResult = GstSdpMediaAddConnection(Handle, nettypeScope.Pointer, addrtypeScope.Pointer, addressScope.Pointer, ttl, addrNumber);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add the format information to @media.</summary>
@@ -170,8 +173,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> formatBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope formatScope = Gst.Interop.GMarshal.StackUtf8(format, formatBuffer);
         int nativeResult = GstSdpMediaAddFormat(Handle, formatScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Convert the contents of @media to a text string.</summary>
@@ -179,9 +183,10 @@ public sealed unsafe partial class SDPMedia
     public string AsText()
     {
         nint nativeResult = GstSdpMediaAsText(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_as_text returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the number of attribute fields in @media.</summary>
@@ -200,9 +205,10 @@ public sealed unsafe partial class SDPMedia
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstSdpMediaAttributesToCaps(Handle, caps.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the number of bandwidth fields in @media.</summary>
@@ -233,9 +239,10 @@ public sealed unsafe partial class SDPMedia
     {
         nint copyNative = default;
         int nativeResult = GstSdpMediaCopy(Handle, &copyNative);
-        System.GC.KeepAlive(this);
         copy = Gst.Sdp.SDPMedia.FromNative(copyNative);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the number of formats in @media.</summary>
@@ -256,8 +263,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPResult Free()
     {
         int nativeResult = GstSdpMediaFree(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the attribute at position @idx in @media.</summary>
@@ -266,9 +274,10 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPAttribute GetAttribute(uint idx)
     {
         nint nativeResult = GstSdpMediaGetAttribute(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPAttribute.FromNative(nativeResult)
+        Gst.Sdp.SDPAttribute result = Gst.Sdp.SDPAttribute.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_attribute returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the first attribute value for @key in @media.</summary>
@@ -280,8 +289,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstSdpMediaGetAttributeVal(Handle, keyScope.Pointer);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the @nth attribute value for @key in @media.</summary>
@@ -294,8 +304,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstSdpMediaGetAttributeValN(Handle, keyScope.Pointer, nth);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the bandwidth at position @idx in @media.</summary>
@@ -304,9 +315,10 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPBandwidth GetBandwidth(uint idx)
     {
         nint nativeResult = GstSdpMediaGetBandwidth(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPBandwidth.FromNative(nativeResult)
+        Gst.Sdp.SDPBandwidth result = Gst.Sdp.SDPBandwidth.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_bandwidth returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Mapping of caps from SDP fields:</summary>
@@ -323,8 +335,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Caps? GetCapsFromMedia(int pt)
     {
         nint nativeResult = GstSdpMediaGetCapsFromMedia(Handle, pt);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the connection at position @idx in @media.</summary>
@@ -333,9 +346,10 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPConnection GetConnection(uint idx)
     {
         nint nativeResult = GstSdpMediaGetConnection(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPConnection.FromNative(nativeResult)
+        Gst.Sdp.SDPConnection result = Gst.Sdp.SDPConnection.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_connection returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the format information at position @idx in @media.</summary>
@@ -344,9 +358,10 @@ public sealed unsafe partial class SDPMedia
     public string GetFormat(uint idx)
     {
         nint nativeResult = GstSdpMediaGetFormat(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_format returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the information of @media</summary>
@@ -354,9 +369,10 @@ public sealed unsafe partial class SDPMedia
     public string GetInformation()
     {
         nint nativeResult = GstSdpMediaGetInformation(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_information returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the encryption information from @media.</summary>
@@ -364,9 +380,10 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPKey GetKey()
     {
         nint nativeResult = GstSdpMediaGetKey(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPKey.FromNative(nativeResult)
+        Gst.Sdp.SDPKey result = Gst.Sdp.SDPKey.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_key returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the media description of @media.</summary>
@@ -374,9 +391,10 @@ public sealed unsafe partial class SDPMedia
     public string GetMedia()
     {
         nint nativeResult = GstSdpMediaGetMedia(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_media returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the number of ports for @media.</summary>
@@ -402,9 +420,10 @@ public sealed unsafe partial class SDPMedia
     public string GetProto()
     {
         nint nativeResult = GstSdpMediaGetProto(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_media_get_proto returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -418,9 +437,10 @@ public sealed unsafe partial class SDPMedia
     {
         ArgumentNullException.ThrowIfNull(attr);
         int nativeResult = GstSdpMediaInsertAttribute(Handle, idx, attr.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(attr);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -434,9 +454,10 @@ public sealed unsafe partial class SDPMedia
     {
         ArgumentNullException.ThrowIfNull(bw);
         int nativeResult = GstSdpMediaInsertBandwidth(Handle, idx, bw.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bw);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -450,9 +471,10 @@ public sealed unsafe partial class SDPMedia
     {
         ArgumentNullException.ThrowIfNull(conn);
         int nativeResult = GstSdpMediaInsertConnection(Handle, idx, conn.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(conn);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -468,8 +490,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> formatBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope formatScope = Gst.Interop.GMarshal.StackUtf8(format, formatBuffer);
         int nativeResult = GstSdpMediaInsertFormat(Handle, idx, formatScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -482,9 +505,10 @@ public sealed unsafe partial class SDPMedia
     {
         nint mikeyNative = default;
         int nativeResult = GstSdpMediaParseKeymgmt(Handle, &mikeyNative);
-        System.GC.KeepAlive(this);
         mikey = Gst.Sdp.MIKEYMessage.FromNative(mikeyNative, Gst.Interop.Transfer.Full);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Remove the attribute in @media at @idx.</summary>
@@ -493,8 +517,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPResult RemoveAttribute(uint idx)
     {
         int nativeResult = GstSdpMediaRemoveAttribute(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the bandwidth information in @media at @idx.</summary>
@@ -503,8 +528,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPResult RemoveBandwidth(uint idx)
     {
         int nativeResult = GstSdpMediaRemoveBandwidth(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the connection information in @media at @idx.</summary>
@@ -513,8 +539,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPResult RemoveConnection(uint idx)
     {
         int nativeResult = GstSdpMediaRemoveConnection(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the format information in @media at @idx.</summary>
@@ -523,8 +550,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPResult RemoveFormat(uint idx)
     {
         int nativeResult = GstSdpMediaRemoveFormat(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the attribute in @media at @idx with @attr.</summary>
@@ -535,9 +563,10 @@ public sealed unsafe partial class SDPMedia
     {
         ArgumentNullException.ThrowIfNull(attr);
         int nativeResult = GstSdpMediaReplaceAttribute(Handle, idx, attr.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(attr);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the bandwidth information in @media at @idx with @bw.</summary>
@@ -548,9 +577,10 @@ public sealed unsafe partial class SDPMedia
     {
         ArgumentNullException.ThrowIfNull(bw);
         int nativeResult = GstSdpMediaReplaceBandwidth(Handle, idx, bw.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bw);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the connection information in @media at @idx with @conn.</summary>
@@ -561,9 +591,10 @@ public sealed unsafe partial class SDPMedia
     {
         ArgumentNullException.ThrowIfNull(conn);
         int nativeResult = GstSdpMediaReplaceConnection(Handle, idx, conn.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(conn);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the format information in @media at @idx with @format.</summary>
@@ -576,8 +607,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> formatBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope formatScope = Gst.Interop.GMarshal.StackUtf8(format, formatBuffer);
         int nativeResult = GstSdpMediaReplaceFormat(Handle, idx, formatScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the media information of @media to @information.</summary>
@@ -589,8 +621,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> informationBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope informationScope = Gst.Interop.GMarshal.StackUtf8(information, informationBuffer);
         int nativeResult = GstSdpMediaSetInformation(Handle, informationScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Adds the encryption information to @media.</summary>
@@ -606,8 +639,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> dataBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope dataScope = Gst.Interop.GMarshal.StackUtf8(data, dataBuffer);
         int nativeResult = GstSdpMediaSetKey(Handle, typeScope.Pointer, dataScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the media description of @media to @med.</summary>
@@ -619,8 +653,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> medBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope medScope = Gst.Interop.GMarshal.StackUtf8(med, medBuffer);
         int nativeResult = GstSdpMediaSetMedia(Handle, medScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the port information in @media.</summary>
@@ -630,8 +665,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPResult SetPortInfo(uint port, uint numPorts)
     {
         int nativeResult = GstSdpMediaSetPortInfo(Handle, port, numPorts);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the media transport protocol of @media to @proto.</summary>
@@ -643,8 +679,9 @@ public sealed unsafe partial class SDPMedia
         System.Span<byte> protoBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope protoScope = Gst.Interop.GMarshal.StackUtf8(proto, protoBuffer);
         int nativeResult = GstSdpMediaSetProto(Handle, protoScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -656,8 +693,9 @@ public sealed unsafe partial class SDPMedia
     public Gst.Sdp.SDPResult Uninit()
     {
         int nativeResult = GstSdpMediaUninit(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Mapping of structure fields to SDP attributes:</summary>
@@ -683,9 +721,10 @@ public sealed unsafe partial class SDPMedia
         ArgumentNullException.ThrowIfNull(structure);
         ArgumentNullException.ThrowIfNull(media);
         int nativeResult = GstSdpMediaAddMediaFromStructure(structure.Handle, media.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(structure);
         System.GC.KeepAlive(media);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Allocate a new GstSDPMedia and store the result in @media.</summary>
@@ -719,9 +758,10 @@ public sealed unsafe partial class SDPMedia
         ArgumentNullException.ThrowIfNull(caps);
         ArgumentNullException.ThrowIfNull(media);
         int nativeResult = GstSdpMediaSetMediaFromCaps(caps.Handle, media.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(caps);
         System.GC.KeepAlive(media);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_sdp_media_add_attribute</c> entry point.</summary>

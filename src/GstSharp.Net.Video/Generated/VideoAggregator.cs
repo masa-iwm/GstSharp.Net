@@ -66,9 +66,10 @@ public abstract unsafe partial class VideoAggregator : Gst.Base.Aggregator
     public Gst.TaskPool GetExecutionTaskPool()
     {
         nint nativeResult = GstVideoAggregatorGetExecutionTaskPool(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.TaskPool>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.TaskPool result = Gst.GObject.Object.FromNative<Gst.TaskPool>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_aggregator_get_execution_task_pool returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>

@@ -137,9 +137,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         nint profileNative = profile.Handle;
         nint profileOwned = Gst.Interop.GObjectNative.ObjectRef(profileNative);
         int nativeResult = GstEncodingTargetAddProfile(instanceHandle, profileOwned);
-        System.GC.KeepAlive(this);
         profile.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_encoding_target_get_category</c> function.</summary>
@@ -150,9 +151,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string GetCategory()
     {
         nint nativeResult = GstEncodingTargetGetCategory(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_target_get_category returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_encoding_target_get_description</c> function.</summary>
@@ -160,9 +162,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string GetDescription()
     {
         nint nativeResult = GstEncodingTargetGetDescription(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_target_get_description returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_encoding_target_get_name</c> function.</summary>
@@ -170,9 +173,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string GetName()
     {
         nint nativeResult = GstEncodingTargetGetName(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_encoding_target_get_name returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_encoding_target_get_path</c> function.</summary>
@@ -180,8 +184,9 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public string? GetPath()
     {
         nint nativeResult = GstEncodingTargetGetPath(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_encoding_target_get_profile</c> function.</summary>
@@ -193,8 +198,9 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstEncodingTargetGetProfile(Handle, nameScope.Pointer);
+        Gst.Pbutils.EncodingProfile? result = Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingProfile>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_encoding_target_get_profiles</c> function.</summary>
@@ -205,7 +211,6 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.EncodingProfile> GetProfiles()
     {
         nint nativeResult = GstEncodingTargetGetProfiles(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.EncodingProfile> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -216,6 +221,7 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -226,9 +232,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     {
         nint errorNative = 0;
         int nativeResult = GstEncodingTargetSave(Handle, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Saves the @target to the provided file location.</summary>
@@ -242,9 +249,10 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         using Gst.Interop.Utf8Scope filepathScope = Gst.Interop.GMarshal.StackUtf8(filepath, filepathBuffer);
         nint errorNative = 0;
         int nativeResult = GstEncodingTargetSaveToFile(Handle, filepathScope.Pointer, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>

@@ -111,9 +111,10 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     public Gst.Net.NetTimePacket Copy()
     {
         nint nativeResult = GstNetTimePacketCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Net.NetTimePacket.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Net.NetTimePacket result = Gst.Net.NetTimePacket.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_net_time_packet_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Sends a #GstNetTimePacket over a socket.</summary>
@@ -130,11 +131,12 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
         ArgumentNullException.ThrowIfNull(destAddress);
         nint errorNative = 0;
         int nativeResult = GstNetTimePacketSend(Handle, socket.Handle, destAddress.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(socket);
         System.GC.KeepAlive(destAddress);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -150,7 +152,6 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
     public byte[]? Serialize()
     {
         nint nativeResult = GstNetTimePacketSerialize(Handle);
-        System.GC.KeepAlive(this);
         byte[]? result = null;
         if (nativeResult != 0)
         {
@@ -158,6 +159,7 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
             new System.ReadOnlySpan<byte>((void*)nativeResult, 16).CopyTo(result);
             Gst.Interop.GMarshal.Free(nativeResult);
         }
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -178,7 +180,6 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
         nint srcAddressNative = default;
         nint errorNative = 0;
         nint nativeResult = GstNetTimePacketReceive(socket.Handle, &srcAddressNative, &errorNative);
-        System.GC.KeepAlive(socket);
         if (errorNative != 0 && nativeResult != 0)
         {
             // The call failed and transferred a value all the same. The throw
@@ -187,8 +188,10 @@ public sealed unsafe partial class NetTimePacket : Gst.GObject.Boxed
         }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         srcAddress = Gst.GObject.Object.FromNative<Gst.Gio.SocketAddress>(srcAddressNative, Gst.Interop.Transfer.Full);
-        return Gst.Net.NetTimePacket.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Net.NetTimePacket result = Gst.Net.NetTimePacket.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_net_time_packet_receive returned no value.");
+        System.GC.KeepAlive(socket);
+        return result;
     }
 
     /// <summary>The <c>gst_net_time_packet_new</c> entry point.</summary>

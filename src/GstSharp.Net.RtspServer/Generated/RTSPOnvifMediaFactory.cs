@@ -72,8 +72,9 @@ public unsafe partial class RTSPOnvifMediaFactory : Gst.RtspServer.RTSPMediaFact
     public string? GetBackchannelLaunch()
     {
         nint nativeResult = GstRtspOnvifMediaFactoryGetBackchannelLaunch(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Returns %TRUE if an ONVIF backchannel is supported by the media factory.</summary>
@@ -81,8 +82,9 @@ public unsafe partial class RTSPOnvifMediaFactory : Gst.RtspServer.RTSPMediaFact
     public bool HasBackchannelSupport()
     {
         int nativeResult = GstRtspOnvifMediaFactoryHasBackchannelSupport(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_onvif_media_factory_has_replay_support</c> function.</summary>
@@ -90,8 +92,9 @@ public unsafe partial class RTSPOnvifMediaFactory : Gst.RtspServer.RTSPMediaFact
     public bool HasReplaySupport()
     {
         int nativeResult = GstRtspOnvifMediaFactoryHasReplaySupport(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -154,8 +157,9 @@ public unsafe partial class RTSPOnvifMediaFactory : Gst.RtspServer.RTSPMediaFact
         ArgumentNullException.ThrowIfNull(factory);
         Gst.RtspServer.RTSPContext ctxNative = ctx;
         int nativeResult = GstRtspOnvifMediaFactoryRequiresBackchannel(factory.Handle, &ctxNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(factory);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_onvif_media_factory_new</c> entry point.</summary>

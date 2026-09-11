@@ -49,8 +49,9 @@ public static unsafe partial class ExtractableExtensions
     {
         ArgumentNullException.ThrowIfNull(self);
         nint nativeResult = GesExtractableGetAsset(self.Handle);
+        GES.Asset? result = Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(self);
-        return Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -71,9 +72,10 @@ public static unsafe partial class ExtractableExtensions
     {
         ArgumentNullException.ThrowIfNull(self);
         nint nativeResult = GesExtractableGetId(self.Handle);
-        System.GC.KeepAlive(self);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("ges_extractable_get_id returned no value.");
+        System.GC.KeepAlive(self);
+        return result;
     }
 
     /// <summary>Sets the asset for this extractable object.</summary>
@@ -98,9 +100,10 @@ public static unsafe partial class ExtractableExtensions
         ArgumentNullException.ThrowIfNull(self);
         ArgumentNullException.ThrowIfNull(asset);
         int nativeResult = GesExtractableSetAsset(self.Handle, asset.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(self);
         System.GC.KeepAlive(asset);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>ges_extractable_get_asset</c> entry point.</summary>

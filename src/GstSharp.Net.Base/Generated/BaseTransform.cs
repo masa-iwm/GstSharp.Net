@@ -179,10 +179,10 @@ public abstract unsafe partial class BaseTransform : Gst.Element
         nint allocatorNative = default;
         nint @paramsNative = GstAllocationParamsNew();
         GstBaseTransformGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
-        System.GC.KeepAlive(this);
         @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
         allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_base_transform_get_buffer_pool</c> function.</summary>
@@ -193,8 +193,9 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public Gst.BufferPool? GetBufferPool()
     {
         nint nativeResult = GstBaseTransformGetBufferPool(Handle);
+        Gst.BufferPool? result = Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>See if @trans is configured as a in_place transform.</summary>
@@ -202,8 +203,9 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool IsInPlace()
     {
         int nativeResult = GstBaseTransformIsInPlace(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>See if @trans is configured as a passthrough transform.</summary>
@@ -211,8 +213,9 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool IsPassthrough()
     {
         int nativeResult = GstBaseTransformIsPassthrough(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Queries if the transform will handle QoS.</summary>
@@ -220,8 +223,9 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool IsQosEnabled()
     {
         int nativeResult = GstBaseTransformIsQosEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -248,8 +252,9 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     public bool Reconfigure()
     {
         int nativeResult = GstBaseTransformReconfigure(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -401,9 +406,10 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(updatedCaps);
         int nativeResult = GstBaseTransformUpdateSrcCaps(Handle, updatedCaps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(updatedCaps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>qos</c> property.</summary>

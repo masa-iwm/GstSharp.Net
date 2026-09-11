@@ -89,8 +89,9 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
     public Gst.FlowReturn Flush(uint payloadLen, Gst.ClockTime timestamp)
     {
         int nativeResult = GstRtpBaseAudioPayloadFlush(Handle, payloadLen, timestamp.Nanoseconds);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>Gets the internal adapter used by the depayloader.</summary>
@@ -98,9 +99,10 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
     public Gst.Base.Adapter GetAdapter()
     {
         nint nativeResult = GstRtpBaseAudioPayloadGetAdapter(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Base.Adapter>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Base.Adapter result = Gst.GObject.Object.FromNative<Gst.Base.Adapter>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtp_base_audio_payload_get_adapter returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -116,8 +118,9 @@ public unsafe partial class RTPBaseAudioPayload : Gst.Rtp.RTPBasePayload
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstRtpBaseAudioPayloadPush(Handle, dataPointer, (uint)data.Length, timestamp.Nanoseconds);
+            Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
             System.GC.KeepAlive(this);
-            return (Gst.FlowReturn)nativeResult;
+            return result;
         }
     }
 

@@ -95,10 +95,11 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         nuint configType = config is null ? 0 : config.BoxedType.Value;
         nint configOwned = config is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(configType, configNative);
         nint nativeResult = GstAudioConverterNew((int)flags, inInfoNative, outInfoNative, configOwned);
+        config?.Dispose();
+        Gst.Audio.AudioConverter? result = Gst.Audio.AudioConverter.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(inInfo);
         System.GC.KeepAlive(outInfo);
-        config?.Dispose();
-        return Gst.Audio.AudioConverter.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -120,7 +121,6 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         fixed (byte* @inPointer = @in)
         {
             int nativeResult = GstAudioConverterConvert(Handle, (int)flags, @inPointer, (nuint)@in.Length, &@outNative, &outSizeNative);
-            System.GC.KeepAlive(this);
             @out = null;
             if (@outNative != 0)
             {
@@ -128,7 +128,9 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
                 new System.ReadOnlySpan<byte>((void*)@outNative, (int)outSizeNative).CopyTo(@out);
                 Gst.Interop.GMarshal.Free(@outNative);
             }
-            return nativeResult != 0;
+            bool result = nativeResult != 0;
+            System.GC.KeepAlive(this);
+            return result;
         }
     }
 
@@ -147,11 +149,12 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         int inRateNative = default;
         int outRateNative = default;
         nint nativeResult = GstAudioConverterGetConfig(Handle, &inRateNative, &outRateNative);
-        System.GC.KeepAlive(this);
         inRate = inRateNative;
         outRate = outRateNative;
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_audio_converter_get_config returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -203,8 +206,9 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public bool IsPassthrough()
     {
         int nativeResult = GstAudioConverterIsPassthrough(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -225,8 +229,9 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
     public bool SupportsInplace()
     {
         int nativeResult = GstAudioConverterSupportsInplace(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set @in_rate, @out_rate and @config as extra configuration for @convert.</summary>
@@ -277,9 +282,10 @@ public sealed unsafe partial class AudioConverter : Gst.GObject.Boxed
         nuint configType = config is null ? 0 : config.BoxedType.Value;
         nint configOwned = config is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(configType, configNative);
         int nativeResult = GstAudioConverterUpdateConfig(instanceHandle, inRate, outRate, configOwned);
-        System.GC.KeepAlive(this);
         config?.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_audio_converter_new</c> entry point.</summary>

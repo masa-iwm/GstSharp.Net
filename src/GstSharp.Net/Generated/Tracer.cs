@@ -59,8 +59,9 @@ public abstract unsafe partial class Tracer : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstTracerRegister(plugin is null ? 0 : plugin.Handle, nameScope.Pointer, type.Value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(plugin);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>params</c> property.</summary>

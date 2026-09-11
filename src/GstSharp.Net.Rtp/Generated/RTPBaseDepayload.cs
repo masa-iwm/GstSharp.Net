@@ -158,8 +158,9 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
     public bool IsAggregateHdrextEnabled()
     {
         int nativeResult = GstRtpBaseDepayloadIsAggregateHdrextEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Queries whether #GstRTPSourceMeta will be added to depayloaded buffers.</summary>
@@ -167,8 +168,9 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
     public bool IsSourceInfoEnabled()
     {
         int nativeResult = GstRtpBaseDepayloadIsSourceInfoEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -207,9 +209,10 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
         nint outBufNative = outBuf.Handle;
         nint outBufOwned = Gst.GstNative.MiniObjectRef(outBufNative);
         int nativeResult = GstRtpBaseDepayloadPush(instanceHandle, outBufOwned);
-        System.GC.KeepAlive(this);
         outBuf.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -244,9 +247,10 @@ public abstract unsafe partial class RTPBaseDepayload : Gst.Element
         nint outListNative = outList.Handle;
         nint outListOwned = Gst.GstNative.MiniObjectRef(outListNative);
         int nativeResult = GstRtpBaseDepayloadPushList(instanceHandle, outListOwned);
-        System.GC.KeepAlive(this);
         outList.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Enable or disable aggregating header extensions.</summary>

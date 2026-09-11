@@ -145,9 +145,10 @@ public sealed unsafe partial class WebRTCICECandidate : Gst.GObject.Boxed
     public Gst.WebRTC.WebRTCICECandidate Copy()
     {
         nint nativeResult = GstWebrtcIceCandidateCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.WebRTC.WebRTCICECandidate.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.WebRTC.WebRTCICECandidate result = Gst.WebRTC.WebRTCICECandidate.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_webrtc_ice_candidate_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_candidate_copy</c> entry point.</summary>

@@ -86,12 +86,13 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         nuint infoType = info is null ? 0 : info.BoxedType.Value;
         nint infoOwned = info is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(infoType, infoNative);
         nint nativeResult = GstSampleNew(bufferNative, capsNative, segmentNative, infoOwned);
+        info?.Dispose();
+        Gst.Sample result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_sample_new returned no value.");
         System.GC.KeepAlive(buffer);
         System.GC.KeepAlive(caps);
         System.GC.KeepAlive(segment);
-        info?.Dispose();
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_sample_new returned no value.");
+        return result;
     }
 
     /// <summary>Get the buffer associated with @sample</summary>
@@ -107,8 +108,9 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     public Gst.Buffer? GetBuffer()
     {
         nint nativeResult = GstSampleGetBuffer(Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the buffer list associated with @sample</summary>
@@ -124,8 +126,9 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     public Gst.BufferList? GetBufferList()
     {
         nint nativeResult = GstSampleGetBufferList(Handle);
+        Gst.BufferList? result = Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the caps associated with @sample</summary>
@@ -141,8 +144,9 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstSampleGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get extra information associated with @sample.</summary>
@@ -156,8 +160,9 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     public Gst.Structure? GetInfo()
     {
         nint nativeResult = GstSampleGetInfo(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the segment associated with @sample</summary>
@@ -171,9 +176,10 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     public Gst.Segment GetSegment()
     {
         nint nativeResult = GstSampleGetSegment(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Segment result = Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_sample_get_segment returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -232,8 +238,8 @@ public sealed unsafe partial class Sample : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -301,9 +307,10 @@ public sealed unsafe partial class Sample : Gst.MiniObject
         nuint infoType = info.BoxedType.Value;
         nint infoOwned = Gst.Interop.GObjectNative.BoxedCopy(infoType, infoNative);
         int nativeResult = GstSampleSetInfo(instanceHandle, infoOwned);
-        System.GC.KeepAlive(this);
         info.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Set the segment associated with @sample. @sample must be writable.</summary>

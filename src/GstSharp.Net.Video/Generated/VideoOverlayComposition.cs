@@ -89,9 +89,10 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     public static Gst.Video.VideoOverlayComposition New(Gst.Video.VideoOverlayRectangle? rectangle)
     {
         nint nativeResult = GstVideoOverlayCompositionNew(rectangle is null ? 0 : rectangle.Handle);
-        System.GC.KeepAlive(rectangle);
-        return Gst.Video.VideoOverlayComposition.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoOverlayComposition result = Gst.Video.VideoOverlayComposition.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_composition_new returned no value.");
+        System.GC.KeepAlive(rectangle);
+        return result;
     }
 
     /// <summary>
@@ -130,9 +131,10 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(videoBuf);
         int nativeResult = GstVideoOverlayCompositionBlend(Handle, videoBuf.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(videoBuf);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -157,9 +159,10 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     public Gst.Video.VideoOverlayComposition Copy()
     {
         nint nativeResult = GstVideoOverlayCompositionCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoOverlayComposition.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoOverlayComposition result = Gst.Video.VideoOverlayComposition.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_composition_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Returns the @n-th #GstVideoOverlayRectangle contained in @comp.</summary>
@@ -176,8 +179,9 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     public Gst.Video.VideoOverlayRectangle? GetRectangle(uint n)
     {
         nint nativeResult = GstVideoOverlayCompositionGetRectangle(Handle, n);
+        Gst.Video.VideoOverlayRectangle? result = Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -241,8 +245,8 @@ public sealed unsafe partial class VideoOverlayComposition : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = GstVideoOverlayCompositionMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 

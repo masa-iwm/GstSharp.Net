@@ -84,9 +84,10 @@ public unsafe partial class Transcoder : Gst.Object
         using Gst.Interop.Utf8Scope destUriScope = Gst.Interop.GMarshal.StackUtf8(destUri, destUriBuffer);
         ArgumentNullException.ThrowIfNull(profile);
         nint nativeResult = GstTranscoderNewFull(sourceUriScope.Pointer, destUriScope.Pointer, profile.Handle);
-        System.GC.KeepAlive(profile);
-        return Gst.GObject.Object.FromNative<Gst.Transcoder.Transcoder>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Transcoder.Transcoder result = Gst.GObject.Object.FromNative<Gst.Transcoder.Transcoder>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_transcoder_new_full returned no value.");
+        System.GC.KeepAlive(profile);
+        return result;
     }
 
     /// <summary>The <c>gst_transcoder_get_avoid_reencoding</c> function.</summary>
@@ -97,8 +98,9 @@ public unsafe partial class Transcoder : Gst.Object
     public bool GetAvoidReencoding()
     {
         int nativeResult = GstTranscoderGetAvoidReencoding(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets the URI of the destination of the transcoded stream.</summary>
@@ -109,9 +111,10 @@ public unsafe partial class Transcoder : Gst.Object
     public string GetDestUri()
     {
         nint nativeResult = GstTranscoderGetDestUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_transcoder_get_dest_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Retrieves the duration of the media stream that self represents.</summary>
@@ -122,8 +125,9 @@ public unsafe partial class Transcoder : Gst.Object
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GstTranscoderGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -148,9 +152,10 @@ public unsafe partial class Transcoder : Gst.Object
     public Gst.Bus GetMessageBus()
     {
         nint nativeResult = GstTranscoderGetMessageBus(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Bus result = Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_transcoder_get_message_bus returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_transcoder_get_pipeline</c> function.</summary>
@@ -158,8 +163,9 @@ public unsafe partial class Transcoder : Gst.Object
     public Gst.Element? GetPipeline()
     {
         nint nativeResult = GstTranscoderGetPipeline(Handle);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_transcoder_get_position</c> function.</summary>
@@ -170,8 +176,9 @@ public unsafe partial class Transcoder : Gst.Object
     public Gst.ClockTime GetPosition()
     {
         ulong nativeResult = GstTranscoderGetPosition(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_transcoder_get_position_update_interval</c> function.</summary>
@@ -202,9 +209,10 @@ public unsafe partial class Transcoder : Gst.Object
     public Gst.Transcoder.TranscoderSignalAdapter? GetSignalAdapter(Gst.GLib.MainContext? context)
     {
         nint nativeResult = GstTranscoderGetSignalAdapter(Handle, context is null ? 0 : context.Handle);
+        Gst.Transcoder.TranscoderSignalAdapter? result = Gst.GObject.Object.FromNative<Gst.Transcoder.TranscoderSignalAdapter>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(context);
-        return Gst.GObject.Object.FromNative<Gst.Transcoder.TranscoderSignalAdapter>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the URI of the currently-transcoding stream.</summary>
@@ -215,9 +223,10 @@ public unsafe partial class Transcoder : Gst.Object
     public string GetSourceUri()
     {
         nint nativeResult = GstTranscoderGetSourceUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_transcoder_get_source_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -231,9 +240,10 @@ public unsafe partial class Transcoder : Gst.Object
     public Gst.Transcoder.TranscoderSignalAdapter GetSyncSignalAdapter()
     {
         nint nativeResult = GstTranscoderGetSyncSignalAdapter(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Transcoder.TranscoderSignalAdapter>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Transcoder.TranscoderSignalAdapter result = Gst.GObject.Object.FromNative<Gst.Transcoder.TranscoderSignalAdapter>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_transcoder_get_sync_signal_adapter returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -247,9 +257,10 @@ public unsafe partial class Transcoder : Gst.Object
     {
         nint errorNative = 0;
         int nativeResult = GstTranscoderRun(Handle, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -310,8 +321,9 @@ public unsafe partial class Transcoder : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(msg);
         int nativeResult = GstTranscoderIsTranscoderMessage(msg.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(msg);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>See #encodebin:avoid-reencoding</summary>

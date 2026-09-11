@@ -70,8 +70,9 @@ public sealed unsafe partial class SDPAttribute
     public Gst.Sdp.SDPResult Clear()
     {
         int nativeResult = GstSdpAttributeClear(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the attribute with @key and @value.</summary>
@@ -86,8 +87,9 @@ public sealed unsafe partial class SDPAttribute
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GstSdpAttributeSet(Handle, keyScope.Pointer, valueScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_sdp_attribute_clear</c> entry point.</summary>

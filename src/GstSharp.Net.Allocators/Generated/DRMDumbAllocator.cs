@@ -93,9 +93,10 @@ public unsafe partial class DRMDumbAllocator : Gst.Allocator
     {
         uint outPitchNative = default;
         nint nativeResult = GstDrmDumbAllocatorAlloc(Handle, drmFourcc, width, height, &outPitchNative);
-        System.GC.KeepAlive(this);
         outPitch = outPitchNative;
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>This function allow verifying if the driver support dma-buf exportation.</summary>
@@ -103,8 +104,9 @@ public unsafe partial class DRMDumbAllocator : Gst.Allocator
     public bool HasPrimeExport()
     {
         int nativeResult = GstDrmDumbAllocatorHasPrimeExport(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>drm-device-path</c> property.</summary>

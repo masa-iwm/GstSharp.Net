@@ -155,8 +155,9 @@ public sealed unsafe partial class Promise : Gst.MiniObject
     public Gst.Structure? GetReply()
     {
         nint nativeResult = GstPromiseGetReply(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -179,8 +180,9 @@ public sealed unsafe partial class Promise : Gst.MiniObject
     public Gst.PromiseResult Wait()
     {
         int nativeResult = GstPromiseWait(Handle);
+        Gst.PromiseResult result = (Gst.PromiseResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.PromiseResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_promise_new</c> entry point.</summary>

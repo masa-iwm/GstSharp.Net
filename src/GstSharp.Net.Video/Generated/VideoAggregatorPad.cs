@@ -63,9 +63,10 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     public Gst.Buffer GetCurrentBuffer()
     {
         nint nativeResult = GstVideoAggregatorPadGetCurrentBuffer(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_aggregator_pad_get_current_buffer returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -86,9 +87,10 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     public Gst.Video.VideoFrame GetPreparedFrame()
     {
         nint nativeResult = GstVideoAggregatorPadGetPreparedFrame(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoFrame.FromNative(nativeResult)
+        Gst.Video.VideoFrame result = Gst.Video.VideoFrame.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_video_aggregator_pad_get_prepared_frame returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -105,8 +107,9 @@ public unsafe partial class VideoAggregatorPad : Gst.Base.AggregatorPad
     public bool HasCurrentBuffer()
     {
         int nativeResult = GstVideoAggregatorPadHasCurrentBuffer(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Allows selecting that this pad requires an output format with alpha</summary>

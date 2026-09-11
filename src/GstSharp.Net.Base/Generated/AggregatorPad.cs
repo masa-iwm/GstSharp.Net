@@ -48,8 +48,9 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool DropBuffer()
     {
         int nativeResult = GstAggregatorPadDropBuffer(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -61,8 +62,9 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool HasBuffer()
     {
         int nativeResult = GstAggregatorPadHasBuffer(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_aggregator_pad_is_eos</c> function.</summary>
@@ -70,8 +72,9 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool IsEos()
     {
         int nativeResult = GstAggregatorPadIsEos(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>It is only valid to call this method from #GstAggregatorClass::aggregate()</summary>
@@ -82,8 +85,9 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public bool IsInactive()
     {
         int nativeResult = GstAggregatorPadIsInactive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_aggregator_pad_peek_buffer</c> function.</summary>
@@ -95,8 +99,9 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public Gst.Buffer? PeekBuffer()
     {
         nint nativeResult = GstAggregatorPadPeekBuffer(Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Steal the ref to the buffer currently queued in @pad.</summary>
@@ -107,8 +112,9 @@ public unsafe partial class AggregatorPad : Gst.Pad
     public Gst.Buffer? PopBuffer()
     {
         nint nativeResult = GstAggregatorPadPopBuffer(Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The number of currently queued buffers inside this pad</summary>

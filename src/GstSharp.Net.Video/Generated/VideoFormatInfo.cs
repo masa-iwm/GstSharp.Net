@@ -347,8 +347,8 @@ public sealed unsafe partial class VideoFormatInfo
     {
         Gst.Video.VideoFormatInfo.ComponentsArray componentsNative = default;
         GstVideoFormatInfoComponent(Handle, plane, &componentsNative);
-        System.GC.KeepAlive(this);
         components = componentsNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>

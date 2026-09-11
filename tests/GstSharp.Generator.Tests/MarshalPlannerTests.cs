@@ -673,8 +673,9 @@ public sealed class MarshalPlannerTests
                 System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
                 using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
                 int nativeResult = GstWidgetIsNamed(Handle, nameScope.Pointer);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(this);
-                return nativeResult != 0;
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public bool IsNamed("),
@@ -689,8 +690,9 @@ public sealed class MarshalPlannerTests
             public string? GetName()
             {
                 nint nativeResult = GstWidgetGetName(Handle);
+                string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
                 System.GC.KeepAlive(this);
-                return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public string? GetName("),
@@ -705,8 +707,9 @@ public sealed class MarshalPlannerTests
             public Gst.State SetState(Gst.State state)
             {
                 int nativeResult = GstWidgetSetState(Handle, (int)state);
+                Gst.State result = (Gst.State)nativeResult;
                 System.GC.KeepAlive(this);
-                return (Gst.State)nativeResult;
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public Gst.State SetState("),
@@ -723,10 +726,11 @@ public sealed class MarshalPlannerTests
                 int widthNative = default;
                 nint capsNative = default;
                 int nativeResult = GstWidgetGetExtents(Handle, &widthNative, &capsNative);
-                System.GC.KeepAlive(this);
                 width = widthNative;
                 caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.Full);
-                return nativeResult != 0;
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public bool GetExtents("),
@@ -748,8 +752,9 @@ public sealed class MarshalPlannerTests
             {
                 Gst.Extent extentNative = extent;
                 int nativeResult = GstWidgetGetExtent(Handle, &extentNative);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(this);
-                return nativeResult != 0;
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public bool GetExtent("),
@@ -775,9 +780,10 @@ public sealed class MarshalPlannerTests
             {
                 Gst.Extent extentNative = default;
                 int nativeResult = GstWidgetGetExtent(Handle, &extentNative);
-                System.GC.KeepAlive(this);
                 extent = extentNative;
-                return nativeResult != 0;
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             run.Member("Widget.cs", "public bool GetExtent("),
@@ -803,9 +809,10 @@ public sealed class MarshalPlannerTests
             {
                 Gst.Extent extentNative = extent;
                 int nativeResult = GstWidgetGrowExtent(Handle, &extentNative);
-                System.GC.KeepAlive(this);
                 extent = extentNative;
-                return nativeResult != 0;
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             run.Member("Widget.cs", "public bool GrowExtent("),
@@ -834,8 +841,8 @@ public sealed class MarshalPlannerTests
             {
                 Gst.Widget.PlaneSizeArray planeSizeNative = default;
                 GstWidgetGetPlaneSizes(Handle, &planeSizeNative);
-                System.GC.KeepAlive(this);
                 planeSize = planeSizeNative;
+                System.GC.KeepAlive(this);
             }
             """,
             run.Member("Widget.cs", "public void GetPlaneSizes("),
@@ -886,9 +893,10 @@ public sealed class MarshalPlannerTests
                 fixed (byte* dataPointer = data)
                 {
                     int nativeResult = GstWidgetWrite(Handle, dataPointer, (nuint)data.Length, &errorNative);
-                    System.GC.KeepAlive(this);
                     Gst.GLib.GException.ThrowIfSet(ref errorNative);
-                    return nativeResult != 0;
+                    bool result = nativeResult != 0;
+                    System.GC.KeepAlive(this);
+                    return result;
                 }
             }
             """,
@@ -1131,7 +1139,6 @@ public sealed class MarshalPlannerTests
             public System.Collections.Generic.IReadOnlyList<Gst.Widget> ListChildren()
             {
                 nint nativeResult = GstWidgetListChildren(Handle);
-                System.GC.KeepAlive(this);
                 nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
                 System.Collections.Generic.List<Gst.Widget> result = new(nativeItems.Length);
                 foreach (nint nativeItem in nativeItems)
@@ -1142,6 +1149,7 @@ public sealed class MarshalPlannerTests
                     }
                 }
 
+                System.GC.KeepAlive(this);
                 return result;
             }
             """,
@@ -1160,7 +1168,6 @@ public sealed class MarshalPlannerTests
             public System.Collections.Generic.IReadOnlyList<Gst.Widget> ListPeers()
             {
                 nint nativeResult = GstWidgetListPeers(Handle);
-                System.GC.KeepAlive(this);
                 nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
                 System.Collections.Generic.List<Gst.Widget> result = new(nativeItems.Length);
                 foreach (nint nativeItem in nativeItems)
@@ -1171,6 +1178,7 @@ public sealed class MarshalPlannerTests
                     }
                 }
 
+                System.GC.KeepAlive(this);
                 return result;
             }
             """,
@@ -1191,7 +1199,6 @@ public sealed class MarshalPlannerTests
             public System.Collections.Generic.IReadOnlyList<Gst.Anchor> ListAnchors()
             {
                 nint nativeResult = GstWidgetListAnchors(Handle);
-                System.GC.KeepAlive(this);
                 nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
                 System.Collections.Generic.List<Gst.Anchor> result = new(nativeItems.Length);
                 foreach (nint nativeItem in nativeItems)
@@ -1202,6 +1209,7 @@ public sealed class MarshalPlannerTests
                     }
                 }
 
+                System.GC.KeepAlive(this);
                 return result;
             }
             """,
@@ -1225,7 +1233,6 @@ public sealed class MarshalPlannerTests
             public System.Collections.Generic.IReadOnlyList<string> ListLabels()
             {
                 nint nativeResult = GstWidgetListLabels(Handle);
-                System.GC.KeepAlive(this);
                 nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
                 System.Collections.Generic.List<string> result = new(nativeItems.Length);
                 foreach (nint nativeItem in nativeItems)
@@ -1236,6 +1243,7 @@ public sealed class MarshalPlannerTests
                     }
                 }
 
+                System.GC.KeepAlive(this);
                 return result;
             }
             """,
@@ -1295,8 +1303,8 @@ public sealed class MarshalPlannerTests
                 nint capsNative = caps.Handle;
                 nint capsOwned = Gst.GstNative.MiniObjectRef(capsNative);
                 GstWidgetTakeCaps(instanceHandle, capsOwned);
-                System.GC.KeepAlive(this);
                 caps.Dispose();
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void TakeCaps("),
@@ -1321,8 +1329,8 @@ public sealed class MarshalPlannerTests
                 nuint payloadType = payload.BoxedType.Value;
                 nint payloadOwned = Gst.Interop.GObjectNative.BoxedCopy(payloadType, payloadNative);
                 GstWidgetTakePayload(instanceHandle, payloadOwned);
-                System.GC.KeepAlive(this);
                 payload.Dispose();
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void TakePayload("),
@@ -1341,8 +1349,8 @@ public sealed class MarshalPlannerTests
                 nint peerNative = peer.Handle;
                 nint peerOwned = Gst.Interop.GObjectNative.ObjectRef(peerNative);
                 GstWidgetTakePeer(instanceHandle, peerOwned);
-                System.GC.KeepAlive(this);
                 peer.Dispose();
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void TakePeer("),
@@ -1364,8 +1372,8 @@ public sealed class MarshalPlannerTests
                 nuint markType = mark is null ? 0 : mark.BoxedType.Value;
                 nint markOwned = mark is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(markType, markNative);
                 GstWidgetTakeMark(instanceHandle, markOwned);
-                System.GC.KeepAlive(this);
                 mark?.Dispose();
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void TakeMark("),
@@ -1475,8 +1483,9 @@ public sealed class MarshalPlannerTests
                 fixed (Gst.GObject.GValueNative* valuePointer = &value.NativeValue)
                 {
                     int nativeResult = GstWidgetFetchQuality(Handle, valuePointer);
+                    bool result = nativeResult != 0;
                     System.GC.KeepAlive(this);
-                    return nativeResult != 0;
+                    return result;
                 }
             }
             """,
@@ -1495,8 +1504,9 @@ public sealed class MarshalPlannerTests
             public Gst.GObject.Value PeekQuality()
             {
                 nint nativeResult = GstWidgetPeekQuality(Handle);
+                Gst.GObject.Value result = Gst.GObject.Value.CopyFrom(nativeResult);
                 System.GC.KeepAlive(this);
-                return Gst.GObject.Value.CopyFrom(nativeResult);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public Gst.GObject.Value PeekQuality("),
@@ -1513,8 +1523,9 @@ public sealed class MarshalPlannerTests
             public Gst.GObject.Value PullQuality()
             {
                 nint nativeResult = GstWidgetPullQuality(Handle);
+                Gst.GObject.Value result = Gst.GObject.Value.TakeOwnership(nativeResult);
                 System.GC.KeepAlive(this);
-                return Gst.GObject.Value.TakeOwnership(nativeResult);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public Gst.GObject.Value PullQuality("),

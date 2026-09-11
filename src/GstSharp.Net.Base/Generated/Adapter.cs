@@ -240,8 +240,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.ClockTime DtsAtDiscont()
     {
         ulong nativeResult = GstAdapterDtsAtDiscont(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -279,8 +280,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? GetBuffer(nuint nbytes)
     {
         nint nativeResult = GstAdapterGetBuffer(Handle, nbytes);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -304,8 +306,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? GetBufferFast(nuint nbytes)
     {
         nint nativeResult = GstAdapterGetBufferFast(Handle, nbytes);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -328,8 +331,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.BufferList? GetBufferList(nuint nbytes)
     {
         nint nativeResult = GstAdapterGetBufferList(Handle, nbytes);
+        Gst.BufferList? result = Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -352,7 +356,6 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Buffer> GetList(nuint nbytes)
     {
         nint nativeResult = GstAdapterGetList(Handle, nbytes);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Buffer> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -363,6 +366,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -429,8 +433,8 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         uint valueNative = default;
         nint nativeResult = GstAdapterMaskedScanUint32Peek(Handle, mask, pattern, offset, size, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -465,9 +469,10 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevDts(Handle, &distanceNative);
-        System.GC.KeepAlive(this);
         distance = distanceNative;
-        return new Gst.ClockTime(nativeResult);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -490,9 +495,10 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevDtsAtOffset(Handle, offset, &distanceNative);
-        System.GC.KeepAlive(this);
         distance = distanceNative;
-        return new Gst.ClockTime(nativeResult);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -514,8 +520,8 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevOffset(Handle, &distanceNative);
-        System.GC.KeepAlive(this);
         distance = distanceNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -538,9 +544,10 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevPts(Handle, &distanceNative);
-        System.GC.KeepAlive(this);
         distance = distanceNative;
-        return new Gst.ClockTime(nativeResult);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -563,9 +570,10 @@ public unsafe partial class Adapter : Gst.GObject.Object
     {
         ulong distanceNative = default;
         ulong nativeResult = GstAdapterPrevPtsAtOffset(Handle, offset, &distanceNative);
-        System.GC.KeepAlive(this);
         distance = distanceNative;
-        return new Gst.ClockTime(nativeResult);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -576,8 +584,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.ClockTime PtsAtDiscont()
     {
         ulong nativeResult = GstAdapterPtsAtDiscont(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -611,8 +620,8 @@ public unsafe partial class Adapter : Gst.GObject.Object
         nint bufNative = buf.Handle;
         nint bufOwned = Gst.GstNative.MiniObjectRef(bufNative);
         GstAdapterPush(instanceHandle, bufOwned);
-        System.GC.KeepAlive(this);
         buf.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -659,8 +668,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? TakeBuffer(nuint nbytes)
     {
         nint nativeResult = GstAdapterTakeBuffer(Handle, nbytes);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -702,8 +712,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.Buffer? TakeBufferFast(nuint nbytes)
     {
         nint nativeResult = GstAdapterTakeBufferFast(Handle, nbytes);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -727,8 +738,9 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public Gst.BufferList? TakeBufferList(nuint nbytes)
     {
         nint nativeResult = GstAdapterTakeBufferList(Handle, nbytes);
+        Gst.BufferList? result = Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -752,7 +764,6 @@ public unsafe partial class Adapter : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Buffer> TakeList(nuint nbytes)
     {
         nint nativeResult = GstAdapterTakeList(Handle, nbytes);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Buffer> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -763,6 +774,7 @@ public unsafe partial class Adapter : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 

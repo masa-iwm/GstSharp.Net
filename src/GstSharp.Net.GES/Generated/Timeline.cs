@@ -223,9 +223,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(layer);
         int nativeResult = GesTimelineAddLayer(Handle, layer.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(layer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Add a track to the timeline.</summary>
@@ -247,9 +248,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(track);
         int nativeResult = GesTimelineAddTrack(Handle, track.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(track);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -260,9 +262,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public GES.Layer AppendLayer()
     {
         nint nativeResult = GesTimelineAppendLayer(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Layer>(nativeResult, Gst.Interop.Transfer.None)
+        GES.Layer result = Gst.GObject.Object.FromNative<GES.Layer>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_timeline_append_layer returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -298,8 +301,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public bool Commit()
     {
         int nativeResult = GesTimelineCommit(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -316,8 +320,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public bool CommitSync()
     {
         int nativeResult = GesTimelineCommitSync(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -365,8 +370,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public bool GetAutoTransition()
     {
         int nativeResult = GesTimelineGetAutoTransition(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the current #GESTimeline:duration of the timeline</summary>
@@ -374,8 +380,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GesTimelineGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>ges_timeline_get_edit_apis_disabled</c> function.</summary>
@@ -383,8 +390,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public bool GetEditApisDisabled()
     {
         int nativeResult = GesTimelineGetEditApisDisabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets the element contained in the timeline with the given name.</summary>
@@ -399,8 +407,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GesTimelineGetElement(Handle, nameScope.Pointer);
+        GES.TimelineElement? result = Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -430,8 +439,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public Gst.ClockTime GetFrameTime(long frameNumber)
     {
         ulong nativeResult = GesTimelineGetFrameTime(Handle, frameNumber);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the list of #GESGroup-s present in the timeline.</summary>
@@ -443,7 +453,6 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public System.Collections.Generic.IReadOnlyList<GES.Group> GetGroups()
     {
         nint nativeResult = GesTimelineGetGroups(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<GES.Group> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -454,6 +463,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -469,8 +479,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public GES.Layer? GetLayer(uint priority)
     {
         nint nativeResult = GesTimelineGetLayer(Handle, priority);
+        GES.Layer? result = Gst.GObject.Object.FromNative<GES.Layer>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Layer>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the list of #GESLayer-s present in the timeline.</summary>
@@ -481,7 +492,6 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public System.Collections.Generic.IReadOnlyList<GES.Layer> GetLayers()
     {
         nint nativeResult = GesTimelineGetLayers(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.Layer> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -492,6 +502,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -508,9 +519,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(track);
         nint nativeResult = GesTimelineGetPadForTrack(Handle, track.Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(track);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the #GESTimeline:snapping-distance for the timeline.</summary>
@@ -518,8 +530,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public Gst.ClockTime GetSnappingDistance()
     {
         ulong nativeResult = GesTimelineGetSnappingDistance(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Search for the #GESTrack corresponding to the given timeline's pad.</summary>
@@ -532,9 +545,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GesTimelineGetTrackForPad(Handle, pad.Handle);
+        GES.Track? result = Gst.GObject.Object.FromNative<GES.Track>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pad);
-        return Gst.GObject.Object.FromNative<GES.Track>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the list of #GESTrack-s used by the timeline.</summary>
@@ -545,7 +559,6 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public System.Collections.Generic.IReadOnlyList<GES.Track> GetTracks()
     {
         nint nativeResult = GesTimelineGetTracks(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.Track> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -556,6 +569,7 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -564,8 +578,9 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     public bool IsEmpty()
     {
         int nativeResult = GesTimelineIsEmpty(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Loads the contents of URI into the timeline.</summary>
@@ -579,9 +594,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         int nativeResult = GesTimelineLoadFromUri(Handle, uriScope.Pointer, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -598,9 +614,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(layer);
         int nativeResult = GesTimelineMoveLayer(Handle, layer.Handle, newLayerPriority);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(layer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -641,9 +658,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(element);
         nint nativeResult = GesTimelinePasteElement(Handle, element.Handle, position.Nanoseconds, layerPriority);
+        GES.TimelineElement? result = Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(element);
-        return Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Removes a layer from the timeline.</summary>
@@ -653,9 +671,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(layer);
         int nativeResult = GesTimelineRemoveLayer(Handle, layer.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(layer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove a track from the timeline.</summary>
@@ -665,9 +684,10 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     {
         ArgumentNullException.ThrowIfNull(track);
         int nativeResult = GesTimelineRemoveTrack(Handle, track.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(track);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -687,10 +707,11 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         int nativeResult = GesTimelineSaveToUri(Handle, uriScope.Pointer, formatterAsset is null ? 0 : formatterAsset.Handle, overwrite ? 1 : 0, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(formatterAsset);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

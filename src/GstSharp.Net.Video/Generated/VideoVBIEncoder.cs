@@ -87,8 +87,9 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstVideoVbiEncoderAddAncillary(Handle, composite ? 1 : 0, dID, sDIDBlockNumber, dataPointer, (uint)data.Length);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -97,9 +98,10 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
     public Gst.Video.VideoVBIEncoder Copy()
     {
         nint nativeResult = GstVideoVbiEncoderCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoVBIEncoder.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoVBIEncoder result = Gst.Video.VideoVBIEncoder.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_vbi_encoder_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_video_vbi_encoder_new</c> entry point.</summary>

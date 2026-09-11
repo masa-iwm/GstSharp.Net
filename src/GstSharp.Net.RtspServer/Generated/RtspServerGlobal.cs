@@ -28,8 +28,9 @@ public static unsafe partial class RtspServerGlobal
         ArgumentNullException.ThrowIfNull(client);
         Gst.RtspServer.RTSPContext ctxNative = ctx;
         int nativeResult = GstRtspParamsGet(client.Handle, &ctxNative);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(client);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set parameters (not implemented yet)</summary>
@@ -41,8 +42,9 @@ public static unsafe partial class RtspServerGlobal
         ArgumentNullException.ThrowIfNull(client);
         Gst.RtspServer.RTSPContext ctxNative = ctx;
         int nativeResult = GstRtspParamsSet(client.Handle, &ctxNative);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(client);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -59,9 +61,10 @@ public static unsafe partial class RtspServerGlobal
         Gst.RtspServer.SDPInfo infoNative = info;
         ArgumentNullException.ThrowIfNull(media);
         int nativeResult = GstRtspSdpFromMedia(sdp.Handle, &infoNative, media.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(sdp);
         System.GC.KeepAlive(media);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Add info from @stream to @sdp.</summary>
@@ -75,9 +78,10 @@ public static unsafe partial class RtspServerGlobal
         Gst.RtspServer.SDPInfo infoNative = info;
         ArgumentNullException.ThrowIfNull(stream);
         int nativeResult = GstRtspSdpFromStream(sdp.Handle, &infoNative, stream.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(sdp);
         System.GC.KeepAlive(stream);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Creates a #GstSDPMedia from the parameters and stores it in @sdp.</summary>
@@ -94,10 +98,11 @@ public static unsafe partial class RtspServerGlobal
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstRtspSdpMakeMedia(sdp.Handle, &infoNative, stream.Handle, caps.Handle, (int)profile);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(sdp);
         System.GC.KeepAlive(stream);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_context_get_type</c> entry point.</summary>

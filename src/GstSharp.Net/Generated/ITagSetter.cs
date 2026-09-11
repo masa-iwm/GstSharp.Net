@@ -114,8 +114,9 @@ public static unsafe partial class TagSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         nint nativeResult = GstTagSetterGetTagList(setter.Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(setter);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -128,8 +129,9 @@ public static unsafe partial class TagSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         int nativeResult = GstTagSetterGetTagMergeMode(setter.Handle);
+        Gst.TagMergeMode result = (Gst.TagMergeMode)nativeResult;
         System.GC.KeepAlive(setter);
-        return (Gst.TagMergeMode)nativeResult;
+        return result;
     }
 
     /// <summary>Merges the given list into the setter's list using the given mode.</summary>

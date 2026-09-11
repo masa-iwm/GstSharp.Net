@@ -73,8 +73,9 @@ public sealed unsafe partial class MetaInfo
     public bool IsCustom()
     {
         int nativeResult = GstMetaInfoIsCustom(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_meta_info_is_custom</c> entry point.</summary>

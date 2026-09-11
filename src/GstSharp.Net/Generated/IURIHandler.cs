@@ -44,8 +44,9 @@ public static unsafe partial class URIHandlerExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
         nint nativeResult = GstUriHandlerGetProtocols(handler.Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
         System.GC.KeepAlive(handler);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+        return result;
     }
 
     /// <summary>Gets the currently handled URI.</summary>
@@ -60,8 +61,9 @@ public static unsafe partial class URIHandlerExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
         nint nativeResult = GstUriHandlerGetUri(handler.Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(handler);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the type of the given URI handler</summary>
@@ -74,8 +76,9 @@ public static unsafe partial class URIHandlerExtensions
     {
         ArgumentNullException.ThrowIfNull(handler);
         int nativeResult = GstUriHandlerGetUriType(handler.Handle);
+        Gst.URIType result = (Gst.URIType)nativeResult;
         System.GC.KeepAlive(handler);
-        return (Gst.URIType)nativeResult;
+        return result;
     }
 
     /// <summary>Tries to set the URI of the given handler.</summary>
@@ -91,9 +94,10 @@ public static unsafe partial class URIHandlerExtensions
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         int nativeResult = GstUriHandlerSetUri(handler.Handle, uriScope.Pointer, &errorNative);
-        System.GC.KeepAlive(handler);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(handler);
+        return result;
     }
 
     /// <summary>The <c>gst_uri_handler_get_protocols</c> entry point.</summary>

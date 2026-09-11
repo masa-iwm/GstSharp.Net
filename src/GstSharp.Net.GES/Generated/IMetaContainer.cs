@@ -63,8 +63,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> strBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope strScope = Gst.Interop.GMarshal.StackUtf8(str, strBuffer);
         int nativeResult = GesMetaContainerAddMetasFromString(container.Handle, strScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -96,10 +97,11 @@ public static unsafe partial class MetaContainerExtensions
         int flagsNative = default;
         nuint typeNative = default;
         int nativeResult = GesMetaContainerCheckMetaRegistered(container.Handle, metaItemScope.Pointer, &flagsNative, &typeNative);
-        System.GC.KeepAlive(container);
         flags = (GES.MetaFlag)flagsNative;
         type = new Gst.GObject.GType(typeNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -125,9 +127,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int destNative = default;
         int nativeResult = GesMetaContainerGetBoolean(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = destNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -159,9 +162,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         nint destNative = default;
         int nativeResult = GesMetaContainerGetDate(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = Gst.GLib.DateNative.ToDateOnly(destNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -187,9 +191,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         nint destNative = default;
         int nativeResult = GesMetaContainerGetDateTime(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = Gst.DateTime.FromNative(destNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -215,9 +220,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         double destNative = default;
         int nativeResult = GesMetaContainerGetDouble(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = destNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -243,9 +249,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         float destNative = default;
         int nativeResult = GesMetaContainerGetFloat(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = destNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -271,9 +278,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int destNative = default;
         int nativeResult = GesMetaContainerGetInt(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = destNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -299,9 +307,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         long destNative = default;
         int nativeResult = GesMetaContainerGetInt64(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = destNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -322,8 +331,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GesMetaContainerGetMarkerList(container.Handle, keyScope.Pointer);
+        GES.MarkerList? result = Gst.GObject.Object.FromNative<GES.MarkerList>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(container);
-        return Gst.GObject.Object.FromNative<GES.MarkerList>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the current value of the specified field of the meta container.</summary>
@@ -342,8 +352,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GesMetaContainerGetMeta(container.Handle, keyScope.Pointer);
+        Gst.GObject.Value result = Gst.GObject.Value.CopyFrom(nativeResult);
         System.GC.KeepAlive(container);
-        return Gst.GObject.Value.CopyFrom(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -364,8 +375,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         nint nativeResult = GesMetaContainerGetString(container.Handle, metaItemScope.Pointer);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(container);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -391,9 +403,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         uint destNative = default;
         int nativeResult = GesMetaContainerGetUint(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = destNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -419,9 +432,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         ulong destNative = default;
         int nativeResult = GesMetaContainerGetUint64(container.Handle, metaItemScope.Pointer, &destNative);
-        System.GC.KeepAlive(container);
         dest = destNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>Serializes the set metadata fields of the meta container to a string.</summary>
@@ -431,9 +445,10 @@ public static unsafe partial class MetaContainerExtensions
     {
         ArgumentNullException.ThrowIfNull(container);
         nint nativeResult = GesMetaContainerMetasToString(container.Handle);
-        System.GC.KeepAlive(container);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("ges_meta_container_metas_to_string returned no value.");
+        System.GC.KeepAlive(container);
+        return result;
     }
 
     /// <summary>
@@ -474,8 +489,9 @@ public static unsafe partial class MetaContainerExtensions
         fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
         {
             int nativeResult = GesMetaContainerRegisterMeta(container.Handle, (int)flags, metaItemScope.Pointer, valuePointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(container);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -502,8 +518,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterMetaBoolean(container.Handle, (int)flags, metaItemScope.Pointer, value ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -535,8 +552,9 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         using Gst.GLib.DateScope valueScope = Gst.GLib.DateScope.Alloc(value);
         int nativeResult = GesMetaContainerRegisterMetaDate(container.Handle, (int)flags, metaItemScope.Pointer, valueScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -563,9 +581,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         ArgumentNullException.ThrowIfNull(value);
         int nativeResult = GesMetaContainerRegisterMetaDateTime(container.Handle, (int)flags, metaItemScope.Pointer, value.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
         System.GC.KeepAlive(value);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -591,8 +610,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterMetaDouble(container.Handle, (int)flags, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -618,8 +638,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterMetaFloat(container.Handle, (int)flags, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -645,8 +666,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterMetaInt(container.Handle, (int)flags, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -672,8 +694,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterMetaInt64(container.Handle, (int)flags, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -702,8 +725,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GesMetaContainerRegisterMetaString(container.Handle, (int)flags, metaItemScope.Pointer, valueScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -729,8 +753,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterMetaUint(container.Handle, (int)flags, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -756,8 +781,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterMetaUint64(container.Handle, (int)flags, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -794,8 +820,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerRegisterStaticMeta(container.Handle, (int)flags, metaItemScope.Pointer, type.Value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -813,8 +840,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerSetBoolean(container.Handle, metaItemScope.Pointer, value ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -838,8 +866,9 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         using Gst.GLib.DateScope valueScope = Gst.GLib.DateScope.Alloc(value);
         int nativeResult = GesMetaContainerSetDate(container.Handle, metaItemScope.Pointer, valueScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -858,9 +887,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         ArgumentNullException.ThrowIfNull(value);
         int nativeResult = GesMetaContainerSetDateTime(container.Handle, metaItemScope.Pointer, value.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
         System.GC.KeepAlive(value);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -878,8 +908,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerSetDouble(container.Handle, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -897,8 +928,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerSetFloat(container.Handle, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -916,8 +948,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerSetInt(container.Handle, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -935,8 +968,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerSetInt64(container.Handle, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -955,9 +989,10 @@ public static unsafe partial class MetaContainerExtensions
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         ArgumentNullException.ThrowIfNull(list);
         int nativeResult = GesMetaContainerSetMarkerList(container.Handle, metaItemScope.Pointer, list.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
         System.GC.KeepAlive(list);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -978,8 +1013,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GesMetaContainerSetString(container.Handle, metaItemScope.Pointer, valueScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -997,8 +1033,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerSetUint(container.Handle, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1016,8 +1053,9 @@ public static unsafe partial class MetaContainerExtensions
         System.Span<byte> metaItemBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope metaItemScope = Gst.Interop.GMarshal.StackUtf8(metaItem, metaItemBuffer);
         int nativeResult = GesMetaContainerSetUint64(container.Handle, metaItemScope.Pointer, value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(container);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The arguments of the <c>notify-meta</c> signal of <c>GESMetaContainer</c>.</summary>

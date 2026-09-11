@@ -68,8 +68,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPResult Close()
     {
         int nativeResult = GstRtspConnectionClose(Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -86,8 +87,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPResult ConnectUsec(long timeout)
     {
         int nativeResult = GstRtspConnectionConnectUsec(Handle, timeout);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -107,9 +109,10 @@ public sealed unsafe partial class RTSPConnection
     {
         ArgumentNullException.ThrowIfNull(response);
         int nativeResult = GstRtspConnectionConnectWithResponseUsec(Handle, timeout, response.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(response);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -132,9 +135,10 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPResult DoTunnel(Gst.Rtsp.RTSPConnection? conn2)
     {
         int nativeResult = GstRtspConnectionDoTunnel(Handle, conn2 is null ? 0 : conn2.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(conn2);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -147,8 +151,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPResult Flush(bool flush)
     {
         int nativeResult = GstRtspConnectionFlush(Handle, flush ? 1 : 0);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Close and free @conn.</summary>
@@ -156,8 +161,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPResult Free()
     {
         int nativeResult = GstRtspConnectionFree(Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the ignore_x_server_reply value.</summary>
@@ -168,8 +174,9 @@ public sealed unsafe partial class RTSPConnection
     public bool GetIgnoreXServerReply()
     {
         int nativeResult = GstRtspConnectionGetIgnoreXServerReply(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Retrieve the IP address of the other end of @conn.</summary>
@@ -180,8 +187,9 @@ public sealed unsafe partial class RTSPConnection
     public string? GetIp()
     {
         nint nativeResult = GstRtspConnectionGetIp(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the file descriptor for reading.</summary>
@@ -192,8 +200,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Gio.Socket? GetReadSocket()
     {
         nint nativeResult = GstRtspConnectionGetReadSocket(Handle);
+        Gst.Gio.Socket? result = Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_connection_get_remember_session_id</c> function.</summary>
@@ -204,8 +213,9 @@ public sealed unsafe partial class RTSPConnection
     public bool GetRememberSessionId()
     {
         int nativeResult = GstRtspConnectionGetRememberSessionId(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the TLS connection of @conn.</summary>
@@ -226,10 +236,11 @@ public sealed unsafe partial class RTSPConnection
     {
         nint errorNative = 0;
         nint nativeResult = GstRtspConnectionGetTls(Handle, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<Gst.Gio.TlsConnection>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Gio.TlsConnection result = Gst.GObject.Object.FromNative<Gst.Gio.TlsConnection>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_rtsp_connection_get_tls returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -245,8 +256,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Gio.TlsDatabase? GetTlsDatabase()
     {
         nint nativeResult = GstRtspConnectionGetTlsDatabase(Handle);
+        Gst.Gio.TlsDatabase? result = Gst.GObject.Object.FromNative<Gst.Gio.TlsDatabase>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.TlsDatabase>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -261,8 +273,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Gio.TlsInteraction? GetTlsInteraction()
     {
         nint nativeResult = GstRtspConnectionGetTlsInteraction(Handle);
+        Gst.Gio.TlsInteraction? result = Gst.GObject.Object.FromNative<Gst.Gio.TlsInteraction>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.TlsInteraction>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -286,8 +299,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Gio.TlsCertificateFlags GetTlsValidationFlags()
     {
         int nativeResult = GstRtspConnectionGetTlsValidationFlags(Handle);
+        Gst.Gio.TlsCertificateFlags result = (Gst.Gio.TlsCertificateFlags)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Gio.TlsCertificateFlags)nativeResult;
+        return result;
     }
 
     /// <summary>Get the tunnel session id the connection.</summary>
@@ -295,8 +309,9 @@ public sealed unsafe partial class RTSPConnection
     public string? GetTunnelid()
     {
         nint nativeResult = GstRtspConnectionGetTunnelid(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Retrieve the URL of the other end of @conn.</summary>
@@ -310,9 +325,10 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPUrl GetUrl()
     {
         nint nativeResult = GstRtspConnectionGetUrl(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Rtsp.RTSPUrl.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Rtsp.RTSPUrl result = Gst.Rtsp.RTSPUrl.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_rtsp_connection_get_url returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the file descriptor for writing.</summary>
@@ -323,8 +339,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Gio.Socket? GetWriteSocket()
     {
         nint nativeResult = GstRtspConnectionGetWriteSocket(Handle);
+        Gst.Gio.Socket? result = Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the tunneling state of the connection.</summary>
@@ -332,8 +349,9 @@ public sealed unsafe partial class RTSPConnection
     public bool IsTunneled()
     {
         int nativeResult = GstRtspConnectionIsTunneled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Calculate the next timeout for @conn</summary>
@@ -363,9 +381,10 @@ public sealed unsafe partial class RTSPConnection
     {
         int reventsNative = default;
         int nativeResult = GstRtspConnectionPollUsec(Handle, (int)events, &reventsNative, timeout);
-        System.GC.KeepAlive(this);
         revents = (Gst.Rtsp.RTSPEvent)reventsNative;
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -384,8 +403,9 @@ public sealed unsafe partial class RTSPConnection
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstRtspConnectionReadUsec(Handle, dataPointer, (uint)data.Length, timeout);
+            Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
             System.GC.KeepAlive(this);
-            return (Gst.Rtsp.RTSPResult)nativeResult;
+            return result;
         }
     }
 
@@ -404,9 +424,10 @@ public sealed unsafe partial class RTSPConnection
     {
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstRtspConnectionReceiveUsec(Handle, message.Handle, timeout);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(message);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Reset the timeout of @conn.</summary>
@@ -414,8 +435,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPResult ResetTimeout()
     {
         int nativeResult = GstRtspConnectionResetTimeout(Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -433,9 +455,10 @@ public sealed unsafe partial class RTSPConnection
     {
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstRtspConnectionSendUsec(Handle, message.Handle, timeout);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(message);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -473,8 +496,9 @@ public sealed unsafe partial class RTSPConnection
         System.Span<byte> passBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope passScope = Gst.Interop.GMarshal.StackUtf8(pass, passBuffer);
         int nativeResult = GstRtspConnectionSetAuth(Handle, (int)method, userScope.Pointer, passScope.Pointer);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -557,8 +581,9 @@ public sealed unsafe partial class RTSPConnection
         System.Span<byte> hostBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope hostScope = Gst.Interop.GMarshal.StackUtf8(host, hostBuffer);
         int nativeResult = GstRtspConnectionSetProxy(Handle, hostScope.Pointer, port);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Configure @conn to use the specified DSCP value.</summary>
@@ -567,8 +592,9 @@ public sealed unsafe partial class RTSPConnection
     public Gst.Rtsp.RTSPResult SetQosDscp(uint qosDscp)
     {
         int nativeResult = GstRtspConnectionSetQosDscp(Handle, qosDscp);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -636,8 +662,9 @@ public sealed unsafe partial class RTSPConnection
     public bool SetTlsValidationFlags(Gst.Gio.TlsCertificateFlags flags)
     {
         int nativeResult = GstRtspConnectionSetTlsValidationFlags(Handle, (int)flags);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -667,8 +694,9 @@ public sealed unsafe partial class RTSPConnection
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstRtspConnectionWriteUsec(Handle, dataPointer, (uint)data.Length, timeout);
+            Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
             System.GC.KeepAlive(this);
-            return (Gst.Rtsp.RTSPResult)nativeResult;
+            return result;
         }
     }
 
@@ -685,10 +713,11 @@ public sealed unsafe partial class RTSPConnection
         ArgumentNullException.ThrowIfNull(socket);
         nint connNative = default;
         int nativeResult = GstRtspConnectionAccept(socket.Handle, &connNative, cancellable is null ? 0 : cancellable.Handle);
+        conn = Gst.Rtsp.RTSPConnection.FromNative(connNative);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(socket);
         System.GC.KeepAlive(cancellable);
-        conn = Gst.Rtsp.RTSPConnection.FromNative(connNative);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -707,9 +736,10 @@ public sealed unsafe partial class RTSPConnection
         ArgumentNullException.ThrowIfNull(url);
         nint connNative = default;
         int nativeResult = GstRtspConnectionCreate(url.Handle, &connNative);
-        System.GC.KeepAlive(url);
         conn = Gst.Rtsp.RTSPConnection.FromNative(connNative);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(url);
+        return result;
     }
 
     /// <summary>
@@ -734,9 +764,10 @@ public sealed unsafe partial class RTSPConnection
         using Gst.Interop.Utf8Scope initialBufferScope = Gst.Interop.GMarshal.StackUtf8(initialBuffer, initialBufferBuffer);
         nint connNative = default;
         int nativeResult = GstRtspConnectionCreateFromSocket(socket.Handle, ipScope.Pointer, port, initialBufferScope.Pointer, &connNative);
-        System.GC.KeepAlive(socket);
         conn = Gst.Rtsp.RTSPConnection.FromNative(connNative);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(socket);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_connection_add_extra_http_request_header</c> entry point.</summary>

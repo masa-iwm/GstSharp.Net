@@ -59,8 +59,9 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     public bool CanMonitor()
     {
         int nativeResult = GstDeviceProviderCanMonitor(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -123,9 +124,10 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     public Gst.Bus GetBus()
     {
         nint nativeResult = GstDeviceProviderGetBus(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Bus result = Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_device_provider_get_bus returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -145,7 +147,6 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Device> GetDevices()
     {
         nint nativeResult = GstDeviceProviderGetDevices(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Device> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -156,6 +157,7 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -167,8 +169,9 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     public Gst.DeviceProviderFactory? GetFactory()
     {
         nint nativeResult = GstDeviceProviderGetFactory(Handle);
+        Gst.DeviceProviderFactory? result = Gst.GObject.Object.FromNative<Gst.DeviceProviderFactory>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.DeviceProviderFactory>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -182,8 +185,9 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     public string[]? GetHiddenProviders()
     {
         nint nativeResult = GstDeviceProviderGetHiddenProviders(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>Get metadata with @key in @provider.</summary>
@@ -195,9 +199,10 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstDeviceProviderGetMetadata(Handle, keyScope.Pointer);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_device_provider_get_metadata returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Make @provider hide the devices from the factory with @name.</summary>
@@ -223,8 +228,9 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     public bool IsStarted()
     {
         int nativeResult = GstDeviceProviderIsStarted(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -249,8 +255,9 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
     public bool Start()
     {
         int nativeResult = GstDeviceProviderStart(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -301,8 +308,9 @@ public abstract unsafe partial class DeviceProvider : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstDeviceProviderRegister(plugin is null ? 0 : plugin.Handle, nameScope.Pointer, rank, type.Value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(plugin);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The arguments of the <c>provider-hidden</c> signal of <c>GstDeviceProvider</c>.</summary>

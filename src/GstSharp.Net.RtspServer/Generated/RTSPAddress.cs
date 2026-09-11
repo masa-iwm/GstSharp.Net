@@ -120,9 +120,10 @@ public sealed unsafe partial class RTSPAddress : Gst.GObject.Boxed
     public Gst.RtspServer.RTSPAddress Copy()
     {
         nint nativeResult = GstRtspAddressCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.RtspServer.RTSPAddress result = Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtsp_address_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_address_copy</c> entry point.</summary>

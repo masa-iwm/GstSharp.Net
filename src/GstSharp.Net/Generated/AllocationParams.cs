@@ -115,8 +115,9 @@ public sealed unsafe partial class AllocationParams : Gst.GObject.Boxed
     public Gst.AllocationParams? Copy()
     {
         nint nativeResult = GstAllocationParamsCopy(Handle);
+        Gst.AllocationParams? result = Gst.AllocationParams.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.AllocationParams.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Initialize @params to its default values</summary>

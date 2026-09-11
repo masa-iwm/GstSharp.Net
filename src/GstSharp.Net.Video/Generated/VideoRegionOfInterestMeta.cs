@@ -147,8 +147,8 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
         nuint sType = s.BoxedType.Value;
         nint sOwned = Gst.Interop.GObjectNative.BoxedCopy(sType, sNative);
         GstVideoRegionOfInterestMetaAddParam(instanceHandle, sOwned);
-        System.GC.KeepAlive(this);
         s.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -168,8 +168,9 @@ public sealed unsafe partial class VideoRegionOfInterestMeta
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstVideoRegionOfInterestMetaGetParam(Handle, nameScope.Pointer);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_video_region_of_interest_meta_get_info</c> function.</summary>

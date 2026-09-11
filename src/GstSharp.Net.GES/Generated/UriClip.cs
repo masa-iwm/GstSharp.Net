@@ -71,9 +71,10 @@ public unsafe partial class UriClip : GES.SourceClip, GES.IExtractable, GES.IMet
     public string GetUri()
     {
         nint nativeResult = GesUriClipGetUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("ges_uri_clip_get_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Lets you know if @self is an image or not.</summary>
@@ -81,8 +82,9 @@ public unsafe partial class UriClip : GES.SourceClip, GES.IExtractable, GES.IMet
     public bool IsImage()
     {
         int nativeResult = GesUriClipIsImage(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Lets you know if the audio track of @self is muted or not.</summary>
@@ -90,8 +92,9 @@ public unsafe partial class UriClip : GES.SourceClip, GES.IExtractable, GES.IMet
     public bool IsMuted()
     {
         int nativeResult = GesUriClipIsMuted(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets whether the clip is a still image or not.</summary>

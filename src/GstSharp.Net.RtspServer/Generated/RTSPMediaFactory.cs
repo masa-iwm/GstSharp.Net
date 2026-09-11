@@ -88,9 +88,10 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(url);
         nint nativeResult = GstRtspMediaFactoryConstruct(Handle, url.Handle);
+        Gst.RtspServer.RTSPMedia? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMedia>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(url);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMedia>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -110,9 +111,10 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(url);
         nint nativeResult = GstRtspMediaFactoryCreateElement(Handle, url.Handle);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(url);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPAddressPool used as the address pool of @factory.</summary>
@@ -123,8 +125,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.RtspServer.RTSPAddressPool? GetAddressPool()
     {
         nint nativeResult = GstRtspMediaFactoryGetAddressPool(Handle);
+        Gst.RtspServer.RTSPAddressPool? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAddressPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAddressPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the kernel UDP buffer size.</summary>
@@ -144,8 +147,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.Clock? GetClock()
     {
         nint nativeResult = GstRtspMediaFactoryGetClock(Handle);
+        Gst.Clock? result = Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_media_factory_get_do_retransmission</c> function.</summary>
@@ -153,8 +157,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool GetDoRetransmission()
     {
         int nativeResult = GstRtspMediaFactoryGetDoRetransmission(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the configured media DSCP QoS.</summary>
@@ -171,8 +176,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool GetEnsureKeyunitOnStart()
     {
         int nativeResult = GstRtspMediaFactoryGetEnsureKeyunitOnStart(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get ensure-keyunit-on-start-timeout time.</summary>
@@ -204,8 +210,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public string? GetLaunch()
     {
         nint nativeResult = GstRtspMediaFactoryGetLaunch(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the the maximum time-to-live value of outgoing multicast packets.</summary>
@@ -225,8 +232,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.GObject.GType GetMediaGtype()
     {
         nuint nativeResult = GstRtspMediaFactoryGetMediaGtype(Handle);
+        Gst.GObject.GType result = new Gst.GObject.GType(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.GObject.GType(nativeResult);
+        return result;
     }
 
     /// <summary>Get the multicast interface used for @factory.</summary>
@@ -237,8 +245,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public string? GetMulticastIface()
     {
         nint nativeResult = GstRtspMediaFactoryGetMulticastIface(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the permissions object from @factory.</summary>
@@ -246,8 +255,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.RtspServer.RTSPPermissions? GetPermissions()
     {
         nint nativeResult = GstRtspMediaFactoryGetPermissions(Handle);
+        Gst.RtspServer.RTSPPermissions? result = Gst.RtspServer.RTSPPermissions.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.RtspServer.RTSPPermissions.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the allowed profiles of @factory.</summary>
@@ -255,8 +265,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.Rtsp.RTSPProfile GetProfiles()
     {
         int nativeResult = GstRtspMediaFactoryGetProfiles(Handle);
+        Gst.Rtsp.RTSPProfile result = (Gst.Rtsp.RTSPProfile)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPProfile)nativeResult;
+        return result;
     }
 
     /// <summary>Get the allowed protocols of @factory.</summary>
@@ -264,8 +275,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.Rtsp.RTSPLowerTrans GetProtocols()
     {
         int nativeResult = GstRtspMediaFactoryGetProtocols(Handle);
+        Gst.Rtsp.RTSPLowerTrans result = (Gst.Rtsp.RTSPLowerTrans)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPLowerTrans)nativeResult;
+        return result;
     }
 
     /// <summary>Gets if and how the media clock should be published according to RFC7273.</summary>
@@ -273,8 +285,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.RtspServer.RTSPPublishClockMode GetPublishClockMode()
     {
         int nativeResult = GstRtspMediaFactoryGetPublishClockMode(Handle);
+        Gst.RtspServer.RTSPPublishClockMode result = (Gst.RtspServer.RTSPPublishClockMode)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.RtspServer.RTSPPublishClockMode)nativeResult;
+        return result;
     }
 
     /// <summary>Get the time that is stored for retransmission purposes</summary>
@@ -282,8 +295,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.ClockTime GetRetransmissionTime()
     {
         ulong nativeResult = GstRtspMediaFactoryGetRetransmissionTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get how media created from this factory will be suspended.</summary>
@@ -291,8 +305,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.RtspServer.RTSPSuspendMode GetSuspendMode()
     {
         int nativeResult = GstRtspMediaFactoryGetSuspendMode(Handle);
+        Gst.RtspServer.RTSPSuspendMode result = (Gst.RtspServer.RTSPSuspendMode)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.RtspServer.RTSPSuspendMode)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -303,8 +318,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public Gst.RtspServer.RTSPTransportMode GetTransportMode()
     {
         int nativeResult = GstRtspMediaFactoryGetTransportMode(Handle);
+        Gst.RtspServer.RTSPTransportMode result = (Gst.RtspServer.RTSPTransportMode)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.RtspServer.RTSPTransportMode)nativeResult;
+        return result;
     }
 
     /// <summary>Check if multicast sockets are configured to be bound to multicast addresses.</summary>
@@ -312,8 +328,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool IsBindMcastAddress()
     {
         int nativeResult = GstRtspMediaFactoryIsBindMcastAddress(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if created media will send and receive RTCP</summary>
@@ -321,8 +338,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool IsEnableRtcp()
     {
         int nativeResult = GstRtspMediaFactoryIsEnableRtcp(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -333,8 +351,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool IsEosShutdown()
     {
         int nativeResult = GstRtspMediaFactoryIsEosShutdown(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get if media created from this factory can be shared between clients.</summary>
@@ -342,8 +361,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool IsShared()
     {
         int nativeResult = GstRtspMediaFactoryIsShared(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_media_factory_is_stop_on_disonnect</c> function.</summary>
@@ -351,8 +371,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool IsStopOnDisonnect()
     {
         int nativeResult = GstRtspMediaFactoryIsStopOnDisonnect(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>configure @pool to be used as the address pool of @factory.</summary>
@@ -491,8 +512,9 @@ public unsafe partial class RTSPMediaFactory : Gst.GObject.Object
     public bool SetMaxMcastTtl(uint ttl)
     {
         int nativeResult = GstRtspMediaFactorySetMaxMcastTtl(Handle, ttl);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

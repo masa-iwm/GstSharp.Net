@@ -101,9 +101,10 @@ public unsafe partial class AudioCdSrc : Gst.Base.PushSrc, Gst.IURIHandler
     {
         ArgumentNullException.ThrowIfNull(track);
         int nativeResult = GstAudioCdSrcAddTrack(Handle, track.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(track);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>device</c> property.</summary>

@@ -83,9 +83,10 @@ public abstract unsafe partial class Allocator : Gst.Object
     public Gst.Memory? Alloc(nuint size, Gst.AllocationParams? @params)
     {
         nint nativeResult = GstAllocatorAlloc(Handle, size, @params is null ? 0 : @params.Handle);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@params);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>

@@ -66,8 +66,9 @@ public sealed unsafe partial class SDPBandwidth
     public Gst.Sdp.SDPResult Clear()
     {
         int nativeResult = GstSdpBandwidthClear(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set bandwidth information in @bw.</summary>
@@ -80,8 +81,9 @@ public sealed unsafe partial class SDPBandwidth
         System.Span<byte> bwtypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope bwtypeScope = Gst.Interop.GMarshal.StackUtf8(bwtype, bwtypeBuffer);
         int nativeResult = GstSdpBandwidthSet(Handle, bwtypeScope.Pointer, bandwidth);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_sdp_bandwidth_clear</c> entry point.</summary>

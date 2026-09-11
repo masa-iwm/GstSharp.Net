@@ -72,8 +72,9 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
     public Gst.RtspServer.RTSPSession? Create()
     {
         nint nativeResult = GstRtspSessionPoolCreate(Handle);
+        Gst.RtspServer.RTSPSession? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSession>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSession>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -107,7 +108,6 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
         try
         {
             nint nativeResult = GstRtspSessionPoolFilter(instanceHandle, func is null ? 0 : Gst.RtspServer.RTSPSessionPoolFilterFuncTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.RtspServer.RTSPSession> result = new(nativeItems.Length);
             foreach (nint nativeItem in nativeItems)
@@ -118,6 +118,7 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
                 }
             }
 
+            System.GC.KeepAlive(this);
             return result;
         }
         finally
@@ -141,8 +142,9 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
         System.Span<byte> sessionidBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope sessionidScope = Gst.Interop.GMarshal.StackUtf8(sessionid, sessionidBuffer);
         nint nativeResult = GstRtspSessionPoolFind(Handle, sessionidScope.Pointer);
+        Gst.RtspServer.RTSPSession? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSession>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSession>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -173,9 +175,10 @@ public unsafe partial class RTSPSessionPool : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(sess);
         int nativeResult = GstRtspSessionPoolRemove(Handle, sess.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sess);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

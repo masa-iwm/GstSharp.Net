@@ -137,9 +137,10 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public static Gst.Video.VideoTimeCode New(uint fpsN, uint fpsD, Gst.GLib.DateTime? latestDailyJam, Gst.Video.VideoTimeCodeFlags flags, uint hours, uint minutes, uint seconds, uint frames, uint fieldCount)
     {
         nint nativeResult = GstVideoTimeCodeNew(fpsN, fpsD, latestDailyJam is null ? 0 : latestDailyJam.Handle, (int)flags, hours, minutes, seconds, frames, fieldCount);
-        System.GC.KeepAlive(latestDailyJam);
-        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoTimeCode result = Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_time_code_new returned no value.");
+        System.GC.KeepAlive(latestDailyJam);
+        return result;
     }
 
     /// <summary>The <c>gst_video_time_code_new_empty</c> function.</summary>
@@ -172,9 +173,10 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(dt);
         nint nativeResult = GstVideoTimeCodeNewFromDateTime(fpsN, fpsD, dt.Handle, (int)flags, fieldCount);
-        System.GC.KeepAlive(dt);
-        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoTimeCode result = Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_time_code_new_from_date_time returned no value.");
+        System.GC.KeepAlive(dt);
+        return result;
     }
 
     /// <summary>
@@ -194,8 +196,9 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(dt);
         nint nativeResult = GstVideoTimeCodeNewFromDateTimeFull(fpsN, fpsD, dt.Handle, (int)flags, fieldCount);
+        Gst.Video.VideoTimeCode? result = Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(dt);
-        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_video_time_code_new_from_string</c> function.</summary>
@@ -247,9 +250,10 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(tcInter);
         nint nativeResult = GstVideoTimeCodeAddInterval(Handle, tcInter.Handle);
+        Gst.Video.VideoTimeCode? result = Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(tcInter);
-        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -283,9 +287,10 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public Gst.Video.VideoTimeCode Copy()
     {
         nint nativeResult = GstVideoTimeCodeCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoTimeCode result = Gst.Video.VideoTimeCode.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_time_code_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_video_time_code_frames_since_daily_jam</c> function.</summary>
@@ -373,9 +378,10 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(dt);
         int nativeResult = GstVideoTimeCodeInitFromDateTimeFull(Handle, fpsN, fpsD, dt.Handle, (int)flags, fieldCount);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(dt);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_video_time_code_is_valid</c> function.</summary>
@@ -386,8 +392,9 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public bool IsValid()
     {
         int nativeResult = GstVideoTimeCodeIsValid(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_video_time_code_nsec_since_daily_jam</c> function.</summary>
@@ -407,8 +414,9 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public Gst.GLib.DateTime? ToDateTime()
     {
         nint nativeResult = GstVideoTimeCodeToDateTime(Handle);
+        Gst.GLib.DateTime? result = Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_video_time_code_to_string</c> function.</summary>
@@ -420,9 +428,10 @@ public sealed unsafe partial class VideoTimeCode : Gst.GObject.Boxed
     public override string ToString()
     {
         nint nativeResult = GstVideoTimeCodeToString(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_video_time_code_to_string returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_video_time_code_new</c> entry point.</summary>

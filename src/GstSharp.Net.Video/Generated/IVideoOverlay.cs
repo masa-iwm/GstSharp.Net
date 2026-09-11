@@ -373,8 +373,9 @@ public static unsafe partial class VideoOverlayExtensions
     {
         ArgumentNullException.ThrowIfNull(overlay);
         int nativeResult = GstVideoOverlaySetRenderRectangle(overlay.Handle, x, y, width, height);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(overlay);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -422,8 +423,9 @@ public static unsafe partial class VideoOverlayExtensions
         fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
         {
             int nativeResult = GstVideoOverlaySetProperty(@object.Handle, lastPropId, propertyId, valuePointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(@object);
-            return nativeResult != 0;
+            return result;
         }
     }
 

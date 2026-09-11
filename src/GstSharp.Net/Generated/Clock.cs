@@ -154,9 +154,10 @@ public abstract unsafe partial class Clock : Gst.Object
     {
         double rSquaredNative = default;
         int nativeResult = GstClockAddObservation(Handle, observationInternal.Nanoseconds, observationExternal.Nanoseconds, &rSquaredNative);
-        System.GC.KeepAlive(this);
         rSquared = rSquaredNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -189,13 +190,14 @@ public abstract unsafe partial class Clock : Gst.Object
         ulong rateNumNative = default;
         ulong rateDenomNative = default;
         int nativeResult = GstClockAddObservationUnapplied(Handle, observationInternal.Nanoseconds, observationExternal.Nanoseconds, &rSquaredNative, &@internalNative, &externalNative, &rateNumNative, &rateDenomNative);
-        System.GC.KeepAlive(this);
         rSquared = rSquaredNative;
         @internal = new Gst.ClockTime(@internalNative);
         external = new Gst.ClockTime(externalNative);
         rateNum = new Gst.ClockTime(rateNumNative);
         rateDenom = new Gst.ClockTime(rateDenomNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -212,8 +214,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime AdjustUnlocked(Gst.ClockTime @internal)
     {
         ulong nativeResult = GstClockAdjustUnlocked(Handle, @internal.Nanoseconds);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -238,8 +241,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime AdjustWithCalibration(Gst.ClockTime internalTarget, Gst.ClockTime cinternal, Gst.ClockTime cexternal, Gst.ClockTime cnum, Gst.ClockTime cdenom)
     {
         ulong nativeResult = GstClockAdjustWithCalibration(Handle, internalTarget.Nanoseconds, cinternal.Nanoseconds, cexternal.Nanoseconds, cnum.Nanoseconds, cdenom.Nanoseconds);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -263,11 +267,11 @@ public abstract unsafe partial class Clock : Gst.Object
         ulong rateNumNative = default;
         ulong rateDenomNative = default;
         GstClockGetCalibration(Handle, &@internalNative, &externalNative, &rateNumNative, &rateDenomNative);
-        System.GC.KeepAlive(this);
         @internal = new Gst.ClockTime(@internalNative);
         external = new Gst.ClockTime(externalNative);
         rateNum = new Gst.ClockTime(rateNumNative);
         rateDenom = new Gst.ClockTime(rateDenomNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -281,8 +285,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime GetInternalTime()
     {
         ulong nativeResult = GstClockGetInternalTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -296,8 +301,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.Clock? GetMaster()
     {
         nint nativeResult = GstClockGetMaster(Handle);
+        Gst.Clock? result = Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -308,8 +314,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime GetResolution()
     {
         ulong nativeResult = GstClockGetResolution(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -324,8 +331,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime GetTime()
     {
         ulong nativeResult = GstClockGetTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the amount of time that master and slave clocks are sampled.</summary>
@@ -333,8 +341,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime GetTimeout()
     {
         ulong nativeResult = GstClockGetTimeout(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -345,8 +354,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public bool IsSynced()
     {
         int nativeResult = GstClockIsSynced(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -363,8 +373,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public bool IsSystemMonotonic()
     {
         int nativeResult = GstClockIsSystemMonotonic(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -415,8 +426,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public bool PeriodicIdReinit(nint id, Gst.ClockTime startTime, Gst.ClockTime interval)
     {
         int nativeResult = GstClockPeriodicIdReinit(Handle, id, startTime.Nanoseconds, interval.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -487,9 +499,10 @@ public abstract unsafe partial class Clock : Gst.Object
     public bool SetMaster(Gst.Clock? master)
     {
         int nativeResult = GstClockSetMaster(Handle, master is null ? 0 : master.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(master);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -504,8 +517,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime SetResolution(Gst.ClockTime resolution)
     {
         ulong nativeResult = GstClockSetResolution(Handle, resolution.Nanoseconds);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -549,8 +563,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public bool SingleShotIdReinit(nint id, Gst.ClockTime time)
     {
         int nativeResult = GstClockSingleShotIdReinit(Handle, id, time.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -567,8 +582,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime UnadjustUnlocked(Gst.ClockTime external)
     {
         ulong nativeResult = GstClockUnadjustUnlocked(Handle, external.Nanoseconds);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -592,8 +608,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public Gst.ClockTime UnadjustWithCalibration(Gst.ClockTime externalTarget, Gst.ClockTime cinternal, Gst.ClockTime cexternal, Gst.ClockTime cnum, Gst.ClockTime cdenom)
     {
         ulong nativeResult = GstClockUnadjustWithCalibration(Handle, externalTarget.Nanoseconds, cinternal.Nanoseconds, cexternal.Nanoseconds, cnum.Nanoseconds, cdenom.Nanoseconds);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -613,8 +630,9 @@ public abstract unsafe partial class Clock : Gst.Object
     public bool WaitForSync(Gst.ClockTime timeout)
     {
         int nativeResult = GstClockWaitForSync(Handle, timeout.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -695,8 +713,9 @@ public abstract unsafe partial class Clock : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(clock);
         int nativeResult = GstClockIdUsesClock(id, clock.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(clock);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

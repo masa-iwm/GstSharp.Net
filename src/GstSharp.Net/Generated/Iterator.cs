@@ -163,9 +163,10 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
     public Gst.Iterator Copy()
     {
         nint nativeResult = GstIteratorCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Iterator result = Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_iterator_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -222,8 +223,9 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
             fixed (Gst.GObject.GValueNative* retPointer = &ret.NativeValue)
             {
                 int nativeResult = GstIteratorFold(instanceHandle, Gst.IteratorFoldFunctionTrampoline.Pointer, retPointer, funcState.UserData);
+                Gst.IteratorResult result = (Gst.IteratorResult)nativeResult;
                 System.GC.KeepAlive(this);
-                return (Gst.IteratorResult)nativeResult;
+                return result;
             }
         }
         finally
@@ -264,8 +266,9 @@ public sealed unsafe partial class Iterator : Gst.GObject.Boxed
         try
         {
             int nativeResult = GstIteratorForeach(instanceHandle, Gst.IteratorForeachFunctionTrampoline.Pointer, funcState.UserData);
+            Gst.IteratorResult result = (Gst.IteratorResult)nativeResult;
             System.GC.KeepAlive(this);
-            return (Gst.IteratorResult)nativeResult;
+            return result;
         }
         finally
         {

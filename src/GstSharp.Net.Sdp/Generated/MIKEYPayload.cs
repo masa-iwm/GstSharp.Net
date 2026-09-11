@@ -105,9 +105,10 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         nint newpayNative = newpay.Handle;
         nint newpayOwned = Gst.GstNative.MiniObjectRef(newpayNative);
         int nativeResult = GstMikeyPayloadKemacAddSub(instanceHandle, newpayOwned);
-        System.GC.KeepAlive(this);
         newpay.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -136,8 +137,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     public Gst.Sdp.MIKEYPayload? KemacGetSub(uint idx)
     {
         nint nativeResult = GstMikeyPayloadKemacGetSub(Handle, idx);
+        Gst.Sdp.MIKEYPayload? result = Gst.Sdp.MIKEYPayload.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Sdp.MIKEYPayload.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Remove the sub payload at @idx in @payload.</summary>
@@ -146,8 +148,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     public bool KemacRemoveSub(uint idx)
     {
         int nativeResult = GstMikeyPayloadKemacRemoveSub(Handle, idx);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -160,8 +163,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     public bool KemacSet(Gst.Sdp.MIKEYEncAlg encAlg, Gst.Sdp.MIKEYMacAlg macAlg)
     {
         int nativeResult = GstMikeyPayloadKemacSet(Handle, (int)encAlg, (int)macAlg);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set the key validity period in the %GST_MIKEY_PT_KEY_DATA @payload.</summary>
@@ -193,8 +197,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
             fixed (byte* vtDataPointer = vtData)
             {
                 int nativeResult = GstMikeyPayloadKeyDataSetInterval(Handle, (byte)vfData.Length, vfDataPointer, (byte)vtData.Length, vtDataPointer);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(this);
-                return nativeResult != 0;
+                return result;
             }
         }
     }
@@ -220,8 +225,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         fixed (byte* keyDataPointer = keyData)
         {
             int nativeResult = GstMikeyPayloadKeyDataSetKey(Handle, (int)keyType, (ushort)keyData.Length, keyDataPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -245,8 +251,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         fixed (byte* saltDataPointer = saltData)
         {
             int nativeResult = GstMikeyPayloadKeyDataSetSalt(Handle, (ushort)saltData.Length, saltDataPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -267,8 +274,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         fixed (byte* spiDataPointer = spiData)
         {
             int nativeResult = GstMikeyPayloadKeyDataSetSpi(Handle, (byte)spiData.Length, spiDataPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -293,8 +301,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstMikeyPayloadPkeSet(Handle, (int)c, (ushort)data.Length, dataPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -315,8 +324,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         fixed (byte* randPointer = rand)
         {
             int nativeResult = GstMikeyPayloadRandSet(Handle, (byte)rand.Length, randPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -341,8 +351,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
         fixed (byte* valPointer = val)
         {
             int nativeResult = GstMikeyPayloadSpAddParam(Handle, type, (byte)val.Length, valPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -367,8 +378,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     public bool SpRemoveParam(uint idx)
     {
         int nativeResult = GstMikeyPayloadSpRemoveParam(Handle, idx);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set the Security Policy parameters for @payload.</summary>
@@ -378,8 +390,9 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     public bool SpSet(uint policy, Gst.Sdp.MIKEYSecProto proto)
     {
         int nativeResult = GstMikeyPayloadSpSet(Handle, policy, (int)proto);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_mikey_payload_new</c> entry point.</summary>

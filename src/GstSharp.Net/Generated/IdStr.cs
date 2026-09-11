@@ -86,9 +86,10 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     public string AsStr()
     {
         nint nativeResult = GstIdStrAsStr(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_id_str_as_str returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Clears @s and sets it to the empty string.</summary>
@@ -109,9 +110,10 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     public Gst.IdStr Copy()
     {
         nint nativeResult = GstIdStrCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.IdStr result = Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_id_str_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Copies @s into @d.</summary>
@@ -165,9 +167,10 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(s2);
         int nativeResult = GstIdStrIsEqual(Handle, s2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(s2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Compares @s1 and @s2 for equality.</summary>
@@ -182,8 +185,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         System.Span<byte> s2Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope s2Scope = Gst.Interop.GMarshal.StackUtf8(s2, s2Buffer);
         int nativeResult = GstIdStrIsEqualToStr(Handle, s2Scope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -206,8 +210,9 @@ public sealed unsafe partial class IdStr : Gst.GObject.Boxed
         System.Span<byte> s2Buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope s2Scope = Gst.Interop.GMarshal.StackUtf8(s2, s2Buffer);
         int nativeResult = GstIdStrIsEqualToStrWithLen(Handle, s2Scope.Pointer, len);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Moves @s into @d and resets @s.</summary>

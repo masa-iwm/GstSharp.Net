@@ -132,9 +132,10 @@ public sealed unsafe partial class VideoTimeCodeInterval : Gst.GObject.Boxed
     public Gst.Video.VideoTimeCodeInterval Copy()
     {
         nint nativeResult = GstVideoTimeCodeIntervalCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoTimeCodeInterval.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoTimeCodeInterval result = Gst.Video.VideoTimeCodeInterval.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_time_code_interval_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Initializes @tc with the given values.</summary>

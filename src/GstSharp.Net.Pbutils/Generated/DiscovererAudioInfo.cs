@@ -85,8 +85,9 @@ public unsafe partial class DiscovererAudioInfo : Gst.Pbutils.DiscovererStreamIn
     public string? GetLanguage()
     {
         nint nativeResult = GstDiscovererAudioInfoGetLanguage(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_audio_info_get_max_bitrate</c> function.</summary>

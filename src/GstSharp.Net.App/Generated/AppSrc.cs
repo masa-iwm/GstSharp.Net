@@ -130,8 +130,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.FlowReturn EndOfStream()
     {
         int nativeResult = GstAppSrcEndOfStream(Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>Get the configured caps on @appsrc.</summary>
@@ -139,8 +140,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstAppSrcGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the number of currently queued buffers inside @appsrc.</summary>
@@ -166,8 +168,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.ClockTime GetCurrentLevelTime()
     {
         ulong nativeResult = GstAppSrcGetCurrentLevelTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -178,8 +181,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GstAppSrcGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Check if appsrc will emit the "new-preroll" and "new-buffer" signals.</summary>
@@ -190,8 +194,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public bool GetEmitSignals()
     {
         int nativeResult = GstAppSrcGetEmitSignals(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Retrieve the min and max latencies in @min and @max respectively.</summary>
@@ -202,9 +207,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
         ulong minNative = default;
         ulong maxNative = default;
         GstAppSrcGetLatency(Handle, &minNative, &maxNative);
-        System.GC.KeepAlive(this);
         min = minNative;
         max = maxNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -215,8 +220,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.App.AppLeakyType GetLeakyType()
     {
         int nativeResult = GstAppSrcGetLeakyType(Handle);
+        Gst.App.AppLeakyType result = (Gst.App.AppLeakyType)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.App.AppLeakyType)nativeResult;
+        return result;
     }
 
     /// <summary>Get the maximum amount of buffers that can be queued in @appsrc.</summary>
@@ -242,8 +248,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.ClockTime GetMaxTime()
     {
         ulong nativeResult = GstAppSrcGetMaxTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -266,8 +273,9 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     public Gst.App.AppStreamType GetStreamType()
     {
         int nativeResult = GstAppSrcGetStreamType(Handle);
+        Gst.App.AppStreamType result = (Gst.App.AppStreamType)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.App.AppStreamType)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -311,9 +319,10 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
         nint bufferListNative = bufferList.Handle;
         nint bufferListOwned = Gst.GstNative.MiniObjectRef(bufferListNative);
         int nativeResult = GstAppSrcPushBufferList(instanceHandle, bufferListOwned);
-        System.GC.KeepAlive(this);
         bufferList.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -345,9 +354,10 @@ public unsafe partial class AppSrc : Gst.Base.BaseSrc, Gst.IURIHandler
     {
         ArgumentNullException.ThrowIfNull(sample);
         int nativeResult = GstAppSrcPushSample(Handle, sample.Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sample);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>

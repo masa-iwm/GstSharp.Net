@@ -50,8 +50,9 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     public string? GetRtpinfo(Gst.ClockTime startTime)
     {
         nint nativeResult = GstRtspStreamTransportGetRtpinfo(Handle, startTime.Nanoseconds);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPStream used when constructing @trans.</summary>
@@ -59,8 +60,9 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     public Gst.RtspServer.RTSPStream? GetStream()
     {
         nint nativeResult = GstRtspStreamTransportGetStream(Handle);
+        Gst.RtspServer.RTSPStream? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStream>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStream>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the transport configured in @trans.</summary>
@@ -71,8 +73,9 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     public Gst.Rtsp.RTSPTransport? GetTransport()
     {
         nint nativeResult = GstRtspStreamTransportGetTransport(Handle);
+        Gst.Rtsp.RTSPTransport? result = Gst.Rtsp.RTSPTransport.FromNative(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Rtsp.RTSPTransport.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Get the url configured in @trans.</summary>
@@ -86,8 +89,9 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     public Gst.Rtsp.RTSPUrl? GetUrl()
     {
         nint nativeResult = GstRtspStreamTransportGetUrl(Handle);
+        Gst.Rtsp.RTSPUrl? result = Gst.Rtsp.RTSPUrl.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Rtsp.RTSPUrl.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Check if @trans is timed out.</summary>
@@ -95,8 +99,9 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     public bool IsTimedOut()
     {
         int nativeResult = GstRtspStreamTransportIsTimedOut(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Signal the installed keep_alive callback for @trans.</summary>
@@ -146,9 +151,10 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstRtspStreamTransportRecvData(instanceHandle, channel, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Send @buffer to the installed RTCP callback for @trans.</summary>
@@ -158,9 +164,10 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(buffer);
         int nativeResult = GstRtspStreamTransportSendRtcp(Handle, buffer.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(buffer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Send @buffer_list to the installed RTCP callback for @trans.</summary>
@@ -170,9 +177,10 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(bufferList);
         int nativeResult = GstRtspStreamTransportSendRtcpList(Handle, bufferList.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bufferList);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Send @buffer to the installed RTP callback for @trans.</summary>
@@ -182,9 +190,10 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(buffer);
         int nativeResult = GstRtspStreamTransportSendRtp(Handle, buffer.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(buffer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Send @buffer_list to the installed RTP callback for @trans.</summary>
@@ -194,9 +203,10 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(bufferList);
         int nativeResult = GstRtspStreamTransportSendRtpList(Handle, bufferList.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bufferList);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Activate or deactivate datatransfer configured in @trans.</summary>
@@ -205,8 +215,9 @@ public unsafe partial class RTSPStreamTransport : Gst.GObject.Object
     public bool SetActive(bool active)
     {
         int nativeResult = GstRtspStreamTransportSetActive(Handle, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

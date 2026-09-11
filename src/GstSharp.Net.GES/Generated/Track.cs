@@ -125,9 +125,10 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     {
         ArgumentNullException.ThrowIfNull(@object);
         int nativeResult = GesTrackAddElement(Handle, @object.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@object);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -149,10 +150,11 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
         ArgumentNullException.ThrowIfNull(@object);
         nint errorNative = 0;
         int nativeResult = GesTrackAddElementFull(Handle, @object.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@object);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -182,8 +184,9 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     public bool Commit()
     {
         int nativeResult = GesTrackCommit(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the #GESTrack:caps of the track.</summary>
@@ -196,8 +199,9 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GesTrackGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -212,7 +216,6 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     public System.Collections.Generic.IReadOnlyList<GES.TrackElement> GetElements()
     {
         nint nativeResult = GesTrackGetElements(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.TrackElement> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -223,6 +226,7 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -231,8 +235,9 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     public bool GetMixing()
     {
         int nativeResult = GesTrackGetMixing(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets the #GESTrack:restriction-caps of the track.</summary>
@@ -240,8 +245,9 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     public Gst.Caps? GetRestrictionCaps()
     {
         nint nativeResult = GesTrackGetRestrictionCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the timeline this track belongs to.</summary>
@@ -252,8 +258,9 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     public GES.Timeline? GetTimeline()
     {
         nint nativeResult = GesTrackGetTimeline(Handle);
+        GES.Timeline? result = Gst.GObject.Object.FromNative<GES.Timeline>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Timeline>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>See ges_track_remove_element_full(), which also returns an error.</summary>
@@ -263,9 +270,10 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
     {
         ArgumentNullException.ThrowIfNull(@object);
         int nativeResult = GesTrackRemoveElement(Handle, @object.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@object);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -280,10 +288,11 @@ public unsafe partial class Track : Gst.Bin, GES.IMetaContainer, Gst.IChildProxy
         ArgumentNullException.ThrowIfNull(@object);
         nint errorNative = 0;
         int nativeResult = GesTrackRemoveElementFull(Handle, @object.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@object);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the #GESTrack:mixing for the track.</summary>

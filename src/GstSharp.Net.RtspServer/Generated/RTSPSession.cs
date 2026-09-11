@@ -84,9 +84,10 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int matchedNative = default;
         nint nativeResult = GstRtspSessionDupMedia(Handle, pathScope.Pointer, &matchedNative);
-        System.GC.KeepAlive(this);
         matched = matchedNative;
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.Full);
+        Gst.RtspServer.RTSPSessionMedia? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -120,7 +121,6 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
         try
         {
             nint nativeResult = GstRtspSessionFilter(instanceHandle, func is null ? 0 : Gst.RtspServer.RTSPSessionFilterFuncTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.RtspServer.RTSPSessionMedia> result = new(nativeItems.Length);
             foreach (nint nativeItem in nativeItems)
@@ -131,6 +131,7 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
                 }
             }
 
+            System.GC.KeepAlive(this);
             return result;
         }
         finally
@@ -147,8 +148,9 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     public string? GetHeader()
     {
         nint nativeResult = GstRtspSessionGetHeader(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -165,9 +167,10 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int matchedNative = default;
         nint nativeResult = GstRtspSessionGetMedia(Handle, pathScope.Pointer, &matchedNative);
-        System.GC.KeepAlive(this);
         matched = matchedNative;
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.None);
+        Gst.RtspServer.RTSPSessionMedia? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the sessionid of @session.</summary>
@@ -178,8 +181,9 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     public string? GetSessionid()
     {
         nint nativeResult = GstRtspSessionGetSessionid(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the timeout value of @session.</summary>
@@ -197,8 +201,9 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     public bool IsExpiredUsec(long now)
     {
         int nativeResult = GstRtspSessionIsExpiredUsec(Handle, now);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -241,10 +246,11 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         nint mediaOwned = Gst.Interop.GObjectNative.ObjectRef(mediaNative);
         nint nativeResult = GstRtspSessionManageMedia(instanceHandle, pathScope.Pointer, mediaOwned);
-        System.GC.KeepAlive(this);
         media.Dispose();
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.RtspServer.RTSPSessionMedia result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_rtsp_session_manage_media returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the amount of milliseconds till the session will expire.</summary>
@@ -271,9 +277,10 @@ public unsafe partial class RTSPSession : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(media);
         int nativeResult = GstRtspSessionReleaseMedia(Handle, media.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(media);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

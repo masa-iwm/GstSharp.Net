@@ -111,7 +111,6 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
         try
         {
             nint nativeResult = GstRtspServerClientFilter(instanceHandle, func is null ? 0 : Gst.RtspServer.RTSPServerClientFilterFuncTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.RtspServer.RTSPClient> result = new(nativeItems.Length);
             foreach (nint nativeItem in nativeItems)
@@ -122,6 +121,7 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
                 }
             }
 
+            System.GC.KeepAlive(this);
             return result;
         }
         finally
@@ -144,8 +144,6 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     {
         nint errorNative = 0;
         nint nativeResult = GstRtspServerCreateSocket(Handle, cancellable is null ? 0 : cancellable.Handle, &errorNative);
-        System.GC.KeepAlive(this);
-        System.GC.KeepAlive(cancellable);
         if (errorNative != 0 && nativeResult != 0)
         {
             // The call failed and transferred a value all the same. The throw
@@ -153,8 +151,11 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
             Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
         }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Gio.Socket result = Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtsp_server_create_socket returned no value.");
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(cancellable);
+        return result;
     }
 
     /// <summary>Get the address on which the server will accept connections.</summary>
@@ -162,8 +163,9 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     public string? GetAddress()
     {
         nint nativeResult = GstRtspServerGetAddress(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPAuth used as the authentication manager of @server.</summary>
@@ -174,8 +176,9 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     public Gst.RtspServer.RTSPAuth? GetAuth()
     {
         nint nativeResult = GstRtspServerGetAuth(Handle);
+        Gst.RtspServer.RTSPAuth? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAuth>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAuth>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The maximum amount of queued requests for the server.</summary>
@@ -213,8 +216,9 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     public Gst.RtspServer.RTSPMountPoints? GetMountPoints()
     {
         nint nativeResult = GstRtspServerGetMountPoints(Handle);
+        Gst.RtspServer.RTSPMountPoints? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMountPoints>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMountPoints>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the service on which the server will accept connections.</summary>
@@ -222,9 +226,10 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     public string GetService()
     {
         nint nativeResult = GstRtspServerGetService(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_rtsp_server_get_service returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPSessionPool used as the session pool of @server.</summary>
@@ -235,8 +240,9 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     public Gst.RtspServer.RTSPSessionPool? GetSessionPool()
     {
         nint nativeResult = GstRtspServerGetSessionPool(Handle);
+        Gst.RtspServer.RTSPSessionPool? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPThreadPool used as the thread pool of @server.</summary>
@@ -247,8 +253,9 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     public Gst.RtspServer.RTSPThreadPool? GetThreadPool()
     {
         nint nativeResult = GstRtspServerGetThreadPool(Handle);
+        Gst.RtspServer.RTSPThreadPool? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPThreadPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPThreadPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Configure @server to accept connections on the given address.</summary>
@@ -394,9 +401,10 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
         System.Span<byte> initialBufferBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope initialBufferScope = Gst.Interop.GMarshal.StackUtf8(initialBuffer, initialBufferBuffer);
         int nativeResult = GstRtspServerTransferConnection(instanceHandle, socketOwned, ipScope.Pointer, port, initialBufferScope.Pointer);
-        System.GC.KeepAlive(this);
         socket.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>address</c> property.</summary>

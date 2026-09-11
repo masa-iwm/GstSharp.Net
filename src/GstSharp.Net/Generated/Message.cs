@@ -112,9 +112,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewAsyncDone(Gst.Object? src, Gst.ClockTime runningTime)
     {
         nint nativeResult = GstMessageNewAsyncDone(src is null ? 0 : src.Handle, runningTime.Nanoseconds);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_async_done returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>This message is posted by elements when they start an ASYNC state change.</summary>
@@ -123,9 +124,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewAsyncStart(Gst.Object? src)
     {
         nint nativeResult = GstMessageNewAsyncStart(src is null ? 0 : src.Handle);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_async_start returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -150,9 +152,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewBuffering(Gst.Object? src, int percent)
     {
         nint nativeResult = GstMessageNewBuffering(src is null ? 0 : src.Handle, percent);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_buffering returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -173,10 +176,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(clock);
         nint nativeResult = GstMessageNewClockLost(src is null ? 0 : src.Handle, clock.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_clock_lost returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(clock);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_clock_lost returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -198,10 +202,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(clock);
         nint nativeResult = GstMessageNewClockProvide(src is null ? 0 : src.Handle, clock.Handle, ready ? 1 : 0);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_clock_provide returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(clock);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_clock_provide returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -216,10 +221,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(device);
         nint nativeResult = GstMessageNewDeviceAdded(src is null ? 0 : src.Handle, device.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_device_added returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(device);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_device_added returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -239,11 +245,12 @@ public sealed unsafe partial class Message : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(device);
         ArgumentNullException.ThrowIfNull(changedDevice);
         nint nativeResult = GstMessageNewDeviceChanged(src is null ? 0 : src.Handle, device.Handle, changedDevice.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_device_changed returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(device);
         System.GC.KeepAlive(changedDevice);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_device_changed returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -262,9 +269,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewDeviceMonitorStarted(Gst.Object? src, bool success)
     {
         nint nativeResult = GstMessageNewDeviceMonitorStarted(src is null ? 0 : src.Handle, success ? 1 : 0);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_device_monitor_started returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -279,10 +287,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(device);
         nint nativeResult = GstMessageNewDeviceRemoved(src is null ? 0 : src.Handle, device.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_device_removed returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(device);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_device_removed returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -296,9 +305,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewDurationChanged(Gst.Object? src)
     {
         nint nativeResult = GstMessageNewDurationChanged(src is null ? 0 : src.Handle);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_duration_changed returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -339,10 +349,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nuint structureType = structure.BoxedType.Value;
         nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
         nint nativeResult = GstMessageNewElement(srcNative, structureOwned);
-        System.GC.KeepAlive(src);
         structure.Dispose();
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_element returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -355,9 +366,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewEos(Gst.Object? src)
     {
         nint nativeResult = GstMessageNewEos(src is null ? 0 : src.Handle);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_eos returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -388,9 +400,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
         nint nativeResult = GstMessageNewError(src is null ? 0 : src.Handle, errorScope.Pointer, debugScope.Pointer);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_error returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -445,10 +458,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
         using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
         nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
         nint nativeResult = GstMessageNewErrorWithDetails(srcNative, errorScope.Pointer, debugScope.Pointer, detailsOwned);
-        System.GC.KeepAlive(src);
         details?.Dispose();
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_error_with_details returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>This message is posted when an element has a new local #GstContext.</summary>
@@ -481,10 +495,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint contextNative = context.Handle;
         nint contextOwned = Gst.GstNative.MiniObjectRef(contextNative);
         nint nativeResult = GstMessageNewHaveContext(srcNative, contextOwned);
-        System.GC.KeepAlive(src);
         context.Dispose();
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_have_context returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -513,9 +528,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
         nint nativeResult = GstMessageNewInfo(src is null ? 0 : src.Handle, errorScope.Pointer, debugScope.Pointer);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_info returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -568,10 +584,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
         using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
         nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
         nint nativeResult = GstMessageNewInfoWithDetails(srcNative, errorScope.Pointer, debugScope.Pointer, detailsOwned);
-        System.GC.KeepAlive(src);
         details?.Dispose();
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_info_with_details returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -588,9 +605,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewInstantRateRequest(Gst.Object? src, double rateMultiplier)
     {
         nint nativeResult = GstMessageNewInstantRateRequest(src is null ? 0 : src.Handle, rateMultiplier);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_instant_rate_request returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -602,9 +620,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewLatency(Gst.Object? src)
     {
         nint nativeResult = GstMessageNewLatency(src is null ? 0 : src.Handle);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_latency returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>This message is posted when an element needs a specific #GstContext.</summary>
@@ -617,9 +636,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
         nint nativeResult = GstMessageNewNeedContext(src is null ? 0 : src.Handle, contextTypeScope.Pointer);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_need_context returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -633,10 +653,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(clock);
         nint nativeResult = GstMessageNewNewClock(src is null ? 0 : src.Handle, clock.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_new_clock returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(clock);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_new_clock returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -663,9 +684,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.Span<byte> textBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope textScope = Gst.Interop.GMarshal.StackUtf8(text, textBuffer);
         nint nativeResult = GstMessageNewProgress(src is null ? 0 : src.Handle, (int)type, codeScope.Pointer, textScope.Pointer);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_progress returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -697,9 +719,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewQos(Gst.Object? src, bool live, ulong runningTime, ulong streamTime, ulong timestamp, ulong duration)
     {
         nint nativeResult = GstMessageNewQos(src is null ? 0 : src.Handle, live ? 1 : 0, runningTime, streamTime, timestamp, duration);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_qos returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -782,11 +805,12 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint tagListOwned = tagList is null ? 0 : Gst.GstNative.MiniObjectRef(tagListNative);
         nint entryStructOwned = entryStruct is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(entryStructType, entryStructNative);
         nint nativeResult = GstMessageNewRedirect(srcNative, locationScope.Pointer, tagListOwned, entryStructOwned);
-        System.GC.KeepAlive(src);
         tagList?.Dispose();
         entryStruct?.Dispose();
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_redirect returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -800,9 +824,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewRequestState(Gst.Object? src, Gst.State state)
     {
         nint nativeResult = GstMessageNewRequestState(src is null ? 0 : src.Handle, (int)state);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_request_state returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -815,9 +840,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewResetTime(Gst.Object? src, Gst.ClockTime runningTime)
     {
         nint nativeResult = GstMessageNewResetTime(src is null ? 0 : src.Handle, runningTime.Nanoseconds);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_reset_time returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -833,9 +859,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewSegmentDone(Gst.Object? src, Gst.Format format, long position)
     {
         nint nativeResult = GstMessageNewSegmentDone(src is null ? 0 : src.Handle, (int)format, position);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_segment_done returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -851,9 +878,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewSegmentStart(Gst.Object? src, Gst.Format format, long position)
     {
         nint nativeResult = GstMessageNewSegmentStart(src is null ? 0 : src.Handle, (int)format, position);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_segment_start returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -868,9 +896,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewStateChanged(Gst.Object? src, Gst.State oldstate, Gst.State newstate, Gst.State pending)
     {
         nint nativeResult = GstMessageNewStateChanged(src is null ? 0 : src.Handle, (int)oldstate, (int)newstate, (int)pending);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_state_changed returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -883,9 +912,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewStateDirty(Gst.Object? src)
     {
         nint nativeResult = GstMessageNewStateDirty(src is null ? 0 : src.Handle);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_state_dirty returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -910,9 +940,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewStepDone(Gst.Object? src, Gst.Format format, ulong amount, double rate, bool flush, bool intermediate, ulong duration, bool eos)
     {
         nint nativeResult = GstMessageNewStepDone(src is null ? 0 : src.Handle, (int)format, amount, rate, flush ? 1 : 0, intermediate ? 1 : 0, duration, eos ? 1 : 0);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_step_done returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -942,9 +973,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewStepStart(Gst.Object? src, bool active, Gst.Format format, ulong amount, double rate, bool flush, bool intermediate)
     {
         nint nativeResult = GstMessageNewStepStart(src is null ? 0 : src.Handle, active ? 1 : 0, (int)format, amount, rate, flush ? 1 : 0, intermediate ? 1 : 0);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_step_start returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -958,10 +990,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(collection);
         nint nativeResult = GstMessageNewStreamCollection(src is null ? 0 : src.Handle, collection.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_stream_collection returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(collection);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_stream_collection returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -974,9 +1007,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public static Gst.Message NewStreamStart(Gst.Object? src)
     {
         nint nativeResult = GstMessageNewStreamStart(src is null ? 0 : src.Handle);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_stream_start returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -991,10 +1025,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(owner);
         nint nativeResult = GstMessageNewStreamStatus(src is null ? 0 : src.Handle, (int)type, owner.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_stream_status returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(owner);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_stream_status returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -1020,10 +1055,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(collection);
         nint nativeResult = GstMessageNewStreamsSelected(src is null ? 0 : src.Handle, collection.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_streams_selected returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(collection);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_streams_selected returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -1043,10 +1079,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(owner);
         nint nativeResult = GstMessageNewStructureChange(src is null ? 0 : src.Handle, (int)type, owner.Handle, busy ? 1 : 0);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_structure_change returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(owner);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_structure_change returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -1082,10 +1119,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint tagListNative = tagList.Handle;
         nint tagListOwned = Gst.GstNative.MiniObjectRef(tagListNative);
         nint nativeResult = GstMessageNewTag(srcNative, tagListOwned);
-        System.GC.KeepAlive(src);
         tagList.Dispose();
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_tag returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -1100,10 +1138,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(toc);
         nint nativeResult = GstMessageNewToc(src is null ? 0 : src.Handle, toc.Handle, updated ? 1 : 0);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_toc returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(toc);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_toc returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -1132,9 +1171,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.Span<byte> debugBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
         nint nativeResult = GstMessageNewWarning(src is null ? 0 : src.Handle, errorScope.Pointer, debugScope.Pointer);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_warning returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -1187,10 +1227,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
         using Gst.Interop.Utf8Scope debugScope = Gst.Interop.GMarshal.StackUtf8(debug, debugBuffer);
         nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
         nint nativeResult = GstMessageNewWarningWithDetails(srcNative, errorScope.Pointer, debugScope.Pointer, detailsOwned);
-        System.GC.KeepAlive(src);
         details?.Dispose();
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_message_new_warning_with_details returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>Creates and appends a new entry.</summary>
@@ -1245,9 +1286,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint tagListOwned = tagList is null ? 0 : Gst.GstNative.MiniObjectRef(tagListNative);
         nint entryStructOwned = entryStruct is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(entryStructType, entryStructNative);
         GstMessageAddRedirectEntry(instanceHandle, locationScope.Pointer, tagListOwned, entryStructOwned);
-        System.GC.KeepAlive(this);
         tagList?.Dispose();
         entryStruct?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Returns the optional details structure of the message. May be NULL if none.</summary>
@@ -1264,8 +1305,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public Gst.Structure? GetDetails()
     {
         nint nativeResult = GstMessageGetDetails(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_message_get_num_redirect_entries</c> function.</summary>
@@ -1313,8 +1355,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public Gst.GObject.Value GetStreamStatusObject()
     {
         nint nativeResult = GstMessageGetStreamStatusObject(Handle);
+        Gst.GObject.Value result = Gst.GObject.Value.CopyFrom(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Value.CopyFrom(nativeResult);
+        return result;
     }
 
     /// <summary>Access the structure of the message.</summary>
@@ -1329,8 +1372,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public Gst.Structure? GetStructure()
     {
         nint nativeResult = GstMessageGetStructure(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -1345,8 +1389,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstMessageHasName(Handle, nameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Returns a writable copy of @message.</summary>
@@ -1396,8 +1441,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -1410,8 +1455,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ulong runningTimeNative = default;
         GstMessageParseAsyncDone(Handle, &runningTimeNative);
-        System.GC.KeepAlive(this);
         runningTime = new Gst.ClockTime(runningTimeNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1426,8 +1471,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         int percentNative = default;
         GstMessageParseBuffering(Handle, &percentNative);
-        System.GC.KeepAlive(this);
         percent = percentNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extracts the buffering stats values from @message.</summary>
@@ -1445,11 +1490,11 @@ public sealed unsafe partial class Message : Gst.MiniObject
         int avgOutNative = default;
         long bufferingLeftNative = default;
         GstMessageParseBufferingStats(Handle, &modeNative, &avgInNative, &avgOutNative, &bufferingLeftNative);
-        System.GC.KeepAlive(this);
         mode = (Gst.BufferingMode)modeNative;
         avgIn = avgInNative;
         avgOut = avgOutNative;
         bufferingLeft = bufferingLeftNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1464,8 +1509,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint clockNative = default;
         GstMessageParseClockLost(Handle, &clockNative);
-        System.GC.KeepAlive(this);
         clock = Gst.GObject.Object.FromNative<Gst.Clock>(clockNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1485,9 +1530,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint clockNative = default;
         int readyNative = default;
         GstMessageParseClockProvide(Handle, &clockNative, &readyNative);
-        System.GC.KeepAlive(this);
         clock = Gst.GObject.Object.FromNative<Gst.Clock>(clockNative, Gst.Interop.Transfer.None);
         ready = readyNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse a context type from an existing GST_MESSAGE_NEED_CONTEXT message.</summary>
@@ -1497,9 +1542,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint contextTypeNative = default;
         int nativeResult = GstMessageParseContextType(Handle, &contextTypeNative);
-        System.GC.KeepAlive(this);
         contextType = Gst.Interop.GMarshal.PtrToStringUtf8(contextTypeNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -1515,8 +1561,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint deviceNative = default;
         GstMessageParseDeviceAdded(Handle, &deviceNative);
-        System.GC.KeepAlive(this);
         device = Gst.GObject.Object.FromNative<Gst.Device>(deviceNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1538,9 +1584,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint deviceNative = default;
         nint changedDeviceNative = default;
         GstMessageParseDeviceChanged(Handle, &deviceNative, &changedDeviceNative);
-        System.GC.KeepAlive(this);
         device = Gst.GObject.Object.FromNative<Gst.Device>(deviceNative, Gst.Interop.Transfer.Full);
         changedDevice = Gst.GObject.Object.FromNative<Gst.Device>(changedDeviceNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1559,8 +1605,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         int successNative = default;
         GstMessageParseDeviceMonitorStarted(Handle, &successNative);
-        System.GC.KeepAlive(this);
         success = successNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1576,8 +1622,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint deviceNative = default;
         GstMessageParseDeviceRemoved(Handle, &deviceNative);
-        System.GC.KeepAlive(this);
         device = Gst.GObject.Object.FromNative<Gst.Device>(deviceNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1589,8 +1635,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint structureNative = default;
         GstMessageParseErrorDetails(Handle, &structureNative);
-        System.GC.KeepAlive(this);
         structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1605,8 +1651,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint structureNative = default;
         GstMessageParseErrorWritableDetails(Handle, &structureNative);
-        System.GC.KeepAlive(this);
         structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the group from the STREAM_START message.</summary>
@@ -1619,9 +1665,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         uint groupIdNative = default;
         int nativeResult = GstMessageParseGroupId(Handle, &groupIdNative);
-        System.GC.KeepAlive(this);
         groupId = groupIdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Extract the context from the HAVE_CONTEXT message.</summary>
@@ -1636,8 +1683,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint contextNative = default;
         GstMessageParseHaveContext(Handle, &contextNative);
-        System.GC.KeepAlive(this);
         context = Gst.Context.FromNative(contextNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1649,8 +1696,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint structureNative = default;
         GstMessageParseInfoDetails(Handle, &structureNative);
-        System.GC.KeepAlive(this);
         structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1665,8 +1712,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint structureNative = default;
         GstMessageParseInfoWritableDetails(Handle, &structureNative);
-        System.GC.KeepAlive(this);
         structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parses the rate_multiplier from the instant-rate-request message.</summary>
@@ -1675,8 +1722,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         double rateMultiplierNative = default;
         GstMessageParseInstantRateRequest(Handle, &rateMultiplierNative);
-        System.GC.KeepAlive(this);
         rateMultiplier = rateMultiplierNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1694,8 +1741,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint clockNative = default;
         GstMessageParseNewClock(Handle, &clockNative);
-        System.GC.KeepAlive(this);
         clock = Gst.GObject.Object.FromNative<Gst.Clock>(clockNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parses the progress @type, @code and @text.</summary>
@@ -1708,10 +1755,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint codeNative = default;
         nint textNative = default;
         GstMessageParseProgress(Handle, &typeNative, &codeNative, &textNative);
-        System.GC.KeepAlive(this);
         type = (Gst.ProgressType)typeNative;
         code = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(codeNative);
         text = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(textNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the timestamps and live status from the QoS message.</summary>
@@ -1748,12 +1795,12 @@ public sealed unsafe partial class Message : Gst.MiniObject
         ulong timestampNative = default;
         ulong durationNative = default;
         GstMessageParseQos(Handle, &liveNative, &runningTimeNative, &streamTimeNative, &timestampNative, &durationNative);
-        System.GC.KeepAlive(this);
         live = liveNative != 0;
         runningTime = runningTimeNative;
         streamTime = streamTimeNative;
         timestamp = timestampNative;
         duration = durationNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1787,10 +1834,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         ulong processedNative = default;
         ulong droppedNative = default;
         GstMessageParseQosStats(Handle, &formatNative, &processedNative, &droppedNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         processed = processedNative;
         dropped = droppedNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the QoS values that have been calculated/analysed from the QoS data</summary>
@@ -1816,10 +1863,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         double proportionNative = default;
         int qualityNative = default;
         GstMessageParseQosValues(Handle, &jitterNative, &proportionNative, &qualityNative);
-        System.GC.KeepAlive(this);
         jitter = jitterNative;
         proportion = proportionNative;
         quality = qualityNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1846,10 +1893,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint tagListNative = default;
         nint entryStructNative = default;
         GstMessageParseRedirectEntry(Handle, entryIndex, &locationNative, &tagListNative, &entryStructNative);
-        System.GC.KeepAlive(this);
         location = Gst.Interop.GMarshal.PtrToStringUtf8(locationNative);
         tagList = Gst.TagList.FromNative(tagListNative, Gst.Interop.Transfer.None);
         entryStruct = Gst.Structure.FromNative(entryStructNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the requested state from the request_state message.</summary>
@@ -1861,8 +1908,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         int stateNative = default;
         GstMessageParseRequestState(Handle, &stateNative);
-        System.GC.KeepAlive(this);
         state = (Gst.State)stateNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the running-time from the RESET_TIME message.</summary>
@@ -1877,8 +1924,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         ulong runningTimeNative = default;
         GstMessageParseResetTime(Handle, &runningTimeNative);
-        System.GC.KeepAlive(this);
         runningTime = new Gst.ClockTime(runningTimeNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extracts the position and format from the segment done message.</summary>
@@ -1892,9 +1939,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         int formatNative = default;
         long positionNative = default;
         GstMessageParseSegmentDone(Handle, &formatNative, &positionNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         position = positionNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extracts the position and format from the segment start message.</summary>
@@ -1908,9 +1955,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         int formatNative = default;
         long positionNative = default;
         GstMessageParseSegmentStart(Handle, &formatNative, &positionNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         position = positionNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extracts the old and new states from the GstMessage.</summary>
@@ -1947,10 +1994,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         int newstateNative = default;
         int pendingNative = default;
         GstMessageParseStateChanged(Handle, &oldstateNative, &newstateNative, &pendingNative);
-        System.GC.KeepAlive(this);
         oldstate = (Gst.State)oldstateNative;
         newstate = (Gst.State)newstateNative;
         pending = (Gst.State)pendingNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the values the step_done message.</summary>
@@ -1974,7 +2021,6 @@ public sealed unsafe partial class Message : Gst.MiniObject
         ulong durationNative = default;
         int eosNative = default;
         GstMessageParseStepDone(Handle, &formatNative, &amountNative, &rateNative, &flushNative, &intermediateNative, &durationNative, &eosNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         amount = amountNative;
         rate = rateNative;
@@ -1982,6 +2028,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
         intermediate = intermediateNative != 0;
         duration = durationNative;
         eos = eosNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the values from step_start message.</summary>
@@ -2003,13 +2050,13 @@ public sealed unsafe partial class Message : Gst.MiniObject
         int flushNative = default;
         int intermediateNative = default;
         GstMessageParseStepStart(Handle, &activeNative, &formatNative, &amountNative, &rateNative, &flushNative, &intermediateNative);
-        System.GC.KeepAlive(this);
         active = activeNative != 0;
         format = (Gst.Format)formatNative;
         amount = amountNative;
         rate = rateNative;
         flush = flushNative != 0;
         intermediate = intermediateNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parses a stream-collection message.</summary>
@@ -2021,8 +2068,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint collectionNative = default;
         GstMessageParseStreamCollection(Handle, &collectionNative);
-        System.GC.KeepAlive(this);
         collection = Gst.GObject.Object.FromNative<Gst.StreamCollection>(collectionNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -2040,9 +2087,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         int typeNative = default;
         nint ownerNative = default;
         GstMessageParseStreamStatus(Handle, &typeNative, &ownerNative);
-        System.GC.KeepAlive(this);
         type = (Gst.StreamStatusType)typeNative;
         owner = Gst.GObject.Object.FromNative<Gst.Element>(ownerNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parses a streams-selected message.</summary>
@@ -2054,8 +2101,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint collectionNative = default;
         GstMessageParseStreamsSelected(Handle, &collectionNative);
-        System.GC.KeepAlive(this);
         collection = Gst.GObject.Object.FromNative<Gst.StreamCollection>(collectionNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extracts the change type and completion status from the GstMessage.</summary>
@@ -2077,10 +2124,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint ownerNative = default;
         int busyNative = default;
         GstMessageParseStructureChange(Handle, &typeNative, &ownerNative, &busyNative);
-        System.GC.KeepAlive(this);
         type = (Gst.StructureChangeType)typeNative;
         owner = Gst.GObject.Object.FromNative<Gst.Element>(ownerNative, Gst.Interop.Transfer.None);
         busy = busyNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -2115,8 +2162,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint tagListNative = default;
         GstMessageParseTag(Handle, &tagListNative);
-        System.GC.KeepAlive(this);
         tagList = Gst.TagList.FromNative(tagListNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -2134,9 +2181,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nint tocNative = default;
         int updatedNative = default;
         GstMessageParseToc(Handle, &tocNative, &updatedNative);
-        System.GC.KeepAlive(this);
         toc = Gst.Toc.FromNative(tocNative, Gst.Interop.Transfer.Full);
         updated = updatedNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -2148,8 +2195,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint structureNative = default;
         GstMessageParseWarningDetails(Handle, &structureNative);
-        System.GC.KeepAlive(this);
         structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -2164,8 +2211,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
     {
         nint structureNative = default;
         GstMessageParseWarningWritableDetails(Handle, &structureNative);
-        System.GC.KeepAlive(this);
         structure = Gst.Structure.FromNative(structureNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Configures the buffering stats values in @message.</summary>
@@ -2211,8 +2258,8 @@ public sealed unsafe partial class Message : Gst.MiniObject
         nuint detailsType = details is null ? 0 : details.BoxedType.Value;
         nint detailsOwned = details is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(detailsType, detailsNative);
         GstMessageSetDetails(instanceHandle, detailsOwned);
-        System.GC.KeepAlive(this);
         details?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the group id on the stream-start message.</summary>
@@ -2350,8 +2397,9 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public Gst.Stream? StreamsSelectedGetStream(uint idx)
     {
         nint nativeResult = GstMessageStreamsSelectedGetStream(Handle, idx);
+        Gst.Stream? result = Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -2372,9 +2420,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public Gst.Structure WritableDetails()
     {
         nint nativeResult = GstMessageWritableDetails(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_message_writable_details returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get a writable version of the structure.</summary>
@@ -2391,9 +2440,10 @@ public sealed unsafe partial class Message : Gst.MiniObject
     public Gst.Structure WritableStructure()
     {
         nint nativeResult = GstMessageWritableStructure(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_message_writable_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_message_new_async_done</c> entry point.</summary>

@@ -135,9 +135,10 @@ public sealed unsafe partial class Meta
     {
         ArgumentNullException.ThrowIfNull(data);
         int nativeResult = GstMetaSerialize(Handle, data.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(data);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_meta_api_type_get_tags</c> function.</summary>
@@ -218,9 +219,10 @@ public sealed unsafe partial class Meta
         fixed (byte* dataPointer = data)
         {
             nint nativeResult = GstMetaDeserialize(buffer.Handle, dataPointer, (nuint)data.Length, &consumedNative);
-            System.GC.KeepAlive(buffer);
             consumed = consumedNative;
-            return Gst.Meta.FromNative(nativeResult);
+            Gst.Meta? result = Gst.Meta.FromNative(nativeResult);
+            System.GC.KeepAlive(buffer);
+            return result;
         }
     }
 

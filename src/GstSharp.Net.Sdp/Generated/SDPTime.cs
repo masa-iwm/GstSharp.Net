@@ -79,8 +79,9 @@ public sealed unsafe partial class SDPTime
     public Gst.Sdp.SDPResult Clear()
     {
         int nativeResult = GstSdpTimeClear(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set time information @start, @stop and @repeat in @t.</summary>
@@ -98,8 +99,9 @@ public sealed unsafe partial class SDPTime
         using Gst.Interop.Utf8Scope stopScope = Gst.Interop.GMarshal.StackUtf8(stop, stopBuffer);
         using Gst.Interop.StrvScope repeatScope = Gst.Interop.GMarshal.AllocStrv(repeat);
         int nativeResult = GstSdpTimeSet(Handle, startScope.Pointer, stopScope.Pointer, repeatScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_sdp_time_clear</c> entry point.</summary>

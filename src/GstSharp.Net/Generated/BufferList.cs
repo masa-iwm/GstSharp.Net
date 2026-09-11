@@ -98,9 +98,10 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     public Gst.BufferList CopyDeep()
     {
         nint nativeResult = GstBufferListCopyDeep(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.BufferList result = Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_buffer_list_copy_deep returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the buffer at @idx.</summary>
@@ -122,9 +123,10 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     public Gst.Buffer Get(uint idx)
     {
         nint nativeResult = GstBufferListGet(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_buffer_list_get returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the buffer at @idx, ensuring it is a writable buffer.</summary>
@@ -146,9 +148,10 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     public Gst.Buffer GetWritable(uint idx)
     {
         nint nativeResult = GstBufferListGetWritable(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_buffer_list_get_writable returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -184,8 +187,8 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         GstBufferListInsert(instanceHandle, idx, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Returns the number of buffers in @list.</summary>
@@ -244,8 +247,8 @@ public sealed unsafe partial class BufferList : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 

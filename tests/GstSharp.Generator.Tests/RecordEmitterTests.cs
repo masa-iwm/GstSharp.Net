@@ -1546,12 +1546,18 @@ public sealed class RecordEmitterTests
             StringComparison.Ordinal);
         Assert.Contains(
             "        nint nativeResult = GstElementFactoryGetStaticPadTemplates(Handle);\n"
-            + "        System.GC.KeepAlive(this);\n"
             + "        nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);\n",
             factory,
             StringComparison.Ordinal);
         Assert.Contains(
             "if (nativeItem != 0 && Gst.StaticPadTemplate.FromNative(nativeItem) is { } adopted)",
+            factory,
+            StringComparison.Ordinal);
+
+        // The elements are read out of memory the factory owns, so the barrier
+        // over the instance follows the walk rather than the call.
+        Assert.Contains(
+            "        System.GC.KeepAlive(this);\n        return result;\n",
             factory,
             StringComparison.Ordinal);
     }

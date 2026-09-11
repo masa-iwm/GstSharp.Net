@@ -99,8 +99,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> relativePathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope relativePathScope = Gst.Interop.GMarshal.StackUtf8(relativePath, relativePathBuffer);
         int nativeResult = GstUriAppendPath(Handle, relativePathScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Append a single path segment onto the end of the URI path.</summary>
@@ -111,8 +112,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> pathSegmentBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope pathSegmentScope = Gst.Interop.GMarshal.StackUtf8(pathSegment, pathSegmentBuffer);
         int nativeResult = GstUriAppendPathSegment(Handle, pathSegmentScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -126,9 +128,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public Gst.Uri Copy()
     {
         nint nativeResult = GstUriCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Uri result = Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_uri_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -141,9 +144,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(second);
         int nativeResult = GstUriEqual(Handle, second.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(second);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Like gst_uri_from_string() but also joins with a base URI.</summary>
@@ -155,8 +159,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint nativeResult = GstUriFromStringWithBase(Handle, uriScope.Pointer);
+        Gst.Uri? result = Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -167,8 +172,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public string? GetFragment()
     {
         nint nativeResult = GstUriGetFragment(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -179,8 +185,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public string? GetHost()
     {
         nint nativeResult = GstUriGetHost(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Extract the path string from the URI object.</summary>
@@ -191,8 +198,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public string? GetPath()
     {
         nint nativeResult = GstUriGetPath(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get a list of path segments from the URI.</summary>
@@ -204,7 +212,6 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public System.Collections.Generic.IReadOnlyList<string> GetPathSegments()
     {
         nint nativeResult = GstUriGetPathSegments(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<string> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -215,6 +222,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -226,8 +234,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public string? GetPathString()
     {
         nint nativeResult = GstUriGetPathString(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -250,7 +259,6 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public System.Collections.Generic.IReadOnlyList<string> GetQueryKeys()
     {
         nint nativeResult = GstUriGetQueryKeys(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<string> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -261,6 +269,7 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -272,8 +281,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public string? GetQueryString()
     {
         nint nativeResult = GstUriGetQueryString(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -299,8 +309,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     {
         using Gst.Interop.GListScope keysScope = Gst.Interop.GMarshal.AllocList(keys, singly: false);
         nint nativeResult = GstUriGetQueryStringOrdered(Handle, keysScope.Head);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -318,8 +329,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> queryKeyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope queryKeyScope = Gst.Interop.GMarshal.StackUtf8(queryKey, queryKeyBuffer);
         nint nativeResult = GstUriGetQueryValue(Handle, queryKeyScope.Pointer);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -330,8 +342,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public string? GetScheme()
     {
         nint nativeResult = GstUriGetScheme(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -342,8 +355,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public string? GetUserinfo()
     {
         nint nativeResult = GstUriGetUserinfo(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -354,8 +368,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public bool IsNormalized()
     {
         int nativeResult = GstUriIsNormalized(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if it is safe to write to this #GstUri.</summary>
@@ -373,8 +388,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public bool IsWritable()
     {
         int nativeResult = GstUriIsWritable(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -393,9 +409,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public Gst.Uri? Join(Gst.Uri? refUri)
     {
         nint nativeResult = GstUriJoin(Handle, refUri is null ? 0 : refUri.Handle);
+        Gst.Uri? result = Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(refUri);
-        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Make the #GstUri writable.</summary>
@@ -432,8 +449,8 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = GstUriMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -468,9 +485,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> fragmentBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fragmentScope = Gst.Interop.GMarshal.StackUtf8(fragment, fragmentBuffer);
         nint nativeResult = GstUriNewWithBase(Handle, schemeScope.Pointer, userinfoScope.Pointer, hostScope.Pointer, port, pathScope.Pointer, queryScope.Pointer, fragmentScope.Pointer);
-        System.GC.KeepAlive(this);
-        return Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Uri result = Gst.Uri.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_uri_new_with_base returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -488,8 +506,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public bool Normalize()
     {
         int nativeResult = GstUriNormalize(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if there is a query table entry for the @query_key key.</summary>
@@ -501,8 +520,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> queryKeyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope queryKeyScope = Gst.Interop.GMarshal.StackUtf8(queryKey, queryKeyBuffer);
         int nativeResult = GstUriQueryHasKey(Handle, queryKeyScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove an entry from the query table by key.</summary>
@@ -514,8 +534,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> queryKeyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope queryKeyScope = Gst.Interop.GMarshal.StackUtf8(queryKey, queryKeyBuffer);
         int nativeResult = GstUriRemoveQueryKey(Handle, queryKeyScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -529,8 +550,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> fragmentBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fragmentScope = Gst.Interop.GMarshal.StackUtf8(fragment, fragmentBuffer);
         int nativeResult = GstUriSetFragment(Handle, fragmentScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set or unset the host for the URI.</summary>
@@ -542,8 +564,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> hostBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope hostScope = Gst.Interop.GMarshal.StackUtf8(host, hostBuffer);
         int nativeResult = GstUriSetHost(Handle, hostScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets or unsets the path in the URI.</summary>
@@ -557,8 +580,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int nativeResult = GstUriSetPath(Handle, pathScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Replace the path segments list in the URI.</summary>
@@ -583,8 +607,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         nint instanceHandle = Handle;
         nint pathSegmentsOwned = Gst.Interop.GMarshal.ConsumeList(pathSegments, singly: false);
         int nativeResult = GstUriSetPathSegments(instanceHandle, pathSegmentsOwned);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets or unsets the path in the URI.</summary>
@@ -599,8 +624,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int nativeResult = GstUriSetPathString(Handle, pathScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set or unset the port number for the URI.</summary>
@@ -609,8 +635,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public bool SetPort(uint port)
     {
         int nativeResult = GstUriSetPort(Handle, port);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets or unsets the query table in the URI.</summary>
@@ -624,8 +651,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> queryBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope queryScope = Gst.Interop.GMarshal.StackUtf8(query, queryBuffer);
         int nativeResult = GstUriSetQueryString(Handle, queryScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -644,8 +672,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> queryValueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope queryValueScope = Gst.Interop.GMarshal.StackUtf8(queryValue, queryValueBuffer);
         int nativeResult = GstUriSetQueryValue(Handle, queryKeyScope.Pointer, queryValueScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set or unset the scheme for the URI.</summary>
@@ -657,8 +686,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> schemeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope schemeScope = Gst.Interop.GMarshal.StackUtf8(scheme, schemeBuffer);
         int nativeResult = GstUriSetScheme(Handle, schemeScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set or unset the user information for the URI.</summary>
@@ -670,8 +700,9 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
         System.Span<byte> userinfoBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope userinfoScope = Gst.Interop.GMarshal.StackUtf8(userinfo, userinfoBuffer);
         int nativeResult = GstUriSetUserinfo(Handle, userinfoScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Convert the URI to a string.</summary>
@@ -686,9 +717,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     public override string ToString()
     {
         nint nativeResult = GstUriToString(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_uri_to_string returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -719,9 +751,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     {
         using Gst.Interop.GListScope keysScope = Gst.Interop.GMarshal.AllocList(keys, singly: false);
         nint nativeResult = GstUriToStringWithKeys(Handle, keysScope.Head);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_uri_to_string_with_keys returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Constructs a URI for a given valid protocol and location.</summary>

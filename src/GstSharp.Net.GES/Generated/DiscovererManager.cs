@@ -45,8 +45,9 @@ public unsafe partial class DiscovererManager : Gst.GObject.Object
     public Gst.ClockTime GetTimeout()
     {
         ulong nativeResult = GesDiscovererManagerGetTimeout(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>ges_discoverer_manager_get_use_cache</c> function.</summary>
@@ -54,8 +55,9 @@ public unsafe partial class DiscovererManager : Gst.GObject.Object
     public bool GetUseCache()
     {
         int nativeResult = GesDiscovererManagerGetUseCache(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the timeout to use for the discoverer</summary>

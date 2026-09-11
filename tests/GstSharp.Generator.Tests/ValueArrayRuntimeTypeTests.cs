@@ -118,9 +118,10 @@ public sealed class ValueArrayRuntimeTypeTests
             {
                 nint colorsNative = default;
                 int nativeResult = GstPaletteGetColors(Handle, &colorsNative);
-                System.GC.KeepAlive(this);
                 colors = Gst.GObject.ValueArray.FromNative(colorsNative, Gst.Interop.Transfer.Full);
-                return nativeResult != 0;
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             Run.Member("Palette.cs", "public bool GetColors("),

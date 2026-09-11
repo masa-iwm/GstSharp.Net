@@ -256,8 +256,9 @@ public sealed unsafe partial class RTSPTransport
     public string? AsText()
     {
         nint nativeResult = GstRtspTransportAsText(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Free the memory used by @transport.</summary>
@@ -265,8 +266,9 @@ public sealed unsafe partial class RTSPTransport
     public Gst.Rtsp.RTSPResult Free()
     {
         int nativeResult = GstRtspTransportFree(Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -279,9 +281,10 @@ public sealed unsafe partial class RTSPTransport
     {
         nint mediaTypeNative = default;
         int nativeResult = GstRtspTransportGetMediaType(Handle, &mediaTypeNative);
-        System.GC.KeepAlive(this);
         mediaType = Gst.Interop.GMarshal.PtrToStringUtf8(mediaTypeNative);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the #GstElement that can handle the buffers transported over @trans.</summary>

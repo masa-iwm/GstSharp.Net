@@ -60,10 +60,11 @@ public abstract unsafe partial class VideoSource : GES.Source, GES.IExtractable,
         int widthNative = default;
         int heightNative = default;
         int nativeResult = GesVideoSourceGetNaturalSize(Handle, &widthNative, &heightNative);
-        System.GC.KeepAlive(this);
         width = widthNative;
         height = heightNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>ges_video_source_get_natural_size</c> entry point.</summary>

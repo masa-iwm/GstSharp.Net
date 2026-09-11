@@ -113,8 +113,9 @@ public sealed unsafe partial class SDPConnection
     public Gst.Sdp.SDPResult Clear()
     {
         int nativeResult = GstSdpConnectionClear(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the connection with the given parameters.</summary>
@@ -139,8 +140,9 @@ public sealed unsafe partial class SDPConnection
         System.Span<byte> addressBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope addressScope = Gst.Interop.GMarshal.StackUtf8(address, addressBuffer);
         int nativeResult = GstSdpConnectionSet(Handle, nettypeScope.Pointer, addrtypeScope.Pointer, addressScope.Pointer, ttl, addrNumber);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_sdp_connection_clear</c> entry point.</summary>

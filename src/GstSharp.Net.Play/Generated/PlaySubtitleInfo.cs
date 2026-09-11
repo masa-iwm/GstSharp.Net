@@ -45,8 +45,9 @@ public unsafe partial class PlaySubtitleInfo : Gst.Play.PlayStreamInfo
     public string? GetLanguage()
     {
         nint nativeResult = GstPlaySubtitleInfoGetLanguage(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_play_subtitle_info_get_language</c> entry point.</summary>

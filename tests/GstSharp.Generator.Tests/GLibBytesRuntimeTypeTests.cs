@@ -156,8 +156,8 @@ public sealed class GLibBytesRuntimeTypeTests
                 nuint blockType = block is null ? 0 : block.BoxedType.Value;
                 nint blockOwned = block is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(blockType, blockNative);
                 GstBlobTakeBlock(instanceHandle, blockOwned);
-                System.GC.KeepAlive(this);
                 block?.Dispose();
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Blob.cs", "public void TakeBlock("),
@@ -177,8 +177,9 @@ public sealed class GLibBytesRuntimeTypeTests
             public Gst.GLib.Bytes? GetBlock()
             {
                 nint nativeResult = GstBlobGetBlock(Handle);
+                Gst.GLib.Bytes? result = Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full);
                 System.GC.KeepAlive(this);
-                return Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+                return result;
             }
             """,
             Run.Member("Blob.cs", "public Gst.GLib.Bytes? GetBlock("),

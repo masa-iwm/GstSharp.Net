@@ -75,8 +75,9 @@ public sealed unsafe partial class StaticPadTemplate
     public Gst.PadTemplate? Get()
     {
         nint nativeResult = GstStaticPadTemplateGet(Handle);
+        Gst.PadTemplate? result = Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the capabilities of the static pad template.</summary>
@@ -89,9 +90,10 @@ public sealed unsafe partial class StaticPadTemplate
     public Gst.Caps GetCaps()
     {
         nint nativeResult = GstStaticPadTemplateGetCaps(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_static_pad_template_get_caps returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_static_pad_template_get</c> entry point.</summary>

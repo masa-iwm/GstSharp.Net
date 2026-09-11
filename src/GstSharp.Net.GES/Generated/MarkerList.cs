@@ -58,9 +58,10 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     public GES.Marker Add(Gst.ClockTime position)
     {
         nint nativeResult = GesMarkerListAdd(Handle, position.Nanoseconds);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Marker>(nativeResult, Gst.Interop.Transfer.None)
+        GES.Marker result = Gst.GObject.Object.FromNative<GES.Marker>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_marker_list_add returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>ges_marker_list_get_markers</c> function.</summary>
@@ -72,7 +73,6 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<GES.Marker> GetMarkers()
     {
         nint nativeResult = GesMarkerListGetMarkers(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.Marker> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -83,6 +83,7 @@ public unsafe partial class MarkerList : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -97,9 +98,10 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(marker);
         int nativeResult = GesMarkerListMove(Handle, marker.Handle, position.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(marker);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -115,9 +117,10 @@ public unsafe partial class MarkerList : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(marker);
         int nativeResult = GesMarkerListRemove(Handle, marker.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(marker);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>ges_marker_list_size</c> function.</summary>

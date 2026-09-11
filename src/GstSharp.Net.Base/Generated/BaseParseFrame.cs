@@ -153,9 +153,10 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBaseParseFrameNew(buffer.Handle, (int)flags, overhead);
-        System.GC.KeepAlive(buffer);
-        return Gst.Base.BaseParseFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Base.BaseParseFrame result = Gst.Base.BaseParseFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_base_parse_frame_new returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>Copies a #GstBaseParseFrame.</summary>
@@ -163,9 +164,10 @@ public sealed unsafe partial class BaseParseFrame : Gst.GObject.Boxed
     public Gst.Base.BaseParseFrame Copy()
     {
         nint nativeResult = GstBaseParseFrameCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Base.BaseParseFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Base.BaseParseFrame result = Gst.Base.BaseParseFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_base_parse_frame_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>

@@ -65,9 +65,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollAddFd(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @fd in @set has data to be read.</summary>
@@ -77,9 +78,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCanRead(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @fd in @set can be used for writing.</summary>
@@ -89,9 +91,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCanWrite(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -108,9 +111,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlPri(Handle, &fdNative, active ? 1 : 0);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -124,9 +128,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlRead(Handle, &fdNative, active ? 1 : 0);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -140,9 +145,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdCtlWrite(Handle, &fdNative, active ? 1 : 0);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @fd in @set has closed the connection.</summary>
@@ -152,9 +158,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasClosed(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @fd in @set has an error.</summary>
@@ -164,9 +171,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasError(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @fd in @set has an exceptional condition (POLLPRI).</summary>
@@ -179,9 +187,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollFdHasPri(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -202,8 +211,8 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         GstPollFdIgnored(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Free a file descriptor set.</summary>
@@ -229,8 +238,9 @@ public sealed unsafe partial class Poll
     public bool ReadControl()
     {
         int nativeResult = GstPollReadControl(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove a file descriptor from the file descriptor set.</summary>
@@ -240,9 +250,10 @@ public sealed unsafe partial class Poll
     {
         Gst.PollFD fdNative = fd;
         int nativeResult = GstPollRemoveFd(Handle, &fdNative);
-        System.GC.KeepAlive(this);
         fd = fdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -278,8 +289,9 @@ public sealed unsafe partial class Poll
     public bool SetControllable(bool controllable)
     {
         int nativeResult = GstPollSetControllable(Handle, controllable ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -354,8 +366,9 @@ public sealed unsafe partial class Poll
     public bool WriteControl()
     {
         int nativeResult = GstPollWriteControl(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_poll_add_fd</c> entry point.</summary>

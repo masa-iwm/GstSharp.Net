@@ -30,9 +30,10 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int centerNative = default;
         int nativeResult = GstVideoOrientationGetHcenter(videoOrientation.Handle, &centerNative);
-        System.GC.KeepAlive(videoOrientation);
         center = centerNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(videoOrientation);
+        return result;
     }
 
     /// <summary>Get the horizontal flipping state (%TRUE for flipped) from the given object.</summary>
@@ -44,9 +45,10 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int flipNative = default;
         int nativeResult = GstVideoOrientationGetHflip(videoOrientation.Handle, &flipNative);
-        System.GC.KeepAlive(videoOrientation);
         flip = flipNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(videoOrientation);
+        return result;
     }
 
     /// <summary>Get the vertical centering offset from the given object.</summary>
@@ -58,9 +60,10 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int centerNative = default;
         int nativeResult = GstVideoOrientationGetVcenter(videoOrientation.Handle, &centerNative);
-        System.GC.KeepAlive(videoOrientation);
         center = centerNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(videoOrientation);
+        return result;
     }
 
     /// <summary>Get the vertical flipping state (%TRUE for flipped) from the given object.</summary>
@@ -72,9 +75,10 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int flipNative = default;
         int nativeResult = GstVideoOrientationGetVflip(videoOrientation.Handle, &flipNative);
-        System.GC.KeepAlive(videoOrientation);
         flip = flipNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(videoOrientation);
+        return result;
     }
 
     /// <summary>Set the horizontal centering offset for the given object.</summary>
@@ -85,8 +89,9 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetHcenter(videoOrientation.Handle, center);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(videoOrientation);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set the horizontal flipping state (%TRUE for flipped) for the given object.</summary>
@@ -97,8 +102,9 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetHflip(videoOrientation.Handle, flip ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(videoOrientation);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set the vertical centering offset for the given object.</summary>
@@ -109,8 +115,9 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetVcenter(videoOrientation.Handle, center);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(videoOrientation);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set the vertical flipping state (%TRUE for flipped) for the given object.</summary>
@@ -121,8 +128,9 @@ public static unsafe partial class VideoOrientationExtensions
     {
         ArgumentNullException.ThrowIfNull(videoOrientation);
         int nativeResult = GstVideoOrientationSetVflip(videoOrientation.Handle, flip ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(videoOrientation);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -137,9 +145,10 @@ public static unsafe partial class VideoOrientationExtensions
         ArgumentNullException.ThrowIfNull(taglist);
         int methodNative = default;
         int nativeResult = GstVideoOrientationFromTag(taglist.Handle, &methodNative);
-        System.GC.KeepAlive(taglist);
         method = (Gst.Video.VideoOrientationMethod)methodNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(taglist);
+        return result;
     }
 
     /// <summary>The <c>gst_video_orientation_get_hcenter</c> entry point.</summary>

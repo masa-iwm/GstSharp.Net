@@ -87,7 +87,6 @@ public sealed unsafe partial class VideoScaler
         uint inOffsetNative = default;
         uint nTapsNative = default;
         nint nativeResult = GstVideoScalerGetCoeff(Handle, outOffset, &inOffsetNative, &nTapsNative);
-        System.GC.KeepAlive(this);
         inOffset = inOffsetNative;
         double[]? result = null;
         if (nativeResult != 0)
@@ -95,6 +94,7 @@ public sealed unsafe partial class VideoScaler
             result = new double[(int)nTapsNative];
             new System.ReadOnlySpan<double>((void*)nativeResult, (int)nTapsNative).CopyTo(result);
         }
+        System.GC.KeepAlive(this);
         return result;
     }
 

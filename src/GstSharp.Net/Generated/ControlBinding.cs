@@ -56,8 +56,9 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     public Gst.GObject.Value GetValue(Gst.ClockTime timestamp)
     {
         nint nativeResult = GstControlBindingGetValue(Handle, timestamp.Nanoseconds);
+        Gst.GObject.Value result = Gst.GObject.Value.TakeOwnership(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Value.TakeOwnership(nativeResult);
+        return result;
     }
 
     /// <summary>Checks if the control binding is disabled.</summary>
@@ -65,8 +66,9 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     public bool IsDisabled()
     {
         int nativeResult = GstControlBindingIsDisabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -104,9 +106,10 @@ public abstract unsafe partial class ControlBinding : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(@object);
         int nativeResult = GstControlBindingSyncValues(Handle, @object.Handle, timestamp.Nanoseconds, lastSync.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@object);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>name</c> property.</summary>

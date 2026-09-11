@@ -65,11 +65,11 @@ public unsafe partial class PlayVideoOverlayVideoRenderer : Gst.GObject.Object, 
         int widthNative = default;
         int heightNative = default;
         GstPlayVideoOverlayVideoRendererGetRenderRectangle(Handle, &xNative, &yNative, &widthNative, &heightNative);
-        System.GC.KeepAlive(this);
         x = xNative;
         y = yNative;
         width = widthNative;
         height = heightNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_play_video_overlay_video_renderer_get_window_handle</c> function.</summary>

@@ -127,8 +127,9 @@ public unsafe partial class PadTemplate : Gst.Object
         using Gst.Interop.Utf8Scope nameTemplateScope = Gst.Interop.GMarshal.StackUtf8(nameTemplate, nameTemplateBuffer);
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPadTemplateNew(nameTemplateScope.Pointer, (int)direction, (int)presence, caps.Handle);
+        Gst.PadTemplate? result = Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(caps);
-        return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Converts a #GstStaticPadTemplate into a #GstPadTemplate with a type.</summary>
@@ -139,8 +140,9 @@ public unsafe partial class PadTemplate : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(padTemplate);
         nint nativeResult = GstPadTemplateNewFromStaticPadTemplateWithGtype(padTemplate.Handle, padType.Value);
+        Gst.PadTemplate? result = Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(padTemplate);
-        return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -160,8 +162,9 @@ public unsafe partial class PadTemplate : Gst.Object
         using Gst.Interop.Utf8Scope nameTemplateScope = Gst.Interop.GMarshal.StackUtf8(nameTemplate, nameTemplateBuffer);
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstPadTemplateNewWithGtype(nameTemplateScope.Pointer, (int)direction, (int)presence, caps.Handle, padType.Value);
+        Gst.PadTemplate? result = Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(caps);
-        return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the capabilities of the pad template.</summary>
@@ -172,9 +175,10 @@ public unsafe partial class PadTemplate : Gst.Object
     public Gst.Caps GetCaps()
     {
         nint nativeResult = GstPadTemplateGetCaps(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pad_template_get_caps returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>See gst_pad_template_set_documentation_caps().</summary>
@@ -185,9 +189,10 @@ public unsafe partial class PadTemplate : Gst.Object
     public Gst.Caps GetDocumentationCaps()
     {
         nint nativeResult = GstPadTemplateGetDocumentationCaps(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pad_template_get_documentation_caps returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Emit the pad-created signal for this template when created by this pad.</summary>

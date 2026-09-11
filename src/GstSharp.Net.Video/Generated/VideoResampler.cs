@@ -98,9 +98,10 @@ public sealed unsafe partial class VideoResampler
     {
         ArgumentNullException.ThrowIfNull(options);
         int nativeResult = GstVideoResamplerInit(Handle, (int)method, (int)flags, nPhases, nTaps, shift, inSize, outSize, options.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(options);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_video_resampler_clear</c> entry point.</summary>

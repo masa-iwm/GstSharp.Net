@@ -902,14 +902,15 @@ public unsafe partial struct RTPBuffer
         nint dataNative = default;
         uint sizeNative = default;
         int nativeResult = GstRtpBufferGetExtensionOnebyteHeaderFromBytes(bytes.Handle, bitPattern, id, nth, &dataNative, &sizeNative);
-        System.GC.KeepAlive(bytes);
         data = null;
         if (dataNative != 0)
         {
             data = new byte[(int)sizeNative];
             new System.ReadOnlySpan<byte>((void*)dataNative, (int)sizeNative).CopyTo(data);
         }
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(bytes);
+        return result;
     }
 
     /// <summary>Map the contents of @buffer into @rtp.</summary>
@@ -922,9 +923,10 @@ public unsafe partial struct RTPBuffer
         ArgumentNullException.ThrowIfNull(buffer);
         Gst.Rtp.RTPBuffer rtpNative = default;
         int nativeResult = GstRtpBufferMap(buffer.Handle, (int)flags, &rtpNative);
-        System.GC.KeepAlive(buffer);
         rtp = rtpNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>

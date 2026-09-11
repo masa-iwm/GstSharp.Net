@@ -64,8 +64,9 @@ public static unsafe partial class TagXmpWriterExtensions
         System.Span<byte> schemaBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope schemaScope = Gst.Interop.GMarshal.StackUtf8(schema, schemaBuffer);
         int nativeResult = GstTagXmpWriterHasSchema(config.Handle, schemaScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(config);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -106,9 +107,10 @@ public static unsafe partial class TagXmpWriterExtensions
         ArgumentNullException.ThrowIfNull(config);
         ArgumentNullException.ThrowIfNull(taglist);
         nint nativeResult = GstTagXmpWriterTagListToXmpBuffer(config.Handle, taglist.Handle, readOnly ? 1 : 0);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(config);
         System.GC.KeepAlive(taglist);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_tag_xmp_writer_add_all_schemas</c> entry point.</summary>

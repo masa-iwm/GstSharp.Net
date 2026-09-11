@@ -140,8 +140,9 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     public Gst.FlowReturn UpdateFlow(Gst.FlowReturn fret)
     {
         int nativeResult = GstFlowCombinerUpdateFlow(Handle, (int)fret);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -163,9 +164,10 @@ public sealed unsafe partial class FlowCombiner : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstFlowCombinerUpdatePadFlow(Handle, pad.Handle, (int)fret);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pad);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_flow_combiner_new</c> entry point.</summary>

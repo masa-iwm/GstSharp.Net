@@ -146,9 +146,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstAggregatorFinishBuffer(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -184,9 +185,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
         nint bufferlistNative = bufferlist.Handle;
         nint bufferlistOwned = Gst.GstNative.MiniObjectRef(bufferlistNative);
         int nativeResult = GstAggregatorFinishBufferList(instanceHandle, bufferlistOwned);
-        System.GC.KeepAlive(this);
         bufferlist.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -212,10 +214,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
         nint allocatorNative = default;
         nint @paramsNative = GstAllocationParamsNew();
         GstAggregatorGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
-        System.GC.KeepAlive(this);
         @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
         allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_aggregator_get_buffer_pool</c> function.</summary>
@@ -226,8 +228,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public Gst.BufferPool? GetBufferPool()
     {
         nint nativeResult = GstAggregatorGetBufferPool(Handle);
+        Gst.BufferPool? result = Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -238,8 +241,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public bool GetForceLive()
     {
         int nativeResult = GstAggregatorGetForceLive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_aggregator_get_ignore_inactive_pads</c> function.</summary>
@@ -247,8 +251,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public bool GetIgnoreInactivePads()
     {
         int nativeResult = GstAggregatorGetIgnoreInactivePads(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -263,8 +268,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public Gst.ClockTime GetLatency()
     {
         ulong nativeResult = GstAggregatorGetLatency(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -276,8 +282,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public bool Negotiate()
     {
         int nativeResult = GstAggregatorNegotiate(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -297,9 +304,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GstAggregatorPeekNextSample(Handle, pad.Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pad);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -340,9 +348,10 @@ public abstract unsafe partial class Aggregator : Gst.Element
         nint @eventNative = @event.Handle;
         nint @eventOwned = Gst.GstNative.MiniObjectRef(@eventNative);
         int nativeResult = GstAggregatorPushSrcEvent(instanceHandle, @eventOwned);
-        System.GC.KeepAlive(this);
         @event.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -440,8 +449,9 @@ public abstract unsafe partial class Aggregator : Gst.Element
     public Gst.ClockTime SimpleGetNextTime()
     {
         ulong nativeResult = GstAggregatorSimpleGetNextTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>

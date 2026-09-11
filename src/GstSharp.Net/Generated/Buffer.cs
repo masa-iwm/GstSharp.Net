@@ -276,9 +276,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public static Gst.Buffer? NewAllocate(Gst.Allocator? allocator, nuint size, Gst.AllocationParams? @params)
     {
         nint nativeResult = GstBufferNewAllocate(allocator is null ? 0 : allocator.Handle, size, @params is null ? 0 : @params.Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(allocator);
         System.GC.KeepAlive(@params);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Creates a new buffer of size @size and fills it with a copy of @data.</summary>
@@ -306,8 +307,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstBufferAddCustomMeta(Handle, nameScope.Pointer);
+        Gst.CustomMeta? result = Gst.CustomMeta.FromNative(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.CustomMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Adds metadata for @info to @buffer using the parameters in @params.</summary>
@@ -318,9 +320,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(info);
         nint nativeResult = GstBufferAddMeta(Handle, info.Handle, @params);
+        Gst.Meta? result = Gst.Meta.FromNative(nativeResult);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(info);
-        return Gst.Meta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -333,9 +336,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(@ref);
         nint nativeResult = GstBufferAddParentBufferMeta(Handle, @ref.Handle);
+        Gst.ParentBufferMeta? result = Gst.ParentBufferMeta.FromNative(nativeResult);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@ref);
-        return Gst.ParentBufferMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Attaches protection metadata to a #GstBuffer.</summary>
@@ -371,10 +375,11 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nuint infoType = info.BoxedType.Value;
         nint infoOwned = Gst.Interop.GObjectNative.BoxedCopy(infoType, infoNative);
         nint nativeResult = GstBufferAddProtectionMeta(instanceHandle, infoOwned);
-        System.GC.KeepAlive(this);
         info.Dispose();
-        return Gst.ProtectionMeta.FromNative(nativeResult)
+        Gst.ProtectionMeta result = Gst.ProtectionMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_protection_meta returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -390,9 +395,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(reference);
         nint nativeResult = GstBufferAddReferenceTimestampMeta(Handle, reference.Handle, timestamp.Nanoseconds, duration.Nanoseconds);
+        Gst.ReferenceTimestampMeta? result = Gst.ReferenceTimestampMeta.FromNative(nativeResult);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(reference);
-        return Gst.ReferenceTimestampMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -440,10 +446,11 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint buf2Owned = Gst.GstNative.MiniObjectRef(buf2Native);
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstBufferAppend(instanceOwned, buf2Owned);
-        System.GC.KeepAlive(this);
         buf2.Dispose();
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_buffer_append returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -481,8 +488,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint memNative = mem.Handle;
         nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
         GstBufferAppendMemory(instanceHandle, memOwned);
-        System.GC.KeepAlive(this);
         mem.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -533,10 +540,11 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint buf2Owned = Gst.GstNative.MiniObjectRef(buf2Native);
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstBufferAppendRegion(instanceOwned, buf2Owned, offset, size);
-        System.GC.KeepAlive(this);
         buf2.Dispose();
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_buffer_append_region returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -547,8 +555,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.Buffer? CopyDeep()
     {
         nint nativeResult = GstBufferCopyDeep(Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Copies the information from @src into @dest.</summary>
@@ -568,9 +577,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstBufferCopyInto(Handle, src.Handle, (int)flags, offset, size);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(src);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -599,8 +609,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.Buffer? CopyRegion(Gst.BufferCopyFlags flags, nuint offset, nuint size)
     {
         nint nativeResult = GstBufferCopyRegion(Handle, (int)flags, offset, size);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -618,7 +629,6 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint destNative = default;
         nuint destSizeNative = default;
         GstBufferExtractDup(Handle, offset, size, &destNative, &destSizeNative);
-        System.GC.KeepAlive(this);
         dest = null;
         if (destNative != 0)
         {
@@ -626,6 +636,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
             new System.ReadOnlySpan<byte>((void*)destNative, (int)destSizeNative).CopyTo(dest);
             Gst.Interop.GMarshal.Free(destNative);
         }
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Copies @size bytes from @src to @buffer at @offset.</summary>
@@ -674,11 +685,12 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         uint lengthNative = default;
         nuint skipNative = default;
         int nativeResult = GstBufferFindMemory(Handle, offset, size, &idxNative, &lengthNative, &skipNative);
-        System.GC.KeepAlive(this);
         idx = idxNative;
         length = lengthNative;
         skip = skipNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -689,8 +701,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.Memory? GetAllMemory()
     {
         nint nativeResult = GstBufferGetAllMemory(Handle);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Finds the first #GstCustomMeta on @buffer for the desired @name.</summary>
@@ -702,8 +715,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstBufferGetCustomMeta(Handle, nameScope.Pointer);
+        Gst.CustomMeta? result = Gst.CustomMeta.FromNative(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.CustomMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the #GstBufferFlags flags set on this buffer.</summary>
@@ -711,8 +725,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.BufferFlags GetFlags()
     {
         int nativeResult = GstBufferGetFlags(Handle);
+        Gst.BufferFlags result = (Gst.BufferFlags)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.BufferFlags)nativeResult;
+        return result;
     }
 
     /// <summary>Gets the memory block at index @idx in @buffer.</summary>
@@ -724,8 +739,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.Memory? GetMemory(uint idx)
     {
         nint nativeResult = GstBufferGetMemory(Handle, idx);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -744,8 +760,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.Memory? GetMemoryRange(uint idx, int length)
     {
         nint nativeResult = GstBufferGetMemoryRange(Handle, idx, length);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -760,8 +777,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.Meta? GetMeta(Gst.GObject.GType api)
     {
         nint nativeResult = GstBufferGetMeta(Handle, api.Value);
+        Gst.Meta? result = Gst.Meta.FromNative(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Meta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_buffer_get_n_meta</c> function.</summary>
@@ -790,9 +808,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.ReferenceTimestampMeta? GetReferenceTimestampMeta(Gst.Caps? reference)
     {
         nint nativeResult = GstBufferGetReferenceTimestampMeta(Handle, reference is null ? 0 : reference.Handle);
+        Gst.ReferenceTimestampMeta? result = Gst.ReferenceTimestampMeta.FromNative(nativeResult);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(reference);
-        return Gst.ReferenceTimestampMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the total size of the memory blocks in @buffer.</summary>
@@ -822,9 +841,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nuint offsetNative = default;
         nuint maxsizeNative = default;
         nuint nativeResult = GstBufferGetSizes(Handle, &offsetNative, &maxsizeNative);
-        System.GC.KeepAlive(this);
         offset = offsetNative;
         maxsize = maxsizeNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -849,9 +868,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nuint offsetNative = default;
         nuint maxsizeNative = default;
         nuint nativeResult = GstBufferGetSizesRange(Handle, idx, length, &offsetNative, &maxsizeNative);
-        System.GC.KeepAlive(this);
         offset = offsetNative;
         maxsize = maxsizeNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -861,8 +880,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public bool HasFlags(Gst.BufferFlags flags)
     {
         int nativeResult = GstBufferHasFlags(Handle, (int)flags);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -902,8 +922,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint memNative = mem.Handle;
         nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
         GstBufferInsertMemory(instanceHandle, idx, memOwned);
-        System.GC.KeepAlive(this);
         mem.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Checks if all memory blocks in @buffer are writable.</summary>
@@ -917,8 +937,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public bool IsAllMemoryWritable()
     {
         int nativeResult = GstBufferIsAllMemoryWritable(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if @length memory blocks in @buffer starting from @idx are writable.</summary>
@@ -935,8 +956,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public bool IsMemoryRangeWritable(uint idx, int length)
     {
         int nativeResult = GstBufferIsMemoryRangeWritable(Handle, idx, length);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Fills @info with the #GstMapInfo of all merged memory blocks in @buffer.</summary>
@@ -963,9 +985,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
         Gst.MapInfo infoNative = default;
         int nativeResult = GstBufferMap(Handle, &infoNative, (int)flags);
-        System.GC.KeepAlive(this);
         info = infoNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -998,9 +1021,10 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     {
         Gst.MapInfo infoNative = default;
         int nativeResult = GstBufferMapRange(Handle, idx, length, &infoNative, (int)flags);
-        System.GC.KeepAlive(this);
         info = infoNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Compares @size bytes starting from @offset in @buffer with the memory in @mem.</summary>
@@ -1059,8 +1083,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.Memory? PeekMemory(uint idx)
     {
         nint nativeResult = GstBufferPeekMemory(Handle, idx);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -1098,8 +1123,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint memNative = mem.Handle;
         nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
         GstBufferPrependMemory(instanceHandle, memOwned);
-        System.GC.KeepAlive(this);
         mem.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Removes all the memory blocks in @buffer.</summary>
@@ -1157,8 +1182,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint memNative = mem.Handle;
         nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
         GstBufferReplaceAllMemory(instanceHandle, memOwned);
-        System.GC.KeepAlive(this);
         mem.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Replaces the memory block at index @idx in @buffer with @mem.</summary>
@@ -1190,8 +1215,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint memNative = mem.Handle;
         nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
         GstBufferReplaceMemory(instanceHandle, idx, memOwned);
-        System.GC.KeepAlive(this);
         mem.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Replaces @length memory blocks in @buffer starting at @idx with @mem.</summary>
@@ -1229,8 +1254,8 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
         nint memNative = mem.Handle;
         nint memOwned = Gst.GstNative.MiniObjectRef(memNative);
         GstBufferReplaceMemoryRange(instanceHandle, idx, length, memOwned);
-        System.GC.KeepAlive(this);
         mem.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the offset and total size of the memory blocks in @buffer.</summary>
@@ -1254,8 +1279,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public bool ResizeRange(uint idx, int length, nint offset, nint size)
     {
         int nativeResult = GstBufferResizeRange(Handle, idx, length, offset, size);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets one or more buffer flags on a buffer.</summary>
@@ -1264,8 +1290,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public bool SetFlags(Gst.BufferFlags flags)
     {
         int nativeResult = GstBufferSetFlags(Handle, (int)flags);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the total size of the memory blocks in @buffer.</summary>
@@ -1291,8 +1318,9 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public bool UnsetFlags(Gst.BufferFlags flags)
     {
         int nativeResult = GstBufferUnsetFlags(Handle, (int)flags);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

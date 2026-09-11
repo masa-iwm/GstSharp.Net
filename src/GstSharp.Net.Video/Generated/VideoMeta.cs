@@ -224,9 +224,10 @@ public sealed unsafe partial class VideoMeta
     {
         Gst.Video.VideoMeta.PlaneHeightArray planeHeightNative = default;
         int nativeResult = GstVideoMetaGetPlaneHeight(Handle, &planeHeightNative);
-        System.GC.KeepAlive(this);
         planeHeight = planeHeightNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -242,9 +243,10 @@ public sealed unsafe partial class VideoMeta
     {
         Gst.Video.VideoMeta.PlaneSizeArray planeSizeNative = default;
         int nativeResult = GstVideoMetaGetPlaneSize(Handle, &planeSizeNative);
-        System.GC.KeepAlive(this);
         planeSize = planeSizeNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -263,11 +265,12 @@ public sealed unsafe partial class VideoMeta
         nint dataNative = default;
         int strideNative = default;
         int nativeResult = GstVideoMetaMap(Handle, plane, &infoNative, &dataNative, &strideNative, (int)flags);
-        System.GC.KeepAlive(this);
         info = infoNative;
         data = dataNative;
         stride = strideNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -281,8 +284,9 @@ public sealed unsafe partial class VideoMeta
     public bool SetAlignment(Gst.Video.VideoAlignment alignment)
     {
         int nativeResult = GstVideoMetaSetAlignment(Handle, alignment);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -299,8 +303,9 @@ public sealed unsafe partial class VideoMeta
     {
         Gst.Video.VideoAlignment alignmentNative = alignment;
         int nativeResult = GstVideoMetaSetAlignmentFull(Handle, &alignmentNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Unmap a previously mapped plane with gst_video_meta_map().</summary>
@@ -311,9 +316,10 @@ public sealed unsafe partial class VideoMeta
     {
         Gst.MapInfo infoNative = info;
         int nativeResult = GstVideoMetaUnmap(Handle, plane, &infoNative);
-        System.GC.KeepAlive(this);
         info = infoNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_video_meta_get_info</c> function.</summary>

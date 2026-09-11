@@ -77,9 +77,10 @@ public sealed unsafe partial class VideoConverter
     public Gst.Structure GetConfig()
     {
         nint nativeResult = GstVideoConverterGetConfig(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_converter_get_config returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Retrieve the input format of @convert.</summary>
@@ -92,9 +93,10 @@ public sealed unsafe partial class VideoConverter
     public Gst.Video.VideoInfo GetInInfo()
     {
         nint nativeResult = GstVideoConverterGetInInfo(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Video.VideoInfo result = Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_converter_get_in_info returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Retrieve the output format of @convert.</summary>
@@ -107,9 +109,10 @@ public sealed unsafe partial class VideoConverter
     public Gst.Video.VideoInfo GetOutInfo()
     {
         nint nativeResult = GstVideoConverterGetOutInfo(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Video.VideoInfo result = Gst.Video.VideoInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_converter_get_out_info returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Set @config as extra configuration for @convert.</summary>
@@ -152,9 +155,10 @@ public sealed unsafe partial class VideoConverter
         nuint configType = config.BoxedType.Value;
         nint configOwned = Gst.Interop.GObjectNative.BoxedCopy(configType, configNative);
         int nativeResult = GstVideoConverterSetConfig(instanceHandle, configOwned);
-        System.GC.KeepAlive(this);
         config.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Transform the GstMeta of @src into @dest using @convert.</summary>
@@ -169,10 +173,11 @@ public sealed unsafe partial class VideoConverter
         ArgumentNullException.ThrowIfNull(src);
         ArgumentNullException.ThrowIfNull(dest);
         int nativeResult = GstVideoConverterTransformMetas(Handle, src.Handle, dest.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(dest);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_video_converter_frame</c> entry point.</summary>

@@ -175,9 +175,10 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPUrl Copy()
     {
         nint nativeResult = GstRtspUrlCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Rtsp.RTSPUrl.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Rtsp.RTSPUrl result = Gst.Rtsp.RTSPUrl.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtsp_url_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Splits the path of @url on '/' boundaries, decoding the resulting components,</summary>
@@ -202,8 +203,9 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     public string[]? DecodePathComponents()
     {
         nint nativeResult = GstRtspUrlDecodePathComponents(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>Get the port number of @url.</summary>
@@ -213,9 +215,10 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     {
         ushort portNative = default;
         int nativeResult = GstRtspUrlGetPort(Handle, &portNative);
-        System.GC.KeepAlive(this);
         port = portNative;
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get a newly allocated string describing the request URI for @url.</summary>
@@ -223,9 +226,10 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     public string GetRequestUri()
     {
         nint nativeResult = GstRtspUrlGetRequestUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_rtsp_url_get_request_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -243,9 +247,10 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
         System.Span<byte> controlPathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope controlPathScope = Gst.Interop.GMarshal.StackUtf8(controlPath, controlPathBuffer);
         nint nativeResult = GstRtspUrlGetRequestUriWithControl(Handle, controlPathScope.Pointer);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_rtsp_url_get_request_uri_with_control returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Set the port number in @url to @port.</summary>
@@ -254,8 +259,9 @@ public sealed unsafe partial class RTSPUrl : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult SetPort(ushort port)
     {
         int nativeResult = GstRtspUrlSetPort(Handle, port);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>

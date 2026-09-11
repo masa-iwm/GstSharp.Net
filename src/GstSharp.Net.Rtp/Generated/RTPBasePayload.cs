@@ -56,9 +56,10 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     public Gst.Buffer AllocateOutputBuffer(uint payloadLen, byte padLen, byte csrcCount)
     {
         nint nativeResult = GstRtpBasePayloadAllocateOutputBuffer(Handle, payloadLen, padLen, csrcCount);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtp_base_payload_allocate_output_buffer returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -90,8 +91,9 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     public bool IsFilled(uint size, Gst.ClockTime duration)
     {
         int nativeResult = GstRtpBasePayloadIsFilled(Handle, size, duration.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -102,8 +104,9 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     public bool IsSourceInfoEnabled()
     {
         int nativeResult = GstRtpBasePayloadIsSourceInfoEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -139,9 +142,10 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstRtpBasePayloadPush(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -177,9 +181,10 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
         nint listNative = list.Handle;
         nint listOwned = Gst.GstNative.MiniObjectRef(listNative);
         int nativeResult = GstRtpBasePayloadPushList(instanceHandle, listOwned);
-        System.GC.KeepAlive(this);
         list.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -209,9 +214,10 @@ public abstract unsafe partial class RTPBasePayload : Gst.Element
     public bool SetOutcapsStructure(Gst.Structure? s)
     {
         int nativeResult = GstRtpBasePayloadSetOutcapsStructure(Handle, s is null ? 0 : s.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(s);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

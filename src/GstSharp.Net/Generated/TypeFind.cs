@@ -109,9 +109,10 @@ public sealed unsafe partial class TypeFind
         using Gst.Interop.Utf8Scope extensionsScope = Gst.Interop.GMarshal.StackUtf8(extensions, extensionsBuffer);
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         int nativeResult = GstTypeFindRegister(pluginNative, nameScope.Pointer, rank, Gst.TypeFindFunctionTrampoline.Pointer, extensionsScope.Pointer, possibleCapsNative, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(plugin);
         System.GC.KeepAlive(possibleCaps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_type_find_get_length</c> entry point.</summary>

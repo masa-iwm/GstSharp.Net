@@ -183,8 +183,9 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     public Gst.Memory? Copy(nint offset, nint size)
     {
         nint nativeResult = GstMemoryCopy(Handle, offset, size);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the current @size, @offset and @maxsize of @mem.</summary>
@@ -196,9 +197,9 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         nuint offsetNative = default;
         nuint maxsizeNative = default;
         nuint nativeResult = GstMemoryGetSizes(Handle, &offsetNative, &maxsizeNative);
-        System.GC.KeepAlive(this);
         offset = offsetNative;
         maxsize = maxsizeNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -221,10 +222,11 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(mem2);
         nuint offsetNative = default;
         int nativeResult = GstMemoryIsSpan(Handle, mem2.Handle, &offsetNative);
+        offset = offsetNative;
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(mem2);
-        offset = offsetNative;
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @mem if allocated with an allocator for @mem_type.</summary>
@@ -236,8 +238,9 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         System.Span<byte> memTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope memTypeScope = Gst.Interop.GMarshal.StackUtf8(memType, memTypeBuffer);
         int nativeResult = GstMemoryIsType(Handle, memTypeScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -284,9 +287,10 @@ public sealed unsafe partial class Memory : Gst.MiniObject
         Gst.MapInfo infoNative = default;
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstMemoryMakeMapped(instanceOwned, &infoNative, (int)flags);
-        System.GC.KeepAlive(this);
         info = infoNative;
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Returns a writable copy of @memory.</summary>
@@ -336,8 +340,8 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -367,9 +371,10 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     {
         Gst.MapInfo infoNative = default;
         int nativeResult = GstMemoryMap(Handle, &infoNative, (int)flags);
-        System.GC.KeepAlive(this);
         info = infoNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -402,9 +407,10 @@ public sealed unsafe partial class Memory : Gst.MiniObject
     public Gst.Memory Share(nint offset, nint size)
     {
         nint nativeResult = GstMemoryShare(Handle, offset, size);
-        System.GC.KeepAlive(this);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Memory result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_memory_share returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Release the memory obtained with gst_memory_map()</summary>

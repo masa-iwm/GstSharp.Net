@@ -45,8 +45,9 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GesUriClipAssetGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets #GstDiscovererInfo about the file</summary>
@@ -54,9 +55,10 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
     public Gst.Pbutils.DiscovererInfo GetInfo()
     {
         nint nativeResult = GesUriClipAssetGetInfo(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Pbutils.DiscovererInfo result = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_uri_clip_asset_get_info returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -69,8 +71,9 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
     public Gst.ClockTime GetMaxDuration()
     {
         ulong nativeResult = GesUriClipAssetGetMaxDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the GESUriSourceAsset @self containes</summary>
@@ -81,7 +84,6 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
     public System.Collections.Generic.IReadOnlyList<GES.UriSourceAsset> GetStreamAssets()
     {
         nint nativeResult = GesUriClipAssetGetStreamAssets(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<GES.UriSourceAsset> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -92,6 +94,7 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -100,8 +103,9 @@ public unsafe partial class UriClipAsset : GES.SourceClipAsset, GES.IMetaContain
     public bool IsImage()
     {
         int nativeResult = GesUriClipAssetIsImage(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

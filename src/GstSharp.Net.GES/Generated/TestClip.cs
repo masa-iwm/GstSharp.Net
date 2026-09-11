@@ -105,8 +105,9 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
     public GES.VideoTestPattern GetVpattern()
     {
         int nativeResult = GesTestClipGetVpattern(Handle);
+        GES.VideoTestPattern result = (GES.VideoTestPattern)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.VideoTestPattern)nativeResult;
+        return result;
     }
 
     /// <summary>Let you know if the audio track of @self is muted or not.</summary>
@@ -114,8 +115,9 @@ public unsafe partial class TestClip : GES.SourceClip, GES.IExtractable, GES.IMe
     public bool IsMuted()
     {
         int nativeResult = GesTestClipIsMuted(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the frequency to generate. See audiotestsrc element.</summary>

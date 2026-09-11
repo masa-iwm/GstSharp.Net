@@ -170,8 +170,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     {
         using Gst.Interop.GListScope layersScope = Gst.Interop.GMarshal.AllocList(layers, singly: false);
         int nativeResult = GesTrackElementEdit(Handle, layersScope.Head, (int)mode, (int)edge, position);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets #GESTrackElement:auto-clamp-control-sources.</summary>
@@ -182,8 +183,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public bool GetAutoClampControlSources()
     {
         int nativeResult = GesTrackElementGetAutoClampControlSources(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -208,8 +210,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         nint nativeResult = GesTrackElementGetControlBinding(Handle, propertyNameScope.Pointer);
+        Gst.ControlBinding? result = Gst.GObject.Object.FromNative<Gst.ControlBinding>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.ControlBinding>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -223,8 +226,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public Gst.Element? GetElement()
     {
         nint nativeResult = GesTrackElementGetElement(Handle);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the GNonLin object this object is controlling.</summary>
@@ -233,9 +237,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public Gst.Element GetGnlobject()
     {
         nint nativeResult = GesTrackElementGetGnlobject(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_track_element_get_gnlobject returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the nleobject that this element wraps.</summary>
@@ -243,9 +248,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public Gst.Element GetNleobject()
     {
         nint nativeResult = GesTrackElementGetNleobject(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_track_element_get_nleobject returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the #GESTrackElement:track for the element.</summary>
@@ -256,8 +262,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public GES.Track? GetTrack()
     {
         nint nativeResult = GesTrackElementGetTrack(Handle);
+        GES.Track? result = Gst.GObject.Object.FromNative<GES.Track>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Track>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the #GESTrackElement:track-type for the element.</summary>
@@ -265,8 +272,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public GES.TrackType GetTrackType()
     {
         int nativeResult = GesTrackElementGetTrackType(Handle);
+        GES.TrackType result = (GES.TrackType)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TrackType)nativeResult;
+        return result;
     }
 
     /// <summary>Gets #GESTrackElement:has-internal-source for the element.</summary>
@@ -274,8 +282,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public bool HasInternalSource()
     {
         int nativeResult = GesTrackElementHasInternalSource(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets #GESTrackElement:active for the element.</summary>
@@ -283,8 +292,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public bool IsActive()
     {
         int nativeResult = GesTrackElementIsActive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -311,8 +321,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public bool IsCore()
     {
         int nativeResult = GesTrackElementIsCore(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -336,8 +347,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         int nativeResult = GesTrackElementRemoveControlBinding(Handle, propertyNameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets #GESTrackElement:active for the element.</summary>
@@ -346,8 +358,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public bool SetActive(bool active)
     {
         int nativeResult = GesTrackElementSetActive(Handle, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -398,9 +411,10 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
         System.Span<byte> bindingTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope bindingTypeScope = Gst.Interop.GMarshal.StackUtf8(bindingType, bindingTypeBuffer);
         int nativeResult = GesTrackElementSetControlSource(Handle, source.Handle, propertyNameScope.Pointer, bindingTypeScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(source);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -420,8 +434,9 @@ public abstract unsafe partial class TrackElement : GES.TimelineElement, GES.IEx
     public bool SetHasInternalSource(bool hasInternalSource)
     {
         int nativeResult = GesTrackElementSetHasInternalSource(Handle, hasInternalSource ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the #GESTrackElement:track-type for the element.</summary>

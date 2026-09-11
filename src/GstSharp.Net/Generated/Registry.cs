@@ -120,9 +120,10 @@ public unsafe partial class Registry : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(feature);
         int nativeResult = GstRegistryAddFeature(Handle, feature.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(feature);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Add the plugin to the registry. The plugin-added signal will be emitted.</summary>
@@ -138,9 +139,10 @@ public unsafe partial class Registry : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(plugin);
         int nativeResult = GstRegistryAddPlugin(Handle, plugin.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(plugin);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -162,8 +164,9 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> featureNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope featureNameScope = Gst.Interop.GMarshal.StackUtf8(featureName, featureNameBuffer);
         int nativeResult = GstRegistryCheckFeatureVersion(Handle, featureNameScope.Pointer, minMajor, minMinor, minMicro);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -186,7 +189,6 @@ public unsafe partial class Registry : Gst.Object
         try
         {
             nint nativeResult = GstRegistryFeatureFilter(instanceHandle, Gst.PluginFeatureFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
-            System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
             foreach (nint nativeItem in nativeItems)
@@ -197,6 +199,7 @@ public unsafe partial class Registry : Gst.Object
                 }
             }
 
+            System.GC.KeepAlive(this);
             return result;
         }
         finally
@@ -219,8 +222,9 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstRegistryFindFeature(Handle, nameScope.Pointer, type.Value);
+        Gst.PluginFeature? result = Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -239,8 +243,9 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstRegistryFindPlugin(Handle, nameScope.Pointer);
+        Gst.Plugin? result = Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Retrieves a #GList of #GstPluginFeature of @type.</summary>
@@ -252,7 +257,6 @@ public unsafe partial class Registry : Gst.Object
     public System.Collections.Generic.IReadOnlyList<Gst.PluginFeature> GetFeatureList(Gst.GObject.GType type)
     {
         nint nativeResult = GstRegistryGetFeatureList(Handle, type.Value);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -263,6 +267,7 @@ public unsafe partial class Registry : Gst.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -278,7 +283,6 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstRegistryGetFeatureListByPlugin(Handle, nameScope.Pointer);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.PluginFeature> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -289,6 +293,7 @@ public unsafe partial class Registry : Gst.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -315,7 +320,6 @@ public unsafe partial class Registry : Gst.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Plugin> GetPluginList()
     {
         nint nativeResult = GstRegistryGetPluginList(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Plugin> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -326,6 +330,7 @@ public unsafe partial class Registry : Gst.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -344,8 +349,9 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> filenameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope filenameScope = Gst.Interop.GMarshal.StackUtf8(filename, filenameBuffer);
         nint nativeResult = GstRegistryLookup(Handle, filenameScope.Pointer);
+        Gst.Plugin? result = Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Find a #GstPluginFeature with @name in @registry.</summary>
@@ -360,8 +366,9 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstRegistryLookupFeature(Handle, nameScope.Pointer);
+        Gst.PluginFeature? result = Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -385,7 +392,6 @@ public unsafe partial class Registry : Gst.Object
         try
         {
             nint nativeResult = GstRegistryPluginFilter(instanceHandle, Gst.PluginFilterTrampoline.Pointer, first ? 1 : 0, filterState.UserData);
-            System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.Plugin> result = new(nativeItems.Length);
             foreach (nint nativeItem in nativeItems)
@@ -396,6 +402,7 @@ public unsafe partial class Registry : Gst.Object
                 }
             }
 
+            System.GC.KeepAlive(this);
             return result;
         }
         finally
@@ -442,8 +449,9 @@ public unsafe partial class Registry : Gst.Object
         System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int nativeResult = GstRegistryScanPath(Handle, pathScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

@@ -48,7 +48,6 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Play.PlayAudioInfo> GetAudioStreams()
     {
         nint nativeResult = GstPlayMediaInfoGetAudioStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Play.PlayAudioInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -59,6 +58,7 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -67,8 +67,9 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public string? GetContainerFormat()
     {
         nint nativeResult = GstPlayMediaInfoGetContainerFormat(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_play_media_info_get_duration</c> function.</summary>
@@ -76,8 +77,9 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GstPlayMediaInfoGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -93,8 +95,9 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public Gst.Sample? GetImageSample()
     {
         nint nativeResult = GstPlayMediaInfoGetImageSample(Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_play_media_info_get_number_of_audio_streams</c> function.</summary>
@@ -141,7 +144,6 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Play.PlayStreamInfo> GetStreamList()
     {
         nint nativeResult = GstPlayMediaInfoGetStreamList(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Play.PlayStreamInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -152,6 +154,7 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -163,7 +166,6 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Play.PlaySubtitleInfo> GetSubtitleStreams()
     {
         nint nativeResult = GstPlayMediaInfoGetSubtitleStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Play.PlaySubtitleInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -174,6 +176,7 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -187,8 +190,9 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstPlayMediaInfoGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_play_media_info_get_title</c> function.</summary>
@@ -196,8 +200,9 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public string? GetTitle()
     {
         nint nativeResult = GstPlayMediaInfoGetTitle(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_play_media_info_get_uri</c> function.</summary>
@@ -205,9 +210,10 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public string GetUri()
     {
         nint nativeResult = GstPlayMediaInfoGetUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_play_media_info_get_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_play_media_info_get_video_streams</c> function.</summary>
@@ -218,7 +224,6 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Play.PlayVideoInfo> GetVideoStreams()
     {
         nint nativeResult = GstPlayMediaInfoGetVideoStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Play.PlayVideoInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -229,6 +234,7 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -237,8 +243,9 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public bool IsLive()
     {
         int nativeResult = GstPlayMediaInfoIsLive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_play_media_info_is_seekable</c> function.</summary>
@@ -246,8 +253,9 @@ public unsafe partial class PlayMediaInfo : Gst.GObject.Object
     public bool IsSeekable()
     {
         int nativeResult = GstPlayMediaInfoIsSeekable(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_play_media_info_get_audio_streams</c> entry point.</summary>

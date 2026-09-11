@@ -75,9 +75,10 @@ public unsafe partial class Stream : Gst.Object
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         nint nativeResult = GstStreamNew(streamIdScope.Pointer, caps is null ? 0 : caps.Handle, (int)type, (int)flags);
-        System.GC.KeepAlive(caps);
-        return Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Stream result = Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_stream_new returned no value.");
+        System.GC.KeepAlive(caps);
+        return result;
     }
 
     /// <summary>Retrieve the caps for @stream, if any</summary>
@@ -85,8 +86,9 @@ public unsafe partial class Stream : Gst.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstStreamGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Retrieve the current stream flags for @stream</summary>
@@ -94,8 +96,9 @@ public unsafe partial class Stream : Gst.Object
     public Gst.StreamFlags GetStreamFlags()
     {
         int nativeResult = GstStreamGetStreamFlags(Handle);
+        Gst.StreamFlags result = (Gst.StreamFlags)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.StreamFlags)nativeResult;
+        return result;
     }
 
     /// <summary>Returns the stream ID of @stream.</summary>
@@ -106,8 +109,9 @@ public unsafe partial class Stream : Gst.Object
     public string? GetStreamId()
     {
         nint nativeResult = GstStreamGetStreamId(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Retrieve the stream type for @stream</summary>
@@ -115,8 +119,9 @@ public unsafe partial class Stream : Gst.Object
     public Gst.StreamType GetStreamType()
     {
         int nativeResult = GstStreamGetStreamType(Handle);
+        Gst.StreamType result = (Gst.StreamType)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.StreamType)nativeResult;
+        return result;
     }
 
     /// <summary>Retrieve the tags for @stream, if any</summary>
@@ -124,8 +129,9 @@ public unsafe partial class Stream : Gst.Object
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstStreamGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Set the caps for the #GstStream</summary>

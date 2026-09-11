@@ -209,9 +209,10 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstDsdInfoNewFromCaps(caps.Handle);
-        System.GC.KeepAlive(caps);
-        return Gst.Audio.DsdInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Audio.DsdInfo result = Gst.Audio.DsdInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_dsd_info_new_from_caps returned no value.");
+        System.GC.KeepAlive(caps);
+        return result;
     }
 
     /// <summary>Copy a GstDsdInfo structure.</summary>
@@ -219,9 +220,10 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     public Gst.Audio.DsdInfo Copy()
     {
         nint nativeResult = GstDsdInfoCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Audio.DsdInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Audio.DsdInfo result = Gst.Audio.DsdInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_dsd_info_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Compares two #GstDsdInfo and returns whether they are equal or not</summary>
@@ -231,9 +233,10 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(other);
         int nativeResult = GstDsdInfoIsEqual(Handle, other.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(other);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set the default info for the DSD info of @format and @rate and @channels.</summary>
@@ -273,9 +276,10 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     public Gst.Caps ToCaps()
     {
         nint nativeResult = GstDsdInfoToCaps(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_dsd_info_to_caps returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_dsd_info_new</c> entry point.</summary>

@@ -53,9 +53,10 @@ public sealed unsafe partial class PlayVisualization : Gst.GObject.Boxed
     public Gst.Play.PlayVisualization Copy()
     {
         nint nativeResult = GstPlayVisualizationCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Play.PlayVisualization.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Play.PlayVisualization result = Gst.Play.PlayVisualization.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_play_visualization_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_play_visualization_copy</c> entry point.</summary>

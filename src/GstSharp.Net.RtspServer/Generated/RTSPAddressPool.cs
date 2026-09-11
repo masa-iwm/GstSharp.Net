@@ -64,8 +64,9 @@ public unsafe partial class RTSPAddressPool : Gst.GObject.Object
     public Gst.RtspServer.RTSPAddress? AcquireAddress(Gst.RtspServer.RTSPAddressFlags flags, int nPorts)
     {
         nint nativeResult = GstRtspAddressPoolAcquireAddress(Handle, (int)flags, nPorts);
+        Gst.RtspServer.RTSPAddress? result = Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -97,8 +98,9 @@ public unsafe partial class RTSPAddressPool : Gst.GObject.Object
         System.Span<byte> maxAddressBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope maxAddressScope = Gst.Interop.GMarshal.StackUtf8(maxAddress, maxAddressBuffer);
         int nativeResult = GstRtspAddressPoolAddRange(Handle, minAddressScope.Pointer, maxAddressScope.Pointer, minPort, maxPort, ttl);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -123,8 +125,9 @@ public unsafe partial class RTSPAddressPool : Gst.GObject.Object
     public bool HasUnicastAddresses()
     {
         int nativeResult = GstRtspAddressPoolHasUnicastAddresses(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -155,9 +158,10 @@ public unsafe partial class RTSPAddressPool : Gst.GObject.Object
         using Gst.Interop.Utf8Scope ipAddressScope = Gst.Interop.GMarshal.StackUtf8(ipAddress, ipAddressBuffer);
         nint addressNative = default;
         int nativeResult = GstRtspAddressPoolReserveAddress(Handle, ipAddressScope.Pointer, port, nPorts, ttl, &addressNative);
-        System.GC.KeepAlive(this);
         address = Gst.RtspServer.RTSPAddress.FromNative(addressNative, Gst.Interop.Transfer.Full);
-        return (Gst.RtspServer.RTSPAddressPoolResult)nativeResult;
+        Gst.RtspServer.RTSPAddressPoolResult result = (Gst.RtspServer.RTSPAddressPoolResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_address_pool_new</c> entry point.</summary>

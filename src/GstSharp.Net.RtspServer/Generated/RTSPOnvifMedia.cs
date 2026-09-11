@@ -53,8 +53,9 @@ public unsafe partial class RTSPOnvifMedia : Gst.RtspServer.RTSPMedia
     public bool CollectBackchannel()
     {
         int nativeResult = GstRtspOnvifMediaCollectBackchannel(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

@@ -73,8 +73,9 @@ public unsafe partial struct VideoMasteringDisplayInfo
         fixed (Gst.Video.VideoMasteringDisplayInfo* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
         {
             int nativeResult = GstVideoMasteringDisplayInfoAddToCaps(self, caps.Handle);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(caps);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -99,8 +100,9 @@ public unsafe partial struct VideoMasteringDisplayInfo
         fixed (Gst.Video.VideoMasteringDisplayInfo* self = &this)
         {
             int nativeResult = GstVideoMasteringDisplayInfoFromCaps(self, caps.Handle);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(caps);
-            return nativeResult != 0;
+            return result;
         }
     }
 

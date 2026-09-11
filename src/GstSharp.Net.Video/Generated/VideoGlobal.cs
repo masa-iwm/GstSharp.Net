@@ -29,9 +29,10 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddAncillaryMeta(buffer.Handle);
-        System.GC.KeepAlive(buffer);
-        return Gst.Video.AncillaryMeta.FromNative(nativeResult)
+        Gst.Video.AncillaryMeta result = Gst.Video.AncillaryMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_ancillary_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -47,9 +48,10 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddVideoAfdMeta(buffer.Handle, field, (int)spec, (int)afd);
-        System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoAFDMeta.FromNative(nativeResult)
+        Gst.Video.VideoAFDMeta result = Gst.Video.VideoAFDMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_afd_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -62,9 +64,10 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddVideoAffineTransformationMeta(buffer.Handle);
-        System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoAffineTransformationMeta.FromNative(nativeResult)
+        Gst.Video.VideoAffineTransformationMeta result = Gst.Video.VideoAffineTransformationMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_affine_transformation_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -91,9 +94,10 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddVideoBarMeta(buffer.Handle, field, isLetterbox ? 1 : 0, barData1, barData2);
-        System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoBarMeta.FromNative(nativeResult)
+        Gst.Video.VideoBarMeta result = Gst.Video.VideoBarMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_bar_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -110,9 +114,10 @@ public static unsafe partial class VideoGlobal
         fixed (byte* dataPointer = data)
         {
             nint nativeResult = GstBufferAddVideoCaptionMeta(buffer.Handle, (int)captionType, dataPointer, (nuint)data.Length);
-            System.GC.KeepAlive(buffer);
-            return Gst.Video.VideoCaptionMeta.FromNative(nativeResult)
+            Gst.Video.VideoCaptionMeta result = Gst.Video.VideoCaptionMeta.FromNative(nativeResult)
                 ?? throw new InvalidOperationException("gst_buffer_add_video_caption_meta returned no value.");
+            System.GC.KeepAlive(buffer);
+            return result;
         }
     }
 
@@ -150,10 +155,11 @@ public static unsafe partial class VideoGlobal
         nint alphaBufferNative = alphaBuffer.Handle;
         nint alphaBufferOwned = Gst.GstNative.MiniObjectRef(alphaBufferNative);
         nint nativeResult = GstBufferAddVideoCodecAlphaMeta(bufferNative, alphaBufferOwned);
-        System.GC.KeepAlive(buffer);
         alphaBuffer.Dispose();
-        return Gst.Video.VideoCodecAlphaMeta.FromNative(nativeResult)
+        Gst.Video.VideoCodecAlphaMeta result = Gst.Video.VideoCodecAlphaMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_codec_alpha_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -176,8 +182,9 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddVideoMeta(buffer.Handle, (int)flags, (int)format, width, height);
+        Gst.Video.VideoMeta? result = Gst.Video.VideoMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Attaches GstVideoMeta metadata to @buffer with the given parameters.</summary>
@@ -222,8 +229,9 @@ public static unsafe partial class VideoGlobal
             fixed (int* stridePointer = stride)
             {
                 nint nativeResult = GstBufferAddVideoMetaFull(buffer.Handle, (int)flags, (int)format, width, height, nPlanes, offsetPointer, stridePointer);
+                Gst.Video.VideoMeta? result = Gst.Video.VideoMeta.FromNative(nativeResult);
                 System.GC.KeepAlive(buffer);
-                return Gst.Video.VideoMeta.FromNative(nativeResult);
+                return result;
             }
         }
     }
@@ -240,10 +248,11 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buf);
         nint nativeResult = GstBufferAddVideoOverlayCompositionMeta(buf.Handle, comp is null ? 0 : comp.Handle);
+        Gst.Video.VideoOverlayCompositionMeta result = Gst.Video.VideoOverlayCompositionMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_video_overlay_composition_meta returned no value.");
         System.GC.KeepAlive(buf);
         System.GC.KeepAlive(comp);
-        return Gst.Video.VideoOverlayCompositionMeta.FromNative(nativeResult)
-            ?? throw new InvalidOperationException("gst_buffer_add_video_overlay_composition_meta returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -264,9 +273,10 @@ public static unsafe partial class VideoGlobal
         System.Span<byte> roiTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope roiTypeScope = Gst.Interop.GMarshal.StackUtf8(roiType, roiTypeBuffer);
         nint nativeResult = GstBufferAddVideoRegionOfInterestMeta(buffer.Handle, roiTypeScope.Pointer, x, y, w, h);
-        System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
+        Gst.Video.VideoRegionOfInterestMeta result = Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_region_of_interest_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -284,9 +294,10 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddVideoRegionOfInterestMetaId(buffer.Handle, roiType.Value, x, y, w, h);
-        System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
+        Gst.Video.VideoRegionOfInterestMeta result = Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_region_of_interest_meta_id returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -317,9 +328,10 @@ public static unsafe partial class VideoGlobal
             fixed (byte* dataPointer = data)
             {
                 nint nativeResult = GstBufferAddVideoSeiUserDataUnregisteredMeta(buffer.Handle, uuidPointer, dataPointer, (nuint)data.Length);
-                System.GC.KeepAlive(buffer);
-                return Gst.Video.VideoSEIUserDataUnregisteredMeta.FromNative(nativeResult)
+                Gst.Video.VideoSEIUserDataUnregisteredMeta result = Gst.Video.VideoSEIUserDataUnregisteredMeta.FromNative(nativeResult)
                     ?? throw new InvalidOperationException("gst_buffer_add_video_sei_user_data_unregistered_meta returned no value.");
+                System.GC.KeepAlive(buffer);
+                return result;
             }
         }
     }
@@ -339,9 +351,10 @@ public static unsafe partial class VideoGlobal
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentNullException.ThrowIfNull(tc);
         nint nativeResult = GstBufferAddVideoTimeCodeMeta(buffer.Handle, tc.Handle);
+        Gst.Video.VideoTimeCodeMeta? result = Gst.Video.VideoTimeCodeMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
         System.GC.KeepAlive(tc);
-        return Gst.Video.VideoTimeCodeMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -366,9 +379,10 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddVideoTimeCodeMetaFull(buffer.Handle, fpsN, fpsD, latestDailyJam is null ? 0 : latestDailyJam.Handle, (int)flags, hours, minutes, seconds, frames, fieldCount);
+        Gst.Video.VideoTimeCodeMeta? result = Gst.Video.VideoTimeCodeMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
         System.GC.KeepAlive(latestDailyJam);
-        return Gst.Video.VideoTimeCodeMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Find the #GstVideoMeta on @buffer with the lowest @id.</summary>
@@ -387,8 +401,9 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferGetVideoMeta(buffer.Handle);
+        Gst.Video.VideoMeta? result = Gst.Video.VideoMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Find the #GstVideoMeta on @buffer with the given @id.</summary>
@@ -408,8 +423,9 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferGetVideoMetaId(buffer.Handle, id);
+        Gst.Video.VideoMeta? result = Gst.Video.VideoMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Find the #GstVideoRegionOfInterestMeta on @buffer with the given @id.</summary>
@@ -429,8 +445,9 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferGetVideoRegionOfInterestMetaId(buffer.Handle, id);
+        Gst.Video.VideoRegionOfInterestMeta? result = Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -445,9 +462,10 @@ public static unsafe partial class VideoGlobal
         ArgumentNullException.ThrowIfNull(config);
         Gst.Video.VideoAlignment alignNative = default;
         int nativeResult = GstBufferPoolConfigGetVideoAlignment(config.Handle, &alignNative);
-        System.GC.KeepAlive(config);
         align = alignNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(config);
+        return result;
     }
 
     /// <summary>
@@ -474,8 +492,9 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(msg);
         int nativeResult = GstIsVideoOverlayPrepareWindowHandleMessage(msg.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(msg);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_video_afd_meta_api_get_type</c> function.</summary>
@@ -517,9 +536,10 @@ public static unsafe partial class VideoGlobal
         ArgumentNullException.ThrowIfNull(dest);
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoBlend(dest.Handle, src.Handle, x, y, globalAlpha);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(dest);
         System.GC.KeepAlive(src);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -663,8 +683,6 @@ public static unsafe partial class VideoGlobal
         ArgumentNullException.ThrowIfNull(toCaps);
         nint errorNative = 0;
         nint nativeResult = GstVideoConvertSample(sample.Handle, toCaps.Handle, timeout.Nanoseconds, &errorNative);
-        System.GC.KeepAlive(sample);
-        System.GC.KeepAlive(toCaps);
         if (errorNative != 0 && nativeResult != 0)
         {
             // The call failed and transferred a value all the same. The throw
@@ -672,7 +690,10 @@ public static unsafe partial class VideoGlobal
             Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
         }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(sample);
+        System.GC.KeepAlive(toCaps);
+        return result;
     }
 
     /// <summary>The <c>gst_video_crop_meta_api_get_type</c> function.</summary>
@@ -796,8 +817,9 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(@event);
         int nativeResult = GstVideoEventIsForceKeyUnit(@event.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(@event);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -896,13 +918,14 @@ public static unsafe partial class VideoGlobal
         int allHeadersNative = default;
         uint countNative = default;
         int nativeResult = GstVideoEventParseDownstreamForceKeyUnit(@event.Handle, &timestampNative, &streamTimeNative, &runningTimeNative, &allHeadersNative, &countNative);
-        System.GC.KeepAlive(@event);
         timestamp = new Gst.ClockTime(timestampNative);
         streamTime = new Gst.ClockTime(streamTimeNative);
         runningTime = new Gst.ClockTime(runningTimeNative);
         allHeaders = allHeadersNative != 0;
         count = countNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -924,9 +947,10 @@ public static unsafe partial class VideoGlobal
         ArgumentNullException.ThrowIfNull(@event);
         int inStillNative = default;
         int nativeResult = GstVideoEventParseStillFrame(@event.Handle, &inStillNative);
-        System.GC.KeepAlive(@event);
         inStill = inStillNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -952,11 +976,12 @@ public static unsafe partial class VideoGlobal
         int allHeadersNative = default;
         uint countNative = default;
         int nativeResult = GstVideoEventParseUpstreamForceKeyUnit(@event.Handle, &runningTimeNative, &allHeadersNative, &countNative);
-        System.GC.KeepAlive(@event);
         runningTime = new Gst.ClockTime(runningTimeNative);
         allHeaders = allHeadersNative != 0;
         count = countNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -1060,8 +1085,9 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstVideoIsDmaDrmCaps(caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1259,10 +1285,11 @@ public static unsafe partial class VideoGlobal
         byte statusNative = default;
         ulong precisionTimeStampNative = default;
         int nativeResult = GstVideoSeiUserDataUnregisteredParsePrecisionTimeStamp(userData.Handle, &statusNative, &precisionTimeStampNative);
-        System.GC.KeepAlive(userData);
         status = statusNative;
         precisionTimeStamp = precisionTimeStampNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(userData);
+        return result;
     }
 
     /// <summary>

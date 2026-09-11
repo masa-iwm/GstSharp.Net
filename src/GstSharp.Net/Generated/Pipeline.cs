@@ -140,8 +140,9 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public bool GetAutoFlushBus()
     {
         int nativeResult = GstPipelineGetAutoFlushBus(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -152,9 +153,10 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public new Gst.Bus GetBus()
     {
         nint nativeResult = GstPipelineGetBus(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Bus result = Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pipeline_get_bus returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Return the configured latency on @pipeline.</summary>
@@ -165,8 +167,9 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.ClockTime GetConfiguredLatency()
     {
         ulong nativeResult = GstPipelineGetConfiguredLatency(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the configured delay (see gst_pipeline_set_delay()).</summary>
@@ -174,8 +177,9 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.ClockTime GetDelay()
     {
         ulong nativeResult = GstPipelineGetDelay(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -186,8 +190,9 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.ClockTime GetLatency()
     {
         ulong nativeResult = GstPipelineGetLatency(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the current clock used by @pipeline.</summary>
@@ -201,9 +206,10 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public Gst.Clock GetPipelineClock()
     {
         nint nativeResult = GstPipelineGetPipelineClock(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Clock result = Gst.GObject.Object.FromNative<Gst.Clock>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pipeline_get_pipeline_clock returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @pipeline is live.</summary>
@@ -211,8 +217,9 @@ public unsafe partial class Pipeline : Gst.Bin, Gst.IChildProxy
     public bool IsLive()
     {
         int nativeResult = GstPipelineIsLive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

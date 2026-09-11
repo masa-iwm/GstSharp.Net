@@ -95,9 +95,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     public Gst.TagList Copy()
     {
         nint nativeResult = GstTagListCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.TagList result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_tag_list_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -138,9 +139,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         int valueNative = default;
         int nativeResult = GstTagListGetBoolean(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -161,9 +163,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         int valueNative = default;
         int nativeResult = GstTagListGetBooleanIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -196,9 +199,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetDate(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = Gst.GLib.DateNative.ToDateOnly(valueNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -231,9 +235,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetDateIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = Gst.GLib.DateNative.ToDateOnly(valueNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -260,9 +265,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetDateTime(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = Gst.DateTime.FromNative(valueNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -287,9 +293,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetDateTimeIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = Gst.DateTime.FromNative(valueNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -309,9 +316,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         double valueNative = default;
         int nativeResult = GstTagListGetDouble(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -332,9 +340,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         double valueNative = default;
         int nativeResult = GstTagListGetDoubleIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -354,9 +363,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         float valueNative = default;
         int nativeResult = GstTagListGetFloat(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -377,9 +387,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         float valueNative = default;
         int nativeResult = GstTagListGetFloatIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -399,9 +410,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         int valueNative = default;
         int nativeResult = GstTagListGetInt(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -421,9 +433,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         long valueNative = default;
         int nativeResult = GstTagListGetInt64(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -444,9 +457,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         long valueNative = default;
         int nativeResult = GstTagListGetInt64Index(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -467,9 +481,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         int valueNative = default;
         int nativeResult = GstTagListGetIntIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -489,9 +504,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetPointer(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -512,9 +528,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetPointerIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -543,9 +560,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint sampleNative = default;
         int nativeResult = GstTagListGetSample(Handle, tagScope.Pointer, &sampleNative);
-        System.GC.KeepAlive(this);
         sample = Gst.Sample.FromNative(sampleNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -575,9 +593,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint sampleNative = default;
         int nativeResult = GstTagListGetSampleIndex(Handle, tagScope.Pointer, index, &sampleNative);
-        System.GC.KeepAlive(this);
         sample = Gst.Sample.FromNative(sampleNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the scope of @list.</summary>
@@ -585,8 +604,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     public Gst.TagScope GetScope()
     {
         int nativeResult = GstTagListGetScope(Handle);
+        Gst.TagScope result = (Gst.TagScope)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.TagScope)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -618,9 +638,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetString(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(valueNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -649,9 +670,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListGetStringIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(valueNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Checks how many value are stored in this tag list for the given tag.</summary>
@@ -684,9 +706,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         uint valueNative = default;
         int nativeResult = GstTagListGetUint(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -706,9 +729,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         ulong valueNative = default;
         int nativeResult = GstTagListGetUint64(Handle, tagScope.Pointer, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -729,9 +753,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         ulong valueNative = default;
         int nativeResult = GstTagListGetUint64Index(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -752,9 +777,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         uint valueNative = default;
         int nativeResult = GstTagListGetUintIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = valueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Inserts the tags of the @from list into the first list using the given mode.</summary>
@@ -773,8 +799,9 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     public bool IsEmpty()
     {
         int nativeResult = GstTagListIsEmpty(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if the two given taglists are equal.</summary>
@@ -784,9 +811,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(list2);
         int nativeResult = GstTagListIsEqual(Handle, list2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(list2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Returns a writable copy of @taglist.</summary>
@@ -836,8 +864,8 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -854,9 +882,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     public Gst.TagList? Merge(Gst.TagList? list2, Gst.TagMergeMode mode)
     {
         nint nativeResult = GstTagListMerge(Handle, list2 is null ? 0 : list2.Handle, (int)mode);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(list2);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the number of tags in @list.</summary>
@@ -874,9 +903,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     public string NthTagName(uint index)
     {
         nint nativeResult = GstTagListNthTagName(Handle, index);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_tag_list_nth_tag_name returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -904,9 +934,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint valueNative = default;
         int nativeResult = GstTagListPeekStringIndex(Handle, tagScope.Pointer, index, &valueNative);
-        System.GC.KeepAlive(this);
         value = Gst.Interop.GMarshal.PtrToStringUtf8(valueNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Removes the given tag from the taglist.</summary>
@@ -940,9 +971,10 @@ public sealed unsafe partial class TagList : Gst.MiniObject
     public override string ToString()
     {
         nint nativeResult = GstTagListToString(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_tag_list_to_string returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_tag_list_new_empty</c> entry point.</summary>

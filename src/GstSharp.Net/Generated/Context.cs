@@ -101,9 +101,10 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public Gst.Context Copy()
     {
         nint nativeResult = GstContextCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Context result = Gst.Context.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_context_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the type of @context.</summary>
@@ -111,9 +112,10 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public string GetContextType()
     {
         nint nativeResult = GstContextGetContextType(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_context_get_context_type returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Accesses the structure of the context.</summary>
@@ -128,9 +130,10 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public Gst.Structure GetStructure()
     {
         nint nativeResult = GstContextGetStructure(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_context_get_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the task pool from @context.</summary>
@@ -143,9 +146,10 @@ public sealed unsafe partial class Context : Gst.MiniObject
     {
         nint poolNative = default;
         int nativeResult = GstContextGetTaskPool(Handle, &poolNative);
-        System.GC.KeepAlive(this);
         pool = Gst.GObject.Object.FromNative<Gst.TaskPool>(poolNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Checks if @context has @context_type.</summary>
@@ -157,8 +161,9 @@ public sealed unsafe partial class Context : Gst.MiniObject
         System.Span<byte> contextTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope contextTypeScope = Gst.Interop.GMarshal.StackUtf8(contextType, contextTypeBuffer);
         int nativeResult = GstContextHasContextType(Handle, contextTypeScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if @context is persistent.</summary>
@@ -166,8 +171,9 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public bool IsPersistent()
     {
         int nativeResult = GstContextIsPersistent(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Returns a writable copy of @context.</summary>
@@ -217,8 +223,8 @@ public sealed unsafe partial class Context : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -251,9 +257,10 @@ public sealed unsafe partial class Context : Gst.MiniObject
     public Gst.Structure WritableStructure()
     {
         nint nativeResult = GstContextWritableStructure(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_context_writable_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_context_new</c> entry point.</summary>

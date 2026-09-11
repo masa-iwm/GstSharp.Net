@@ -54,8 +54,9 @@ public unsafe partial class RTSPMediaFactoryURI : Gst.RtspServer.RTSPMediaFactor
     public string? GetUri()
     {
         nint nativeResult = GstRtspMediaFactoryUriGetUri(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Set the URI of the resource that will be streamed by this factory.</summary>

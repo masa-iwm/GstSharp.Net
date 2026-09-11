@@ -68,8 +68,9 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstDiscovererStreamInfoGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_misc</c> function.</summary>
@@ -85,8 +86,9 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Structure? GetMisc()
     {
         nint nativeResult = GstDiscovererStreamInfoGetMisc(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_next</c> function.</summary>
@@ -98,8 +100,9 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererStreamInfo? GetNext()
     {
         nint nativeResult = GstDiscovererStreamInfoGetNext(Handle);
+        Gst.Pbutils.DiscovererStreamInfo? result = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_previous</c> function.</summary>
@@ -111,8 +114,9 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererStreamInfo? GetPrevious()
     {
         nint nativeResult = GstDiscovererStreamInfoGetPrevious(Handle);
+        Gst.Pbutils.DiscovererStreamInfo? result = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_stream_id</c> function.</summary>
@@ -123,8 +127,9 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public string? GetStreamId()
     {
         nint nativeResult = GstDiscovererStreamInfoGetStreamId(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_stream_number</c> function.</summary>
@@ -147,9 +152,10 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public string GetStreamTypeNick()
     {
         nint nativeResult = GstDiscovererStreamInfoGetStreamTypeNick(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_discoverer_stream_info_get_stream_type_nick returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_tags</c> function.</summary>
@@ -163,8 +169,9 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstDiscovererStreamInfoGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_toc</c> function.</summary>
@@ -178,8 +185,9 @@ public unsafe partial class DiscovererStreamInfo : Gst.GObject.Object
     public Gst.Toc? GetToc()
     {
         nint nativeResult = GstDiscovererStreamInfoGetToc(Handle);
+        Gst.Toc? result = Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_stream_info_get_caps</c> entry point.</summary>

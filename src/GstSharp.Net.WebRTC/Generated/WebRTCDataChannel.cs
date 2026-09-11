@@ -68,9 +68,10 @@ public abstract unsafe partial class WebRTCDataChannel : Gst.GObject.Object
         using Gst.Interop.Utf8Scope strScope = Gst.Interop.GMarshal.StackUtf8(str, strBuffer);
         nint errorNative = 0;
         int nativeResult = GstWebrtcDataChannelSendStringFull(Handle, strScope.Pointer, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>buffered-amount</c> property.</summary>

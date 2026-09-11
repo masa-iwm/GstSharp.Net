@@ -204,9 +204,10 @@ public static unsafe partial class RtspGlobal
         System.Span<byte> reasonBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope reasonScope = Gst.Interop.GMarshal.StackUtf8(reason, reasonBuffer);
         int nativeResult = GstRtspMessageNewResponse(&msgNative, (int)code, reasonScope.Pointer, request is null ? 0 : request.Handle);
-        System.GC.KeepAlive(request);
         msg = Gst.Rtsp.RTSPMessage.FromNative(msgNative, Gst.Interop.Transfer.Full);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(request);
+        return result;
     }
 
     /// <summary>Convert @options to a string.</summary>

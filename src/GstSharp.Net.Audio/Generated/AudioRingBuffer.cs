@@ -63,9 +63,10 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(spec);
         int nativeResult = GstAudioRingBufferAcquire(Handle, spec.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(spec);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Activate @buf to start or stop pulling data.</summary>
@@ -80,8 +81,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Activate(bool active)
     {
         int nativeResult = GstAudioRingBufferActivate(Handle, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -130,8 +132,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool CloseDevice()
     {
         int nativeResult = GstAudioRingBufferCloseDevice(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -147,9 +150,10 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     {
         long destValNative = default;
         int nativeResult = GstAudioRingBufferConvert(Handle, (int)srcFmt, srcVal, (int)destFmt, &destValNative);
-        System.GC.KeepAlive(this);
         destVal = destValNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -181,8 +185,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool DeviceIsOpen()
     {
         int nativeResult = GstAudioRingBufferDeviceIsOpen(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets the current segment base number of the ringbuffer.</summary>
@@ -216,8 +221,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool IsAcquired()
     {
         int nativeResult = GstAudioRingBufferIsAcquired(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @buf is activated.</summary>
@@ -228,8 +234,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool IsActive()
     {
         int nativeResult = GstAudioRingBufferIsActive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @buf is flushing.</summary>
@@ -240,8 +247,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool IsFlushing()
     {
         int nativeResult = GstAudioRingBufferIsFlushing(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -267,8 +275,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool OpenDevice()
     {
         int nativeResult = GstAudioRingBufferOpenDevice(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Pause processing samples from the ringbuffer.</summary>
@@ -276,8 +285,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Pause()
     {
         int nativeResult = GstAudioRingBufferPause(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -293,7 +303,6 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         nint readptrNative = default;
         int lenNative = default;
         int nativeResult = GstAudioRingBufferPrepareRead(Handle, &segmentNative, &readptrNative, &lenNative);
-        System.GC.KeepAlive(this);
         segment = segmentNative;
         readptr = null;
         if (readptrNative != 0)
@@ -301,7 +310,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
             readptr = new byte[(int)lenNative];
             new System.ReadOnlySpan<byte>((void*)readptrNative, (int)lenNative).CopyTo(readptr);
         }
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Free the resources of the ringbuffer.</summary>
@@ -309,8 +320,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Release()
     {
         int nativeResult = GstAudioRingBufferRelease(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -390,8 +402,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Start()
     {
         int nativeResult = GstAudioRingBufferStart(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Stop processing samples from the ringbuffer.</summary>
@@ -399,8 +412,9 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
     public bool Stop()
     {
         int nativeResult = GstAudioRingBufferStop(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Print debug info about the buffer sized in @spec to the debug log.</summary>
@@ -430,9 +444,10 @@ public abstract unsafe partial class AudioRingBuffer : Gst.Object
         ArgumentNullException.ThrowIfNull(spec);
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstAudioRingBufferParseCaps(spec.Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(spec);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_audio_ring_buffer_acquire</c> entry point.</summary>

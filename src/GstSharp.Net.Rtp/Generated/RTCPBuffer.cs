@@ -157,9 +157,10 @@ public unsafe partial struct RTCPBuffer
         ArgumentNullException.ThrowIfNull(buffer);
         Gst.Rtp.RTCPBuffer rtcpNative = default;
         int nativeResult = GstRtcpBufferMap(buffer.Handle, (int)flags, &rtcpNative);
-        System.GC.KeepAlive(buffer);
         rtcp = rtcpNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>
@@ -219,8 +220,9 @@ public unsafe partial struct RTCPBuffer
     {
         ArgumentNullException.ThrowIfNull(buffer);
         int nativeResult = GstRtcpBufferValidate(buffer.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(buffer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -273,8 +275,9 @@ public unsafe partial struct RTCPBuffer
     {
         ArgumentNullException.ThrowIfNull(buffer);
         int nativeResult = GstRtcpBufferValidateReduced(buffer.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(buffer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtcp_buffer_add_packet</c> entry point.</summary>

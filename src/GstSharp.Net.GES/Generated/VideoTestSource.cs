@@ -48,8 +48,9 @@ public unsafe partial class VideoTestSource : GES.VideoSource, GES.IExtractable,
     public GES.VideoTestPattern GetPattern()
     {
         int nativeResult = GesVideoTestSourceGetPattern(Handle);
+        GES.VideoTestPattern result = (GES.VideoTestPattern)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.VideoTestPattern)nativeResult;
+        return result;
     }
 
     /// <summary>Sets the source to use the given @pattern.</summary>

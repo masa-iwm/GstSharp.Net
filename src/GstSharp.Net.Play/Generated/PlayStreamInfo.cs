@@ -55,8 +55,9 @@ public abstract unsafe partial class PlayStreamInfo : Gst.GObject.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstPlayStreamInfoGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>A string describing codec used in #GstPlayStreamInfo.</summary>
@@ -64,8 +65,9 @@ public abstract unsafe partial class PlayStreamInfo : Gst.GObject.Object
     public string? GetCodec()
     {
         nint nativeResult = GstPlayStreamInfoGetCodec(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -89,9 +91,10 @@ public abstract unsafe partial class PlayStreamInfo : Gst.GObject.Object
     public string GetStreamId()
     {
         nint nativeResult = GstPlayStreamInfoGetStreamId(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_play_stream_info_get_stream_id returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -102,9 +105,10 @@ public abstract unsafe partial class PlayStreamInfo : Gst.GObject.Object
     public string GetStreamType()
     {
         nint nativeResult = GstPlayStreamInfoGetStreamType(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_play_stream_info_get_stream_type returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_play_stream_info_get_tags</c> function.</summary>
@@ -117,8 +121,9 @@ public abstract unsafe partial class PlayStreamInfo : Gst.GObject.Object
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstPlayStreamInfoGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_play_stream_info_get_caps</c> entry point.</summary>

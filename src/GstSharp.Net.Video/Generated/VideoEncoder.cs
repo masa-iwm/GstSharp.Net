@@ -113,9 +113,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
         nint nativeResult = GstVideoEncoderAllocateOutputBuffer(Handle, size);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_encoder_allocate_output_buffer returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -136,9 +137,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoEncoderAllocateOutputFrame(Handle, frame.Handle, size);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(frame);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -179,8 +181,8 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         nuint frameType = frame.BoxedType.Value;
         nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
         GstVideoEncoderDropFrame(instanceHandle, frameOwned);
-        System.GC.KeepAlive(this);
         frame.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -230,9 +232,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         nuint frameType = frame.BoxedType.Value;
         nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
         int nativeResult = GstVideoEncoderFinishFrame(instanceHandle, frameOwned);
-        System.GC.KeepAlive(this);
         frame.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -256,9 +259,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstVideoEncoderFinishSubframe(Handle, frame.Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(frame);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -284,10 +288,10 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         nint allocatorNative = default;
         nint @paramsNative = GstAllocationParamsNew();
         GstVideoEncoderGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
-        System.GC.KeepAlive(this);
         @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
         allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get a pending unfinished #GstVideoCodecFrame</summary>
@@ -296,8 +300,9 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Video.VideoCodecFrame? GetFrame(int frameNumber)
     {
         nint nativeResult = GstVideoEncoderGetFrame(Handle, frameNumber);
+        Gst.Video.VideoCodecFrame? result = Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get all pending unfinished #GstVideoCodecFrame</summary>
@@ -305,7 +310,6 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public System.Collections.Generic.IReadOnlyList<Gst.Video.VideoCodecFrame> GetFrames()
     {
         nint nativeResult = GstVideoEncoderGetFrames(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Video.VideoCodecFrame> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -316,6 +320,7 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -336,9 +341,9 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         GstVideoEncoderGetLatency(Handle, &minLatencyNative, &maxLatencyNative);
-        System.GC.KeepAlive(this);
         minLatency = new Gst.ClockTime(minLatencyNative);
         maxLatency = new Gst.ClockTime(maxLatencyNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -372,8 +377,9 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.ClockTime GetMinForceKeyUnitInterval()
     {
         ulong nativeResult = GstVideoEncoderGetMinForceKeyUnitInterval(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the oldest unfinished pending #GstVideoCodecFrame</summary>
@@ -381,8 +387,9 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Video.VideoCodecFrame? GetOldestFrame()
     {
         nint nativeResult = GstVideoEncoderGetOldestFrame(Handle);
+        Gst.Video.VideoCodecFrame? result = Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Video.VideoCodecFrame.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the current #GstVideoCodecState</summary>
@@ -390,8 +397,9 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Video.VideoCodecState? GetOutputState()
     {
         nint nativeResult = GstVideoEncoderGetOutputState(Handle);
+        Gst.Video.VideoCodecState? result = Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -402,8 +410,9 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public bool IsQosEnabled()
     {
         int nativeResult = GstVideoEncoderIsQosEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -439,8 +448,9 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public bool Negotiate()
     {
         int nativeResult = GstVideoEncoderNegotiate(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -454,11 +464,12 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
         nint nativeResult = GstVideoEncoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_video_encoder_proxy_getcaps returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
         System.GC.KeepAlive(filter);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_video_encoder_proxy_getcaps returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -497,8 +508,8 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         nuint frameType = frame.BoxedType.Value;
         nint frameOwned = Gst.Interop.GObjectNative.BoxedCopy(frameType, frameNative);
         GstVideoEncoderReleaseFrame(instanceHandle, frameOwned);
-        System.GC.KeepAlive(this);
         frame.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the codec headers to be sent downstream whenever requested.</summary>
@@ -610,10 +621,11 @@ public abstract unsafe partial class VideoEncoder : Gst.Element, Gst.IPreset
         nint referenceNative = reference is null ? 0 : reference.Handle;
         nint capsOwned = Gst.GstNative.MiniObjectRef(capsNative);
         nint nativeResult = GstVideoEncoderSetOutputState(instanceHandle, capsOwned, referenceNative);
+        caps.Dispose();
+        Gst.Video.VideoCodecState? result = Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(reference);
-        caps.Dispose();
-        return Gst.Video.VideoCodecState.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Configures @encoder to handle Quality-of-Service events from downstream.</summary>

@@ -147,8 +147,9 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstAudioInfoNewFromCaps(caps.Handle);
+        Gst.Audio.AudioInfo? result = Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(caps);
-        return Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -166,9 +167,10 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     {
         long destValNative = default;
         int nativeResult = GstAudioInfoConvert(Handle, (int)srcFmt, srcVal, (int)destFmt, &destValNative);
-        System.GC.KeepAlive(this);
         destVal = destValNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Copy a GstAudioInfo structure.</summary>
@@ -176,9 +178,10 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     public Gst.Audio.AudioInfo Copy()
     {
         nint nativeResult = GstAudioInfoCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Audio.AudioInfo result = Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_info_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Compares two #GstAudioInfo and returns whether they are equal or not</summary>
@@ -188,9 +191,10 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(other);
         int nativeResult = GstAudioInfoIsEqual(Handle, other.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(other);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Set the default info for the audio info of @format and @rate and @channels.</summary>
@@ -230,9 +234,10 @@ public sealed unsafe partial class AudioInfo : Gst.GObject.Boxed
     public Gst.Caps ToCaps()
     {
         nint nativeResult = GstAudioInfoToCaps(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_info_to_caps returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_audio_info_new</c> entry point.</summary>

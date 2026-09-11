@@ -142,11 +142,12 @@ public unsafe partial class CollectPads : Gst.Object
         ArgumentNullException.ThrowIfNull(buf);
         nint outbufNative = default;
         int nativeResult = GstCollectPadsClipRunningTime(Handle, cdata.Handle, buf.Handle, &outbufNative, userData);
+        outbuf = Gst.Buffer.FromNative(outbufNative, Gst.Interop.Transfer.Full);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(cdata);
         System.GC.KeepAlive(buf);
-        outbuf = Gst.Buffer.FromNative(outbufNative, Gst.Interop.Transfer.Full);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -163,10 +164,11 @@ public unsafe partial class CollectPads : Gst.Object
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(@event);
         int nativeResult = GstCollectPadsEventDefault(Handle, data.Handle, @event.Handle, discard ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(data);
         System.GC.KeepAlive(@event);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Flush @size bytes from the pad @data.</summary>
@@ -209,9 +211,10 @@ public unsafe partial class CollectPads : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(data);
         nint nativeResult = GstCollectPadsPeek(Handle, data.Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(data);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -231,9 +234,10 @@ public unsafe partial class CollectPads : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(data);
         nint nativeResult = GstCollectPadsPop(Handle, data.Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(data);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -250,10 +254,11 @@ public unsafe partial class CollectPads : Gst.Object
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstCollectPadsQueryDefault(Handle, data.Handle, query.Handle, discard ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(data);
         System.GC.KeepAlive(query);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get a subbuffer of @size bytes from the given pad @data.</summary>
@@ -275,9 +280,10 @@ public unsafe partial class CollectPads : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(data);
         nint nativeResult = GstCollectPadsReadBuffer(Handle, data.Handle, size);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(data);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -295,9 +301,10 @@ public unsafe partial class CollectPads : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstCollectPadsRemovePad(Handle, pad.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pad);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -571,10 +578,11 @@ public unsafe partial class CollectPads : Gst.Object
         ArgumentNullException.ThrowIfNull(pad);
         ArgumentNullException.ThrowIfNull(@event);
         int nativeResult = GstCollectPadsSrcEventDefault(Handle, pad.Handle, @event.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pad);
         System.GC.KeepAlive(@event);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Starts the processing of data in the collect_pads.</summary>
@@ -622,9 +630,10 @@ public unsafe partial class CollectPads : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(data);
         nint nativeResult = GstCollectPadsTakeBuffer(Handle, data.Handle, size);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(data);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_collect_pads_new</c> entry point.</summary>

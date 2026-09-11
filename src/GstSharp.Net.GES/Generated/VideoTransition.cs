@@ -70,8 +70,9 @@ public unsafe partial class VideoTransition : GES.Transition, GES.IExtractable, 
     public GES.VideoStandardTransitionType GetTransitionType()
     {
         int nativeResult = GesVideoTransitionGetTransitionType(Handle);
+        GES.VideoStandardTransitionType result = (GES.VideoStandardTransitionType)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.VideoStandardTransitionType)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -83,8 +84,9 @@ public unsafe partial class VideoTransition : GES.Transition, GES.IExtractable, 
     public bool IsInverted()
     {
         int nativeResult = GesVideoTransitionIsInverted(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -121,8 +123,9 @@ public unsafe partial class VideoTransition : GES.Transition, GES.IExtractable, 
     public bool SetTransitionType(GES.VideoStandardTransitionType type)
     {
         int nativeResult = GesVideoTransitionSetTransitionType(Handle, (int)type);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>This value represents the border width of the transition.</summary>

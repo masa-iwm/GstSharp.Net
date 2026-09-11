@@ -157,9 +157,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstEventNewCaps(caps.Handle);
-        System.GC.KeepAlive(caps);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Event result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_caps returned no value.");
+        System.GC.KeepAlive(caps);
+        return result;
     }
 
     /// <summary>
@@ -432,9 +433,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
         System.Span<byte> originBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope originScope = Gst.Interop.GMarshal.StackUtf8(origin, originBuffer);
         nint nativeResult = GstEventNewProtection(systemIdScope.Pointer, data.Handle, originScope.Pointer);
-        System.GC.KeepAlive(data);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Event result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_protection returned no value.");
+        System.GC.KeepAlive(data);
+        return result;
     }
 
     /// <summary>
@@ -613,9 +615,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(segment);
         nint nativeResult = GstEventNewSegment(segment.Handle);
-        System.GC.KeepAlive(segment);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Event result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_segment returned no value.");
+        System.GC.KeepAlive(segment);
+        return result;
     }
 
     /// <summary>
@@ -650,9 +653,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstEventNewSinkMessage(nameScope.Pointer, msg.Handle);
-        System.GC.KeepAlive(msg);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Event result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_sink_message returned no value.");
+        System.GC.KeepAlive(msg);
+        return result;
     }
 
     /// <summary>
@@ -707,9 +711,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(collection);
         nint nativeResult = GstEventNewStreamCollection(collection.Handle);
-        System.GC.KeepAlive(collection);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Event result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_stream_collection returned no value.");
+        System.GC.KeepAlive(collection);
+        return result;
     }
 
     /// <summary>
@@ -826,9 +831,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(toc);
         nint nativeResult = GstEventNewToc(toc.Handle, updated ? 1 : 0);
-        System.GC.KeepAlive(toc);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Event result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_event_new_toc returned no value.");
+        System.GC.KeepAlive(toc);
+        return result;
     }
 
     /// <summary>
@@ -918,8 +924,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public Gst.Structure? GetStructure()
     {
         nint nativeResult = GstEventGetStructure(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -934,8 +941,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstEventHasName(Handle, nameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -948,8 +956,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public bool HasNameId(Gst.GLib.Quark name)
     {
         int nativeResult = GstEventHasNameId(Handle, name.Value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Returns a writable copy of @event.</summary>
@@ -999,8 +1008,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -1016,11 +1025,11 @@ public sealed unsafe partial class Event : Gst.MiniObject
         long maxsizeNative = default;
         int asyncNative = default;
         GstEventParseBufferSize(Handle, &formatNative, &minsizeNative, &maxsizeNative, &asyncNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         minsize = minsizeNative;
         maxsize = maxsizeNative;
         async = asyncNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1032,8 +1041,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint capsNative = default;
         GstEventParseCaps(Handle, &capsNative);
-        System.GC.KeepAlive(this);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse the FLUSH_STOP event and retrieve the @reset_time member.</summary>
@@ -1042,8 +1051,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         int resetTimeNative = default;
         GstEventParseFlushStop(Handle, &resetTimeNative);
-        System.GC.KeepAlive(this);
         resetTime = resetTimeNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract timestamp and duration from a new GAP event.</summary>
@@ -1060,9 +1069,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
         ulong timestampNative = default;
         ulong durationNative = default;
         GstEventParseGap(Handle, &timestampNative, &durationNative);
-        System.GC.KeepAlive(this);
         timestamp = new Gst.ClockTime(timestampNative);
         duration = new Gst.ClockTime(durationNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1074,8 +1083,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         int flagsNative = default;
         GstEventParseGapFlags(Handle, &flagsNative);
-        System.GC.KeepAlive(this);
         flags = (Gst.GapFlags)flagsNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_event_parse_group_id</c> function.</summary>
@@ -1088,9 +1097,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         uint groupIdNative = default;
         int nativeResult = GstEventParseGroupId(Handle, &groupIdNative);
-        System.GC.KeepAlive(this);
         groupId = groupIdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Extract rate and flags from an instant-rate-change event.</summary>
@@ -1107,9 +1117,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
         double rateMultiplierNative = default;
         int newFlagsNative = default;
         GstEventParseInstantRateChange(Handle, &rateMultiplierNative, &newFlagsNative);
-        System.GC.KeepAlive(this);
         rateMultiplier = rateMultiplierNative;
         newFlags = (Gst.SegmentFlags)newFlagsNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extract the rate multiplier and running times from an instant-rate-sync-time event.</summary>
@@ -1131,10 +1141,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
         ulong runningTimeNative = default;
         ulong upstreamRunningTimeNative = default;
         GstEventParseInstantRateSyncTime(Handle, &rateMultiplierNative, &runningTimeNative, &upstreamRunningTimeNative);
-        System.GC.KeepAlive(this);
         rateMultiplier = rateMultiplierNative;
         runningTime = new Gst.ClockTime(runningTimeNative);
         upstreamRunningTime = new Gst.ClockTime(upstreamRunningTimeNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get the latency in the latency event.</summary>
@@ -1143,8 +1153,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ulong latencyNative = default;
         GstEventParseLatency(Handle, &latencyNative);
-        System.GC.KeepAlive(this);
         latency = new Gst.ClockTime(latencyNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1171,10 +1181,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
         nint dataNative = default;
         nint originNative = default;
         GstEventParseProtection(Handle, &systemIdNative, &dataNative, &originNative);
-        System.GC.KeepAlive(this);
         systemId = Gst.Interop.GMarshal.PtrToStringUtf8(systemIdNative);
         data = Gst.Buffer.FromNative(dataNative, Gst.Interop.Transfer.None);
         origin = Gst.Interop.GMarshal.PtrToStringUtf8(originNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1195,11 +1205,11 @@ public sealed unsafe partial class Event : Gst.MiniObject
         long diffNative = default;
         ulong timestampNative = default;
         GstEventParseQos(Handle, &typeNative, &proportionNative, &diffNative, &timestampNative);
-        System.GC.KeepAlive(this);
         type = (Gst.QOSType)typeNative;
         proportion = proportionNative;
         diff = diffNative;
         timestamp = new Gst.ClockTime(timestampNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parses a seek @event and stores the results in the given result locations.</summary>
@@ -1220,7 +1230,6 @@ public sealed unsafe partial class Event : Gst.MiniObject
         int stopTypeNative = default;
         long stopNative = default;
         GstEventParseSeek(Handle, &rateNative, &formatNative, &flagsNative, &startTypeNative, &startNative, &stopTypeNative, &stopNative);
-        System.GC.KeepAlive(this);
         rate = rateNative;
         format = (Gst.Format)formatNative;
         flags = (Gst.SeekFlags)flagsNative;
@@ -1228,6 +1237,7 @@ public sealed unsafe partial class Event : Gst.MiniObject
         start = startNative;
         stopType = (Gst.SeekType)stopTypeNative;
         stop = stopNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1239,8 +1249,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         ulong intervalNative = default;
         GstEventParseSeekTrickmodeInterval(Handle, &intervalNative);
-        System.GC.KeepAlive(this);
         interval = new Gst.ClockTime(intervalNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1253,8 +1263,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint segmentNative = default;
         GstEventParseSegment(Handle, &segmentNative);
-        System.GC.KeepAlive(this);
         segment = Gst.Segment.FromNative(segmentNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extracts the position and format from the segment done message.</summary>
@@ -1265,9 +1275,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
         int formatNative = default;
         long positionNative = default;
         GstEventParseSegmentDone(Handle, &formatNative, &positionNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         position = positionNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse the sink-message event. Unref @msg after usage.</summary>
@@ -1276,8 +1286,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint msgNative = default;
         GstEventParseSinkMessage(Handle, &msgNative);
-        System.GC.KeepAlive(this);
         msg = Gst.Message.FromNative(msgNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse the step event.</summary>
@@ -1297,12 +1307,12 @@ public sealed unsafe partial class Event : Gst.MiniObject
         int flushNative = default;
         int intermediateNative = default;
         GstEventParseStep(Handle, &formatNative, &amountNative, &rateNative, &flushNative, &intermediateNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         amount = amountNative;
         rate = rateNative;
         flush = flushNative != 0;
         intermediate = intermediateNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse a stream-start @event and extract the #GstStream from it.</summary>
@@ -1311,8 +1321,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint streamNative = default;
         GstEventParseStream(Handle, &streamNative);
-        System.GC.KeepAlive(this);
         stream = Gst.GObject.Object.FromNative<Gst.Stream>(streamNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Retrieve new #GstStreamCollection from STREAM_COLLECTION event @event.</summary>
@@ -1321,8 +1331,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint collectionNative = default;
         GstEventParseStreamCollection(Handle, &collectionNative);
-        System.GC.KeepAlive(this);
         collection = Gst.GObject.Object.FromNative<Gst.StreamCollection>(collectionNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_event_parse_stream_flags</c> function.</summary>
@@ -1331,8 +1341,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         int flagsNative = default;
         GstEventParseStreamFlags(Handle, &flagsNative);
-        System.GC.KeepAlive(this);
         flags = (Gst.StreamFlags)flagsNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1344,8 +1354,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         uint groupIdNative = default;
         GstEventParseStreamGroupDone(Handle, &groupIdNative);
-        System.GC.KeepAlive(this);
         groupId = groupIdNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1359,8 +1369,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint streamIdNative = default;
         GstEventParseStreamStart(Handle, &streamIdNative);
-        System.GC.KeepAlive(this);
         streamId = Gst.Interop.GMarshal.PtrToStringUtf8(streamIdNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1374,8 +1384,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint taglistNative = default;
         GstEventParseTag(Handle, &taglistNative);
-        System.GC.KeepAlive(this);
         taglist = Gst.TagList.FromNative(taglistNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse a TOC @event and store the results in the given @toc and @updated locations.</summary>
@@ -1386,9 +1396,9 @@ public sealed unsafe partial class Event : Gst.MiniObject
         nint tocNative = default;
         int updatedNative = default;
         GstEventParseToc(Handle, &tocNative, &updatedNative);
-        System.GC.KeepAlive(this);
         toc = Gst.Toc.FromNative(tocNative, Gst.Interop.Transfer.Full);
         updated = updatedNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse a TOC select @event and store the results in the given @uid location.</summary>
@@ -1397,8 +1407,8 @@ public sealed unsafe partial class Event : Gst.MiniObject
     {
         nint uidNative = default;
         GstEventParseTocSelect(Handle, &uidNative);
-        System.GC.KeepAlive(this);
         uid = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uidNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1503,9 +1513,10 @@ public sealed unsafe partial class Event : Gst.MiniObject
     public Gst.Structure WritableStructure()
     {
         nint nativeResult = GstEventWritableStructure(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_event_writable_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_event_new_buffer_size</c> entry point.</summary>

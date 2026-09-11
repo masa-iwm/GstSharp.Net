@@ -129,8 +129,9 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public bool IsImage()
     {
         int nativeResult = GstDiscovererVideoInfoIsImage(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_video_info_is_interlaced</c> function.</summary>
@@ -138,8 +139,9 @@ public unsafe partial class DiscovererVideoInfo : Gst.Pbutils.DiscovererStreamIn
     public bool IsInterlaced()
     {
         int nativeResult = GstDiscovererVideoInfoIsInterlaced(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_video_info_get_bitrate</c> entry point.</summary>

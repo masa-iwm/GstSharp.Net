@@ -701,8 +701,8 @@ public sealed class RejectionRulesTests
             {
                 Gst.Rect rectNative = default;
                 GstWidgetGetRect(Handle, &rectNative);
-                System.GC.KeepAlive(this);
                 rect = rectNative;
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void GetRect"));
@@ -738,8 +738,8 @@ public sealed class RejectionRulesTests
             {
                 nint instanceHandle = BeginMakeWritable();
                 nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-                System.GC.KeepAlive(this);
                 AdoptWritable(nativeResult);
+                System.GC.KeepAlive(this);
                 return this;
             }
             """,
@@ -764,8 +764,8 @@ public sealed class RejectionRulesTests
             {
                 nint instanceHandle = BeginMakeWritable();
                 nint nativeResult = GstOverlayMakeWritable(instanceHandle);
-                System.GC.KeepAlive(this);
                 AdoptWritable(nativeResult);
+                System.GC.KeepAlive(this);
                 return this;
             }
             """,
@@ -790,9 +790,10 @@ public sealed class RejectionRulesTests
                 nint instanceHandle = Handle;
                 nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
                 nint nativeResult = GstCapsTruncate(instanceOwned);
-                System.GC.KeepAlive(this);
-                return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+                Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
                     ?? throw new InvalidOperationException("gst_caps_truncate returned no value.");
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             Run.Member("Caps.cs", "public Gst.Caps Truncate"));
@@ -812,8 +813,8 @@ public sealed class RejectionRulesTests
             {
                 nint instanceHandle = BeginMakeWritable();
                 nint nativeResult = GstInfoMakeWritable(instanceHandle);
-                System.GC.KeepAlive(this);
                 AdoptWritable(nativeResult);
+                System.GC.KeepAlive(this);
                 return this;
             }
             """,

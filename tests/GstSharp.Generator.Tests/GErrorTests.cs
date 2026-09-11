@@ -279,8 +279,9 @@ public sealed class GErrorTests
             public Gst.GLib.GException? GetError()
             {
                 nint nativeResult = GstWidgetGetError(Handle);
+                Gst.GLib.GException? result = Gst.GLib.GException.FromBorrowed(nativeResult);
                 System.GC.KeepAlive(this);
-                return Gst.GLib.GException.FromBorrowed(nativeResult);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public Gst.GLib.GException? GetError("),

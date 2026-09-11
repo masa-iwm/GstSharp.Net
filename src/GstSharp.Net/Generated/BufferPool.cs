@@ -112,9 +112,10 @@ public unsafe partial class BufferPool : Gst.Object
         nint bufferNative = default;
         Gst.BufferPoolAcquireParams @paramsNative = @params;
         int nativeResult = GstBufferPoolAcquireBuffer(Handle, &bufferNative, &@paramsNative);
-        System.GC.KeepAlive(this);
         buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -125,9 +126,10 @@ public unsafe partial class BufferPool : Gst.Object
     public Gst.Structure GetConfig()
     {
         nint nativeResult = GstBufferPoolGetConfig(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_buffer_pool_get_config returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -142,8 +144,9 @@ public unsafe partial class BufferPool : Gst.Object
     public string[]? GetOptions()
     {
         nint nativeResult = GstBufferPoolGetOptions(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+        return result;
     }
 
     /// <summary>Checks if the bufferpool supports @option.</summary>
@@ -155,8 +158,9 @@ public unsafe partial class BufferPool : Gst.Object
         System.Span<byte> optionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope optionScope = Gst.Interop.GMarshal.StackUtf8(option, optionBuffer);
         int nativeResult = GstBufferPoolHasOption(Handle, optionScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -167,8 +171,9 @@ public unsafe partial class BufferPool : Gst.Object
     public bool IsActive()
     {
         int nativeResult = GstBufferPoolIsActive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -194,8 +199,9 @@ public unsafe partial class BufferPool : Gst.Object
     public bool SetActive(bool active)
     {
         int nativeResult = GstBufferPoolSetActive(Handle, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -245,7 +251,6 @@ public unsafe partial class BufferPool : Gst.Object
         nint allocatorNative = default;
         nint @paramsNative = GstAllocationParamsNew();
         int nativeResult = GstBufferPoolConfigGetAllocator(configNative, &allocatorNative, @paramsNative);
-        System.GC.KeepAlive(config);
         if (nativeResult != 0)
         {
             @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full);
@@ -258,7 +263,9 @@ public unsafe partial class BufferPool : Gst.Object
             @params = null;
         }
         allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.None);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(config);
+        return result;
     }
 
     /// <summary>
@@ -272,8 +279,9 @@ public unsafe partial class BufferPool : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         nint nativeResult = GstBufferPoolConfigGetOption(config.Handle, index);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(config);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the configuration values from @config.</summary>
@@ -291,12 +299,13 @@ public unsafe partial class BufferPool : Gst.Object
         uint minBuffersNative = default;
         uint maxBuffersNative = default;
         int nativeResult = GstBufferPoolConfigGetParams(config.Handle, &capsNative, &sizeNative, &minBuffersNative, &maxBuffersNative);
-        System.GC.KeepAlive(config);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
         size = sizeNative;
         minBuffers = minBuffersNative;
         maxBuffers = maxBuffersNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(config);
+        return result;
     }
 
     /// <summary>Checks if @config contains @option.</summary>
@@ -310,8 +319,9 @@ public unsafe partial class BufferPool : Gst.Object
         System.Span<byte> optionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope optionScope = Gst.Interop.GMarshal.StackUtf8(option, optionBuffer);
         int nativeResult = GstBufferPoolConfigHasOption(config.Handle, optionScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(config);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -390,9 +400,10 @@ public unsafe partial class BufferPool : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         int nativeResult = GstBufferPoolConfigValidateParams(config.Handle, caps is null ? 0 : caps.Handle, size, minBuffers, maxBuffers);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(config);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_buffer_pool_new</c> entry point.</summary>

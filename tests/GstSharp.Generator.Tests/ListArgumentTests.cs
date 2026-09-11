@@ -392,8 +392,9 @@ public sealed class ListArgumentTests
                 ArgumentNullException.ThrowIfNull(widgets);
                 using Gst.Interop.GListScope widgetsScope = Gst.Interop.GMarshal.AllocList(widgets, singly: false);
                 int nativeResult = GstWidgetSetWidgets(Handle, widgetsScope.Head);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(this);
-                return nativeResult != 0;
+                return result;
             }
             """.ReplaceLineEndings("\n"),
             Run.Member("Widget.cs", "public bool SetWidgets("),
@@ -479,8 +480,9 @@ public sealed class ListArgumentTests
                 nint instanceHandle = Handle;
                 nint tagsOwned = Gst.Interop.GMarshal.ConsumeList(tags, singly: false);
                 int nativeResult = GstWidgetTakeTags(instanceHandle, tagsOwned);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(this);
-                return nativeResult != 0;
+                return result;
             }
             """.ReplaceLineEndings("\n"),
             Run.Member("Widget.cs", "public bool TakeTags("),

@@ -70,8 +70,9 @@ public sealed unsafe partial class RTSPToken : Gst.MiniObject
         System.Span<byte> fieldBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldScope = Gst.Interop.GMarshal.StackUtf8(field, fieldBuffer);
         nint nativeResult = GstRtspTokenGetString(Handle, fieldScope.Pointer);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Access the structure of the token.</summary>
@@ -86,9 +87,10 @@ public sealed unsafe partial class RTSPToken : Gst.MiniObject
     public Gst.Structure GetStructure()
     {
         nint nativeResult = GstRtspTokenGetStructure(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_rtsp_token_get_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @token has a boolean @field and if it is set to %TRUE.</summary>
@@ -100,8 +102,9 @@ public sealed unsafe partial class RTSPToken : Gst.MiniObject
         System.Span<byte> fieldBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope fieldScope = Gst.Interop.GMarshal.StackUtf8(field, fieldBuffer);
         int nativeResult = GstRtspTokenIsAllowed(Handle, fieldScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets a boolean value on @token.</summary>

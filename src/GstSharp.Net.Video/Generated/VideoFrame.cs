@@ -86,9 +86,10 @@ public sealed unsafe partial class VideoFrame
     {
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoFrameCopy(Handle, src.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(src);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Copy the plane with index @plane from @src to @dest.</summary>
@@ -105,9 +106,10 @@ public sealed unsafe partial class VideoFrame
     {
         ArgumentNullException.ThrowIfNull(src);
         int nativeResult = GstVideoFrameCopyPlane(Handle, src.Handle, plane);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(src);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_video_frame_copy</c> entry point.</summary>

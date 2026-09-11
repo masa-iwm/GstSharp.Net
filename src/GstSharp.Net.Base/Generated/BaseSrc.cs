@@ -194,10 +194,10 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         nint allocatorNative = default;
         nint @paramsNative = GstAllocationParamsNew();
         GstBaseSrcGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
-        System.GC.KeepAlive(this);
         @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
         allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get the number of bytes that @src will push out with each buffer.</summary>
@@ -217,8 +217,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public Gst.BufferPool? GetBufferPool()
     {
         nint nativeResult = GstBaseSrcGetBufferPool(Handle);
+        Gst.BufferPool? result = Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.BufferPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Query if @src timestamps outgoing buffers based on the current running_time.</summary>
@@ -226,8 +227,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool GetDoTimestamp()
     {
         int nativeResult = GstBaseSrcGetDoTimestamp(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the current async behaviour of @src. See also gst_base_src_set_async().</summary>
@@ -235,8 +237,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool IsAsync()
     {
         int nativeResult = GstBaseSrcIsAsync(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if an element is in live mode.</summary>
@@ -244,8 +247,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool IsLive()
     {
         int nativeResult = GstBaseSrcIsLive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -264,8 +268,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool Negotiate()
     {
         int nativeResult = GstBaseSrcNegotiate(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -287,8 +292,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public bool NewSeamlessSegment(long start, long stop, long time)
     {
         int nativeResult = GstBaseSrcNewSeamlessSegment(Handle, start, stop, time);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -312,9 +318,10 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(segment);
         int nativeResult = GstBaseSrcNewSegment(Handle, segment.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(segment);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -344,9 +351,10 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(segment);
         int nativeResult = GstBaseSrcPushSegment(Handle, segment.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(segment);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -368,11 +376,12 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         int nativeResult = GstBaseSrcQueryLatency(Handle, &liveNative, &minLatencyNative, &maxLatencyNative);
-        System.GC.KeepAlive(this);
         live = liveNative != 0;
         minLatency = new Gst.ClockTime(minLatencyNative);
         maxLatency = new Gst.ClockTime(maxLatencyNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -428,9 +437,10 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstBaseSrcSetCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -513,8 +523,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public Gst.FlowReturn StartWait()
     {
         int nativeResult = GstBaseSrcStartWait(Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -564,8 +575,8 @@ public abstract unsafe partial class BaseSrc : Gst.Element
         nint bufferListNative = bufferList.Handle;
         nint bufferListOwned = Gst.GstNative.MiniObjectRef(bufferListNative);
         GstBaseSrcSubmitBufferList(instanceHandle, bufferListOwned);
-        System.GC.KeepAlive(this);
         bufferList.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -588,8 +599,9 @@ public abstract unsafe partial class BaseSrc : Gst.Element
     public Gst.FlowReturn WaitPlaying()
     {
         int nativeResult = GstBaseSrcWaitPlaying(Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>blocksize</c> property.</summary>

@@ -87,9 +87,10 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.Audio.AudioStreamAlign Copy()
     {
         nint nativeResult = GstAudioStreamAlignCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Audio.AudioStreamAlign.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Audio.AudioStreamAlign result = Gst.Audio.AudioStreamAlign.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_stream_align_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the currently configured alignment threshold.</summary>
@@ -97,8 +98,9 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.ClockTime GetAlignmentThreshold()
     {
         ulong nativeResult = GstAudioStreamAlignGetAlignmentThreshold(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the currently configured discont wait.</summary>
@@ -106,8 +108,9 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.ClockTime GetDiscontWait()
     {
         ulong nativeResult = GstAudioStreamAlignGetDiscontWait(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the currently configured sample rate.</summary>
@@ -139,8 +142,9 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
     public Gst.ClockTime GetTimestampAtDiscont()
     {
         ulong nativeResult = GstAudioStreamAlignGetTimestampAtDiscont(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Marks the next buffer as discontinuous and resets timestamp tracking.</summary>
@@ -185,11 +189,12 @@ public sealed unsafe partial class AudioStreamAlign : Gst.GObject.Boxed
         ulong outDurationNative = default;
         ulong outSamplePositionNative = default;
         int nativeResult = GstAudioStreamAlignProcess(Handle, discont ? 1 : 0, timestamp.Nanoseconds, nSamples, &outTimestampNative, &outDurationNative, &outSamplePositionNative);
-        System.GC.KeepAlive(this);
         outTimestamp = new Gst.ClockTime(outTimestampNative);
         outDuration = new Gst.ClockTime(outDurationNative);
         outSamplePosition = outSamplePositionNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Sets @alignment_treshold as new alignment threshold for the following processing.</summary>

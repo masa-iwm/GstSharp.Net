@@ -67,8 +67,9 @@ public abstract unsafe partial class Device : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstDeviceCreateElement(Handle, nameScope.Pointer);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Getter for the #GstCaps that this device supports.</summary>
@@ -79,8 +80,9 @@ public abstract unsafe partial class Device : Gst.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstDeviceGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -92,9 +94,10 @@ public abstract unsafe partial class Device : Gst.Object
     public string GetDeviceClass()
     {
         nint nativeResult = GstDeviceGetDeviceClass(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_device_get_device_class returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the user-friendly name of the device.</summary>
@@ -102,9 +105,10 @@ public abstract unsafe partial class Device : Gst.Object
     public string GetDisplayName()
     {
         nint nativeResult = GstDeviceGetDisplayName(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_device_get_display_name returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the extra properties of a device.</summary>
@@ -115,8 +119,9 @@ public abstract unsafe partial class Device : Gst.Object
     public Gst.Structure? GetProperties()
     {
         nint nativeResult = GstDeviceGetProperties(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Check if @device matches all of the given classes</summary>
@@ -131,8 +136,9 @@ public abstract unsafe partial class Device : Gst.Object
         System.Span<byte> classesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope classesScope = Gst.Interop.GMarshal.StackUtf8(classes, classesBuffer);
         int nativeResult = GstDeviceHasClasses(Handle, classesScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @factory matches all of the given classes</summary>
@@ -145,8 +151,9 @@ public abstract unsafe partial class Device : Gst.Object
     {
         using Gst.Interop.StrvScope classesScope = Gst.Interop.GMarshal.AllocStrv(classes);
         int nativeResult = GstDeviceHasClassesv(Handle, classesScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -169,9 +176,10 @@ public abstract unsafe partial class Device : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(element);
         int nativeResult = GstDeviceReconfigureElement(Handle, element.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(element);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>device-class</c> property.</summary>

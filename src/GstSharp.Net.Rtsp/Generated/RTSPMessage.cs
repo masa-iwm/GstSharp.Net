@@ -69,8 +69,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GstRtspMessageAddHeader(Handle, (int)field, valueScope.Pointer);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -89,8 +90,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GstRtspMessageAddHeaderByName(Handle, headerScope.Pointer, valueScope.Pointer);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -103,9 +105,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     {
         nint copyNative = default;
         int nativeResult = GstRtspMessageCopy(Handle, &copyNative);
-        System.GC.KeepAlive(this);
         copy = Gst.Rtsp.RTSPMessage.FromNative(copyNative, Gst.Interop.Transfer.Full);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Dump the contents of @msg to stdout.</summary>
@@ -113,8 +116,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult Dump()
     {
         int nativeResult = GstRtspMessageDump(Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -135,14 +139,15 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         nint dataNative = default;
         uint sizeNative = default;
         int nativeResult = GstRtspMessageGetBody(Handle, &dataNative, &sizeNative);
-        System.GC.KeepAlive(this);
         data = null;
         if (dataNative != 0)
         {
             data = new byte[(int)sizeNative];
             new System.ReadOnlySpan<byte>((void*)dataNative, (int)sizeNative).CopyTo(data);
         }
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -162,9 +167,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     {
         nint bufferNative = default;
         int nativeResult = GstRtspMessageGetBodyBuffer(Handle, &bufferNative);
-        System.GC.KeepAlive(this);
         buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.None);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -182,9 +188,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     {
         nint valueNative = default;
         int nativeResult = GstRtspMessageGetHeader(Handle, (int)field, &valueNative, indx);
-        System.GC.KeepAlive(this);
         value = Gst.Interop.GMarshal.PtrToStringUtf8(valueNative);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -205,9 +212,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope headerScope = Gst.Interop.GMarshal.StackUtf8(header, headerBuffer);
         nint valueNative = default;
         int nativeResult = GstRtspMessageGetHeaderByName(Handle, headerScope.Pointer, &valueNative, index);
-        System.GC.KeepAlive(this);
         value = Gst.Interop.GMarshal.PtrToStringUtf8(valueNative);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the message type of @msg.</summary>
@@ -215,8 +223,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPMsgType GetMessageType()
     {
         int nativeResult = GstRtspMessageGetType(Handle);
+        Gst.Rtsp.RTSPMsgType result = (Gst.Rtsp.RTSPMsgType)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPMsgType)nativeResult;
+        return result;
     }
 
     /// <summary>Checks if @msg has a body and the body is stored as #GstBuffer.</summary>
@@ -227,8 +236,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public bool HasBodyBuffer()
     {
         int nativeResult = GstRtspMessageHasBodyBuffer(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -239,8 +249,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult Init()
     {
         int nativeResult = GstRtspMessageInit(Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Initialize a new data #GstRTSPMessage for @channel.</summary>
@@ -249,8 +260,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult InitData(byte channel)
     {
         int nativeResult = GstRtspMessageInitData(Handle, channel);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -266,8 +278,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         int nativeResult = GstRtspMessageInitRequest(Handle, (int)method, uriScope.Pointer);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Initialize @msg with @code and @reason.</summary>
@@ -287,9 +300,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         System.Span<byte> reasonBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope reasonScope = Gst.Interop.GMarshal.StackUtf8(reason, reasonBuffer);
         int nativeResult = GstRtspMessageInitResponse(Handle, (int)code, reasonScope.Pointer, request is null ? 0 : request.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(request);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Parse the data message @msg and store the channel in @channel.</summary>
@@ -299,9 +313,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     {
         byte channelNative = default;
         int nativeResult = GstRtspMessageParseData(Handle, &channelNative);
-        System.GC.KeepAlive(this);
         channel = channelNative;
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -322,11 +337,12 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         nint uriNative = default;
         int versionNative = default;
         int nativeResult = GstRtspMessageParseRequest(Handle, &methodNative, &uriNative, &versionNative);
-        System.GC.KeepAlive(this);
         method = (Gst.Rtsp.RTSPMethod)methodNative;
         uri = Gst.Interop.GMarshal.PtrToStringUtf8(uriNative);
         version = (Gst.Rtsp.RTSPVersion)versionNative;
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -347,11 +363,12 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         nint reasonNative = default;
         int versionNative = default;
         int nativeResult = GstRtspMessageParseResponse(Handle, &codeNative, &reasonNative, &versionNative);
-        System.GC.KeepAlive(this);
         code = (Gst.Rtsp.RTSPStatusCode)codeNative;
         reason = Gst.Interop.GMarshal.PtrToStringUtf8(reasonNative);
         version = (Gst.Rtsp.RTSPVersion)versionNative;
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -364,8 +381,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult RemoveHeader(Gst.Rtsp.RTSPHeaderField field, int indx)
     {
         int nativeResult = GstRtspMessageRemoveHeader(Handle, (int)field, indx);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -381,8 +399,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         System.Span<byte> headerBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope headerScope = Gst.Interop.GMarshal.StackUtf8(header, headerBuffer);
         int nativeResult = GstRtspMessageRemoveHeaderByName(Handle, headerScope.Pointer, index);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -396,8 +415,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstRtspMessageSetBody(Handle, dataPointer, (uint)data.Length);
+            Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
             System.GC.KeepAlive(this);
-            return (Gst.Rtsp.RTSPResult)nativeResult;
+            return result;
         }
     }
 
@@ -411,9 +431,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(buffer);
         int nativeResult = GstRtspMessageSetBodyBuffer(Handle, buffer.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(buffer);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -427,7 +448,6 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         nint dataNative = default;
         uint sizeNative = default;
         int nativeResult = GstRtspMessageStealBody(Handle, &dataNative, &sizeNative);
-        System.GC.KeepAlive(this);
         data = null;
         if (dataNative != 0)
         {
@@ -435,7 +455,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
             new System.ReadOnlySpan<byte>((void*)dataNative, (int)sizeNative).CopyTo(data);
             Gst.Interop.GMarshal.Free(dataNative);
         }
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -455,9 +477,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     {
         nint bufferNative = default;
         int nativeResult = GstRtspMessageStealBodyBuffer(Handle, &bufferNative);
-        System.GC.KeepAlive(this);
         buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -492,9 +515,10 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstRtspMessageTakeBodyBuffer(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -510,8 +534,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         nint instanceHandle = Handle;
         nint valueNative = Gst.Interop.GMarshal.StringToUtf8Ptr(value);
         int nativeResult = GstRtspMessageTakeHeader(instanceHandle, (int)field, valueNative);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -530,8 +555,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope headerScope = Gst.Interop.GMarshal.StackUtf8(header, headerBuffer);
         nint valueNative = Gst.Interop.GMarshal.StringToUtf8Ptr(value);
         int nativeResult = GstRtspMessageTakeHeaderByName(instanceHandle, headerScope.Pointer, valueNative);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -544,8 +570,9 @@ public sealed unsafe partial class RTSPMessage : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPResult Unset()
     {
         int nativeResult = GstRtspMessageUnset(Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_message_add_header</c> entry point.</summary>

@@ -68,8 +68,9 @@ public sealed unsafe partial class StaticCaps
     public Gst.Caps? Get()
     {
         nint nativeResult = GstStaticCapsGet(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_static_caps_cleanup</c> entry point.</summary>

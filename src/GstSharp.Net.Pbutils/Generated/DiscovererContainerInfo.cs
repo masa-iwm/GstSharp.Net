@@ -49,7 +49,6 @@ public unsafe partial class DiscovererContainerInfo : Gst.Pbutils.DiscovererStre
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererStreamInfo> GetStreams()
     {
         nint nativeResult = GstDiscovererContainerInfoGetStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.DiscovererStreamInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -60,6 +59,7 @@ public unsafe partial class DiscovererContainerInfo : Gst.Pbutils.DiscovererStre
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -74,8 +74,9 @@ public unsafe partial class DiscovererContainerInfo : Gst.Pbutils.DiscovererStre
     public new Gst.TagList? GetTags()
     {
         nint nativeResult = GstDiscovererContainerInfoGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_container_info_get_streams</c> entry point.</summary>

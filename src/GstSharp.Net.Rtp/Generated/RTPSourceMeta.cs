@@ -89,8 +89,9 @@ public sealed unsafe partial class RTPSourceMeta
         fixed (uint* csrcPointer = csrc)
         {
             int nativeResult = GstRtpSourceMetaAppendCsrc(Handle, csrcPointer, (uint)csrc.Length);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 

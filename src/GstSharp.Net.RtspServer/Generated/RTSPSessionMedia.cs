@@ -94,9 +94,10 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     {
         Gst.Rtsp.RTSPRange rangeNative = default;
         int nativeResult = GstRtspSessionMediaAllocChannels(Handle, &rangeNative);
-        System.GC.KeepAlive(this);
         range = rangeNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the base_time of the #GstRTSPMedia in @media</summary>
@@ -104,8 +105,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     public Gst.ClockTime GetBaseTime()
     {
         ulong nativeResult = GstRtspSessionMediaGetBaseTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPMedia that was used when constructing @media</summary>
@@ -116,8 +118,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     public Gst.RtspServer.RTSPMedia? GetMedia()
     {
         nint nativeResult = GstRtspSessionMediaGetMedia(Handle);
+        Gst.RtspServer.RTSPMedia? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMedia>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMedia>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -131,8 +134,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     public string? GetRtpinfo()
     {
         nint nativeResult = GstRtspSessionMediaGetRtpinfo(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the current RTSP state of @media.</summary>
@@ -140,8 +144,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     public Gst.Rtsp.RTSPState GetRtspState()
     {
         int nativeResult = GstRtspSessionMediaGetRtspState(Handle);
+        Gst.Rtsp.RTSPState result = (Gst.Rtsp.RTSPState)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPState)nativeResult;
+        return result;
     }
 
     /// <summary>Get a previously created #GstRTSPStreamTransport for the stream at @idx.</summary>
@@ -153,8 +158,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     public Gst.RtspServer.RTSPStreamTransport? GetTransport(uint idx)
     {
         nint nativeResult = GstRtspSessionMediaGetTransport(Handle, idx);
+        Gst.RtspServer.RTSPStreamTransport? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStreamTransport>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStreamTransport>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -171,9 +177,10 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int matchedNative = default;
         int nativeResult = GstRtspSessionMediaMatches(Handle, pathScope.Pointer, &matchedNative);
-        System.GC.KeepAlive(this);
         matched = matchedNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Set the RTSP state of @media to @state.</summary>
@@ -190,8 +197,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     public bool SetState(Gst.State state)
     {
         int nativeResult = GstRtspSessionMediaSetState(Handle, (int)state);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_session_media_new</c> entry point.</summary>

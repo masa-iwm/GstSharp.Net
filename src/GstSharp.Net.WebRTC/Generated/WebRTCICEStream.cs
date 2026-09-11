@@ -46,8 +46,9 @@ public abstract unsafe partial class WebRTCICEStream : Gst.Object
     public Gst.WebRTC.WebRTCICETransport? FindTransport(Gst.WebRTC.WebRTCICEComponent component)
     {
         nint nativeResult = GstWebrtcIceStreamFindTransport(Handle, (int)component);
+        Gst.WebRTC.WebRTCICETransport? result = Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICETransport>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICETransport>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_stream_gather_candidates</c> function.</summary>
@@ -55,8 +56,9 @@ public abstract unsafe partial class WebRTCICEStream : Gst.Object
     public bool GatherCandidates()
     {
         int nativeResult = GstWebrtcIceStreamGatherCandidates(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>stream-id</c> property.</summary>

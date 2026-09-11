@@ -70,8 +70,9 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     public string? GetFontDesc()
     {
         nint nativeResult = GesTitleClipGetFontDesc(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the horizontal aligment used by @self.</summary>
@@ -80,8 +81,9 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     public GES.TextHAlign GetHalignment()
     {
         int nativeResult = GesTitleClipGetHalignment(Handle);
+        GES.TextHAlign result = (GES.TextHAlign)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TextHAlign)nativeResult;
+        return result;
     }
 
     /// <summary>Get the text currently set on @self.</summary>
@@ -90,8 +92,9 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     public string? GetText()
     {
         nint nativeResult = GesTitleClipGetText(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the color used by @self.</summary>
@@ -110,8 +113,9 @@ public unsafe partial class TitleClip : GES.SourceClip, GES.IExtractable, GES.IM
     public GES.TextVAlign GetValignment()
     {
         int nativeResult = GesTitleClipGetValignment(Handle);
+        GES.TextVAlign result = (GES.TextVAlign)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TextVAlign)nativeResult;
+        return result;
     }
 
     /// <summary>Get the horizontal position used by @self.</summary>

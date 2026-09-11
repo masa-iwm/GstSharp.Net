@@ -90,8 +90,9 @@ public sealed unsafe partial class PadProbeInfo
     public Gst.Buffer? GetBuffer()
     {
         nint nativeResult = GstPadProbeInfoGetBuffer(Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_buffer_list</c> function.</summary>
@@ -104,8 +105,9 @@ public sealed unsafe partial class PadProbeInfo
     public Gst.BufferList? GetBufferList()
     {
         nint nativeResult = GstPadProbeInfoGetBufferList(Handle);
+        Gst.BufferList? result = Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.BufferList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_event</c> function.</summary>
@@ -118,8 +120,9 @@ public sealed unsafe partial class PadProbeInfo
     public Gst.Event? GetEvent()
     {
         nint nativeResult = GstPadProbeInfoGetEvent(Handle);
+        Gst.Event? result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_flow_return</c> function.</summary>
@@ -130,8 +133,9 @@ public sealed unsafe partial class PadProbeInfo
     public Gst.FlowReturn GetFlowReturn()
     {
         int nativeResult = GstPadProbeInfoGetFlowReturn(Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_id</c> function.</summary>
@@ -168,8 +172,9 @@ public sealed unsafe partial class PadProbeInfo
     public Gst.Query? GetQuery()
     {
         nint nativeResult = GstPadProbeInfoGetQuery(Handle);
+        Gst.Query? result = Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_pad_probe_info_get_size</c> function.</summary>
@@ -211,8 +216,8 @@ public sealed unsafe partial class PadProbeInfo
         nint bufferNative = buffer is null ? 0 : buffer.Handle;
         nint bufferOwned = buffer is null ? 0 : Gst.GstNative.MiniObjectRef(bufferNative);
         GstPadProbeInfoSetBuffer(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Updates @info with @list or %NULL.</summary>
@@ -242,8 +247,8 @@ public sealed unsafe partial class PadProbeInfo
         nint listNative = list is null ? 0 : list.Handle;
         nint listOwned = list is null ? 0 : Gst.GstNative.MiniObjectRef(listNative);
         GstPadProbeInfoSetBufferList(instanceHandle, listOwned);
-        System.GC.KeepAlive(this);
         list?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Updates @info with @event or %NULL.</summary>
@@ -273,8 +278,8 @@ public sealed unsafe partial class PadProbeInfo
         nint @eventNative = @event is null ? 0 : @event.Handle;
         nint @eventOwned = @event is null ? 0 : Gst.GstNative.MiniObjectRef(@eventNative);
         GstPadProbeInfoSetEvent(instanceHandle, @eventOwned);
-        System.GC.KeepAlive(this);
         @event?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Updates @info with @flow_ret.</summary>

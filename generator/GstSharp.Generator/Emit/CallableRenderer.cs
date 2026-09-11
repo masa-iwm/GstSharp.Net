@@ -1977,7 +1977,6 @@ internal static class CallableRenderer
         }
 
         WriteCall(writer, plan);
-        WriteKeepAlive(writer, plan);
         WriteConsumedDisposes(writer, plan);
 
         if (plan.Throws)
@@ -2111,22 +2110,46 @@ internal static class CallableRenderer
 
     /// <summary>
     /// Keeps every wrapper a member hands to native code reachable until the
-    /// native call returned: the instance and each handle argument.
+    /// member is done reading native memory: the instance and each handle
+    /// argument.
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The member being written.</param>
     /// <remarks>
+    /// <para>
     /// The call takes the raw handle out of the wrapper, and nothing mentions
     /// the wrapper afterwards, so the collector is free to finalize it while
     /// the call is still running. The finalizer releases the instance, and the
     /// call is then working on freed memory. That holds for an argument just as
     /// much as for the instance, and a static function has nothing but its
-    /// arguments. The barriers are emitted right after the call, because that
-    /// is the last use of the handles, and in declaration order, which puts the
+    /// arguments. The barriers are written in declaration order, which puts the
     /// instance first. <c>GC.KeepAlive</c> accepts a null reference, so a
     /// nullable argument needs no guard of its own. A consumed argument gets no
-    /// barrier: its <c>Dispose</c> right after the barriers is its last use and
-    /// keeps it alive across the call on its own.
+    /// barrier: its <c>Dispose</c> is its last use and keeps it alive across
+    /// the call on its own.
+    /// </para>
+    /// <para>
+    /// The barriers are the last statements before the <c>return</c>, after
+    /// every out conversion and after the return value has been converted into
+    /// a local, rather than right after the call. What a conversion reads may
+    /// <em>alias</em> memory the instance or an argument owns: a transfer-none
+    /// <c>out</c> array is copied out of storage that lives inside the
+    /// argument, a borrowed string return points into the instance, and the
+    /// elements of a borrowed list belong to whatever produced it. A barrier
+    /// placed before those reads ends exactly where the danger begins, so the
+    /// finalizer of the wrapper can free the storage in the middle of the copy.
+    /// A returned value has to be converted into a local for that reason:
+    /// <c>return expression;</c> leaves no statement position after the
+    /// conversion for the barrier to take.
+    /// </para>
+    /// <para>
+    /// One placement covers the throwing path as well. At the call site the
+    /// barriers below are still reachable, so the references are live across
+    /// the call however the member ends; and what runs between the call and a
+    /// throw touches only what the call transferred — the released return
+    /// value, the storage the binding allocated, the <c>GError</c> — never
+    /// memory an argument or the instance owns.
+    /// </para>
     /// </remarks>
     private static void WriteKeepAlive(CodeWriter writer, MarshalPlan plan)
     {
@@ -2140,9 +2163,7 @@ internal static class CallableRenderer
                     "System.GC.KeepAlive("
                     + (plan.Form == CallableForm.ExtensionMethod ? argument.Name : "this") + ");");
             }
-            else if (argument.Kind == ArgumentKind.Handle
-                && argument.Direction == ArgumentDirection.In
-                && !argument.IsHidden)
+            else if (IsBarrierArgument(argument))
             {
                 writer.WriteLine("System.GC.KeepAlive(" + argument.Name + ");");
             }
@@ -2150,7 +2171,32 @@ internal static class CallableRenderer
     }
 
     /// <summary>
-    /// Disposes every consumed argument, right after the barriers of the call.
+    /// Tests whether a member carries any barrier at all, which is what says
+    /// that its return value has to be converted into a local first.
+    /// </summary>
+    /// <param name="plan">The member being written.</param>
+    /// <returns><see langword="true"/> when <see cref="WriteKeepAlive"/> writes a line.</returns>
+    /// <remarks>
+    /// A member that hands native code no wrapper — a static function over
+    /// scalars — keeps its plain <c>return</c> rather than a local nothing
+    /// reads.
+    /// </remarks>
+    private static bool HasKeepAlive(MarshalPlan plan) =>
+        plan.Arguments.Any(
+            static argument => argument.Kind == ArgumentKind.Instance || IsBarrierArgument(argument));
+
+    /// <summary>
+    /// Tests whether one argument other than the instance takes a barrier.
+    /// </summary>
+    /// <param name="argument">The argument being written.</param>
+    /// <returns><see langword="true"/> for a borrowed handle the member spells.</returns>
+    private static bool IsBarrierArgument(ArgumentPlan argument) =>
+        argument.Kind == ArgumentKind.Handle
+        && argument.Direction == ArgumentDirection.In
+        && !argument.IsHidden;
+
+    /// <summary>
+    /// Disposes every consumed argument, right after the call.
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The member being written.</param>
@@ -3123,11 +3169,24 @@ internal static class CallableRenderer
         writer.CloseBlock();
     }
 
+    /// <summary>Writes the conversion of the return value and the barriers in front of it.</summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <remarks>
+    /// Every shape ends the same way: what the member answers is a local by the
+    /// time <see cref="WriteKeepAlive"/> runs, so the wrappers the call was
+    /// handed outlive every read of native memory the conversion makes. A
+    /// member with no barrier keeps the plain <c>return</c> of the expression,
+    /// and so does one whose answer is the local of the call itself, which
+    /// nothing converts.
+    /// </remarks>
     private static void WriteReturn(CodeWriter writer, MarshalPlan plan)
     {
         ReturnPlan value = plan.Return;
+        bool barriers = HasKeepAlive(plan);
         if (value.IsVoid)
         {
+            WriteKeepAlive(writer, plan);
             return;
         }
 
@@ -3139,6 +3198,7 @@ internal static class CallableRenderer
         if (plan.InstanceConsumption == InstanceConsumption.InPlace)
         {
             writer.WriteLine("AdoptWritable(" + ResultLocal + ");");
+            WriteKeepAlive(writer, plan);
             writer.WriteLine("return this;");
             return;
         }
@@ -3155,6 +3215,7 @@ internal static class CallableRenderer
                 target: ConvertedLocal,
                 declare: true,
                 fixedLength: value.FixedLength);
+            WriteKeepAlive(writer, plan);
             writer.WriteLine("return " + ConvertedLocal + ";");
             return;
         }
@@ -3162,6 +3223,8 @@ internal static class CallableRenderer
         if (value.Kind == ArgumentKind.GListReturn)
         {
             WriteListConversion(writer, value);
+            WriteKeepAlive(writer, plan);
+            writer.WriteLine("return " + ConvertedLocal + ";");
             return;
         }
 
@@ -3184,7 +3247,17 @@ internal static class CallableRenderer
             // and the default of a struct is such a value. object.ToString has
             // to answer something for every instance, so the empty string is
             // what a description that does not exist reads as.
-            writer.WriteLine("return " + expression + " ?? string.Empty;");
+            if (!barriers)
+            {
+                writer.WriteLine("return " + expression + " ?? string.Empty;");
+                return;
+            }
+
+            writer.WriteLine(
+                TrimNullable(value.PublicType) + " " + ConvertedLocal + " = " + expression
+                + " ?? string.Empty;");
+            WriteKeepAlive(writer, plan);
+            writer.WriteLine("return " + ConvertedLocal + ";");
             return;
         }
 
@@ -3194,24 +3267,48 @@ internal static class CallableRenderer
 
         if (!needsCheck)
         {
-            writer.WriteLine("return " + expression + ";");
+            // A value the call already left in a local of its own is handed
+            // back as it stands: there is nothing left to convert, so the
+            // barriers have nothing to follow.
+            if (!barriers || expression == ResultLocal)
+            {
+                WriteKeepAlive(writer, plan);
+                writer.WriteLine("return " + expression + ";");
+                return;
+            }
+
+            writer.WriteLine(value.PublicType + " " + ConvertedLocal + " = " + expression + ";");
+            WriteKeepAlive(writer, plan);
+            writer.WriteLine("return " + ConvertedLocal + ";");
             return;
         }
 
-        writer.WriteLine("return " + expression);
+        if (!barriers)
+        {
+            writer.WriteLine("return " + expression);
+            writer.WriteLine(
+                "    ?? throw new InvalidOperationException(\"" + plan.EntryPoint + " returned no value.\");");
+            return;
+        }
+
+        writer.WriteLine(TrimNullable(value.PublicType) + " " + ConvertedLocal + " = " + expression);
         writer.WriteLine(
             "    ?? throw new InvalidOperationException(\"" + plan.EntryPoint + " returned no value.\");");
+        WriteKeepAlive(writer, plan);
+        writer.WriteLine("return " + ConvertedLocal + ";");
     }
 
     /// <summary>
-    /// Writes the materialization of a returned <c>GList</c>.
+    /// Writes the materialization of a returned <c>GList</c>, up to but not
+    /// including the <c>return</c> of the list it built.
     /// </summary>
     /// <param name="writer">The target writer.</param>
-    /// <param name="value">The return value, whose element projection is read here.</param>
+    /// <param name="value">The element projection of the return value is read here.</param>
     /// <remarks>
     /// <para>
     /// The three steps are in this order on purpose, and the barriers of the
-    /// call have already been written when this runs. The element pointers are
+    /// call are written after all of them, because a borrowed element is
+    /// adopted out of memory the instance owns. The element pointers are
     /// copied out of the spine first, the spine is released next, and the
     /// elements are adopted last, so that an adoption that throws — every one
     /// of them can — cannot leave a managed value pointing into freed nodes and
@@ -3252,7 +3349,6 @@ internal static class CallableRenderer
         writer.CloseBlock();
         writer.CloseBlock();
         writer.WriteLine();
-        writer.WriteLine("return " + ConvertedLocal + ";");
     }
 
     private static void WriteArrayConversion(

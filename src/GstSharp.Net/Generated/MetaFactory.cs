@@ -90,9 +90,10 @@ public unsafe partial class MetaFactory : Gst.PluginFeature
         ArgumentNullException.ThrowIfNull(plugin);
         ArgumentNullException.ThrowIfNull(metaInfo);
         int nativeResult = GstMetaFactoryRegister(plugin.Handle, metaInfo.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(plugin);
         System.GC.KeepAlive(metaInfo);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_meta_factory_load</c> entry point.</summary>

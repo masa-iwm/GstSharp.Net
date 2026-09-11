@@ -67,8 +67,9 @@ public sealed unsafe partial class ParseContext : Gst.GObject.Boxed
     public Gst.ParseContext? Copy()
     {
         nint nativeResult = GstParseContextCopy(Handle);
+        Gst.ParseContext? result = Gst.ParseContext.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.ParseContext.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -84,8 +85,9 @@ public sealed unsafe partial class ParseContext : Gst.GObject.Boxed
     public string[]? GetMissingElements()
     {
         nint nativeResult = GstParseContextGetMissingElements(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>The <c>gst_parse_context_new</c> entry point.</summary>

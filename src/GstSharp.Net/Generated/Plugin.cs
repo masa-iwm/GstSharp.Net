@@ -200,8 +200,9 @@ public unsafe partial class Plugin : Gst.Object
     public Gst.Structure? GetCacheData()
     {
         nint nativeResult = GstPluginGetCacheData(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the long descriptive name of the plugin</summary>
@@ -209,9 +210,10 @@ public unsafe partial class Plugin : Gst.Object
     public string GetDescription()
     {
         nint nativeResult = GstPluginGetDescription(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_description returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>get the filename of the plugin</summary>
@@ -219,8 +221,9 @@ public unsafe partial class Plugin : Gst.Object
     public string? GetFilename()
     {
         nint nativeResult = GstPluginGetFilename(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>get the license of the plugin</summary>
@@ -228,9 +231,10 @@ public unsafe partial class Plugin : Gst.Object
     public string GetLicense()
     {
         nint nativeResult = GstPluginGetLicense(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_license returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the short name of the plugin</summary>
@@ -238,9 +242,10 @@ public unsafe partial class Plugin : Gst.Object
     public new string GetName()
     {
         nint nativeResult = GstPluginGetName(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_name returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>get the URL where the plugin comes from</summary>
@@ -248,9 +253,10 @@ public unsafe partial class Plugin : Gst.Object
     public string GetOrigin()
     {
         nint nativeResult = GstPluginGetOrigin(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_origin returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>get the package the plugin belongs to.</summary>
@@ -258,9 +264,10 @@ public unsafe partial class Plugin : Gst.Object
     public string GetPackage()
     {
         nint nativeResult = GstPluginGetPackage(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_package returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the release date (and possibly time) in form of a string, if available.</summary>
@@ -280,8 +287,9 @@ public unsafe partial class Plugin : Gst.Object
     public string? GetReleaseDateString()
     {
         nint nativeResult = GstPluginGetReleaseDateString(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>get the source module the plugin belongs to.</summary>
@@ -289,9 +297,10 @@ public unsafe partial class Plugin : Gst.Object
     public string GetSource()
     {
         nint nativeResult = GstPluginGetSource(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_source returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_plugin_get_status_errors</c> function.</summary>
@@ -299,8 +308,9 @@ public unsafe partial class Plugin : Gst.Object
     public string[]? GetStatusErrors()
     {
         nint nativeResult = GstPluginGetStatusErrors(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>The <c>gst_plugin_get_status_infos</c> function.</summary>
@@ -308,8 +318,9 @@ public unsafe partial class Plugin : Gst.Object
     public string[]? GetStatusInfos()
     {
         nint nativeResult = GstPluginGetStatusInfos(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>The <c>gst_plugin_get_status_warnings</c> function.</summary>
@@ -317,8 +328,9 @@ public unsafe partial class Plugin : Gst.Object
     public string[]? GetStatusWarnings()
     {
         nint nativeResult = GstPluginGetStatusWarnings(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>get the version of the plugin</summary>
@@ -326,9 +338,10 @@ public unsafe partial class Plugin : Gst.Object
     public string GetVersion()
     {
         nint nativeResult = GstPluginGetVersion(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_plugin_get_version returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>queries if the plugin is loaded into memory</summary>
@@ -336,8 +349,9 @@ public unsafe partial class Plugin : Gst.Object
     public bool IsLoaded()
     {
         int nativeResult = GstPluginIsLoaded(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -362,8 +376,9 @@ public unsafe partial class Plugin : Gst.Object
     public Gst.Plugin? Load()
     {
         nint nativeResult = GstPluginLoad(Handle);
+        Gst.Plugin? result = Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -400,8 +415,8 @@ public unsafe partial class Plugin : Gst.Object
         nuint cacheDataType = cacheData.BoxedType.Value;
         nint cacheDataOwned = Gst.Interop.GObjectNative.BoxedCopy(cacheDataType, cacheDataNative);
         GstPluginSetCacheData(instanceHandle, cacheDataOwned);
-        System.GC.KeepAlive(this);
         cacheData.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Load the named plugin. Refs the plugin.</summary>

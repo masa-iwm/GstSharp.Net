@@ -207,8 +207,9 @@ public abstract unsafe partial class BaseParse : Gst.Element
     public bool AddIndexEntry(ulong offset, Gst.ClockTime ts, bool key, bool force)
     {
         int nativeResult = GstBaseParseAddIndexEntry(Handle, offset, ts.Nanoseconds, key ? 1 : 0, force ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Default implementation of #GstBaseParseClass::convert.</summary>
@@ -221,9 +222,10 @@ public abstract unsafe partial class BaseParse : Gst.Element
     {
         long destValueNative = default;
         int nativeResult = GstBaseParseConvertDefault(Handle, (int)srcFormat, srcValue, (int)destFormat, &destValueNative);
-        System.GC.KeepAlive(this);
         destValue = destValueNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -265,9 +267,10 @@ public abstract unsafe partial class BaseParse : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstBaseParseFinishFrame(Handle, frame.Handle, size);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(frame);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -307,9 +310,10 @@ public abstract unsafe partial class BaseParse : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(frame);
         int nativeResult = GstBaseParsePushFrame(Handle, frame.Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(frame);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>

@@ -61,9 +61,10 @@ public sealed unsafe partial class WebRTCSessionDescription : Gst.GObject.Boxed
     public Gst.WebRTC.WebRTCSessionDescription Copy()
     {
         nint nativeResult = GstWebrtcSessionDescriptionCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.WebRTC.WebRTCSessionDescription.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.WebRTC.WebRTCSessionDescription result = Gst.WebRTC.WebRTCSessionDescription.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_webrtc_session_description_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_session_description_copy</c> entry point.</summary>

@@ -47,8 +47,9 @@ public static unsafe partial class StreamVolumeExtensions
     {
         ArgumentNullException.ThrowIfNull(volume);
         int nativeResult = GstStreamVolumeGetMute(volume.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(volume);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_stream_volume_get_volume</c> function.</summary>

@@ -63,8 +63,9 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     public Gst.DeviceProvider? Get()
     {
         nint nativeResult = GstDeviceProviderFactoryGet(Handle);
+        Gst.DeviceProvider? result = Gst.GObject.Object.FromNative<Gst.DeviceProvider>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.DeviceProvider>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -76,8 +77,9 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     public Gst.GObject.GType GetDeviceProviderType()
     {
         nuint nativeResult = GstDeviceProviderFactoryGetDeviceProviderType(Handle);
+        Gst.GObject.GType result = new Gst.GObject.GType(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.GObject.GType(nativeResult);
+        return result;
     }
 
     /// <summary>Get the metadata on @factory with @key.</summary>
@@ -92,8 +94,9 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstDeviceProviderFactoryGetMetadata(Handle, keyScope.Pointer);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the available keys for the metadata on @factory.</summary>
@@ -104,8 +107,9 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     public string[]? GetMetadataKeys()
     {
         nint nativeResult = GstDeviceProviderFactoryGetMetadataKeys(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>Check if @factory matches all of the given @classes</summary>
@@ -119,8 +123,9 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
         System.Span<byte> classesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope classesScope = Gst.Interop.GMarshal.StackUtf8(classes, classesBuffer);
         int nativeResult = GstDeviceProviderFactoryHasClasses(Handle, classesScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @factory matches all of the given classes</summary>
@@ -133,8 +138,9 @@ public unsafe partial class DeviceProviderFactory : Gst.PluginFeature
     {
         using Gst.Interop.StrvScope classesScope = Gst.Interop.GMarshal.AllocStrv(classes);
         int nativeResult = GstDeviceProviderFactoryHasClassesv(Handle, classesScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

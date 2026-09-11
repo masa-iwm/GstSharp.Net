@@ -52,9 +52,10 @@ public sealed unsafe partial class CustomMeta
     public Gst.Structure GetStructure()
     {
         nint nativeResult = GstCustomMetaGetStructure(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_custom_meta_get_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Checks whether the name of the custom meta is @name</summary>
@@ -66,8 +67,9 @@ public sealed unsafe partial class CustomMeta
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstCustomMetaHasName(Handle, nameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_custom_meta_get_structure</c> entry point.</summary>

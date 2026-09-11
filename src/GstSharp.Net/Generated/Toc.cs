@@ -134,8 +134,9 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
         System.Span<byte> uidBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope uidScope = Gst.Interop.GMarshal.StackUtf8(uid, uidBuffer);
         nint nativeResult = GstTocFindEntry(Handle, uidScope.Pointer);
+        Gst.TocEntry? result = Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TocEntry.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the list of #GstTocEntry of @toc.</summary>
@@ -143,7 +144,6 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     public System.Collections.Generic.IReadOnlyList<Gst.TocEntry> GetEntries()
     {
         nint nativeResult = GstTocGetEntries(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.TocEntry> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -154,6 +154,7 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -162,8 +163,9 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     public Gst.TocScope GetScope()
     {
         int nativeResult = GstTocGetScope(Handle);
+        Gst.TocScope result = (Gst.TocScope)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.TocScope)nativeResult;
+        return result;
     }
 
     /// <summary>Gets the tags for @toc.</summary>
@@ -176,8 +178,9 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstTocGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Merge @tags into the existing tags of @toc using @mode.</summary>
@@ -216,8 +219,8 @@ public sealed unsafe partial class Toc : Gst.GObject.Boxed
         nint tagsNative = tags is null ? 0 : tags.Handle;
         nint tagsOwned = tags is null ? 0 : Gst.GstNative.MiniObjectRef(tagsNative);
         GstTocSetTags(instanceHandle, tagsOwned);
-        System.GC.KeepAlive(this);
         tags?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_toc_new</c> entry point.</summary>

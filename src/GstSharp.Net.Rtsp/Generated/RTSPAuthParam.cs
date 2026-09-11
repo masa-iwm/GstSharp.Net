@@ -88,9 +88,10 @@ public sealed unsafe partial class RTSPAuthParam : Gst.GObject.Boxed
     public Gst.Rtsp.RTSPAuthParam Copy()
     {
         nint nativeResult = GstRtspAuthParamCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Rtsp.RTSPAuthParam.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Rtsp.RTSPAuthParam result = Gst.Rtsp.RTSPAuthParam.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtsp_auth_param_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_auth_param_copy</c> entry point.</summary>

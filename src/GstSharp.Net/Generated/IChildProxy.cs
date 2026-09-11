@@ -79,8 +79,9 @@ public static unsafe partial class ChildProxyExtensions
     {
         ArgumentNullException.ThrowIfNull(parent);
         nint nativeResult = GstChildProxyGetChildByIndex(parent.Handle, index);
+        Gst.GObject.Object? result = Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(parent);
-        return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Looks up a child element by the given name.</summary>
@@ -104,8 +105,9 @@ public static unsafe partial class ChildProxyExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstChildProxyGetChildByName(parent.Handle, nameScope.Pointer);
+        Gst.GObject.Object? result = Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(parent);
-        return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Looks up a child element by the given full-path name.</summary>
@@ -132,8 +134,9 @@ public static unsafe partial class ChildProxyExtensions
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstChildProxyGetChildByNameRecurse(childProxy.Handle, nameScope.Pointer);
+        Gst.GObject.Object? result = Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(childProxy);
-        return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the number of child objects this parent contains.</summary>
@@ -197,10 +200,11 @@ public static unsafe partial class ChildProxyExtensions
         nint targetNative = default;
         nint pspecNative = default;
         int nativeResult = GstChildProxyLookup(@object.Handle, nameScope.Pointer, &targetNative, &pspecNative);
-        System.GC.KeepAlive(@object);
         target = Gst.GObject.Object.FromNative<Gst.GObject.Object>(targetNative, Gst.Interop.Transfer.Full);
         pspec = (pspecNative == 0 ? null : Gst.GObject.ParamSpec.FromNative(pspecNative, Gst.Interop.Transfer.None));
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@object);
+        return result;
     }
 
     /// <summary>Sets a single property using the GstChildProxy mechanism.</summary>

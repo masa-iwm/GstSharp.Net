@@ -54,8 +54,9 @@ public unsafe partial class ProxyPad : Gst.Pad
     public Gst.ProxyPad? GetInternal()
     {
         nint nativeResult = GstProxyPadGetInternal(Handle);
+        Gst.ProxyPad? result = Gst.GObject.Object.FromNative<Gst.ProxyPad>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.ProxyPad>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Invoke the default chain function of the proxy pad.</summary>
@@ -92,10 +93,11 @@ public unsafe partial class ProxyPad : Gst.Pad
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstProxyPadChainDefault(padNative, parentNative, bufferOwned);
+        buffer.Dispose();
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(pad);
         System.GC.KeepAlive(parent);
-        buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>Invoke the default chain list function of the proxy pad.</summary>
@@ -132,10 +134,11 @@ public unsafe partial class ProxyPad : Gst.Pad
         nint listNative = list.Handle;
         nint listOwned = Gst.GstNative.MiniObjectRef(listNative);
         int nativeResult = GstProxyPadChainListDefault(padNative, parentNative, listOwned);
+        list.Dispose();
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(pad);
         System.GC.KeepAlive(parent);
-        list.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>Invoke the default getrange function of the proxy pad.</summary>
@@ -154,10 +157,11 @@ public unsafe partial class ProxyPad : Gst.Pad
         ArgumentNullException.ThrowIfNull(parent);
         nint bufferNative = default;
         int nativeResult = GstProxyPadGetrangeDefault(pad.Handle, parent.Handle, offset, size, &bufferNative);
+        buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(pad);
         System.GC.KeepAlive(parent);
-        buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>Invoke the default iterate internal links function of the proxy pad.</summary>
@@ -171,9 +175,10 @@ public unsafe partial class ProxyPad : Gst.Pad
     {
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GstProxyPadIterateInternalLinksDefault(pad.Handle, parent is null ? 0 : parent.Handle);
+        Gst.Iterator? result = Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(pad);
         System.GC.KeepAlive(parent);
-        return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_proxy_pad_get_internal</c> entry point.</summary>

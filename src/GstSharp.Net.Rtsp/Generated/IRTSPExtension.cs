@@ -32,10 +32,11 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(req);
         ArgumentNullException.ThrowIfNull(resp);
         int nativeResult = GstRtspExtensionAfterSend(ext.Handle, req.Handle, resp.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(req);
         System.GC.KeepAlive(resp);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_before_send</c> function.</summary>
@@ -47,9 +48,10 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(ext);
         ArgumentNullException.ThrowIfNull(req);
         int nativeResult = GstRtspExtensionBeforeSend(ext.Handle, req.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(req);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_configure_stream</c> function.</summary>
@@ -61,9 +63,10 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(ext);
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstRtspExtensionConfigureStream(ext.Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_detect_server</c> function.</summary>
@@ -75,9 +78,10 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(ext);
         ArgumentNullException.ThrowIfNull(resp);
         int nativeResult = GstRtspExtensionDetectServer(ext.Handle, resp.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(resp);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_get_transports</c> function.</summary>
@@ -93,8 +97,9 @@ public static unsafe partial class RTSPExtensionExtensions
         System.Span<byte> transportBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope transportScope = Gst.Interop.GMarshal.StackUtf8(transport, transportBuffer);
         int nativeResult = GstRtspExtensionGetTransports(ext.Handle, (int)protocols, transportScope.Pointer);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_parse_sdp</c> function.</summary>
@@ -108,10 +113,11 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(sdp);
         ArgumentNullException.ThrowIfNull(s);
         int nativeResult = GstRtspExtensionParseSdp(ext.Handle, sdp.Handle, s.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(sdp);
         System.GC.KeepAlive(s);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_receive_request</c> function.</summary>
@@ -123,9 +129,10 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(ext);
         ArgumentNullException.ThrowIfNull(req);
         int nativeResult = GstRtspExtensionReceiveRequest(ext.Handle, req.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(req);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_send</c> function.</summary>
@@ -139,10 +146,11 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(req);
         ArgumentNullException.ThrowIfNull(resp);
         int nativeResult = GstRtspExtensionSend(ext.Handle, req.Handle, resp.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(req);
         System.GC.KeepAlive(resp);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_setup_media</c> function.</summary>
@@ -154,9 +162,10 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(ext);
         ArgumentNullException.ThrowIfNull(media);
         int nativeResult = GstRtspExtensionSetupMedia(ext.Handle, media.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(media);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_extension_stream_select</c> function.</summary>
@@ -168,9 +177,10 @@ public static unsafe partial class RTSPExtensionExtensions
         ArgumentNullException.ThrowIfNull(ext);
         ArgumentNullException.ThrowIfNull(url);
         int nativeResult = GstRtspExtensionStreamSelect(ext.Handle, url.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(ext);
         System.GC.KeepAlive(url);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The arguments of the <c>send</c> signal of <c>GstRTSPExtension</c>.</summary>

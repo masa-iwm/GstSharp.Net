@@ -32,8 +32,9 @@ public static unsafe partial class ColorBalanceExtensions
     {
         ArgumentNullException.ThrowIfNull(balance);
         int nativeResult = GstColorBalanceGetBalanceType(balance.Handle);
+        Gst.Video.ColorBalanceType result = (Gst.Video.ColorBalanceType)nativeResult;
         System.GC.KeepAlive(balance);
-        return (Gst.Video.ColorBalanceType)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -72,7 +73,6 @@ public static unsafe partial class ColorBalanceExtensions
     {
         ArgumentNullException.ThrowIfNull(balance);
         nint nativeResult = GstColorBalanceListChannels(balance.Handle);
-        System.GC.KeepAlive(balance);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Video.ColorBalanceChannel> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -83,6 +83,7 @@ public static unsafe partial class ColorBalanceExtensions
             }
         }
 
+        System.GC.KeepAlive(balance);
         return result;
     }
 

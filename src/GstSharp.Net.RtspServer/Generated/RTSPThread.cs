@@ -61,8 +61,9 @@ public sealed unsafe partial class RTSPThread : Gst.MiniObject
     public bool Reuse()
     {
         int nativeResult = GstRtspThreadReuse(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_thread_reuse</c> entry point.</summary>

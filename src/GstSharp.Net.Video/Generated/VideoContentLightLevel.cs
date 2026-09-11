@@ -50,8 +50,9 @@ public unsafe partial struct VideoContentLightLevel
         fixed (Gst.Video.VideoContentLightLevel* self = &System.Runtime.CompilerServices.Unsafe.AsRef(in this))
         {
             int nativeResult = GstVideoContentLightLevelAddToCaps(self, caps.Handle);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(caps);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -76,8 +77,9 @@ public unsafe partial struct VideoContentLightLevel
         fixed (Gst.Video.VideoContentLightLevel* self = &this)
         {
             int nativeResult = GstVideoContentLightLevelFromCaps(self, caps.Handle);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(caps);
-            return nativeResult != 0;
+            return result;
         }
     }
 

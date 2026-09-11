@@ -118,8 +118,8 @@ public sealed class GLibDateTimeRuntimeTypeTests
                 nuint timeType = time is null ? 0 : time.BoxedType.Value;
                 nint timeOwned = time is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(timeType, timeNative);
                 GstStampTakeTime(instanceHandle, timeOwned);
-                System.GC.KeepAlive(this);
                 time?.Dispose();
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Stamp.cs", "public void TakeTime("),
@@ -168,8 +168,9 @@ public sealed class GLibDateTimeRuntimeTypeTests
             public Gst.GLib.DateTime? GetTime()
             {
                 nint nativeResult = GstStampGetTime(Handle);
+                Gst.GLib.DateTime? result = Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
                 System.GC.KeepAlive(this);
-                return Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+                return result;
             }
             """,
             Run.Member("Stamp.cs", "public Gst.GLib.DateTime? GetTime("),

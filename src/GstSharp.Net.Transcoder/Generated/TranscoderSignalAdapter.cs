@@ -45,8 +45,9 @@ public unsafe partial class TranscoderSignalAdapter : Gst.GObject.Object
     public Gst.Transcoder.Transcoder? GetTranscoder()
     {
         nint nativeResult = GstTranscoderSignalAdapterGetTranscoder(Handle);
+        Gst.Transcoder.Transcoder? result = Gst.GObject.Object.FromNative<Gst.Transcoder.Transcoder>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Transcoder.Transcoder>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The #GstTranscoder tracked by the adapter.</summary>

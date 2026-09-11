@@ -94,9 +94,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstQueryNewAcceptCaps(caps.Handle);
-        System.GC.KeepAlive(caps);
-        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Query result = Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_query_new_accept_caps returned no value.");
+        System.GC.KeepAlive(caps);
+        return result;
     }
 
     /// <summary>Constructs a new query object for querying the allocation properties.</summary>
@@ -109,9 +110,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public static Gst.Query NewAllocation(Gst.Caps? caps, bool needPool)
     {
         nint nativeResult = GstQueryNewAllocation(caps is null ? 0 : caps.Handle, needPool ? 1 : 0);
-        System.GC.KeepAlive(caps);
-        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Query result = Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_query_new_allocation returned no value.");
+        System.GC.KeepAlive(caps);
+        return result;
     }
 
     /// <summary>Constructs a new query object for querying the bitrate.</summary>
@@ -172,9 +174,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(filter);
         nint nativeResult = GstQueryNewCaps(filter.Handle);
-        System.GC.KeepAlive(filter);
-        return Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Query result = Gst.Query.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_query_new_caps returned no value.");
+        System.GC.KeepAlive(filter);
+        return result;
     }
 
     /// <summary>Constructs a new query object for querying the pipeline-local context.</summary>
@@ -406,8 +409,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public bool AddBufferingRange(long start, long stop)
     {
         int nativeResult = GstQueryAddBufferingRange(Handle, start, stop);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Add @mode as one of the supported scheduling modes to @query.</summary>
@@ -430,9 +434,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         uint indexNative = default;
         int nativeResult = GstQueryFindAllocationMeta(Handle, api.Value, &indexNative);
-        System.GC.KeepAlive(this);
         index = indexNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -515,8 +520,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public Gst.Structure? GetStructure()
     {
         nint nativeResult = GstQueryGetStructure(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Check if @query has scheduling mode set.</summary>
@@ -534,8 +540,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public bool HasSchedulingMode(Gst.PadMode mode)
     {
         int nativeResult = GstQueryHasSchedulingMode(Handle, (int)mode);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -551,8 +558,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public bool HasSchedulingModeWithFlags(Gst.PadMode mode, Gst.SchedulingFlags flags)
     {
         int nativeResult = GstQueryHasSchedulingModeWithFlags(Handle, (int)mode, (int)flags);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Returns a writable copy of @query.</summary>
@@ -602,8 +610,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -616,8 +624,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint capsNative = default;
         GstQueryParseAcceptCaps(Handle, &capsNative);
-        System.GC.KeepAlive(this);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse the result from @query and store in @result.</summary>
@@ -626,8 +634,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         int resultNative = default;
         GstQueryParseAcceptCapsResult(Handle, &resultNative);
-        System.GC.KeepAlive(this);
         result = resultNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -648,9 +656,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
         nint capsNative = default;
         int needPoolNative = default;
         GstQueryParseAllocation(Handle, &capsNative, &needPoolNative);
-        System.GC.KeepAlive(this);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
         needPool = needPoolNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get the results of a bitrate query. See also gst_query_set_bitrate().</summary>
@@ -659,8 +667,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         uint nominalBitrateNative = default;
         GstQueryParseBitrate(Handle, &nominalBitrateNative);
-        System.GC.KeepAlive(this);
         nominalBitrate = nominalBitrateNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -674,9 +682,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
         int busyNative = default;
         int percentNative = default;
         GstQueryParseBufferingPercent(Handle, &busyNative, &percentNative);
-        System.GC.KeepAlive(this);
         busy = busyNative != 0;
         percent = percentNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -701,11 +709,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         long stopNative = default;
         long estimatedTotalNative = default;
         GstQueryParseBufferingRange(Handle, &formatNative, &startNative, &stopNative, &estimatedTotalNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         start = startNative;
         stop = stopNative;
         estimatedTotal = estimatedTotalNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Extracts the buffering stats values from @query.</summary>
@@ -723,11 +731,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         int avgOutNative = default;
         long bufferingLeftNative = default;
         GstQueryParseBufferingStats(Handle, &modeNative, &avgInNative, &avgOutNative, &bufferingLeftNative);
-        System.GC.KeepAlive(this);
         mode = (Gst.BufferingMode)modeNative;
         avgIn = avgInNative;
         avgOut = avgOutNative;
         bufferingLeft = bufferingLeftNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -739,8 +747,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint filterNative = default;
         GstQueryParseCaps(Handle, &filterNative);
-        System.GC.KeepAlive(this);
         filter = Gst.Caps.FromNative(filterNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -752,8 +760,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint capsNative = default;
         GstQueryParseCapsResult(Handle, &capsNative);
-        System.GC.KeepAlive(this);
         caps = Gst.Caps.FromNative(capsNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -765,8 +773,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint contextNative = default;
         GstQueryParseContext(Handle, &contextNative);
-        System.GC.KeepAlive(this);
         context = Gst.Context.FromNative(contextNative, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse a context type from an existing GST_QUERY_CONTEXT query.</summary>
@@ -776,9 +784,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint contextTypeNative = default;
         int nativeResult = GstQueryParseContextType(Handle, &contextTypeNative);
-        System.GC.KeepAlive(this);
         contextType = Gst.Interop.GMarshal.PtrToStringUtf8(contextTypeNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -805,11 +814,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         int destFormatNative = default;
         long destValueNative = default;
         GstQueryParseConvert(Handle, &srcFormatNative, &srcValueNative, &destFormatNative, &destValueNative);
-        System.GC.KeepAlive(this);
         srcFormat = (Gst.Format)srcFormatNative;
         srcValue = srcValueNative;
         destFormat = (Gst.Format)destFormatNative;
         destValue = destValueNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -826,9 +835,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
         int formatNative = default;
         long durationNative = default;
         GstQueryParseDuration(Handle, &formatNative, &durationNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         duration = durationNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse a latency query answer.</summary>
@@ -841,10 +850,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         GstQueryParseLatency(Handle, &liveNative, &minLatencyNative, &maxLatencyNative);
-        System.GC.KeepAlive(this);
         live = liveNative != 0;
         minLatency = new Gst.ClockTime(minLatencyNative);
         maxLatency = new Gst.ClockTime(maxLatencyNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Parse the number of formats in the formats @query.</summary>
@@ -853,8 +862,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         uint nFormatsNative = default;
         GstQueryParseNFormats(Handle, &nFormatsNative);
-        System.GC.KeepAlive(this);
         nFormats = nFormatsNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -868,9 +877,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint @paramsNative = default;
         nuint nativeResult = GstQueryParseNthAllocationMeta(Handle, index, &@paramsNative);
-        System.GC.KeepAlive(this);
         @params = Gst.Structure.FromNative(@paramsNative, Gst.Interop.Transfer.None);
-        return new Gst.GObject.GType(nativeResult);
+        Gst.GObject.GType result = new Gst.GObject.GType(nativeResult);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the pool parameters in @query.</summary>
@@ -889,11 +899,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         uint minBuffersNative = default;
         uint maxBuffersNative = default;
         GstQueryParseNthAllocationPool(Handle, index, &poolNative, &sizeNative, &minBuffersNative, &maxBuffersNative);
-        System.GC.KeepAlive(this);
         pool = Gst.GObject.Object.FromNative<Gst.BufferPool>(poolNative, Gst.Interop.Transfer.Full);
         size = sizeNative;
         minBuffers = minBuffersNative;
         maxBuffers = maxBuffersNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -909,10 +919,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         long startNative = default;
         long stopNative = default;
         int nativeResult = GstQueryParseNthBufferingRange(Handle, index, &startNative, &stopNative);
-        System.GC.KeepAlive(this);
         start = startNative;
         stop = stopNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -926,8 +937,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         int formatNative = default;
         GstQueryParseNthFormat(Handle, nth, &formatNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -939,8 +950,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public Gst.PadMode ParseNthSchedulingMode(uint index)
     {
         int nativeResult = GstQueryParseNthSchedulingMode(Handle, index);
+        Gst.PadMode result = (Gst.PadMode)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.PadMode)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -957,9 +969,9 @@ public sealed unsafe partial class Query : Gst.MiniObject
         int formatNative = default;
         long curNative = default;
         GstQueryParsePosition(Handle, &formatNative, &curNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         cur = curNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Set the scheduling properties.</summary>
@@ -974,11 +986,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         int maxsizeNative = default;
         int alignNative = default;
         GstQueryParseScheduling(Handle, &flagsNative, &minsizeNative, &maxsizeNative, &alignNative);
-        System.GC.KeepAlive(this);
         flags = (Gst.SchedulingFlags)flagsNative;
         minsize = minsizeNative;
         maxsize = maxsizeNative;
         align = alignNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1000,11 +1012,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         long segmentStartNative = default;
         long segmentEndNative = default;
         GstQueryParseSeeking(Handle, &formatNative, &seekableNative, &segmentStartNative, &segmentEndNative);
-        System.GC.KeepAlive(this);
         format = (Gst.Format)formatNative;
         seekable = seekableNative != 0;
         segmentStart = segmentStartNative;
         segmentEnd = segmentEndNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1028,11 +1040,11 @@ public sealed unsafe partial class Query : Gst.MiniObject
         long startValueNative = default;
         long stopValueNative = default;
         GstQueryParseSegment(Handle, &rateNative, &formatNative, &startValueNative, &stopValueNative);
-        System.GC.KeepAlive(this);
         rate = rateNative;
         format = (Gst.Format)formatNative;
         startValue = startValueNative;
         stopValue = stopValueNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get the results of a selectable query. See also gst_query_set_selectable().</summary>
@@ -1041,8 +1053,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         int selectableNative = default;
         GstQueryParseSelectable(Handle, &selectableNative);
-        System.GC.KeepAlive(this);
         selectable = selectableNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1058,8 +1070,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint uriNative = default;
         GstQueryParseUri(Handle, &uriNative);
-        System.GC.KeepAlive(this);
         uri = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uriNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1075,8 +1087,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         nint uriNative = default;
         GstQueryParseUriRedirection(Handle, &uriNative);
-        System.GC.KeepAlive(this);
         uri = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uriNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1093,8 +1105,8 @@ public sealed unsafe partial class Query : Gst.MiniObject
     {
         int permanentNative = default;
         GstQueryParseUriRedirectionPermanent(Handle, &permanentNative);
-        System.GC.KeepAlive(this);
         permanent = permanentNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Remove the metadata API at @index of the metadata API array.</summary>
@@ -1385,9 +1397,10 @@ public sealed unsafe partial class Query : Gst.MiniObject
     public Gst.Structure WritableStructure()
     {
         nint nativeResult = GstQueryWritableStructure(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_query_writable_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_query_new_accept_caps</c> entry point.</summary>

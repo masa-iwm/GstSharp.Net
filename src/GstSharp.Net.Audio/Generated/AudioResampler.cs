@@ -143,9 +143,10 @@ public sealed unsafe partial class AudioResampler
     {
         ArgumentNullException.ThrowIfNull(options);
         int nativeResult = GstAudioResamplerUpdate(Handle, inRate, outRate, options.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(options);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Make a new resampler.</summary>
@@ -161,9 +162,10 @@ public sealed unsafe partial class AudioResampler
     {
         ArgumentNullException.ThrowIfNull(options);
         nint nativeResult = GstAudioResamplerNew((int)method, (int)flags, (int)format, channels, inRate, outRate, options.Handle);
-        System.GC.KeepAlive(options);
-        return Gst.Audio.AudioResampler.FromNative(nativeResult)
+        Gst.Audio.AudioResampler result = Gst.Audio.AudioResampler.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_audio_resampler_new returned no value.");
+        System.GC.KeepAlive(options);
+        return result;
     }
 
     /// <summary>

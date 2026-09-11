@@ -197,8 +197,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool GetDropOutOfSegment()
     {
         int nativeResult = GstBaseSinkGetDropOutOfSegment(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -217,8 +218,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.Sample? GetLastSample()
     {
         nint nativeResult = GstBaseSinkGetLastSample(Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the currently configured latency.</summary>
@@ -226,8 +228,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.ClockTime GetLatency()
     {
         ulong nativeResult = GstBaseSinkGetLatency(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the maximum amount of bits per second that the sink will render.</summary>
@@ -264,8 +267,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.ClockTime GetProcessingDeadline()
     {
         ulong nativeResult = GstBaseSinkGetProcessingDeadline(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -276,8 +280,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.ClockTime GetRenderDelay()
     {
         ulong nativeResult = GstBaseSinkGetRenderDelay(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -295,9 +300,10 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.Structure GetStats()
     {
         nint nativeResult = GstBaseSinkGetStats(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_base_sink_get_stats returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -308,8 +314,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool GetSync()
     {
         int nativeResult = GstBaseSinkGetSync(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -344,8 +351,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool IsAsyncEnabled()
     {
         int nativeResult = GstBaseSinkIsAsyncEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -356,8 +364,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool IsLastSampleEnabled()
     {
         int nativeResult = GstBaseSinkIsLastSampleEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -368,8 +377,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public bool IsQosEnabled()
     {
         int nativeResult = GstBaseSinkIsQosEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -398,12 +408,13 @@ public abstract unsafe partial class BaseSink : Gst.Element
         ulong minLatencyNative = default;
         ulong maxLatencyNative = default;
         int nativeResult = GstBaseSinkQueryLatency(Handle, &liveNative, &upstreamLiveNative, &minLatencyNative, &maxLatencyNative);
-        System.GC.KeepAlive(this);
         live = liveNative != 0;
         upstreamLive = upstreamLiveNative != 0;
         minLatency = new Gst.ClockTime(minLatencyNative);
         maxLatency = new Gst.ClockTime(maxLatencyNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -576,9 +587,10 @@ public abstract unsafe partial class BaseSink : Gst.Element
     {
         long jitterNative = default;
         int nativeResult = GstBaseSinkWait(Handle, time.Nanoseconds, &jitterNative);
-        System.GC.KeepAlive(this);
         jitter = jitterNative;
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -610,9 +622,10 @@ public abstract unsafe partial class BaseSink : Gst.Element
     {
         long jitterNative = default;
         int nativeResult = GstBaseSinkWaitClock(Handle, time.Nanoseconds, &jitterNative);
-        System.GC.KeepAlive(this);
         jitter = jitterNative;
-        return (Gst.ClockReturn)nativeResult;
+        Gst.ClockReturn result = (Gst.ClockReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -647,8 +660,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     public Gst.FlowReturn WaitPreroll()
     {
         int nativeResult = GstBaseSinkWaitPreroll(Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>The amount of bytes to pull when operating in pull mode.</summary>

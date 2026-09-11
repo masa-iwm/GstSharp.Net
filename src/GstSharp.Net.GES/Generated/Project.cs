@@ -119,9 +119,10 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     {
         ArgumentNullException.ThrowIfNull(asset);
         int nativeResult = GesProjectAddAsset(Handle, asset.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(asset);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -138,9 +139,10 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     {
         ArgumentNullException.ThrowIfNull(profile);
         int nativeResult = GesProjectAddEncodingProfile(Handle, profile.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(profile);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Adds a formatter to be used to load @project</summary>
@@ -169,8 +171,9 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         System.Span<byte> idBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope idScope = Gst.Interop.GMarshal.StackUtf8(id, idBuffer);
         int nativeResult = GesProjectCreateAsset(Handle, idScope.Pointer, extractableType.Value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -188,7 +191,6 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         using Gst.Interop.Utf8Scope idScope = Gst.Interop.GMarshal.StackUtf8(id, idBuffer);
         nint errorNative = 0;
         nint nativeResult = GesProjectCreateAssetSync(Handle, idScope.Pointer, extractableType.Value, &errorNative);
-        System.GC.KeepAlive(this);
         if (errorNative != 0 && nativeResult != 0)
         {
             // The call failed and transferred a value all the same. The throw
@@ -196,7 +198,9 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
             Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
         }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.Full);
+        GES.Asset? result = Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>ges_project_get_asset</c> function.</summary>
@@ -215,8 +219,9 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         System.Span<byte> idBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope idScope = Gst.Interop.GMarshal.StackUtf8(id, idBuffer);
         nint nativeResult = GesProjectGetAsset(Handle, idScope.Pointer, extractableType.Value);
+        GES.Asset? result = Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the assets that are being loaded</summary>
@@ -228,7 +233,6 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     public System.Collections.Generic.IReadOnlyList<GES.Asset> GetLoadingAssets()
     {
         nint nativeResult = GesProjectGetLoadingAssets(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.Asset> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -239,6 +243,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -247,8 +252,9 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     public string? GetUri()
     {
         nint nativeResult = GesProjectGetUri(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -267,7 +273,6 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     public System.Collections.Generic.IReadOnlyList<GES.Asset> ListAssets(Gst.GObject.GType filter)
     {
         nint nativeResult = GesProjectListAssets(Handle, filter.Value);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.Asset> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -278,6 +283,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -292,7 +298,6 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.EncodingProfile> ListEncodingProfiles()
     {
         nint nativeResult = GesProjectListEncodingProfiles(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.EncodingProfile> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -303,6 +308,7 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -315,10 +321,11 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         ArgumentNullException.ThrowIfNull(timeline);
         nint errorNative = 0;
         int nativeResult = GesProjectLoad(Handle, timeline.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(timeline);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove @asset from @project.</summary>
@@ -328,9 +335,10 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     {
         ArgumentNullException.ThrowIfNull(asset);
         int nativeResult = GesProjectRemoveAsset(Handle, asset.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(asset);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -380,11 +388,12 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         nint formatterAssetOwned = formatterAsset is null ? 0 : Gst.Interop.GObjectNative.ObjectRef(formatterAssetNative);
         nint errorNative = 0;
         int nativeResult = GesProjectSave(instanceHandle, timelineNative, uriScope.Pointer, formatterAssetOwned, overwrite ? 1 : 0, &errorNative);
-        System.GC.KeepAlive(this);
-        System.GC.KeepAlive(timeline);
         formatterAsset?.Dispose();
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(timeline);
+        return result;
     }
 
     /// <summary>The <c>uri</c> property.</summary>

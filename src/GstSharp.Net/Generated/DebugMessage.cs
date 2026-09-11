@@ -37,8 +37,9 @@ public sealed unsafe partial class DebugMessage
     public string? Get()
     {
         nint nativeResult = GstDebugMessageGet(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -49,8 +50,9 @@ public sealed unsafe partial class DebugMessage
     public string? GetId()
     {
         nint nativeResult = GstDebugMessageGetId(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_debug_message_get</c> entry point.</summary>

@@ -29,8 +29,8 @@ public static unsafe partial class TranscoderMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         ulong durationNative = default;
         GstTranscoderMessageParseDuration(msg.Handle, &durationNative);
-        System.GC.KeepAlive(msg);
         duration = new Gst.ClockTime(durationNative);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given position @msg and extract the corresponding #GstClockTime</summary>
@@ -41,8 +41,8 @@ public static unsafe partial class TranscoderMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         ulong positionNative = default;
         GstTranscoderMessageParsePosition(msg.Handle, &positionNative);
-        System.GC.KeepAlive(msg);
         position = new Gst.ClockTime(positionNative);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given state @msg and extract the corresponding #GstTranscoderState</summary>
@@ -53,8 +53,8 @@ public static unsafe partial class TranscoderMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         int stateNative = default;
         GstTranscoderMessageParseState(msg.Handle, &stateNative);
-        System.GC.KeepAlive(msg);
         state = (Gst.Transcoder.TranscoderState)stateNative;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>The <c>gst_transcoder_message_get_name</c> entry point.</summary>

@@ -129,8 +129,9 @@ public sealed class StringArrayTests
             public string[]? GetTags()
             {
                 nint nativeResult = GstWidgetGetTags(Handle);
+                string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
                 System.GC.KeepAlive(this);
-                return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+                return result;
             }
             """.ReplaceLineEndings("\n"),
             Run.Member("Widget.cs", "public string[]? GetTags("),
@@ -146,8 +147,9 @@ public sealed class StringArrayTests
             public string[]? StealTags()
             {
                 nint nativeResult = GstWidgetStealTags(Handle);
+                string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
                 System.GC.KeepAlive(this);
-                return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+                return result;
             }
             """.ReplaceLineEndings("\n"),
             Run.Member("Widget.cs", "public string[]? StealTags("),
@@ -169,8 +171,9 @@ public sealed class StringArrayTests
                 ArgumentNullException.ThrowIfNull(tags);
                 using Gst.Interop.StrvScope tagsScope = Gst.Interop.GMarshal.AllocStrv(tags);
                 int nativeResult = GstWidgetSetTags(Handle, tagsScope.Pointer);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(this);
-                return nativeResult != 0;
+                return result;
             }
             """.ReplaceLineEndings("\n"),
             Run.Member("Widget.cs", "public bool SetTags("),

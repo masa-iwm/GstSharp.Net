@@ -396,9 +396,11 @@ public sealed class ClassEmitterTests
         // pinned adjacent, because nothing else in the suite pins this path.
         Assert.Contains(
             """
-                    System.GC.KeepAlive(timeline);
                     formatterAsset?.Dispose();
                     Gst.GLib.GException.ThrowIfSet(ref errorNative);
+                    bool result = nativeResult != 0;
+                    System.GC.KeepAlive(this);
+                    System.GC.KeepAlive(timeline);
             """,
             SourceOf("GstSharp.Net.GES/Generated/Project.cs"),
             StringComparison.Ordinal);
@@ -514,7 +516,6 @@ public sealed class ClassEmitterTests
         Assert.Contains(
             """
                     nint nativeResult = GstDiscovererDiscoverUri(Handle, uriScope.Pointer, &errorNative);
-                    System.GC.KeepAlive(this);
                     if (errorNative != 0 && nativeResult != 0)
                     {
                         // The call failed and transferred a value all the same. The throw
@@ -522,6 +523,9 @@ public sealed class ClassEmitterTests
                         Gst.Interop.GObjectNative.ObjectUnref(nativeResult);
                     }
                     Gst.GLib.GException.ThrowIfSet(ref errorNative);
+                    Gst.Pbutils.DiscovererInfo result = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.Full)
+                        ?? throw new InvalidOperationException("gst_discoverer_discover_uri returned no value.");
+                    System.GC.KeepAlive(this);
             """,
             SourceOf("GstSharp.Net.Pbutils/Generated/Discoverer.cs"),
             StringComparison.Ordinal);

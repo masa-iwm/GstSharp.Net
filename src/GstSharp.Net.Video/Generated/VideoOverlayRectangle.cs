@@ -81,9 +81,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(pixels);
         nint nativeResult = GstVideoOverlayRectangleNewRaw(pixels.Handle, renderX, renderY, renderWidth, renderHeight, (int)flags);
-        System.GC.KeepAlive(pixels);
-        return Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoOverlayRectangle result = Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_new_raw returned no value.");
+        System.GC.KeepAlive(pixels);
+        return result;
     }
 
     /// <summary>
@@ -99,9 +100,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Video.VideoOverlayRectangle Copy()
     {
         nint nativeResult = GstVideoOverlayRectangleCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoOverlayRectangle result = Gst.Video.VideoOverlayRectangle.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -115,8 +117,9 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Video.VideoOverlayFormatFlags GetFlags()
     {
         int nativeResult = GstVideoOverlayRectangleGetFlags(Handle);
+        Gst.Video.VideoOverlayFormatFlags result = (Gst.Video.VideoOverlayFormatFlags)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Video.VideoOverlayFormatFlags)nativeResult;
+        return result;
     }
 
     /// <summary>Retrieves the global-alpha value associated with a #GstVideoOverlayRectangle.</summary>
@@ -149,9 +152,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Buffer GetPixelsArgb(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsArgb(Handle, (int)flags);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_argb returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_video_overlay_rectangle_get_pixels_ayuv</c> function.</summary>
@@ -175,9 +179,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Buffer GetPixelsAyuv(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsAyuv(Handle, (int)flags);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_ayuv returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_video_overlay_rectangle_get_pixels_raw</c> function.</summary>
@@ -202,9 +207,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Buffer GetPixelsRaw(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsRaw(Handle, (int)flags);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_raw returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -231,9 +237,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Buffer GetPixelsUnscaledArgb(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsUnscaledArgb(Handle, (int)flags);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_unscaled_argb returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -260,9 +267,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Buffer GetPixelsUnscaledAyuv(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsUnscaledAyuv(Handle, (int)flags);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_unscaled_ayuv returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -289,9 +297,10 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
     public Gst.Buffer GetPixelsUnscaledRaw(Gst.Video.VideoOverlayFormatFlags flags)
     {
         nint nativeResult = GstVideoOverlayRectangleGetPixelsUnscaledRaw(Handle, (int)flags);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_video_overlay_rectangle_get_pixels_unscaled_raw returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -310,12 +319,13 @@ public sealed unsafe partial class VideoOverlayRectangle : Gst.MiniObject
         uint renderWidthNative = default;
         uint renderHeightNative = default;
         int nativeResult = GstVideoOverlayRectangleGetRenderRectangle(Handle, &renderXNative, &renderYNative, &renderWidthNative, &renderHeightNative);
-        System.GC.KeepAlive(this);
         renderX = renderXNative;
         renderY = renderYNative;
         renderWidth = renderWidthNative;
         renderHeight = renderHeightNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>

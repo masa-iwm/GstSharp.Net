@@ -119,8 +119,8 @@ public unsafe partial class TaskPool : Gst.Object
     {
         nint errorNative = 0;
         GstTaskPoolPrepare(Handle, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_task_pool_new</c> entry point.</summary>

@@ -70,9 +70,10 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     {
         ArgumentNullException.ThrowIfNull(child);
         int nativeResult = GesContainerAdd(Handle, child.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(child);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Edits the container within its timeline.</summary>
@@ -114,8 +115,9 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     {
         using Gst.Interop.GListScope layersScope = Gst.Interop.GMarshal.AllocList(layers, singly: false);
         int nativeResult = GesContainerEdit(Handle, layersScope.Head, newLayerPriority, (int)mode, (int)edge, position);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -132,7 +134,6 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     public System.Collections.Generic.IReadOnlyList<GES.TimelineElement> GetChildren(bool recursive)
     {
         nint nativeResult = GesContainerGetChildren(Handle, recursive ? 1 : 0);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.TimelineElement> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -143,6 +144,7 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -156,9 +158,10 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     {
         ArgumentNullException.ThrowIfNull(child);
         int nativeResult = GesContainerRemove(Handle, child.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(child);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

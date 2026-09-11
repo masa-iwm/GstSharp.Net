@@ -106,8 +106,9 @@ public abstract unsafe partial class BaseEffect : GES.Operation, GES.IExtractabl
     public bool IsTimeEffect()
     {
         int nativeResult = GesBaseEffectIsTimeEffect(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -136,8 +137,9 @@ public abstract unsafe partial class BaseEffect : GES.Operation, GES.IExtractabl
         System.Span<byte> childPropertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope childPropertyNameScope = Gst.Interop.GMarshal.StackUtf8(childPropertyName, childPropertyNameBuffer);
         int nativeResult = GesBaseEffectRegisterTimeProperty(Handle, childPropertyNameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>ges_base_effect_is_time_effect</c> entry point.</summary>

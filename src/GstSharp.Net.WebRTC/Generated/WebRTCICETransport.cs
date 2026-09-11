@@ -67,8 +67,9 @@ public abstract unsafe partial class WebRTCICETransport : Gst.Object
     public Gst.WebRTC.WebRTCICECandidatePair? GetSelectedCandidatePair()
     {
         nint nativeResult = GstWebrtcIceTransportGetSelectedCandidatePair(Handle);
+        Gst.WebRTC.WebRTCICECandidatePair? result = Gst.WebRTC.WebRTCICECandidatePair.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.WebRTC.WebRTCICECandidatePair.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_transport_new_candidate</c> function.</summary>

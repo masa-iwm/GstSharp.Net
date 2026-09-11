@@ -148,9 +148,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.Buffer AllocateOutputBuffer(nuint size)
     {
         nint nativeResult = GstAudioDecoderAllocateOutputBuffer(Handle, size);
-        System.GC.KeepAlive(this);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_audio_decoder_allocate_output_buffer returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Collects decoded data and pushes it downstream.</summary>
@@ -192,9 +193,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         nint bufNative = buf is null ? 0 : buf.Handle;
         nint bufOwned = buf is null ? 0 : Gst.GstNative.MiniObjectRef(bufNative);
         int nativeResult = GstAudioDecoderFinishFrame(instanceHandle, bufOwned, frames);
-        System.GC.KeepAlive(this);
         buf?.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -241,9 +243,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         nint bufNative = buf is null ? 0 : buf.Handle;
         nint bufOwned = buf is null ? 0 : Gst.GstNative.MiniObjectRef(bufNative);
         int nativeResult = GstAudioDecoderFinishSubframe(instanceHandle, bufOwned);
-        System.GC.KeepAlive(this);
         buf?.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -269,10 +272,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         nint allocatorNative = default;
         nint @paramsNative = GstAllocationParamsNew();
         GstAudioDecoderGetAllocator(instanceHandle, &allocatorNative, @paramsNative);
-        System.GC.KeepAlive(this);
         @params = Gst.AllocationParams.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_allocation_params_new returned no value.");
         allocator = Gst.GObject.Object.FromNative<Gst.Allocator>(allocatorNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_audio_decoder_get_audio_info</c> function.</summary>
@@ -285,9 +288,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.Audio.AudioInfo GetAudioInfo()
     {
         nint nativeResult = GstAudioDecoderGetAudioInfo(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Audio.AudioInfo result = Gst.Audio.AudioInfo.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_audio_decoder_get_audio_info returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_audio_decoder_get_delay</c> function.</summary>
@@ -304,8 +308,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool GetDrainable()
     {
         int nativeResult = GstAudioDecoderGetDrainable(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_audio_decoder_get_estimate_rate</c> function.</summary>
@@ -328,9 +333,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         ulong minNative = default;
         ulong maxNative = default;
         GstAudioDecoderGetLatency(Handle, &minNative, &maxNative);
-        System.GC.KeepAlive(this);
         min = new Gst.ClockTime(minNative);
         max = new Gst.ClockTime(maxNative);
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_audio_decoder_get_max_errors</c> function.</summary>
@@ -347,8 +352,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.ClockTime GetMinLatency()
     {
         ulong nativeResult = GstAudioDecoderGetMinLatency(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Queries decoder required format handling.</summary>
@@ -356,8 +362,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool GetNeedsFormat()
     {
         int nativeResult = GstAudioDecoderGetNeedsFormat(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Return current parsing (sync and eos) state.</summary>
@@ -368,9 +375,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
         int syncNative = default;
         int eosNative = default;
         GstAudioDecoderGetParseState(Handle, &syncNative, &eosNative);
-        System.GC.KeepAlive(this);
         sync = syncNative != 0;
         eos = eosNative != 0;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Queries decoder packet loss concealment handling.</summary>
@@ -378,8 +385,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool GetPlc()
     {
         int nativeResult = GstAudioDecoderGetPlc(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_audio_decoder_get_plc_aware</c> function.</summary>
@@ -396,8 +404,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.ClockTime GetTolerance()
     {
         ulong nativeResult = GstAudioDecoderGetTolerance(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -429,8 +438,9 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public bool Negotiate()
     {
         int nativeResult = GstAudioDecoderNegotiate(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -444,11 +454,12 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     public Gst.Caps ProxyGetcaps(Gst.Caps? caps, Gst.Caps? filter)
     {
         nint nativeResult = GstAudioDecoderProxyGetcaps(Handle, caps is null ? 0 : caps.Handle, filter is null ? 0 : filter.Handle);
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_audio_decoder_proxy_getcaps returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
         System.GC.KeepAlive(filter);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_audio_decoder_proxy_getcaps returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -556,9 +567,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstAudioDecoderSetOutputCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Configure output info on the srcpad of @dec.</summary>
@@ -568,9 +580,10 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(info);
         int nativeResult = GstAudioDecoderSetOutputFormat(Handle, info.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(info);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

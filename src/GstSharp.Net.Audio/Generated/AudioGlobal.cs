@@ -273,8 +273,9 @@ public static unsafe partial class AudioGlobal
             fixed (byte* dstPointer = dst)
             {
                 int nativeResult = GstAudioIec61937Payload(srcPointer, (uint)src.Length, dstPointer, (uint)dst.Length, spec.Handle, endianness);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(spec);
-                return nativeResult != 0;
+                return result;
             }
         }
     }
@@ -399,9 +400,10 @@ public static unsafe partial class AudioGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddAudioClippingMeta(buffer.Handle, (int)format, start, end);
-        System.GC.KeepAlive(buffer);
-        return Gst.Audio.AudioClippingMeta.FromNative(nativeResult)
+        Gst.Audio.AudioClippingMeta result = Gst.Audio.AudioClippingMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_audio_clipping_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>Attaches audio level information to @buffer. (RFC 6464)</summary>
@@ -413,8 +415,9 @@ public static unsafe partial class AudioGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferAddAudioLevelMeta(buffer.Handle, level, voiceActivity ? 1 : 0);
+        Gst.Audio.AudioLevelMeta? result = Gst.Audio.AudioLevelMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Audio.AudioLevelMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -460,9 +463,10 @@ public static unsafe partial class AudioGlobal
         fixed (nuint* offsetsPointer = offsets)
         {
             nint nativeResult = GstBufferAddDsdPlaneOffsetMeta(buffer.Handle, (int)offsets.Length, numBytesPerChannel, offsetsPointer);
-            System.GC.KeepAlive(buffer);
-            return Gst.Audio.DsdPlaneOffsetMeta.FromNative(nativeResult)
+            Gst.Audio.DsdPlaneOffsetMeta result = Gst.Audio.DsdPlaneOffsetMeta.FromNative(nativeResult)
                 ?? throw new InvalidOperationException("gst_buffer_add_dsd_plane_offset_meta returned no value.");
+            System.GC.KeepAlive(buffer);
+            return result;
         }
     }
 
@@ -482,8 +486,9 @@ public static unsafe partial class AudioGlobal
         fixed (Gst.Audio.AudioChannelPosition* toPositionPointer = toPosition)
         {
             nint nativeResult = GstBufferGetAudioDownmixMetaForChannels(buffer.Handle, toPositionPointer, (int)toPosition.Length);
+            Gst.Audio.AudioDownmixMeta? result = Gst.Audio.AudioDownmixMeta.FromNative(nativeResult);
             System.GC.KeepAlive(buffer);
-            return Gst.Audio.AudioDownmixMeta.FromNative(nativeResult);
+            return result;
         }
     }
 
@@ -497,8 +502,9 @@ public static unsafe partial class AudioGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferGetAudioLevelMeta(buffer.Handle);
+        Gst.Audio.AudioLevelMeta? result = Gst.Audio.AudioLevelMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Audio.AudioLevelMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_dsd_plane_offset_meta_api_get_type</c> function.</summary>

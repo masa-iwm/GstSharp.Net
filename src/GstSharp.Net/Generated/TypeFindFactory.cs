@@ -116,8 +116,9 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstTypeFindFactoryGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -130,8 +131,9 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     public string[]? GetExtensions()
     {
         nint nativeResult = GstTypeFindFactoryGetExtensions(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+        return result;
     }
 
     /// <summary>
@@ -143,8 +145,9 @@ public unsafe partial class TypeFindFactory : Gst.PluginFeature
     public bool HasFunction()
     {
         int nativeResult = GstTypeFindFactoryHasFunction(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

@@ -60,8 +60,9 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public bool CheckVersion(uint minMajor, uint minMinor, uint minMicro)
     {
         int nativeResult = GstPluginFeatureCheckVersion(Handle, minMajor, minMinor, minMicro);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the plugin that provides this feature.</summary>
@@ -73,8 +74,9 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public Gst.Plugin? GetPlugin()
     {
         nint nativeResult = GstPluginFeatureGetPlugin(Handle);
+        Gst.Plugin? result = Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Plugin>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the name of the plugin that provides this feature.</summary>
@@ -86,8 +88,9 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public string? GetPluginName()
     {
         nint nativeResult = GstPluginFeatureGetPluginName(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the rank of a plugin feature.</summary>
@@ -124,8 +127,9 @@ public abstract unsafe partial class PluginFeature : Gst.Object
     public Gst.PluginFeature? Load()
     {
         nint nativeResult = GstPluginFeatureLoad(Handle);
+        Gst.PluginFeature? result = Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.PluginFeature>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>

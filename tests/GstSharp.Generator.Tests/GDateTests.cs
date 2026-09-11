@@ -200,8 +200,9 @@ public sealed class GDateTests
             {
                 using Gst.GLib.DateScope dateScope = Gst.GLib.DateScope.Alloc(date);
                 int nativeResult = GstWidgetSetDate(Handle, dateScope.Pointer);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(this);
-                return nativeResult != 0;
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public bool SetDate("),
@@ -222,9 +223,10 @@ public sealed class GDateTests
             {
                 nint dateNative = default;
                 int nativeResult = GstWidgetGetDate(Handle, &dateNative);
-                System.GC.KeepAlive(this);
                 date = Gst.GLib.DateNative.ToDateOnly(dateNative);
-                return nativeResult != 0;
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public bool GetDate("),

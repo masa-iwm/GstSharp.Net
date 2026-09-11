@@ -150,8 +150,9 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     public Gst.GLib.GException? GetError()
     {
         nint nativeResult = GesAssetGetError(Handle);
+        Gst.GLib.GException? result = Gst.GLib.GException.FromBorrowed(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.GLib.GException.FromBorrowed(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the #GESAsset:extractable-type of the asset.</summary>
@@ -159,8 +160,9 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     public Gst.GObject.GType GetExtractableType()
     {
         nuint nativeResult = GesAssetGetExtractableType(Handle);
+        Gst.GObject.GType result = new Gst.GObject.GType(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.GObject.GType(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the #GESAsset:id of the asset.</summary>
@@ -168,9 +170,10 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     public string GetId()
     {
         nint nativeResult = GesAssetGetId(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("ges_asset_get_id returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the default #GESAsset:proxy of the asset.</summary>
@@ -178,8 +181,9 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     public GES.Asset? GetProxy()
     {
         nint nativeResult = GesAssetGetProxy(Handle);
+        GES.Asset? result = Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the #GESAsset:proxy-target of the asset.</summary>
@@ -196,8 +200,9 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     public GES.Asset? GetProxyTarget()
     {
         nint nativeResult = GesAssetGetProxyTarget(Handle);
+        GES.Asset? result = Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Asset>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -212,7 +217,6 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     public System.Collections.Generic.IReadOnlyList<GES.Asset> ListProxies()
     {
         nint nativeResult = GesAssetListProxies(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<GES.Asset> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -223,6 +227,7 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -251,9 +256,10 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     public bool SetProxy(GES.Asset? proxy)
     {
         int nativeResult = GesAssetSetProxy(Handle, proxy is null ? 0 : proxy.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(proxy);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -272,9 +278,10 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     {
         ArgumentNullException.ThrowIfNull(proxy);
         int nativeResult = GesAssetUnproxy(Handle, proxy.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(proxy);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

@@ -156,9 +156,10 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public Gst.Bus GetBus()
     {
         nint nativeResult = GstDeviceMonitorGetBus(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Bus result = Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_device_monitor_get_bus returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -178,7 +179,6 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Device> GetDevices()
     {
         nint nativeResult = GstDeviceMonitorGetDevices(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Device> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -189,6 +189,7 @@ public unsafe partial class DeviceMonitor : Gst.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -203,8 +204,9 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public string[]? GetProviders()
     {
         nint nativeResult = GstDeviceMonitorGetProviders(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>
@@ -215,8 +217,9 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public bool GetShowAllDevices()
     {
         int nativeResult = GstDeviceMonitorGetShowAllDevices(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -228,8 +231,9 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public bool RemoveFilter(uint filterId)
     {
         int nativeResult = GstDeviceMonitorRemoveFilter(Handle, filterId);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -268,8 +272,9 @@ public unsafe partial class DeviceMonitor : Gst.Object
     public bool Start()
     {
         int nativeResult = GstDeviceMonitorStart(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Stops monitoring the devices.</summary>

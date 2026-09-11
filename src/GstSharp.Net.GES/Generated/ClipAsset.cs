@@ -63,8 +63,9 @@ public unsafe partial class ClipAsset : GES.Asset, GES.IMetaContainer
     public Gst.ClockTime GetFrameTime(long frameNumber)
     {
         ulong nativeResult = GesClipAssetGetFrameTime(Handle, frameNumber);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Result: %TRUE if @self has a natural framerate %FALSE otherwise</summary>
@@ -76,10 +77,11 @@ public unsafe partial class ClipAsset : GES.Asset, GES.IMetaContainer
         int framerateNNative = default;
         int framerateDNative = default;
         int nativeResult = GesClipAssetGetNaturalFramerate(Handle, &framerateNNative, &framerateDNative);
-        System.GC.KeepAlive(this);
         framerateN = framerateNNative;
         framerateD = framerateDNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets track types for which objects extracted from @self can create #GESTrackElement</summary>
@@ -90,8 +92,9 @@ public unsafe partial class ClipAsset : GES.Asset, GES.IMetaContainer
     public GES.TrackType GetSupportedFormats()
     {
         int nativeResult = GesClipAssetGetSupportedFormats(Handle);
+        GES.TrackType result = (GES.TrackType)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TrackType)nativeResult;
+        return result;
     }
 
     /// <summary>Sets track types for which objects extracted from @self can create #GESTrackElement</summary>

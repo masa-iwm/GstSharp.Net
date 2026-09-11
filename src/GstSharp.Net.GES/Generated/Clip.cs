@@ -250,9 +250,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     {
         ArgumentNullException.ThrowIfNull(asset);
         nint nativeResult = GesClipAddAsset(Handle, asset.Handle);
+        GES.TrackElement? result = Gst.GObject.Object.FromNative<GES.TrackElement>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(asset);
-        return Gst.GObject.Object.FromNative<GES.TrackElement>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Adds the track element child of the clip to a specific track.</summary>
@@ -297,12 +298,13 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
         ArgumentNullException.ThrowIfNull(track);
         nint errorNative = 0;
         nint nativeResult = GesClipAddChildToTrack(Handle, child.Handle, track.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        GES.TrackElement result = Gst.GObject.Object.FromNative<GES.TrackElement>(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("ges_clip_add_child_to_track returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(child);
         System.GC.KeepAlive(track);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<GES.TrackElement>(nativeResult, Gst.Interop.Transfer.None)
-            ?? throw new InvalidOperationException("ges_clip_add_child_to_track returned no value.");
+        return result;
     }
 
     /// <summary>Add a top effect to a clip at the given index.</summary>
@@ -334,10 +336,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
         ArgumentNullException.ThrowIfNull(effect);
         nint errorNative = 0;
         int nativeResult = GesClipAddTopEffect(Handle, effect.Handle, index, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(effect);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -370,9 +373,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public GES.TrackElement? FindTrackElement(GES.Track? track, Gst.GObject.GType type)
     {
         nint nativeResult = GesClipFindTrackElement(Handle, track is null ? 0 : track.Handle, type.Value);
+        GES.TrackElement? result = Gst.GObject.Object.FromNative<GES.TrackElement>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(track);
-        return Gst.GObject.Object.FromNative<GES.TrackElement>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -418,8 +422,6 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public System.Collections.Generic.IReadOnlyList<GES.TrackElement> FindTrackElements(GES.Track? track, GES.TrackType trackType, Gst.GObject.GType type)
     {
         nint nativeResult = GesClipFindTrackElements(Handle, track is null ? 0 : track.Handle, (int)trackType, type.Value);
-        System.GC.KeepAlive(this);
-        System.GC.KeepAlive(track);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.TrackElement> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -430,6 +432,8 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
             }
         }
 
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(track);
         return result;
     }
 
@@ -438,8 +442,9 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public Gst.ClockTime GetDurationLimit()
     {
         ulong nativeResult = GesClipGetDurationLimit(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -505,10 +510,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
         ArgumentNullException.ThrowIfNull(child);
         nint errorNative = 0;
         ulong nativeResult = GesClipGetInternalTimeFromTimelineTime(Handle, child.Handle, timelineTime.Nanoseconds, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(child);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the #GESClip:layer of the clip.</summary>
@@ -519,8 +525,9 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public GES.Layer? GetLayer()
     {
         nint nativeResult = GesClipGetLayer(Handle);
+        GES.Layer? result = Gst.GObject.Object.FromNative<GES.Layer>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Layer>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the #GESClip:supported-formats of the clip.</summary>
@@ -528,8 +535,9 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public GES.TrackType GetSupportedFormats()
     {
         int nativeResult = GesClipGetSupportedFormats(Handle);
+        GES.TrackType result = (GES.TrackType)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TrackType)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -601,10 +609,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
         ArgumentNullException.ThrowIfNull(child);
         nint errorNative = 0;
         ulong nativeResult = GesClipGetTimelineTimeFromInternalTime(Handle, child.Handle, internalTime.Nanoseconds, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(child);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -637,9 +646,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     {
         nint errorNative = 0;
         ulong nativeResult = GesClipGetTimelineTimeFromSourceFrame(Handle, frameNumber, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return new Gst.ClockTime(nativeResult);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -685,7 +695,6 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public System.Collections.Generic.IReadOnlyList<GES.TrackElement> GetTopEffects()
     {
         nint nativeResult = GesClipGetTopEffects(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.TrackElement> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -696,6 +705,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -716,8 +726,9 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public bool IsMovingBetweenLayers()
     {
         int nativeResult = GesClipIsMovingBetweenLayers(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>See ges_clip_move_to_layer_full(), which also gives an error.</summary>
@@ -727,9 +738,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     {
         ArgumentNullException.ThrowIfNull(layer);
         int nativeResult = GesClipMoveToLayer(Handle, layer.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(layer);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -745,10 +757,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
         ArgumentNullException.ThrowIfNull(layer);
         nint errorNative = 0;
         int nativeResult = GesClipMoveToLayerFull(Handle, layer.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(layer);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove a top effect from the clip.</summary>
@@ -766,10 +779,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
         ArgumentNullException.ThrowIfNull(effect);
         nint errorNative = 0;
         int nativeResult = GesClipRemoveTopEffect(Handle, effect.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(effect);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -792,9 +806,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     {
         ArgumentNullException.ThrowIfNull(effect);
         int nativeResult = GesClipSetTopEffectIndex(Handle, effect.Handle, newindex);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(effect);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -813,10 +828,11 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
         ArgumentNullException.ThrowIfNull(effect);
         nint errorNative = 0;
         int nativeResult = GesClipSetTopEffectIndexFull(Handle, effect.Handle, newindex, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(effect);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>ges_clip_set_top_effect_priority</c> function.</summary>
@@ -827,9 +843,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     {
         ArgumentNullException.ThrowIfNull(effect);
         int nativeResult = GesClipSetTopEffectPriority(Handle, effect.Handle, newpriority);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(effect);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>See ges_clip_split_full(), which also gives an error.</summary>
@@ -841,8 +858,9 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public GES.Clip? Split(ulong position)
     {
         nint nativeResult = GesClipSplit(Handle, position);
+        GES.Clip? result = Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -892,9 +910,10 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     {
         nint errorNative = 0;
         nint nativeResult = GesClipSplitFull(Handle, position, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None);
+        GES.Clip? result = Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>

@@ -149,10 +149,11 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         ArgumentNullException.ThrowIfNull(pspec);
         ArgumentNullException.ThrowIfNull(child);
         int nativeResult = GesTimelineElementAddChildProperty(Handle, pspec.Handle, child.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pspec);
         System.GC.KeepAlive(child);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -178,9 +179,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public GES.TimelineElement Copy(bool deep)
     {
         nint nativeResult = GesTimelineElementCopy(Handle, deep ? 1 : 0);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.None)
+        GES.TimelineElement result = Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_timeline_element_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>See ges_timeline_element_edit_full(), which also gives an error.</summary>
@@ -221,8 +223,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     {
         using Gst.Interop.GListScope layersScope = Gst.Interop.GMarshal.AllocList(layers, singly: false);
         int nativeResult = GesTimelineElementEdit(Handle, layersScope.Head, newLayerPriority, (int)mode, (int)edge, position);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -270,9 +273,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     {
         nint errorNative = 0;
         int nativeResult = GesTimelineElementEditFull(Handle, newLayerPriority, (int)mode, (int)edge, position, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -303,8 +307,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GesTimelineElementGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the #GESTimelineElement:in-point for the element.</summary>
@@ -312,8 +317,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public Gst.ClockTime GetInpoint()
     {
         ulong nativeResult = GesTimelineElementGetInpoint(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -338,8 +344,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public Gst.ClockTime GetMaxDuration()
     {
         ulong nativeResult = GesTimelineElementGetMaxDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the #GESTimelineElement:name for the element.</summary>
@@ -347,8 +354,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public string? GetName()
     {
         nint nativeResult = GesTimelineElementGetName(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -377,10 +385,11 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         int framerateNNative = default;
         int framerateDNative = default;
         int nativeResult = GesTimelineElementGetNaturalFramerate(Handle, &framerateNNative, &framerateDNative);
-        System.GC.KeepAlive(this);
         framerateN = framerateNNative;
         framerateD = framerateDNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the #GESTimelineElement:parent for the element.</summary>
@@ -391,8 +400,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public GES.TimelineElement? GetParent()
     {
         nint nativeResult = GesTimelineElementGetParent(Handle);
+        GES.TimelineElement? result = Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the #GESTimelineElement:priority for the element.</summary>
@@ -409,8 +419,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public Gst.ClockTime GetStart()
     {
         ulong nativeResult = GesTimelineElementGetStart(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the #GESTimelineElement:timeline for the element.</summary>
@@ -421,8 +432,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public GES.Timeline? GetTimeline()
     {
         nint nativeResult = GesTimelineElementGetTimeline(Handle);
+        GES.Timeline? result = Gst.GObject.Object.FromNative<GES.Timeline>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Timeline>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the toplevel #GESTimelineElement:parent of the element.</summary>
@@ -430,9 +442,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public GES.TimelineElement GetToplevelParent()
     {
         nint nativeResult = GesTimelineElementGetToplevelParent(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full)
+        GES.TimelineElement result = Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("ges_timeline_element_get_toplevel_parent returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -443,8 +456,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public GES.TrackType GetTrackTypes()
     {
         int nativeResult = GesTimelineElementGetTrackTypes(Handle);
+        GES.TrackType result = (GES.TrackType)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TrackType)nativeResult;
+        return result;
     }
 
     /// <summary>Looks up a child property of the element.</summary>
@@ -485,10 +499,11 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         nint childNative = default;
         nint pspecNative = default;
         int nativeResult = GesTimelineElementLookupChild(Handle, propNameScope.Pointer, &childNative, &pspecNative);
-        System.GC.KeepAlive(this);
         child = Gst.GObject.Object.FromNative<Gst.GObject.Object>(childNative, Gst.Interop.Transfer.Full);
         pspec = (pspecNative == 0 ? null : Gst.GObject.ParamSpec.FromNative(pspecNative, Gst.Interop.Transfer.Full));
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -524,8 +539,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public GES.TimelineElement? Paste(Gst.ClockTime pastePosition)
     {
         nint nativeResult = GesTimelineElementPaste(Handle, pastePosition.Nanoseconds);
+        GES.TimelineElement? result = Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.TimelineElement>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -540,9 +556,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     {
         ArgumentNullException.ThrowIfNull(pspec);
         int nativeResult = GesTimelineElementRemoveChildProperty(Handle, pspec.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(pspec);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -558,8 +575,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool Ripple(Gst.ClockTime start)
     {
         int nativeResult = GesTimelineElementRipple(Handle, start.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -575,8 +593,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool RippleEnd(Gst.ClockTime end)
     {
         int nativeResult = GesTimelineElementRippleEnd(Handle, end.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -589,8 +608,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool RollEnd(Gst.ClockTime end)
     {
         int nativeResult = GesTimelineElementRollEnd(Handle, end.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -603,8 +623,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool RollStart(Gst.ClockTime start)
     {
         int nativeResult = GesTimelineElementRollStart(Handle, start.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -682,9 +703,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         fixed (Gst.GObject.GValueNative* valuePointer = &System.Runtime.CompilerServices.Unsafe.AsRef(in value).NativeValue)
         {
             int nativeResult = GesTimelineElementSetChildPropertyFull(Handle, propertyNameScope.Pointer, valuePointer, &errorNative);
-            System.GC.KeepAlive(this);
             Gst.GLib.GException.ThrowIfSet(ref errorNative);
-            return nativeResult != 0;
+            bool result = nativeResult != 0;
+            System.GC.KeepAlive(this);
+            return result;
         }
     }
 
@@ -706,8 +728,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool SetDuration(Gst.ClockTime duration)
     {
         int nativeResult = GesTimelineElementSetDuration(Handle, duration.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -720,8 +743,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool SetInpoint(Gst.ClockTime inpoint)
     {
         int nativeResult = GesTimelineElementSetInpoint(Handle, inpoint.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -734,8 +758,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool SetMaxDuration(Gst.ClockTime maxduration)
     {
         int nativeResult = GesTimelineElementSetMaxDuration(Handle, maxduration.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -768,8 +793,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GesTimelineElementSetName(Handle, nameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the #GESTimelineElement:parent for the element.</summary>
@@ -796,9 +822,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     {
         ArgumentNullException.ThrowIfNull(parent);
         int nativeResult = GesTimelineElementSetParent(Handle, parent.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(parent);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the priority of the element within the containing layer.</summary>
@@ -808,8 +835,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool SetPriority(uint priority)
     {
         int nativeResult = GesTimelineElementSetPriority(Handle, priority);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -831,8 +859,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool SetStart(Gst.ClockTime start)
     {
         int nativeResult = GesTimelineElementSetStart(Handle, start.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the #GESTimelineElement:timeline of the element.</summary>
@@ -859,9 +888,10 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     {
         ArgumentNullException.ThrowIfNull(timeline);
         int nativeResult = GesTimelineElementSetTimeline(Handle, timeline.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(timeline);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -874,8 +904,9 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     public bool Trim(Gst.ClockTime start)
     {
         int nativeResult = GesTimelineElementTrim(Handle, start.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

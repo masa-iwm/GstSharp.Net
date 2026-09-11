@@ -49,10 +49,11 @@ public unsafe partial class TrackElementAsset : GES.Asset, GES.IMetaContainer
         int framerateNNative = default;
         int framerateDNative = default;
         int nativeResult = GesTrackElementAssetGetNaturalFramerate(Handle, &framerateNNative, &framerateDNative);
-        System.GC.KeepAlive(this);
         framerateN = framerateNNative;
         framerateD = framerateDNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -63,8 +64,9 @@ public unsafe partial class TrackElementAsset : GES.Asset, GES.IMetaContainer
     public GES.TrackType GetTrackType()
     {
         int nativeResult = GesTrackElementAssetGetTrackType(Handle);
+        GES.TrackType result = (GES.TrackType)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TrackType)nativeResult;
+        return result;
     }
 
     /// <summary>

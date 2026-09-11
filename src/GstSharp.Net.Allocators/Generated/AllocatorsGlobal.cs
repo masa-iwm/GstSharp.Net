@@ -39,8 +39,9 @@ public static unsafe partial class AllocatorsGlobal
     {
         ArgumentNullException.ThrowIfNull(mem);
         nint nativeResult = GstDrmDumbMemoryExportDmabuf(mem.Handle);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(mem);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Return the DRM buffer object handle associated with @mem.</summary>
@@ -80,8 +81,9 @@ public static unsafe partial class AllocatorsGlobal
     {
         ArgumentNullException.ThrowIfNull(mem);
         int nativeResult = GstIsDmabufMemory(mem.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(mem);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_is_drm_dumb_memory</c> function.</summary>
@@ -91,8 +93,9 @@ public static unsafe partial class AllocatorsGlobal
     {
         ArgumentNullException.ThrowIfNull(mem);
         int nativeResult = GstIsDrmDumbMemory(mem.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(mem);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @mem is memory backed by an fd</summary>
@@ -105,8 +108,9 @@ public static unsafe partial class AllocatorsGlobal
     {
         ArgumentNullException.ThrowIfNull(mem);
         int nativeResult = GstIsFdMemory(mem.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(mem);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_is_phys_memory</c> function.</summary>
@@ -116,8 +120,9 @@ public static unsafe partial class AllocatorsGlobal
     {
         ArgumentNullException.ThrowIfNull(mem);
         int nativeResult = GstIsPhysMemory(mem.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(mem);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_phys_memory_get_phys_addr</c> function.</summary>

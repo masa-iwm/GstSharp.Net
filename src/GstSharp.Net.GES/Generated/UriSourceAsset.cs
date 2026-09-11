@@ -51,9 +51,10 @@ public unsafe partial class UriSourceAsset : GES.TrackElementAsset, GES.IMetaCon
     public GES.UriClipAsset GetFilesourceAsset()
     {
         nint nativeResult = GesUriSourceAssetGetFilesourceAsset(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.UriClipAsset>(nativeResult, Gst.Interop.Transfer.None)
+        GES.UriClipAsset result = Gst.GObject.Object.FromNative<GES.UriClipAsset>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_uri_source_asset_get_filesource_asset returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the #GstDiscovererStreamInfo user by @asset</summary>
@@ -61,9 +62,10 @@ public unsafe partial class UriSourceAsset : GES.TrackElementAsset, GES.IMetaCon
     public Gst.Pbutils.DiscovererStreamInfo GetStreamInfo()
     {
         nint nativeResult = GesUriSourceAssetGetStreamInfo(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Pbutils.DiscovererStreamInfo result = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("ges_uri_source_asset_get_stream_info returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>ges_uri_source_asset_get_stream_uri</c> function.</summary>
@@ -71,9 +73,10 @@ public unsafe partial class UriSourceAsset : GES.TrackElementAsset, GES.IMetaCon
     public string GetStreamUri()
     {
         nint nativeResult = GesUriSourceAssetGetStreamUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("ges_uri_source_asset_get_stream_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Check if @asset contains a single image</summary>
@@ -84,8 +87,9 @@ public unsafe partial class UriSourceAsset : GES.TrackElementAsset, GES.IMetaCon
     public bool IsImage()
     {
         int nativeResult = GesUriSourceAssetIsImage(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>ges_uri_source_asset_get_filesource_asset</c> entry point.</summary>

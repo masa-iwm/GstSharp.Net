@@ -91,8 +91,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public bool GetBufferListSupport()
     {
         int nativeResult = GstAppSinkGetBufferListSupport(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the configured caps on @appsink.</summary>
@@ -100,8 +101,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstAppSinkGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the number of currently queued buffers inside @appsink.</summary>
@@ -136,8 +138,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.ClockTime GetCurrentLevelTime()
     {
         ulong nativeResult = GstAppSinkGetCurrentLevelTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -152,8 +155,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public bool GetDrop()
     {
         int nativeResult = GstAppSinkGetDrop(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if appsink will emit the "new-preroll" and "new-sample" signals.</summary>
@@ -164,8 +168,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public bool GetEmitSignals()
     {
         int nativeResult = GstAppSinkGetEmitSignals(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -179,8 +184,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.App.AppLeakyType GetLeakyType()
     {
         int nativeResult = GstAppSinkGetLeakyType(Handle);
+        Gst.App.AppLeakyType result = (Gst.App.AppLeakyType)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.App.AppLeakyType)nativeResult;
+        return result;
     }
 
     /// <summary>Get the maximum amount of buffers that can be queued in @appsink.</summary>
@@ -206,8 +212,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.ClockTime GetMaxTime()
     {
         ulong nativeResult = GstAppSinkGetMaxTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -221,8 +228,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public bool GetWaitOnEos()
     {
         int nativeResult = GstAppSinkGetWaitOnEos(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -239,8 +247,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public bool IsEos()
     {
         int nativeResult = GstAppSinkIsEos(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -277,8 +286,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.Sample? PullPreroll()
     {
         nint nativeResult = GstAppSinkPullPreroll(Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -305,8 +315,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.Sample? PullSample()
     {
         nint nativeResult = GstAppSinkPullSample(Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Instruct @appsink to enable or disable buffer list support.</summary>
@@ -460,8 +471,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.Sample? TryPullPreroll(Gst.ClockTime timeout)
     {
         nint nativeResult = GstAppSinkTryPullPreroll(Handle, timeout.Nanoseconds);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -490,8 +502,9 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
     public Gst.Sample? TryPullSample(Gst.ClockTime timeout)
     {
         nint nativeResult = GstAppSinkTryPullSample(Handle, timeout.Nanoseconds);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The number of currently queued buffers inside appsink.</summary>

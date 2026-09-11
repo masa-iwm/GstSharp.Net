@@ -142,9 +142,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(mediaType);
         nint nativeResult = GstCapsNewIdStrEmptySimple(mediaType.Handle);
-        System.GC.KeepAlive(mediaType);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_new_id_str_empty_simple returned no value.");
+        System.GC.KeepAlive(mediaType);
+        return result;
     }
 
     /// <summary>
@@ -179,8 +180,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint caps2Native = caps2.Handle;
         nint caps2Owned = Gst.GstNative.MiniObjectRef(caps2Native);
         GstCapsAppend(instanceHandle, caps2Owned);
-        System.GC.KeepAlive(this);
         caps2.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -216,8 +217,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nuint structureType = structure.BoxedType.Value;
         nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
         GstCapsAppendStructure(instanceHandle, structureOwned);
-        System.GC.KeepAlive(this);
         structure.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -271,9 +272,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
         nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
         GstCapsAppendStructureFull(instanceHandle, structureOwned, featuresOwned);
-        System.GC.KeepAlive(this);
         structure.Dispose();
         features?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -286,9 +287,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps2);
         int nativeResult = GstCapsCanIntersect(Handle, caps2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -306,9 +308,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public Gst.Caps Copy()
     {
         nint nativeResult = GstCapsCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -320,9 +323,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public Gst.Caps CopyNth(uint nth)
     {
         nint nativeResult = GstCapsCopyNth(Handle, nth);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_copy_nth returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -367,8 +371,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         try
         {
             int nativeResult = GstCapsForeach(instanceHandle, Gst.CapsForeachFuncTrampoline.Pointer, funcState.UserData);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
         finally
         {
@@ -400,8 +405,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public Gst.CapsFeatures? GetFeatures(uint index)
     {
         nint nativeResult = GstCapsGetFeatures(Handle, index);
+        Gst.CapsFeatures? result = Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Gets the number of structures contained in @caps.</summary>
@@ -437,9 +443,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public Gst.Structure GetStructure(uint index)
     {
         nint nativeResult = GstCapsGetStructure(Handle, index);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_caps_get_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -490,10 +497,11 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps2);
         nint nativeResult = GstCapsIntersect(Handle, caps2.Handle);
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_intersect returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps2);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_caps_intersect returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -508,10 +516,11 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps2);
         nint nativeResult = GstCapsIntersectFull(Handle, caps2.Handle, (int)mode);
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_intersect_full returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps2);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_caps_intersect_full returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -525,9 +534,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps2);
         int nativeResult = GstCapsIsAlwaysCompatible(Handle, caps2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Determines if @caps represents any media format.</summary>
@@ -535,8 +545,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public bool IsAny()
     {
         int nativeResult = GstCapsIsAny(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Determines if @caps represents no media formats.</summary>
@@ -544,8 +555,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public bool IsEmpty()
     {
         int nativeResult = GstCapsIsEmpty(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if the given caps represent the same set of caps.</summary>
@@ -555,9 +567,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps2);
         int nativeResult = GstCapsIsEqual(Handle, caps2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -570,9 +583,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps2);
         int nativeResult = GstCapsIsEqualFixed(Handle, caps2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -584,8 +598,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public bool IsFixed()
     {
         int nativeResult = GstCapsIsFixed(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if the given caps are exactly the same set of caps.</summary>
@@ -595,9 +610,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps2);
         int nativeResult = GstCapsIsStrictlyEqual(Handle, caps2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if all caps represented by @subset are also represented by @superset.</summary>
@@ -607,9 +623,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(superset);
         int nativeResult = GstCapsIsSubset(Handle, superset.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(superset);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -622,9 +639,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(structure);
         int nativeResult = GstCapsIsSubsetStructure(Handle, structure.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(structure);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -638,10 +656,11 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(structure);
         int nativeResult = GstCapsIsSubsetStructureFull(Handle, structure.Handle, features is null ? 0 : features.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(structure);
         System.GC.KeepAlive(features);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Returns a writable copy of @caps.</summary>
@@ -691,8 +710,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         nint instanceHandle = BeginMakeWritable();
         nint nativeResult = Gst.GstNative.MiniObjectMakeWritable(instanceHandle);
-        System.GC.KeepAlive(this);
         AdoptWritable(nativeResult);
+        System.GC.KeepAlive(this);
         return this;
     }
 
@@ -714,8 +733,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         try
         {
             int nativeResult = GstCapsMapInPlace(instanceHandle, Gst.CapsMapFuncTrampoline.Pointer, funcState.UserData);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
         finally
         {
@@ -774,10 +794,11 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint caps2Owned = Gst.GstNative.MiniObjectRef(caps2Native);
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstCapsMerge(instanceOwned, caps2Owned);
-        System.GC.KeepAlive(this);
         caps2.Dispose();
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_merge returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Appends @structure to @caps if it is not already expressed by @caps.</summary>
@@ -821,10 +842,11 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint structureOwned = Gst.Interop.GObjectNative.BoxedCopy(structureType, structureNative);
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstCapsMergeStructure(instanceOwned, structureOwned);
-        System.GC.KeepAlive(this);
         structure.Dispose();
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_merge_structure returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Appends @structure with @features to @caps if its not already expressed by @caps.</summary>
@@ -886,11 +908,12 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstCapsMergeStructureFull(instanceOwned, structureOwned, featuresOwned);
-        System.GC.KeepAlive(this);
         structure.Dispose();
         features?.Dispose();
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_merge_structure_full returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -920,9 +943,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint instanceHandle = Handle;
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstCapsNormalize(instanceOwned);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_normalize returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -954,9 +978,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public string Serialize(Gst.SerializeFlags flags)
     {
         nint nativeResult = GstCapsSerialize(Handle, (int)flags);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_caps_serialize returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Sets the @features for the structure at @index.</summary>
@@ -988,8 +1013,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nuint featuresType = features is null ? 0 : features.BoxedType.Value;
         nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
         GstCapsSetFeatures(instanceHandle, index, featuresOwned);
-        System.GC.KeepAlive(this);
         features?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Sets the @features for all the structures of @caps.</summary>
@@ -1020,8 +1045,8 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nuint featuresType = features is null ? 0 : features.BoxedType.Value;
         nint featuresOwned = features is null ? 0 : Gst.Interop.GObjectNative.BoxedCopy(featuresType, featuresNative);
         GstCapsSetFeaturesSimple(instanceHandle, featuresOwned);
-        System.GC.KeepAlive(this);
         features?.Dispose();
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>
@@ -1091,9 +1116,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint instanceHandle = Handle;
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstCapsSimplify(instanceOwned);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_simplify returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -1108,8 +1134,9 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public Gst.Structure? StealStructure(uint index)
     {
         nint nativeResult = GstCapsStealStructure(Handle, index);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -1123,10 +1150,11 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(subtrahend);
         nint nativeResult = GstCapsSubtract(Handle, subtrahend.Handle);
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_caps_subtract returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(subtrahend);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_caps_subtract returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -1150,9 +1178,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     public override string ToString()
     {
         nint nativeResult = GstCapsToString(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_caps_to_string returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -1186,9 +1215,10 @@ public sealed unsafe partial class Caps : Gst.MiniObject
         nint instanceHandle = Handle;
         nint instanceOwned = Gst.GstNative.MiniObjectRef(instanceHandle);
         nint nativeResult = GstCapsTruncate(instanceOwned);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_truncate returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Converts @caps from a string representation.</summary>

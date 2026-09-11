@@ -65,9 +65,10 @@ public sealed unsafe partial class InstallPluginsContext : Gst.GObject.Boxed
     public Gst.Pbutils.InstallPluginsContext Copy()
     {
         nint nativeResult = GstInstallPluginsContextCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Pbutils.InstallPluginsContext.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Pbutils.InstallPluginsContext result = Gst.Pbutils.InstallPluginsContext.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_install_plugins_context_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>

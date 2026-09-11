@@ -54,10 +54,11 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         ArgumentNullException.ThrowIfNull(payloader);
         ArgumentNullException.ThrowIfNull(pad);
         nint nativeResult = GstRtspStreamNew(idx, payloader.Handle, pad.Handle);
+        Gst.RtspServer.RTSPStream result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStream>(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_rtsp_stream_new returned no value.");
         System.GC.KeepAlive(payloader);
         System.GC.KeepAlive(pad);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStream>(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_rtsp_stream_new returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -76,8 +77,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         System.Span<byte> destinationBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope destinationScope = Gst.Interop.GMarshal.StackUtf8(destination, destinationBuffer);
         int nativeResult = GstRtspStreamAddMulticastClientAddress(Handle, destinationScope.Pointer, rtpPort, rtcpPort, Gst.Gio.SocketFamilyNative.ToNative(family));
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -95,9 +97,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(trans);
         int nativeResult = GstRtspStreamAddTransport(Handle, trans.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(trans);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Allocates RTP and RTCP ports.</summary>
@@ -109,9 +112,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(transport);
         int nativeResult = GstRtspStreamAllocateUdpSockets(Handle, Gst.Gio.SocketFamilyNative.ToNative(family), transport.Handle, useClientSettings ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(transport);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -124,9 +128,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(transport);
         int nativeResult = GstRtspStreamCompleteStream(Handle, transport.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(transport);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the #GstRTSPAddressPool used as the address pool of @stream.</summary>
@@ -137,8 +142,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.RtspServer.RTSPAddressPool? GetAddressPool()
     {
         nint nativeResult = GstRtspStreamGetAddressPool(Handle);
+        Gst.RtspServer.RTSPAddressPool? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAddressPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAddressPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the size of the UDP transmission buffer (in bytes)</summary>
@@ -158,8 +164,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Caps? GetCaps()
     {
         nint nativeResult = GstRtspStreamGetCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the control string to identify this stream.</summary>
@@ -167,8 +174,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public string? GetControl()
     {
         nint nativeResult = GstRtspStreamGetControl(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_stream_get_current_seqnum</c> function.</summary>
@@ -203,8 +211,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Bin? GetJoinedBin()
     {
         nint nativeResult = GstRtspStreamGetJoinedBin(Handle);
+        Gst.Bin? result = Gst.GObject.Object.FromNative<Gst.Bin>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Bin>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the the maximum time-to-live value of outgoing multicast packets.</summary>
@@ -239,8 +248,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.RtspServer.RTSPAddress? GetMulticastAddress(Gst.Gio.SocketFamily family)
     {
         nint nativeResult = GstRtspStreamGetMulticastAddress(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        Gst.RtspServer.RTSPAddress? result = Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get all multicast client addresses that RTP data will be sent to</summary>
@@ -248,9 +258,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public string GetMulticastClientAddresses()
     {
         nint nativeResult = GstRtspStreamGetMulticastClientAddresses(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_rtsp_stream_get_multicast_client_addresses returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the multicast interface used for @stream.</summary>
@@ -261,8 +272,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public string? GetMulticastIface()
     {
         nint nativeResult = GstRtspStreamGetMulticastIface(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the allowed profiles of @stream.</summary>
@@ -270,8 +282,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Rtsp.RTSPProfile GetProfiles()
     {
         int nativeResult = GstRtspStreamGetProfiles(Handle);
+        Gst.Rtsp.RTSPProfile result = (Gst.Rtsp.RTSPProfile)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPProfile)nativeResult;
+        return result;
     }
 
     /// <summary>Get the allowed protocols of @stream.</summary>
@@ -279,8 +292,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Rtsp.RTSPLowerTrans GetProtocols()
     {
         int nativeResult = GstRtspStreamGetProtocols(Handle);
+        Gst.Rtsp.RTSPLowerTrans result = (Gst.Rtsp.RTSPLowerTrans)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPLowerTrans)nativeResult;
+        return result;
     }
 
     /// <summary>Get the stream payload type.</summary>
@@ -297,8 +311,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.RtspServer.RTSPPublishClockMode GetPublishClockMode()
     {
         int nativeResult = GstRtspStreamGetPublishClockMode(Handle);
+        Gst.RtspServer.RTSPPublishClockMode result = (Gst.RtspServer.RTSPPublishClockMode)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.RtspServer.RTSPPublishClockMode)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_stream_get_rate_control</c> function.</summary>
@@ -309,8 +324,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool GetRateControl()
     {
         int nativeResult = GstRtspStreamGetRateControl(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Retrieve the current rate and/or applied_rate.</summary>
@@ -322,10 +338,11 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         double rateNative = default;
         double appliedRateNative = default;
         int nativeResult = GstRtspStreamGetRates(Handle, &rateNative, &appliedRateNative);
-        System.GC.KeepAlive(this);
         rate = rateNative;
         appliedRate = appliedRateNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the payload-type used for retransmission of this stream</summary>
@@ -342,8 +359,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.ClockTime GetRetransmissionTime()
     {
         ulong nativeResult = GstRtspStreamGetRetransmissionTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the multicast RTCP socket from @stream for a @family.</summary>
@@ -355,8 +373,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Gio.Socket? GetRtcpMulticastSocket(Gst.Gio.SocketFamily family)
     {
         nint nativeResult = GstRtspStreamGetRtcpMulticastSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        Gst.Gio.Socket? result = Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the RTCP socket from @stream for a @family.</summary>
@@ -371,8 +390,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Gio.Socket? GetRtcpSocket(Gst.Gio.SocketFamily family)
     {
         nint nativeResult = GstRtspStreamGetRtcpSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        Gst.Gio.Socket? result = Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the multicast RTP socket from @stream for a @family.</summary>
@@ -381,8 +401,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Gio.Socket? GetRtpMulticastSocket(Gst.Gio.SocketFamily family)
     {
         nint nativeResult = GstRtspStreamGetRtpMulticastSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        Gst.Gio.Socket? result = Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the RTP socket from @stream for a @family.</summary>
@@ -397,8 +418,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Gio.Socket? GetRtpSocket(Gst.Gio.SocketFamily family)
     {
         nint nativeResult = GstRtspStreamGetRtpSocket(Handle, Gst.Gio.SocketFamilyNative.ToNative(family));
+        Gst.Gio.Socket? result = Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.Socket>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -417,12 +439,13 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         uint clockRateNative = default;
         ulong runningTimeNative = default;
         int nativeResult = GstRtspStreamGetRtpinfo(Handle, &rtptimeNative, &seqNative, &clockRateNative, &runningTimeNative);
-        System.GC.KeepAlive(this);
         rtptime = rtptimeNative;
         seq = seqNative;
         clockRate = clockRateNative;
         runningTime = new Gst.ClockTime(runningTimeNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the RTP session of this stream.</summary>
@@ -430,8 +453,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.GObject.Object? GetRtpsession()
     {
         nint nativeResult = GstRtspStreamGetRtpsession(Handle);
+        Gst.GObject.Object? result = Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.GObject.Object>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -444,8 +468,8 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         Gst.Rtsp.RTSPRange serverPortNative = default;
         GstRtspStreamGetServerPort(Handle, &serverPortNative, Gst.Gio.SocketFamilyNative.ToNative(family));
-        System.GC.KeepAlive(this);
         serverPort = serverPortNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>Get the sinkpad associated with @stream.</summary>
@@ -453,8 +477,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Pad? GetSinkpad()
     {
         nint nativeResult = GstRtspStreamGetSinkpad(Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the srcpad associated with @stream.</summary>
@@ -462,8 +487,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Pad? GetSrcpad()
     {
         nint nativeResult = GstRtspStreamGetSrcpad(Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the SRTP encoder for this stream.</summary>
@@ -471,8 +497,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Element? GetSrtpEncoder()
     {
         nint nativeResult = GstRtspStreamGetSrtpEncoder(Handle);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -484,8 +511,8 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         uint ssrcNative = default;
         GstRtspStreamGetSsrc(Handle, &ssrcNative);
-        System.GC.KeepAlive(this);
         ssrc = ssrcNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_rtsp_stream_get_ulpfec_enabled</c> function.</summary>
@@ -493,8 +520,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool GetUlpfecEnabled()
     {
         int nativeResult = GstRtspStreamGetUlpfecEnabled(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_stream_get_ulpfec_percentage</c> function.</summary>
@@ -527,8 +555,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         System.Span<byte> keymgmtBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keymgmtScope = Gst.Interop.GMarshal.StackUtf8(keymgmt, keymgmtBuffer);
         int nativeResult = GstRtspStreamHandleKeymgmt(Handle, keymgmtScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @stream has the control string @control.</summary>
@@ -539,8 +568,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         System.Span<byte> controlBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope controlScope = Gst.Interop.GMarshal.StackUtf8(control, controlBuffer);
         int nativeResult = GstRtspStreamHasControl(Handle, controlScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if multicast sockets are configured to be bound to multicast addresses.</summary>
@@ -548,8 +578,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool IsBindMcastAddress()
     {
         int nativeResult = GstRtspStreamIsBindMcastAddress(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @stream is blocking on a #GstBuffer.</summary>
@@ -557,8 +588,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool IsBlocking()
     {
         int nativeResult = GstRtspStreamIsBlocking(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>See gst_rtsp_stream_set_client_side()</summary>
@@ -566,8 +598,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool IsClientSide()
     {
         int nativeResult = GstRtspStreamIsClientSide(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -579,8 +612,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool IsComplete()
     {
         int nativeResult = GstRtspStreamIsComplete(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks whether the stream is a receiver.</summary>
@@ -588,8 +622,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool IsReceiver()
     {
         int nativeResult = GstRtspStreamIsReceiver(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks whether the stream is a sender.</summary>
@@ -597,8 +632,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool IsSender()
     {
         int nativeResult = GstRtspStreamIsSender(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @transport can be handled by stream</summary>
@@ -608,9 +644,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(transport);
         int nativeResult = GstRtspStreamIsTransportSupported(Handle, transport.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(transport);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Join the #GstBin @bin that contains the element @rtpbin.</summary>
@@ -629,10 +666,11 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         ArgumentNullException.ThrowIfNull(bin);
         ArgumentNullException.ThrowIfNull(rtpbin);
         int nativeResult = GstRtspStreamJoinBin(Handle, bin.Handle, rtpbin.Handle, (int)state);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bin);
         System.GC.KeepAlive(rtpbin);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove the elements of @stream from @bin.</summary>
@@ -644,10 +682,11 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         ArgumentNullException.ThrowIfNull(bin);
         ArgumentNullException.ThrowIfNull(rtpbin);
         int nativeResult = GstRtspStreamLeaveBin(Handle, bin.Handle, rtpbin.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bin);
         System.GC.KeepAlive(rtpbin);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -660,9 +699,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         long positionNative = default;
         int nativeResult = GstRtspStreamQueryPosition(Handle, &positionNative);
-        System.GC.KeepAlive(this);
         position = positionNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -675,9 +715,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         long stopNative = default;
         int nativeResult = GstRtspStreamQueryStop(Handle, &stopNative);
-        System.GC.KeepAlive(this);
         stop = stopNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -713,9 +754,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstRtspStreamRecvRtcp(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -751,9 +793,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstRtspStreamRecvRtp(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -770,9 +813,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(trans);
         int nativeResult = GstRtspStreamRemoveTransport(Handle, trans.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(trans);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Creating a rtxreceive bin</summary>
@@ -781,8 +825,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Element? RequestAuxReceiver(uint sessid)
     {
         nint nativeResult = GstRtspStreamRequestAuxReceiver(Handle, sessid);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Creating a rtxsend bin</summary>
@@ -791,8 +836,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Element? RequestAuxSender(uint sessid)
     {
         nint nativeResult = GstRtspStreamRequestAuxSender(Handle, sessid);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Creating a rtpulpfecdec element</summary>
@@ -803,9 +849,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(rtpbin);
         nint nativeResult = GstRtspStreamRequestUlpfecDecoder(Handle, rtpbin.Handle, sessid);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(rtpbin);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Creating a rtpulpfecenc element</summary>
@@ -814,8 +861,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public Gst.Element? RequestUlpfecEncoder(uint sessid)
     {
         nint nativeResult = GstRtspStreamRequestUlpfecEncoder(Handle, sessid);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -838,8 +886,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         System.Span<byte> addressBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope addressScope = Gst.Interop.GMarshal.StackUtf8(address, addressBuffer);
         nint nativeResult = GstRtspStreamReserveAddress(Handle, addressScope.Pointer, port, nPorts, ttl);
+        Gst.RtspServer.RTSPAddress? result = Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.RtspServer.RTSPAddress.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Checks whether the individual @stream is seekable.</summary>
@@ -847,8 +896,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool Seekable()
     {
         int nativeResult = GstRtspStreamSeekable(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>configure @pool to be used as the address pool of @stream.</summary>
@@ -877,8 +927,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool SetBlocked(bool blocked)
     {
         int nativeResult = GstRtspStreamSetBlocked(Handle, blocked ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -933,8 +984,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool SetMaxMcastTtl(uint ttl)
     {
         int nativeResult = GstRtspStreamSetMaxMcastTtl(Handle, ttl);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Configure the mtu in the payloader of @stream to @mtu.</summary>
@@ -1075,7 +1127,6 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
         try
         {
             nint nativeResult = GstRtspStreamTransportFilter(instanceHandle, func is null ? 0 : Gst.RtspServer.RTSPStreamTransportFilterFuncTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.RtspServer.RTSPStreamTransport> result = new(nativeItems.Length);
             foreach (nint nativeItem in nativeItems)
@@ -1086,6 +1137,7 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
                 }
             }
 
+            System.GC.KeepAlive(this);
             return result;
         }
         finally
@@ -1099,8 +1151,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool UnblockLinked()
     {
         int nativeResult = GstRtspStreamUnblockLinked(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1127,9 +1180,10 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool UpdateCrypto(uint ssrc, Gst.Caps? crypto)
     {
         int nativeResult = GstRtspStreamUpdateCrypto(Handle, ssrc, crypto is null ? 0 : crypto.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(crypto);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if the requested multicast ttl value is allowed.</summary>
@@ -1138,8 +1192,9 @@ public unsafe partial class RTSPStream : Gst.GObject.Object
     public bool VerifyMcastTtl(uint ttl)
     {
         int nativeResult = GstRtspStreamVerifyMcastTtl(Handle, ttl);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>control</c> property.</summary>

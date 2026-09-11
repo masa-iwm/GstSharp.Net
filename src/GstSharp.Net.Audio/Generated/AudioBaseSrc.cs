@@ -53,8 +53,9 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public Gst.Audio.AudioRingBuffer? CreateRingbuffer()
     {
         nint nativeResult = GstAudioBaseSrcCreateRingbuffer(Handle);
+        Gst.Audio.AudioRingBuffer? result = Gst.GObject.Object.FromNative<Gst.Audio.AudioRingBuffer>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Audio.AudioRingBuffer>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -65,8 +66,9 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public bool GetProvideClock()
     {
         int nativeResult = GstAudioBaseSrcGetProvideClock(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the current slave method used by @src.</summary>
@@ -74,8 +76,9 @@ public unsafe partial class AudioBaseSrc : Gst.Base.PushSrc
     public Gst.Audio.AudioBaseSrcSlaveMethod GetSlaveMethod()
     {
         int nativeResult = GstAudioBaseSrcGetSlaveMethod(Handle);
+        Gst.Audio.AudioBaseSrcSlaveMethod result = (Gst.Audio.AudioBaseSrcSlaveMethod)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Audio.AudioBaseSrcSlaveMethod)nativeResult;
+        return result;
     }
 
     /// <summary>

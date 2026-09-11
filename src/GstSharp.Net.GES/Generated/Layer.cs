@@ -94,9 +94,10 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     {
         ArgumentNullException.ThrowIfNull(asset);
         nint nativeResult = GesLayerAddAsset(Handle, asset.Handle, start.Nanoseconds, inpoint.Nanoseconds, duration.Nanoseconds, (int)trackTypes);
+        GES.Clip? result = Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(asset);
-        return Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -128,11 +129,12 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
         ArgumentNullException.ThrowIfNull(asset);
         nint errorNative = 0;
         nint nativeResult = GesLayerAddAssetFull(Handle, asset.Handle, start.Nanoseconds, inpoint.Nanoseconds, duration.Nanoseconds, (int)trackTypes, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        GES.Clip result = Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None)
+            ?? throw new InvalidOperationException("ges_layer_add_asset_full returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(asset);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<GES.Clip>(nativeResult, Gst.Interop.Transfer.None)
-            ?? throw new InvalidOperationException("ges_layer_add_asset_full returned no value.");
+        return result;
     }
 
     /// <summary>See ges_layer_add_clip_full(), which also gives an error.</summary>
@@ -145,9 +147,10 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     {
         ArgumentNullException.ThrowIfNull(clip);
         int nativeResult = GesLayerAddClip(Handle, clip.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(clip);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -172,10 +175,11 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
         ArgumentNullException.ThrowIfNull(clip);
         nint errorNative = 0;
         int nativeResult = GesLayerAddClipFull(Handle, clip.Handle, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(clip);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -188,9 +192,10 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     {
         ArgumentNullException.ThrowIfNull(track);
         int nativeResult = GesLayerGetActiveForTrack(Handle, track.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(track);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets the #GESLayer:auto-transition of the layer.</summary>
@@ -198,8 +203,9 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     public bool GetAutoTransition()
     {
         int nativeResult = GesLayerGetAutoTransition(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the #GESClip-s contained in this layer.</summary>
@@ -210,7 +216,6 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     public System.Collections.Generic.IReadOnlyList<GES.Clip> GetClips()
     {
         nint nativeResult = GesLayerGetClips(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.Clip> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -221,6 +226,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -234,7 +240,6 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     public System.Collections.Generic.IReadOnlyList<GES.Clip> GetClipsInInterval(Gst.ClockTime start, Gst.ClockTime end)
     {
         nint nativeResult = GesLayerGetClipsInInterval(Handle, start.Nanoseconds, end.Nanoseconds);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<GES.Clip> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -245,6 +250,7 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -257,8 +263,9 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GesLayerGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -282,8 +289,9 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     public GES.Timeline? GetTimeline()
     {
         nint nativeResult = GesLayerGetTimeline(Handle);
+        GES.Timeline? result = Gst.GObject.Object.FromNative<GES.Timeline>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<GES.Timeline>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -297,8 +305,9 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     public bool IsEmpty()
     {
         int nativeResult = GesLayerIsEmpty(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Removes the given clip from the layer.</summary>
@@ -311,9 +320,10 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     {
         ArgumentNullException.ThrowIfNull(clip);
         int nativeResult = GesLayerRemoveClip(Handle, clip.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(clip);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -352,8 +362,9 @@ public unsafe partial class Layer : Gst.GObject.InitiallyUnowned, GES.IExtractab
     {
         using Gst.Interop.GListScope tracksScope = Gst.Interop.GMarshal.AllocList(tracks, singly: false);
         int nativeResult = GesLayerSetActiveForTracks(Handle, active ? 1 : 0, tracksScope.Head);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

@@ -217,9 +217,10 @@ public sealed class GioRuntimeTypeTests
             public Gst.Gio.Cancellable StealCancellable()
             {
                 nint nativeResult = GstConnectionStealCancellable(Handle);
-                System.GC.KeepAlive(this);
-                return Gst.GObject.Object.FromNative<Gst.Gio.Cancellable>(nativeResult, Gst.Interop.Transfer.Full)
+                Gst.Gio.Cancellable result = Gst.GObject.Object.FromNative<Gst.Gio.Cancellable>(nativeResult, Gst.Interop.Transfer.Full)
                     ?? throw new InvalidOperationException("gst_connection_steal_cancellable returned no value.");
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             Run.Member("Connection.cs", "public Gst.Gio.Cancellable StealCancellable("),
@@ -282,8 +283,9 @@ public sealed class GioRuntimeTypeTests
             public Gst.Gio.TlsAuthenticationMode GetAuthenticationMode()
             {
                 int nativeResult = GstConnectionGetAuthenticationMode(Handle);
+                Gst.Gio.TlsAuthenticationMode result = (Gst.Gio.TlsAuthenticationMode)nativeResult;
                 System.GC.KeepAlive(this);
-                return (Gst.Gio.TlsAuthenticationMode)nativeResult;
+                return result;
             }
             """,
             Run.Member("Connection.cs", "public Gst.Gio.TlsAuthenticationMode GetAuthenticationMode("),
@@ -302,8 +304,9 @@ public sealed class GioRuntimeTypeTests
             public Gst.Gio.TlsCertificateFlags GetValidationFlags()
             {
                 int nativeResult = GstConnectionGetValidationFlags(Handle);
+                Gst.Gio.TlsCertificateFlags result = (Gst.Gio.TlsCertificateFlags)nativeResult;
                 System.GC.KeepAlive(this);
-                return (Gst.Gio.TlsCertificateFlags)nativeResult;
+                return result;
             }
             """,
             Run.Member("Connection.cs", "public Gst.Gio.TlsCertificateFlags GetValidationFlags("),
@@ -361,8 +364,9 @@ public sealed class GioRuntimeTypeTests
             public Gst.Gio.SocketFamily GetFamily()
             {
                 int nativeResult = GstConnectionGetFamily(Handle);
+                Gst.Gio.SocketFamily result = Gst.Gio.SocketFamilyNative.FromNative(nativeResult);
                 System.GC.KeepAlive(this);
-                return Gst.Gio.SocketFamilyNative.FromNative(nativeResult);
+                return result;
             }
             """,
             Run.Member("Connection.cs", "public Gst.Gio.SocketFamily GetFamily("),

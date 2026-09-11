@@ -57,9 +57,9 @@ public unsafe partial class PlayVideoInfo : Gst.Play.PlayStreamInfo
         int fpsNNative = default;
         int fpsDNative = default;
         GstPlayVideoInfoGetFramerate(Handle, &fpsNNative, &fpsDNative);
-        System.GC.KeepAlive(this);
         fpsN = fpsNNative;
         fpsD = fpsDNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_play_video_info_get_height</c> function.</summary>
@@ -88,9 +88,9 @@ public unsafe partial class PlayVideoInfo : Gst.Play.PlayStreamInfo
         uint parNNative = default;
         uint parDNative = default;
         GstPlayVideoInfoGetPixelAspectRatio(Handle, &parNNative, &parDNative);
-        System.GC.KeepAlive(this);
         parN = parNNative;
         parD = parDNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_play_video_info_get_width</c> function.</summary>

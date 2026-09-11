@@ -85,8 +85,9 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     public Gst.RtspServer.RTSPAuth? GetAuth()
     {
         nint nativeResult = GstRtspClientGetAuth(Handle);
+        Gst.RtspServer.RTSPAuth? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAuth>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPAuth>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPConnection of @client.</summary>
@@ -97,8 +98,9 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     public Gst.Rtsp.RTSPConnection? GetConnection()
     {
         nint nativeResult = GstRtspClientGetConnection(Handle);
+        Gst.Rtsp.RTSPConnection? result = Gst.Rtsp.RTSPConnection.FromNative(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Rtsp.RTSPConnection.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>Get the Content-Length limit of @client.</summary>
@@ -115,8 +117,9 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     public Gst.RtspServer.RTSPMountPoints? GetMountPoints()
     {
         nint nativeResult = GstRtspClientGetMountPoints(Handle);
+        Gst.RtspServer.RTSPMountPoints? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMountPoints>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMountPoints>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPSessionPool object that @client uses to manage its sessions.</summary>
@@ -124,8 +127,9 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     public Gst.RtspServer.RTSPSessionPool? GetSessionPool()
     {
         nint nativeResult = GstRtspClientGetSessionPool(Handle);
+        Gst.RtspServer.RTSPSessionPool? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -140,8 +144,9 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     public Gst.RtspServer.RTSPStreamTransport? GetStreamTransport(byte channel)
     {
         nint nativeResult = GstRtspClientGetStreamTransport(Handle, channel);
+        Gst.RtspServer.RTSPStreamTransport? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStreamTransport>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPStreamTransport>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the #GstRTSPThreadPool used as the thread pool of @client.</summary>
@@ -152,8 +157,9 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     public Gst.RtspServer.RTSPThreadPool? GetThreadPool()
     {
         nint nativeResult = GstRtspClientGetThreadPool(Handle);
+        Gst.RtspServer.RTSPThreadPool? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPThreadPool>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPThreadPool>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Let the client handle @message.</summary>
@@ -163,9 +169,10 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstRtspClientHandleMessage(Handle, message.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(message);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -182,10 +189,11 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstRtspClientSendMessage(Handle, session is null ? 0 : session.Handle, message.Handle);
+        Gst.Rtsp.RTSPResult result = (Gst.Rtsp.RTSPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(session);
         System.GC.KeepAlive(message);
-        return (Gst.Rtsp.RTSPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -219,7 +227,6 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
         try
         {
             nint nativeResult = GstRtspClientSessionFilter(instanceHandle, func is null ? 0 : Gst.RtspServer.RTSPClientSessionFilterFuncTrampoline.Pointer, funcState.UserData);
-            System.GC.KeepAlive(this);
             nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
             System.Collections.Generic.List<Gst.RtspServer.RTSPSession> result = new(nativeItems.Length);
             foreach (nint nativeItem in nativeItems)
@@ -230,6 +237,7 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
                 }
             }
 
+            System.GC.KeepAlive(this);
             return result;
         }
         finally

@@ -340,10 +340,11 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
         ulong clipStartNative = default;
         ulong clipStopNative = default;
         int nativeResult = GstSegmentClip(Handle, (int)format, start, stop, &clipStartNative, &clipStopNative);
-        System.GC.KeepAlive(this);
         clipStart = clipStartNative;
         clipStop = clipStopNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Create a copy of given @segment.</summary>
@@ -354,9 +355,10 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public Gst.Segment Copy()
     {
         nint nativeResult = GstSegmentCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Segment result = Gst.Segment.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_segment_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Copy the contents of @src into @dest.</summary>
@@ -418,9 +420,10 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         int updateNative = default;
         int nativeResult = GstSegmentDoSeek(Handle, rate, (int)format, (int)flags, (int)startType, start, (int)stopType, stop, &updateNative);
-        System.GC.KeepAlive(this);
         update = updateNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -448,9 +451,10 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(s1);
         int nativeResult = GstSegmentIsEqual(Handle, s1.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(s1);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -466,8 +470,9 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public bool OffsetRunningTime(Gst.Format format, long offset)
     {
         int nativeResult = GstSegmentOffsetRunningTime(Handle, (int)format, offset);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -519,8 +524,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong positionNative = default;
         int nativeResult = GstSegmentPositionFromRunningTimeFull(Handle, (int)format, runningTime, &positionNative);
-        System.GC.KeepAlive(this);
         position = positionNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -572,8 +577,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong positionNative = default;
         int nativeResult = GstSegmentPositionFromStreamTimeFull(Handle, (int)format, streamTime, &positionNative);
-        System.GC.KeepAlive(this);
         position = positionNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -590,8 +595,9 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     public bool SetRunningTime(Gst.Format format, ulong runningTime)
     {
         int nativeResult = GstSegmentSetRunningTime(Handle, (int)format, runningTime);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -669,8 +675,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong runningTimeNative = default;
         int nativeResult = GstSegmentToRunningTimeFull(Handle, (int)format, position, &runningTimeNative);
-        System.GC.KeepAlive(this);
         runningTime = runningTimeNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 
@@ -733,8 +739,8 @@ public sealed unsafe partial class Segment : Gst.GObject.Boxed
     {
         ulong streamTimeNative = default;
         int nativeResult = GstSegmentToStreamTimeFull(Handle, (int)format, position, &streamTimeNative);
-        System.GC.KeepAlive(this);
         streamTime = streamTimeNative;
+        System.GC.KeepAlive(this);
         return nativeResult;
     }
 

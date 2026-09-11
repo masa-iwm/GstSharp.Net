@@ -108,9 +108,10 @@ public sealed unsafe partial class AudioBuffer
         nint segmentNative = segment.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         nint nativeResult = GstAudioBufferClip(bufferOwned, segmentNative, rate, bpf);
-        System.GC.KeepAlive(segment);
         buffer.Dispose();
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(segment);
+        return result;
     }
 
     /// <summary>
@@ -144,8 +145,9 @@ public sealed unsafe partial class AudioBuffer
             fixed (Gst.Audio.AudioChannelPosition* toPointer = to)
             {
                 int nativeResult = GstAudioBufferReorderChannels(buffer.Handle, (int)format, (int)to.Length, fromPointer, toPointer);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(buffer);
-                return nativeResult != 0;
+                return result;
             }
         }
     }

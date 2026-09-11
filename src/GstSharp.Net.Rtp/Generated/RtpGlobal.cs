@@ -21,8 +21,9 @@ public static unsafe partial class RtpGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferGetRtpSourceMeta(buffer.Handle);
+        Gst.Rtp.RTPSourceMeta? result = Gst.Rtp.RTPSourceMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Rtp.RTPSourceMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>

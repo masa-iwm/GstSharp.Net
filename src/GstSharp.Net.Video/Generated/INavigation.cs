@@ -98,8 +98,8 @@ public static unsafe partial class NavigationExtensions
         nint @eventNative = @event.Handle;
         nint @eventOwned = Gst.GstNative.MiniObjectRef(@eventNative);
         GstNavigationSendEventSimple(instanceHandle, @eventOwned);
-        System.GC.KeepAlive(navigation);
         @event.Dispose();
+        System.GC.KeepAlive(navigation);
     }
 
     /// <summary>The <c>gst_navigation_send_key_event</c> function.</summary>
@@ -187,10 +187,11 @@ public static unsafe partial class NavigationExtensions
         double xNative = default;
         double yNative = default;
         int nativeResult = GstNavigationEventGetCoordinates(@event.Handle, &xNative, &yNative);
-        System.GC.KeepAlive(@event);
         x = xNative;
         y = yNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -203,8 +204,9 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(@event);
         int nativeResult = GstNavigationEventGetType(@event.Handle);
+        Gst.Video.NavigationEventType result = (Gst.Video.NavigationEventType)nativeResult;
         System.GC.KeepAlive(@event);
-        return (Gst.Video.NavigationEventType)nativeResult;
+        return result;
     }
 
     /// <summary>Create a new navigation event given navigation command..</summary>
@@ -451,9 +453,10 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(@event);
         int commandNative = default;
         int nativeResult = GstNavigationEventParseCommand(@event.Handle, &commandNative);
-        System.GC.KeepAlive(@event);
         command = (Gst.Video.NavigationCommand)commandNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -474,9 +477,10 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(@event);
         nint keyNative = default;
         int nativeResult = GstNavigationEventParseKeyEvent(@event.Handle, &keyNative);
-        System.GC.KeepAlive(@event);
         key = Gst.Interop.GMarshal.PtrToStringUtf8(keyNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>The <c>gst_navigation_event_parse_modifier_state</c> function.</summary>
@@ -494,9 +498,10 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(@event);
         int stateNative = default;
         int nativeResult = GstNavigationEventParseModifierState(@event.Handle, &stateNative);
-        System.GC.KeepAlive(@event);
         state = (Gst.Video.NavigationModifierType)stateNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -528,11 +533,12 @@ public static unsafe partial class NavigationExtensions
         double xNative = default;
         double yNative = default;
         int nativeResult = GstNavigationEventParseMouseButtonEvent(@event.Handle, &buttonNative, &xNative, &yNative);
-        System.GC.KeepAlive(@event);
         button = buttonNative;
         x = xNative;
         y = yNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -555,10 +561,11 @@ public static unsafe partial class NavigationExtensions
         double xNative = default;
         double yNative = default;
         int nativeResult = GstNavigationEventParseMouseMoveEvent(@event.Handle, &xNative, &yNative);
-        System.GC.KeepAlive(@event);
         x = xNative;
         y = yNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -591,12 +598,13 @@ public static unsafe partial class NavigationExtensions
         double deltaXNative = default;
         double deltaYNative = default;
         int nativeResult = GstNavigationEventParseMouseScrollEvent(@event.Handle, &xNative, &yNative, &deltaXNative, &deltaYNative);
-        System.GC.KeepAlive(@event);
         x = xNative;
         y = yNative;
         deltaX = deltaXNative;
         deltaY = deltaYNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -631,12 +639,13 @@ public static unsafe partial class NavigationExtensions
         double yNative = default;
         double pressureNative = default;
         int nativeResult = GstNavigationEventParseTouchEvent(@event.Handle, &identifierNative, &xNative, &yNative, &pressureNative);
-        System.GC.KeepAlive(@event);
         identifier = identifierNative;
         x = xNative;
         y = yNative;
         pressure = pressureNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>Retrieve the details of a #GstNavigation touch-up event.</summary>
@@ -661,11 +670,12 @@ public static unsafe partial class NavigationExtensions
         double xNative = default;
         double yNative = default;
         int nativeResult = GstNavigationEventParseTouchUpEvent(@event.Handle, &identifierNative, &xNative, &yNative);
-        System.GC.KeepAlive(@event);
         identifier = identifierNative;
         x = xNative;
         y = yNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@event);
+        return result;
     }
 
     /// <summary>
@@ -680,8 +690,9 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(@event);
         int nativeResult = GstNavigationEventSetCoordinates(@event.Handle, x, y);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(@event);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -698,8 +709,9 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(message);
         int nativeResult = GstNavigationMessageGetType(message.Handle);
+        Gst.Video.NavigationMessageType result = (Gst.Video.NavigationMessageType)nativeResult;
         System.GC.KeepAlive(message);
-        return (Gst.Video.NavigationMessageType)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -716,9 +728,10 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(src);
         nint nativeResult = GstNavigationMessageNewAnglesChanged(src.Handle, curAngle, nAngles);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_navigation_message_new_angles_changed returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -731,9 +744,10 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(src);
         nint nativeResult = GstNavigationMessageNewCommandsChanged(src.Handle);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_navigation_message_new_commands_changed returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -748,10 +762,11 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(src);
         ArgumentNullException.ThrowIfNull(@event);
         nint nativeResult = GstNavigationMessageNewEvent(src.Handle, @event.Handle);
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_navigation_message_new_event returned no value.");
         System.GC.KeepAlive(src);
         System.GC.KeepAlive(@event);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_navigation_message_new_event returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -768,9 +783,10 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(src);
         nint nativeResult = GstNavigationMessageNewMouseOver(src.Handle, active ? 1 : 0);
-        System.GC.KeepAlive(src);
-        return Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Message result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_navigation_message_new_mouse_over returned no value.");
+        System.GC.KeepAlive(src);
+        return result;
     }
 
     /// <summary>
@@ -793,10 +809,11 @@ public static unsafe partial class NavigationExtensions
         uint curAngleNative = default;
         uint nAnglesNative = default;
         int nativeResult = GstNavigationMessageParseAnglesChanged(message.Handle, &curAngleNative, &nAnglesNative);
-        System.GC.KeepAlive(message);
         curAngle = curAngleNative;
         nAngles = nAnglesNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(message);
+        return result;
     }
 
     /// <summary>
@@ -815,9 +832,10 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(message);
         nint @eventNative = default;
         int nativeResult = GstNavigationMessageParseEvent(message.Handle, &@eventNative);
-        System.GC.KeepAlive(message);
         @event = Gst.Event.FromNative(@eventNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(message);
+        return result;
     }
 
     /// <summary>
@@ -836,9 +854,10 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(message);
         int activeNative = default;
         int nativeResult = GstNavigationMessageParseMouseOver(message.Handle, &activeNative);
-        System.GC.KeepAlive(message);
         active = activeNative != 0;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(message);
+        return result;
     }
 
     /// <summary>
@@ -854,8 +873,9 @@ public static unsafe partial class NavigationExtensions
     {
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstNavigationQueryGetType(query.Handle);
+        Gst.Video.NavigationQueryType result = (Gst.Video.NavigationQueryType)nativeResult;
         System.GC.KeepAlive(query);
-        return (Gst.Video.NavigationQueryType)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -904,10 +924,11 @@ public static unsafe partial class NavigationExtensions
         uint curAngleNative = default;
         uint nAnglesNative = default;
         int nativeResult = GstNavigationQueryParseAngles(query.Handle, &curAngleNative, &nAnglesNative);
-        System.GC.KeepAlive(query);
         curAngle = curAngleNative;
         nAngles = nAnglesNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(query);
+        return result;
     }
 
     /// <summary>Parse the number of commands in the #GstNavigation commands @query.</summary>
@@ -919,9 +940,10 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(query);
         uint nCmdsNative = default;
         int nativeResult = GstNavigationQueryParseCommandsLength(query.Handle, &nCmdsNative);
-        System.GC.KeepAlive(query);
         nCmds = nCmdsNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(query);
+        return result;
     }
 
     /// <summary>
@@ -938,9 +960,10 @@ public static unsafe partial class NavigationExtensions
         ArgumentNullException.ThrowIfNull(query);
         int cmdNative = default;
         int nativeResult = GstNavigationQueryParseCommandsNth(query.Handle, nth, &cmdNative);
-        System.GC.KeepAlive(query);
         cmd = (Gst.Video.NavigationCommand)cmdNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(query);
+        return result;
     }
 
     /// <summary>Set the #GstNavigation angles query result field in @query.</summary>

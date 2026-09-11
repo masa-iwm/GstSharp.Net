@@ -75,8 +75,9 @@ public unsafe partial class GhostPad : Gst.ProxyPad
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(target);
         nint nativeResult = GstGhostPadNew(nameScope.Pointer, target.Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(target);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -100,9 +101,10 @@ public unsafe partial class GhostPad : Gst.ProxyPad
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(templ);
         nint nativeResult = GstGhostPadNewFromTemplate(nameScope.Pointer, target.Handle, templ.Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(target);
         System.GC.KeepAlive(templ);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -143,8 +145,9 @@ public unsafe partial class GhostPad : Gst.ProxyPad
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(templ);
         nint nativeResult = GstGhostPadNewNoTargetFromTemplate(nameScope.Pointer, templ.Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(templ);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Finish initialization of a newly allocated ghost pad.</summary>
@@ -161,8 +164,9 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     public bool Construct()
     {
         int nativeResult = GstGhostPadConstruct(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the target pad of @gpad. Unref target pad after usage.</summary>
@@ -174,8 +178,9 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     public Gst.Pad? GetTarget()
     {
         nint nativeResult = GstGhostPadGetTarget(Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -191,9 +196,10 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     public bool SetTarget(Gst.Pad? newtarget)
     {
         int nativeResult = GstGhostPadSetTarget(Handle, newtarget is null ? 0 : newtarget.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(newtarget);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Invoke the default activate mode function of a ghost pad.</summary>
@@ -206,9 +212,10 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstGhostPadActivateModeDefault(pad.Handle, parent is null ? 0 : parent.Handle, (int)mode, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(pad);
         System.GC.KeepAlive(parent);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -224,9 +231,10 @@ public unsafe partial class GhostPad : Gst.ProxyPad
     {
         ArgumentNullException.ThrowIfNull(pad);
         int nativeResult = GstGhostPadInternalActivateModeDefault(pad.Handle, parent is null ? 0 : parent.Handle, (int)mode, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(pad);
         System.GC.KeepAlive(parent);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_ghost_pad_new</c> entry point.</summary>

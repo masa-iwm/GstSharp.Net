@@ -212,9 +212,9 @@ public sealed class CallerAllocatedStorageTests
                 nint instanceHandle = Handle;
                 nint @paramsNative = GstParamsNew();
                 GstWidgetGetParams(instanceHandle, @paramsNative);
-                System.GC.KeepAlive(this);
                 @params = Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
                     ?? throw new InvalidOperationException("gst_params_new returned no value.");
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void GetParams"));
@@ -233,7 +233,6 @@ public sealed class CallerAllocatedStorageTests
                 nint instanceHandle = Handle;
                 nint @paramsNative = GstParamsNew();
                 int nativeResult = GstWidgetFillParams(instanceHandle, @paramsNative);
-                System.GC.KeepAlive(this);
                 if (nativeResult != 0)
                 {
                     @params = Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full);
@@ -245,7 +244,9 @@ public sealed class CallerAllocatedStorageTests
                     Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)?.Dispose();
                     @params = null;
                 }
-                return nativeResult != 0;
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public bool FillParams"));
@@ -274,9 +275,9 @@ public sealed class CallerAllocatedStorageTests
                 nint instanceHandle = Handle;
                 nint @paramsNative = GstParamsNew();
                 GstWidgetFillParams(instanceHandle, @paramsNative);
-                System.GC.KeepAlive(this);
                 @params = Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
                     ?? throw new InvalidOperationException("gst_params_new returned no value.");
+                System.GC.KeepAlive(this);
             }
             """,
             run.Member("Widget.cs", "public void FillParams"));
@@ -304,9 +305,9 @@ public sealed class CallerAllocatedStorageTests
                 System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
                 using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
                 GstWidgetNameParams(instanceHandle, @paramsNative, nameScope.Pointer);
-                System.GC.KeepAlive(this);
                 @params = Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
                     ?? throw new InvalidOperationException("gst_params_new returned no value.");
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void NameParams"));
@@ -327,7 +328,6 @@ public sealed class CallerAllocatedStorageTests
                 nint @paramsNative = GstParamsNew();
                 nint errorNative = 0;
                 int nativeResult = GstWidgetLoadParams(instanceHandle, @paramsNative, &errorNative);
-                System.GC.KeepAlive(this);
                 if (errorNative != 0)
                 {
                     Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)?.Dispose();
@@ -344,7 +344,9 @@ public sealed class CallerAllocatedStorageTests
                     Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)?.Dispose();
                     @params = null;
                 }
-                return nativeResult != 0;
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
             }
             """,
             Run.Member("Widget.cs", "public bool LoadParams"));
@@ -383,10 +385,10 @@ public sealed class CallerAllocatedStorageTests
                 nint ownerNative = default;
                 nint @paramsNative = GstParamsNew();
                 GstWidgetGetOwnerAndParams(instanceHandle, &ownerNative, @paramsNative);
-                System.GC.KeepAlive(this);
                 @params = Gst.Params.FromNative(@paramsNative, Gst.Interop.Transfer.Full)
                     ?? throw new InvalidOperationException("gst_params_new returned no value.");
                 owner = Gst.GObject.Object.FromNative<Gst.Widget>(ownerNative, Gst.Interop.Transfer.Full);
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void GetOwnerAndParams"));
@@ -487,8 +489,8 @@ public sealed class CallerAllocatedStorageTests
             {
                 Gst.Rect rectNative = default;
                 GstWidgetGetRect(Handle, &rectNative);
-                System.GC.KeepAlive(this);
                 rect = rectNative;
+                System.GC.KeepAlive(this);
             }
             """,
             Run.Member("Widget.cs", "public void GetRect"));
@@ -522,8 +524,9 @@ public sealed class CallerAllocatedStorageTests
             {
                 ArgumentNullException.ThrowIfNull(@params);
                 int nativeResult = GstWidgetUpdateParams(@params.Handle, flags);
+                bool result = nativeResult != 0;
                 System.GC.KeepAlive(@params);
-                return nativeResult != 0;
+                return result;
             }
             """,
             run.Member("Widget.cs", "public static bool UpdateParams"));

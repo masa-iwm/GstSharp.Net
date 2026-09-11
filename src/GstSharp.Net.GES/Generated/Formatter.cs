@@ -57,10 +57,11 @@ public abstract unsafe partial class Formatter : Gst.GObject.InitiallyUnowned, G
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         int nativeResult = GesFormatterLoadFromUri(Handle, timeline.Handle, uriScope.Pointer, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(timeline);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Save data from timeline to the given URI.</summary>
@@ -81,10 +82,11 @@ public abstract unsafe partial class Formatter : Gst.GObject.InitiallyUnowned, G
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         nint errorNative = 0;
         int nativeResult = GesFormatterSaveToUri(Handle, timeline.Handle, uriScope.Pointer, overwrite ? 1 : 0, &errorNative);
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(timeline);
-        Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

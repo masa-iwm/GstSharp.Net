@@ -70,8 +70,9 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     public GES.PipelineFlags GetMode()
     {
         int nativeResult = GesPipelineGetMode(Handle);
+        GES.PipelineFlags result = (GES.PipelineFlags)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.PipelineFlags)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -98,9 +99,10 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GesPipelineGetThumbnail(Handle, caps.Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -127,8 +129,9 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     public Gst.Sample? GetThumbnailRgb24(int width, int height)
     {
         nint nativeResult = GesPipelineGetThumbnailRgb24(Handle, width, height);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the #GESPipeline:audio-sink of the pipeline.</summary>
@@ -136,8 +139,9 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     public Gst.Element? PreviewGetAudioSink()
     {
         nint nativeResult = GesPipelinePreviewGetAudioSink(Handle);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the #GESPipeline:video-sink of the pipeline.</summary>
@@ -145,8 +149,9 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     public Gst.Element? PreviewGetVideoSink()
     {
         nint nativeResult = GesPipelinePreviewGetVideoSink(Handle);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Sets the #GESPipeline:audio-sink of the pipeline.</summary>
@@ -196,9 +201,10 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
         using Gst.Interop.Utf8Scope locationScope = Gst.Interop.GMarshal.StackUtf8(location, locationBuffer);
         nint errorNative = 0;
         int nativeResult = GesPipelineSaveThumbnail(Handle, width, height, formatScope.Pointer, locationScope.Pointer, &errorNative);
-        System.GC.KeepAlive(this);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Sets the #GESPipeline:mode of the pipeline.</summary>
@@ -220,8 +226,9 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     public bool SetMode(GES.PipelineFlags mode)
     {
         int nativeResult = GesPipelineSetMode(Handle, (int)mode);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -247,9 +254,10 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
         using Gst.Interop.Utf8Scope outputUriScope = Gst.Interop.GMarshal.StackUtf8(outputUri, outputUriBuffer);
         ArgumentNullException.ThrowIfNull(profile);
         int nativeResult = GesPipelineSetRenderSettings(Handle, outputUriScope.Pointer, profile.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(profile);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -269,9 +277,10 @@ public unsafe partial class Pipeline : Gst.Pipeline, Gst.IChildProxy, Gst.Video.
     {
         ArgumentNullException.ThrowIfNull(timeline);
         int nativeResult = GesPipelineSetTimeline(Handle, timeline.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(timeline);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

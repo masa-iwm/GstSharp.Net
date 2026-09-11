@@ -53,8 +53,9 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.Audio.AudioRingBuffer? CreateRingbuffer()
     {
         nint nativeResult = GstAudioBaseSinkCreateRingbuffer(Handle);
+        Gst.Audio.AudioRingBuffer? result = Gst.GObject.Object.FromNative<Gst.Audio.AudioRingBuffer>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Audio.AudioRingBuffer>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the current alignment threshold, in nanoseconds, used by @sink.</summary>
@@ -62,8 +63,9 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.ClockTime GetAlignmentThreshold()
     {
         ulong nativeResult = GstAudioBaseSinkGetAlignmentThreshold(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the current discont wait, in nanoseconds, used by @sink.</summary>
@@ -71,8 +73,9 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.ClockTime GetDiscontWait()
     {
         ulong nativeResult = GstAudioBaseSinkGetDiscontWait(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>Get the current drift tolerance, in microseconds, used by @sink.</summary>
@@ -92,8 +95,9 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public bool GetProvideClock()
     {
         int nativeResult = GstAudioBaseSinkGetProvideClock(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get the current slave method used by @sink.</summary>
@@ -101,8 +105,9 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     public Gst.Audio.AudioBaseSinkSlaveMethod GetSlaveMethod()
     {
         int nativeResult = GstAudioBaseSinkGetSlaveMethod(Handle);
+        Gst.Audio.AudioBaseSinkSlaveMethod result = (Gst.Audio.AudioBaseSinkSlaveMethod)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Audio.AudioBaseSinkSlaveMethod)nativeResult;
+        return result;
     }
 
     /// <summary>

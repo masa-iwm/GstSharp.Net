@@ -118,9 +118,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(binding);
         int nativeResult = GstObjectAddControlBinding(Handle, binding.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(binding);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -185,8 +186,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         nint nativeResult = GstObjectGetControlBinding(Handle, propertyNameScope.Pointer);
+        Gst.ControlBinding? result = Gst.GObject.Object.FromNative<Gst.ControlBinding>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.ControlBinding>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -209,8 +211,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.ClockTime GetControlRate()
     {
         ulong nativeResult = GstObjectGetControlRate(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -229,8 +232,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public string? GetName()
     {
         nint nativeResult = GstObjectGetName(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -244,8 +248,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.Object? GetParent()
     {
         nint nativeResult = GstObjectGetParent(Handle);
+        Gst.Object? result = Gst.GObject.Object.FromNative<Gst.Object>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Object>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -262,9 +267,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public string GetPathString()
     {
         nint nativeResult = GstObjectGetPathString(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_object_get_path_string returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -281,9 +287,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.Object GetToplevel()
     {
         nint nativeResult = GstObjectGetToplevel(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Object>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Object result = Gst.GObject.Object.FromNative<Gst.Object>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_object_get_toplevel returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Gets the value for the given controlled property at the requested time.</summary>
@@ -301,8 +308,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         System.Span<byte> propertyNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope propertyNameScope = Gst.Interop.GMarshal.StackUtf8(propertyName, propertyNameBuffer);
         nint nativeResult = GstObjectGetValue(Handle, propertyNameScope.Pointer, timestamp.Nanoseconds);
+        Gst.GObject.Value result = Gst.GObject.Value.TakeOwnership(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Value.TakeOwnership(nativeResult);
+        return result;
     }
 
     /// <summary>Check if the @object has active controlled properties.</summary>
@@ -310,8 +318,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public bool HasActiveControlBindings()
     {
         int nativeResult = GstObjectHasActiveControlBindings(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -325,9 +334,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(ancestor);
         int nativeResult = GstObjectHasAncestor(Handle, ancestor.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(ancestor);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -340,9 +350,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(ancestor);
         int nativeResult = GstObjectHasAsAncestor(Handle, ancestor.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(ancestor);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -358,9 +369,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(parent);
         int nativeResult = GstObjectHasAsParent(Handle, parent.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(parent);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -373,9 +385,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(binding);
         int nativeResult = GstObjectRemoveControlBinding(Handle, binding.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(binding);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -447,8 +460,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstObjectSetName(Handle, nameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -464,9 +478,10 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     {
         ArgumentNullException.ThrowIfNull(parent);
         int nativeResult = GstObjectSetParent(Handle, parent.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(parent);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -480,8 +495,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public Gst.ClockTime SuggestNextSync()
     {
         ulong nativeResult = GstObjectSuggestNextSync(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -502,8 +518,9 @@ public abstract unsafe partial class Object : Gst.GObject.InitiallyUnowned
     public bool SyncValues(Gst.ClockTime timestamp)
     {
         int nativeResult = GstObjectSyncValues(Handle, timestamp.Nanoseconds);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

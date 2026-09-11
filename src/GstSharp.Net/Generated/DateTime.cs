@@ -443,8 +443,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasDay()
     {
         int nativeResult = GstDateTimeHasDay(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_date_time_has_month</c> function.</summary>
@@ -452,8 +453,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasMonth()
     {
         int nativeResult = GstDateTimeHasMonth(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_date_time_has_second</c> function.</summary>
@@ -461,8 +463,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasSecond()
     {
         int nativeResult = GstDateTimeHasSecond(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_date_time_has_time</c> function.</summary>
@@ -473,8 +476,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasTime()
     {
         int nativeResult = GstDateTimeHasTime(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_date_time_has_year</c> function.</summary>
@@ -485,8 +489,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public bool HasYear()
     {
         int nativeResult = GstDateTimeHasYear(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Creates a new #GDateTime from a fully defined #GstDateTime object.</summary>
@@ -498,8 +503,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public Gst.GLib.DateTime? ToGDateTime()
     {
         nint nativeResult = GstDateTimeToGDateTime(Handle);
+        Gst.GLib.DateTime? result = Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GLib.DateTime.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -515,8 +521,9 @@ public sealed unsafe partial class DateTime : Gst.GObject.Boxed
     public string? ToIso8601String()
     {
         nint nativeResult = GstDateTimeToIso8601String(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_date_time_new</c> entry point.</summary>

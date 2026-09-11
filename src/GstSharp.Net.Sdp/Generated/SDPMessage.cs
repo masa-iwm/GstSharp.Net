@@ -132,8 +132,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> valueBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope valueScope = Gst.Interop.GMarshal.StackUtf8(value, valueBuffer);
         int nativeResult = GstSdpMessageAddAttribute(Handle, keyScope.Pointer, valueScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add the specified bandwidth information to @msg.</summary>
@@ -146,8 +147,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> bwtypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope bwtypeScope = Gst.Interop.GMarshal.StackUtf8(bwtype, bwtypeBuffer);
         int nativeResult = GstSdpMessageAddBandwidth(Handle, bwtypeScope.Pointer, bandwidth);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add @email to the list of emails in @msg.</summary>
@@ -159,8 +161,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> emailBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope emailScope = Gst.Interop.GMarshal.StackUtf8(email, emailBuffer);
         int nativeResult = GstSdpMessageAddEmail(Handle, emailScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -174,9 +177,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(media);
         int nativeResult = GstSdpMessageAddMedia(Handle, media.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(media);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add @phone to the list of phones in @msg.</summary>
@@ -188,8 +192,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> phoneBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope phoneScope = Gst.Interop.GMarshal.StackUtf8(phone, phoneBuffer);
         int nativeResult = GstSdpMessageAddPhone(Handle, phoneScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add time information @start and @stop to @msg.</summary>
@@ -207,8 +212,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope stopScope = Gst.Interop.GMarshal.StackUtf8(stop, stopBuffer);
         using Gst.Interop.StrvScope repeatScope = Gst.Interop.GMarshal.AllocStrv(repeat);
         int nativeResult = GstSdpMessageAddTime(Handle, startScope.Pointer, stopScope.Pointer, repeatScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Add time zone information to @msg.</summary>
@@ -224,8 +230,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> typedTimeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope typedTimeScope = Gst.Interop.GMarshal.StackUtf8(typedTime, typedTimeBuffer);
         int nativeResult = GstSdpMessageAddZone(Handle, adjTimeScope.Pointer, typedTimeScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Convert the contents of @msg to a text string.</summary>
@@ -233,9 +240,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public string AsText()
     {
         nint nativeResult = GstSdpMessageAsText(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_as_text returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the number of attributes in @msg.</summary>
@@ -254,9 +262,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstSdpMessageAttributesToCaps(Handle, caps.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the number of bandwidth information in @msg.</summary>
@@ -278,9 +287,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         nint copyNative = default;
         int nativeResult = GstSdpMessageCopy(Handle, &copyNative);
-        System.GC.KeepAlive(this);
         copy = Gst.Sdp.SDPMessage.FromNative(copyNative, Gst.Interop.Transfer.Full);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Dump the parsed contents of @msg to stdout.</summary>
@@ -288,8 +298,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult Dump()
     {
         int nativeResult = GstSdpMessageDump(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the number of emails in @msg.</summary>
@@ -307,9 +318,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPAttribute GetAttribute(uint idx)
     {
         nint nativeResult = GstSdpMessageGetAttribute(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPAttribute.FromNative(nativeResult)
+        Gst.Sdp.SDPAttribute result = Gst.Sdp.SDPAttribute.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_attribute returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the first attribute with key @key in @msg.</summary>
@@ -321,8 +333,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstSdpMessageGetAttributeVal(Handle, keyScope.Pointer);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the @nth attribute with key @key in @msg.</summary>
@@ -335,8 +348,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstSdpMessageGetAttributeValN(Handle, keyScope.Pointer, nth);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the bandwidth at index @idx from @msg.</summary>
@@ -345,9 +359,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPBandwidth GetBandwidth(uint idx)
     {
         nint nativeResult = GstSdpMessageGetBandwidth(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPBandwidth.FromNative(nativeResult)
+        Gst.Sdp.SDPBandwidth result = Gst.Sdp.SDPBandwidth.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_bandwidth returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the connection of @msg.</summary>
@@ -355,9 +370,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPConnection GetConnection()
     {
         nint nativeResult = GstSdpMessageGetConnection(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPConnection.FromNative(nativeResult)
+        Gst.Sdp.SDPConnection result = Gst.Sdp.SDPConnection.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_connection returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the email with number @idx from @msg.</summary>
@@ -366,9 +382,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public string GetEmail(uint idx)
     {
         nint nativeResult = GstSdpMessageGetEmail(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_email returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the information in @msg.</summary>
@@ -376,9 +393,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public string GetInformation()
     {
         nint nativeResult = GstSdpMessageGetInformation(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_information returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the encryption information from @msg.</summary>
@@ -386,9 +404,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPKey GetKey()
     {
         nint nativeResult = GstSdpMessageGetKey(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPKey.FromNative(nativeResult)
+        Gst.Sdp.SDPKey result = Gst.Sdp.SDPKey.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_key returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the media description at index @idx in @msg.</summary>
@@ -397,9 +416,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPMedia GetMedia(uint idx)
     {
         nint nativeResult = GstSdpMessageGetMedia(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPMedia.FromNative(nativeResult)
+        Gst.Sdp.SDPMedia result = Gst.Sdp.SDPMedia.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_media returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the origin of @msg.</summary>
@@ -407,9 +427,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPOrigin GetOrigin()
     {
         nint nativeResult = GstSdpMessageGetOrigin(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPOrigin.FromNative(nativeResult)
+        Gst.Sdp.SDPOrigin result = Gst.Sdp.SDPOrigin.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_origin returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the phone with number @idx from @msg.</summary>
@@ -418,9 +439,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public string GetPhone(uint idx)
     {
         nint nativeResult = GstSdpMessageGetPhone(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_phone returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the session name in @msg.</summary>
@@ -428,9 +450,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public string GetSessionName()
     {
         nint nativeResult = GstSdpMessageGetSessionName(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_session_name returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get time information with index @idx from @msg.</summary>
@@ -439,9 +462,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPTime GetTime(uint idx)
     {
         nint nativeResult = GstSdpMessageGetTime(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPTime.FromNative(nativeResult)
+        Gst.Sdp.SDPTime result = Gst.Sdp.SDPTime.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_time returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the URI in @msg.</summary>
@@ -449,9 +473,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public string GetUri()
     {
         nint nativeResult = GstSdpMessageGetUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the version in @msg.</summary>
@@ -459,9 +484,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public string GetVersion()
     {
         nint nativeResult = GstSdpMessageGetVersion(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_version returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get time zone information with index @idx from @msg.</summary>
@@ -470,9 +496,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPZone GetZone(uint idx)
     {
         nint nativeResult = GstSdpMessageGetZone(Handle, idx);
-        System.GC.KeepAlive(this);
-        return Gst.Sdp.SDPZone.FromNative(nativeResult)
+        Gst.Sdp.SDPZone result = Gst.Sdp.SDPZone.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_get_zone returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -487,9 +514,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(attr);
         int nativeResult = GstSdpMessageInsertAttribute(Handle, idx, attr.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(attr);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -504,9 +532,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(bw);
         int nativeResult = GstSdpMessageInsertBandwidth(Handle, idx, bw.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bw);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -522,8 +551,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> emailBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope emailScope = Gst.Interop.GMarshal.StackUtf8(email, emailBuffer);
         int nativeResult = GstSdpMessageInsertEmail(Handle, idx, emailScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -539,8 +569,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> phoneBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope phoneScope = Gst.Interop.GMarshal.StackUtf8(phone, phoneBuffer);
         int nativeResult = GstSdpMessageInsertPhone(Handle, idx, phoneScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -555,9 +586,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(t);
         int nativeResult = GstSdpMessageInsertTime(Handle, idx, t.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(t);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -572,9 +604,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(zone);
         int nativeResult = GstSdpMessageInsertZone(Handle, idx, zone.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(zone);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the number of media descriptions in @msg.</summary>
@@ -596,9 +629,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         nint mikeyNative = default;
         int nativeResult = GstSdpMessageParseKeymgmt(Handle, &mikeyNative);
-        System.GC.KeepAlive(this);
         mikey = Gst.Sdp.MIKEYMessage.FromNative(mikeyNative, Gst.Interop.Transfer.Full);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the number of phones in @msg.</summary>
@@ -616,8 +650,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult RemoveAttribute(uint idx)
     {
         int nativeResult = GstSdpMessageRemoveAttribute(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the bandwidth information in @msg at index @idx.</summary>
@@ -626,8 +661,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult RemoveBandwidth(uint idx)
     {
         int nativeResult = GstSdpMessageRemoveBandwidth(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the email in @msg at index @idx.</summary>
@@ -636,8 +672,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult RemoveEmail(uint idx)
     {
         int nativeResult = GstSdpMessageRemoveEmail(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the media at @idx from the array of medias in @msg if found.</summary>
@@ -649,8 +686,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult RemoveMedia(uint idx)
     {
         int nativeResult = GstSdpMessageRemoveMedia(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the phone number in @msg at index @idx.</summary>
@@ -659,8 +697,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult RemovePhone(uint idx)
     {
         int nativeResult = GstSdpMessageRemovePhone(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the time information in @msg at index @idx.</summary>
@@ -669,8 +708,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult RemoveTime(uint idx)
     {
         int nativeResult = GstSdpMessageRemoveTime(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Remove the zone information in @msg at index @idx.</summary>
@@ -679,8 +719,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult RemoveZone(uint idx)
     {
         int nativeResult = GstSdpMessageRemoveZone(Handle, idx);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the attribute in @msg at index @idx with @attr.</summary>
@@ -691,9 +732,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(attr);
         int nativeResult = GstSdpMessageReplaceAttribute(Handle, idx, attr.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(attr);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the bandwidth information in @msg at index @idx with @bw.</summary>
@@ -704,9 +746,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(bw);
         int nativeResult = GstSdpMessageReplaceBandwidth(Handle, idx, bw.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(bw);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the email in @msg at index @idx with @email.</summary>
@@ -719,8 +762,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> emailBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope emailScope = Gst.Interop.GMarshal.StackUtf8(email, emailBuffer);
         int nativeResult = GstSdpMessageReplaceEmail(Handle, idx, emailScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the phone number in @msg at index @idx with @phone.</summary>
@@ -733,8 +777,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> phoneBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope phoneScope = Gst.Interop.GMarshal.StackUtf8(phone, phoneBuffer);
         int nativeResult = GstSdpMessageReplacePhone(Handle, idx, phoneScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the time information in @msg at index @idx with @t.</summary>
@@ -745,9 +790,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(t);
         int nativeResult = GstSdpMessageReplaceTime(Handle, idx, t.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(t);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Replace the zone information in @msg at index @idx with @zone.</summary>
@@ -758,9 +804,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(zone);
         int nativeResult = GstSdpMessageReplaceZone(Handle, idx, zone.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(zone);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Configure the SDP connection in @msg with the given parameters.</summary>
@@ -785,8 +832,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> addressBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope addressScope = Gst.Interop.GMarshal.StackUtf8(address, addressBuffer);
         int nativeResult = GstSdpMessageSetConnection(Handle, nettypeScope.Pointer, addrtypeScope.Pointer, addressScope.Pointer, ttl, addrNumber);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the information in @msg.</summary>
@@ -798,8 +846,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> informationBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope informationScope = Gst.Interop.GMarshal.StackUtf8(information, informationBuffer);
         int nativeResult = GstSdpMessageSetInformation(Handle, informationScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Adds the encryption information to @msg.</summary>
@@ -815,8 +864,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> dataBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope dataScope = Gst.Interop.GMarshal.StackUtf8(data, dataBuffer);
         int nativeResult = GstSdpMessageSetKey(Handle, typeScope.Pointer, dataScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Configure the SDP origin in @msg with the given parameters.</summary>
@@ -848,8 +898,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> addrBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope addrScope = Gst.Interop.GMarshal.StackUtf8(addr, addrBuffer);
         int nativeResult = GstSdpMessageSetOrigin(Handle, usernameScope.Pointer, sessIdScope.Pointer, sessVersionScope.Pointer, nettypeScope.Pointer, addrtypeScope.Pointer, addrScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the session name in @msg.</summary>
@@ -861,8 +912,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> sessionNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope sessionNameScope = Gst.Interop.GMarshal.StackUtf8(sessionName, sessionNameBuffer);
         int nativeResult = GstSdpMessageSetSessionName(Handle, sessionNameScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the URI in @msg.</summary>
@@ -874,8 +926,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         int nativeResult = GstSdpMessageSetUri(Handle, uriScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set the version in @msg.</summary>
@@ -887,8 +940,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         System.Span<byte> versionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope versionScope = Gst.Interop.GMarshal.StackUtf8(version, versionBuffer);
         int nativeResult = GstSdpMessageSetVersion(Handle, versionScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the number of time information entries in @msg.</summary>
@@ -909,8 +963,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
     public Gst.Sdp.SDPResult Uninit()
     {
         int nativeResult = GstSdpMessageUninit(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Get the number of time zone information entries in @msg.</summary>
@@ -937,9 +992,10 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope schemeScope = Gst.Interop.GMarshal.StackUtf8(scheme, schemeBuffer);
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstSdpMessageAsUri(schemeScope.Pointer, msg.Handle);
-        System.GC.KeepAlive(msg);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_sdp_message_as_uri returned no value.");
+        System.GC.KeepAlive(msg);
+        return result;
     }
 
     /// <summary>Allocate a new GstSDPMessage and store the result in @msg.</summary>
@@ -981,8 +1037,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstSdpMessageParseBuffer(dataPointer, (uint)data.Length, msg.Handle);
+            Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
             System.GC.KeepAlive(msg);
-            return (Gst.Sdp.SDPResult)nativeResult;
+            return result;
         }
     }
 
@@ -1008,8 +1065,9 @@ public sealed unsafe partial class SDPMessage : Gst.GObject.Boxed
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         ArgumentNullException.ThrowIfNull(msg);
         int nativeResult = GstSdpMessageParseUri(uriScope.Pointer, msg.Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(msg);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_sdp_message_add_attribute</c> entry point.</summary>

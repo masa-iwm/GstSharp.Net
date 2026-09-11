@@ -20,10 +20,11 @@ public static unsafe partial class NetGlobal
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentNullException.ThrowIfNull(addr);
         nint nativeResult = GstBufferAddNetAddressMeta(buffer.Handle, addr.Handle);
+        Gst.Net.NetAddressMeta result = Gst.Net.NetAddressMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_net_address_meta returned no value.");
         System.GC.KeepAlive(buffer);
         System.GC.KeepAlive(addr);
-        return Gst.Net.NetAddressMeta.FromNative(nativeResult)
-            ?? throw new InvalidOperationException("gst_buffer_add_net_address_meta returned no value.");
+        return result;
     }
 
     /// <summary>Attaches @message as metadata in a #GstNetControlMessageMeta to @buffer.</summary>
@@ -35,10 +36,11 @@ public static unsafe partial class NetGlobal
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentNullException.ThrowIfNull(message);
         nint nativeResult = GstBufferAddNetControlMessageMeta(buffer.Handle, message.Handle);
+        Gst.Net.NetControlMessageMeta result = Gst.Net.NetControlMessageMeta.FromNative(nativeResult)
+            ?? throw new InvalidOperationException("gst_buffer_add_net_control_message_meta returned no value.");
         System.GC.KeepAlive(buffer);
         System.GC.KeepAlive(message);
-        return Gst.Net.NetControlMessageMeta.FromNative(nativeResult)
-            ?? throw new InvalidOperationException("gst_buffer_add_net_control_message_meta returned no value.");
+        return result;
     }
 
     /// <summary>Find the #GstNetAddressMeta on @buffer.</summary>
@@ -51,8 +53,9 @@ public static unsafe partial class NetGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstBufferGetNetAddressMeta(buffer.Handle);
+        Gst.Net.NetAddressMeta? result = Gst.Net.NetAddressMeta.FromNative(nativeResult);
         System.GC.KeepAlive(buffer);
-        return Gst.Net.NetAddressMeta.FromNative(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_net_address_meta_api_get_type</c> function.</summary>
@@ -79,8 +82,9 @@ public static unsafe partial class NetGlobal
     {
         ArgumentNullException.ThrowIfNull(socket);
         int nativeResult = GstNetUtilsSetSocketTos(socket.Handle, qosDscp);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(socket);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -145,8 +149,9 @@ public static unsafe partial class NetGlobal
     {
         ArgumentNullException.ThrowIfNull(config);
         int nativeResult = GstPtpInitFull(config.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(config);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if the GStreamer PTP clock subsystem is initialized.</summary>

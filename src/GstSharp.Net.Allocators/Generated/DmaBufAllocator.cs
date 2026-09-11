@@ -65,8 +65,9 @@ public unsafe partial class DmaBufAllocator : Gst.Allocators.FdAllocator
     {
         ArgumentNullException.ThrowIfNull(allocator);
         nint nativeResult = GstDmabufAllocatorAlloc(allocator.Handle, fd, size);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(allocator);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Return a %GstMemory that wraps a dmabuf file descriptor.</summary>
@@ -79,8 +80,9 @@ public unsafe partial class DmaBufAllocator : Gst.Allocators.FdAllocator
     {
         ArgumentNullException.ThrowIfNull(allocator);
         nint nativeResult = GstDmabufAllocatorAllocWithFlags(allocator.Handle, fd, size, (int)flags);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(allocator);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_dmabuf_allocator_new</c> entry point.</summary>

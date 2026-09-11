@@ -67,8 +67,9 @@ public unsafe partial class FdAllocator : Gst.Allocator
     {
         ArgumentNullException.ThrowIfNull(allocator);
         nint nativeResult = GstFdAllocatorAlloc(allocator.Handle, fd, size, (int)flags);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(allocator);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Return a %GstMemory that wraps a generic file descriptor.</summary>
@@ -91,8 +92,9 @@ public unsafe partial class FdAllocator : Gst.Allocator
     {
         ArgumentNullException.ThrowIfNull(allocator);
         nint nativeResult = GstFdAllocatorAllocFull(allocator.Handle, fd, maxsize, offset, size, (int)flags);
+        Gst.Memory? result = Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(allocator);
-        return Gst.Memory.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_fd_allocator_new</c> entry point.</summary>

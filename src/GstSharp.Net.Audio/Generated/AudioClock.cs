@@ -72,8 +72,9 @@ public unsafe partial class AudioClock : Gst.SystemClock
     public Gst.ClockTime Adjust(Gst.ClockTime time)
     {
         ulong nativeResult = GstAudioClockAdjust(Handle, time.Nanoseconds);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -84,8 +85,9 @@ public unsafe partial class AudioClock : Gst.SystemClock
     public new Gst.ClockTime GetTime()
     {
         ulong nativeResult = GstAudioClockGetTime(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>

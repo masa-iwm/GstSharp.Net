@@ -65,8 +65,9 @@ public unsafe partial class NetTimeProvider : Gst.Object
         System.Span<byte> addressBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope addressScope = Gst.Interop.GMarshal.StackUtf8(address, addressBuffer);
         nint nativeResult = GstNetTimeProviderNew(clock.Handle, addressScope.Pointer, port);
+        Gst.Net.NetTimeProvider? result = Gst.GObject.Object.FromNative<Gst.Net.NetTimeProvider>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(clock);
-        return Gst.GObject.Object.FromNative<Gst.Net.NetTimeProvider>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>active</c> property.</summary>

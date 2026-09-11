@@ -49,8 +49,9 @@ public static unsafe partial class TocSetterExtensions
     {
         ArgumentNullException.ThrowIfNull(setter);
         nint nativeResult = GstTocSetterGetToc(setter.Handle);
+        Gst.Toc? result = Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(setter);
-        return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>

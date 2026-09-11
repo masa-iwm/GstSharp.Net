@@ -103,9 +103,10 @@ public unsafe partial class StreamCollection : Gst.Object
         nint streamNative = stream.Handle;
         nint streamOwned = Gst.Interop.GObjectNative.ObjectRef(streamNative);
         int nativeResult = GstStreamCollectionAddStream(instanceHandle, streamOwned);
-        System.GC.KeepAlive(this);
         stream.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the number of streams this collection contains</summary>
@@ -126,8 +127,9 @@ public unsafe partial class StreamCollection : Gst.Object
     public Gst.Stream? GetStream(uint index)
     {
         nint nativeResult = GstStreamCollectionGetStream(Handle, index);
+        Gst.Stream? result = Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Returns the upstream id of the @collection.</summary>
@@ -135,8 +137,9 @@ public unsafe partial class StreamCollection : Gst.Object
     public string? GetUpstreamId()
     {
         nint nativeResult = GstStreamCollectionGetUpstreamId(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>stream-id</summary>

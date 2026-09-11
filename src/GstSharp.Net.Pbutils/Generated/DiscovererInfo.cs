@@ -45,9 +45,10 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererInfo Copy()
     {
         nint nativeResult = GstDiscovererInfoCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Pbutils.DiscovererInfo result = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererInfo>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_discoverer_info_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Finds all the #GstDiscovererAudioInfo contained in @info</summary>
@@ -59,7 +60,6 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererAudioInfo> GetAudioStreams()
     {
         nint nativeResult = GstDiscovererInfoGetAudioStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.DiscovererAudioInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -70,6 +70,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -82,7 +83,6 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererContainerInfo> GetContainerStreams()
     {
         nint nativeResult = GstDiscovererInfoGetContainerStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.DiscovererContainerInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -93,6 +93,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -101,8 +102,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GstDiscovererInfoGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_live</c> function.</summary>
@@ -110,8 +112,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public bool GetLive()
     {
         int nativeResult = GstDiscovererInfoGetLive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_misc</c> function.</summary>
@@ -127,8 +130,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Structure? GetMisc()
     {
         nint nativeResult = GstDiscovererInfoGetMisc(Handle);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the installer details for missing elements</summary>
@@ -141,8 +145,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public string[]? GetMissingElementsInstallerDetails()
     {
         nint nativeResult = GstDiscovererInfoGetMissingElementsInstallerDetails(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_result</c> function.</summary>
@@ -150,8 +155,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererResult GetResult()
     {
         int nativeResult = GstDiscovererInfoGetResult(Handle);
+        Gst.Pbutils.DiscovererResult result = (Gst.Pbutils.DiscovererResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Pbutils.DiscovererResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_seekable</c> function.</summary>
@@ -159,8 +165,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public bool GetSeekable()
     {
         int nativeResult = GstDiscovererInfoGetSeekable(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_stream_info</c> function.</summary>
@@ -173,8 +180,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Pbutils.DiscovererStreamInfo? GetStreamInfo()
     {
         nint nativeResult = GstDiscovererInfoGetStreamInfo(Handle);
+        Gst.Pbutils.DiscovererStreamInfo? result = Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.DiscovererStreamInfo>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_stream_list</c> function.</summary>
@@ -186,7 +194,6 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererStreamInfo> GetStreamList()
     {
         nint nativeResult = GstDiscovererInfoGetStreamList(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.DiscovererStreamInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -197,6 +204,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -213,7 +221,6 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererStreamInfo> GetStreams(Gst.GObject.GType streamtype)
     {
         nint nativeResult = GstDiscovererInfoGetStreams(Handle, streamtype.Value);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.DiscovererStreamInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -224,6 +231,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -236,7 +244,6 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererSubtitleInfo> GetSubtitleStreams()
     {
         nint nativeResult = GstDiscovererInfoGetSubtitleStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.DiscovererSubtitleInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -247,6 +254,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -262,8 +270,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.TagList? GetTags()
     {
         nint nativeResult = GstDiscovererInfoGetTags(Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_toc</c> function.</summary>
@@ -277,8 +286,9 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public Gst.Toc? GetToc()
     {
         nint nativeResult = GstDiscovererInfoGetToc(Handle);
+        Gst.Toc? result = Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Toc.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>The <c>gst_discoverer_info_get_uri</c> function.</summary>
@@ -289,9 +299,10 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public string GetUri()
     {
         nint nativeResult = GstDiscovererInfoGetUri(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_discoverer_info_get_uri returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Finds all the #GstDiscovererVideoInfo contained in @info</summary>
@@ -303,7 +314,6 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.DiscovererVideoInfo> GetVideoStreams()
     {
         nint nativeResult = GstDiscovererInfoGetVideoStreams(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.DiscovererVideoInfo> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -314,6 +324,7 @@ public unsafe partial class DiscovererInfo : Gst.GObject.Object
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 

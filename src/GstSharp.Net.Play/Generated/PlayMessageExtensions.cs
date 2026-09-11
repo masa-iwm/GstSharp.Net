@@ -31,8 +31,9 @@ public static unsafe partial class PlayMessageExtensions
     {
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstPlayMessageGetStreamId(msg.Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(msg);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Reads the URI the play message @msg applies to.</summary>
@@ -45,8 +46,9 @@ public static unsafe partial class PlayMessageExtensions
     {
         ArgumentNullException.ThrowIfNull(msg);
         nint nativeResult = GstPlayMessageGetUri(msg.Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(msg);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Parse the given buffering @msg and extract the corresponding value</summary>
@@ -60,8 +62,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         uint percentNative = default;
         GstPlayMessageParseBuffering(msg.Handle, &percentNative);
-        System.GC.KeepAlive(msg);
         percent = percentNative;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given buffering @msg and extract the corresponding value</summary>
@@ -73,8 +75,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         uint percentNative = default;
         GstPlayMessageParseBufferingPercent(msg.Handle, &percentNative);
-        System.GC.KeepAlive(msg);
         percent = percentNative;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given duration-changed @msg and extract the corresponding #GstClockTime</summary>
@@ -88,8 +90,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         ulong durationNative = default;
         GstPlayMessageParseDurationChanged(msg.Handle, &durationNative);
-        System.GC.KeepAlive(msg);
         duration = new Gst.ClockTime(durationNative);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given duration-changed @msg and extract the corresponding #GstClockTime</summary>
@@ -101,8 +103,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         ulong durationNative = default;
         GstPlayMessageParseDurationUpdated(msg.Handle, &durationNative);
-        System.GC.KeepAlive(msg);
         duration = new Gst.ClockTime(durationNative);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given media-info-updated @msg and extract the corresponding media information</summary>
@@ -113,8 +115,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         nint infoNative = default;
         GstPlayMessageParseMediaInfoUpdated(msg.Handle, &infoNative);
-        System.GC.KeepAlive(msg);
         info = Gst.GObject.Object.FromNative<Gst.Play.PlayMediaInfo>(infoNative, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given mute-changed @msg and extract the corresponding audio muted state</summary>
@@ -125,8 +127,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         int mutedNative = default;
         GstPlayMessageParseMutedChanged(msg.Handle, &mutedNative);
-        System.GC.KeepAlive(msg);
         muted = mutedNative != 0;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given position-updated @msg and extract the corresponding #GstClockTime</summary>
@@ -137,8 +139,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         ulong positionNative = default;
         GstPlayMessageParsePositionUpdated(msg.Handle, &positionNative);
-        System.GC.KeepAlive(msg);
         position = new Gst.ClockTime(positionNative);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given seek-done @msg and extract the corresponding #GstClockTime</summary>
@@ -152,8 +154,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         ulong positionNative = default;
         GstPlayMessageParseSeekDone(msg.Handle, &positionNative);
-        System.GC.KeepAlive(msg);
         position = new Gst.ClockTime(positionNative);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given state-changed @msg and extract the corresponding #GstPlayState</summary>
@@ -164,8 +166,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         int stateNative = default;
         GstPlayMessageParseStateChanged(msg.Handle, &stateNative);
-        System.GC.KeepAlive(msg);
         state = (Gst.Play.PlayState)stateNative;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given @msg and extract its #GstPlayMessage type.</summary>
@@ -176,8 +178,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         int typeNative = default;
         GstPlayMessageParseType(msg.Handle, &typeNative);
-        System.GC.KeepAlive(msg);
         type = (Gst.Play.PlayMessage)typeNative;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given uri-loaded @msg and extract the corresponding value</summary>
@@ -191,8 +193,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         nint uriNative = default;
         GstPlayMessageParseUriLoaded(msg.Handle, &uriNative);
-        System.GC.KeepAlive(msg);
         uri = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(uriNative);
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>
@@ -207,9 +209,9 @@ public static unsafe partial class PlayMessageExtensions
         uint widthNative = default;
         uint heightNative = default;
         GstPlayMessageParseVideoDimensionsChanged(msg.Handle, &widthNative, &heightNative);
-        System.GC.KeepAlive(msg);
         width = widthNative;
         height = heightNative;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>Parse the given volume-changed @msg and extract the corresponding audio volume</summary>
@@ -220,8 +222,8 @@ public static unsafe partial class PlayMessageExtensions
         ArgumentNullException.ThrowIfNull(msg);
         double volumeNative = default;
         GstPlayMessageParseVolumeChanged(msg.Handle, &volumeNative);
-        System.GC.KeepAlive(msg);
         volume = volumeNative;
+        System.GC.KeepAlive(msg);
     }
 
     /// <summary>The <c>gst_play_message_get_name</c> entry point.</summary>

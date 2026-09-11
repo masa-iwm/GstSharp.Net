@@ -63,8 +63,9 @@ public unsafe partial class PlayAudioInfo : Gst.Play.PlayStreamInfo
     public string? GetLanguage()
     {
         nint nativeResult = GstPlayAudioInfoGetLanguage(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_play_audio_info_get_max_bitrate</c> function.</summary>

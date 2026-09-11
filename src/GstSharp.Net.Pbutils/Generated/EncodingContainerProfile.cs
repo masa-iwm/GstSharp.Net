@@ -59,9 +59,10 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
         System.Span<byte> presetBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope presetScope = Gst.Interop.GMarshal.StackUtf8(preset, presetBuffer);
         nint nativeResult = GstEncodingContainerProfileNew(nameScope.Pointer, descriptionScope.Pointer, format.Handle, presetScope.Pointer);
-        System.GC.KeepAlive(format);
-        return Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingContainerProfile>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Pbutils.EncodingContainerProfile result = Gst.GObject.Object.FromNative<Gst.Pbutils.EncodingContainerProfile>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_encoding_container_profile_new returned no value.");
+        System.GC.KeepAlive(format);
+        return result;
     }
 
     /// <summary>
@@ -77,9 +78,10 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     {
         ArgumentNullException.ThrowIfNull(profile);
         int nativeResult = GstEncodingContainerProfileContainsProfile(Handle, profile.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(profile);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_encoding_container_profile_get_profiles</c> function.</summary>
@@ -87,7 +89,6 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     public System.Collections.Generic.IReadOnlyList<Gst.Pbutils.EncodingProfile> GetProfiles()
     {
         nint nativeResult = GstEncodingContainerProfileGetProfiles(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.Pbutils.EncodingProfile> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -98,6 +99,7 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 

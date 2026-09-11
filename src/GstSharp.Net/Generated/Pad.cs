@@ -147,9 +147,10 @@ public unsafe partial class Pad : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstPadNewFromStaticTemplate(templ.Handle, nameScope.Pointer);
-        System.GC.KeepAlive(templ);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Pad result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_pad_new_from_static_template returned no value.");
+        System.GC.KeepAlive(templ);
+        return result;
     }
 
     /// <summary>
@@ -167,9 +168,10 @@ public unsafe partial class Pad : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstPadNewFromTemplate(templ.Handle, nameScope.Pointer);
-        System.GC.KeepAlive(templ);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Pad result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_pad_new_from_template returned no value.");
+        System.GC.KeepAlive(templ);
+        return result;
     }
 
     /// <summary>
@@ -185,8 +187,9 @@ public unsafe partial class Pad : Gst.Object
     public bool ActivateMode(Gst.PadMode mode, bool active)
     {
         int nativeResult = GstPadActivateMode(Handle, (int)mode, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -234,9 +237,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadCanLink(Handle, sinkpad.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sinkpad);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Chain a buffer to @pad.</summary>
@@ -285,9 +289,10 @@ public unsafe partial class Pad : Gst.Object
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstPadChain(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Chain a bufferlist to @pad.</summary>
@@ -336,9 +341,10 @@ public unsafe partial class Pad : Gst.Object
         nint listNative = list.Handle;
         nint listOwned = Gst.GstNative.MiniObjectRef(listNative);
         int nativeResult = GstPadChainList(instanceHandle, listOwned);
-        System.GC.KeepAlive(this);
         list.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -349,8 +355,9 @@ public unsafe partial class Pad : Gst.Object
     public bool CheckReconfigure()
     {
         int nativeResult = GstPadCheckReconfigure(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -385,10 +392,11 @@ public unsafe partial class Pad : Gst.Object
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         nint nativeResult = GstPadCreateStreamId(Handle, parent.Handle, streamIdScope.Pointer);
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_pad_create_stream_id returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(parent);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
-            ?? throw new InvalidOperationException("gst_pad_create_stream_id returned no value.");
+        return result;
     }
 
     /// <summary>Invokes the default event handler for the given pad.</summary>
@@ -430,10 +438,11 @@ public unsafe partial class Pad : Gst.Object
         nint @eventNative = @event.Handle;
         nint @eventOwned = Gst.GstNative.MiniObjectRef(@eventNative);
         int nativeResult = GstPadEventDefault(instanceHandle, parentNative, @eventOwned);
+        @event.Dispose();
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(parent);
-        @event.Dispose();
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -454,8 +463,9 @@ public unsafe partial class Pad : Gst.Object
         try
         {
             int nativeResult = GstPadForward(instanceHandle, Gst.PadForwardFunctionTrampoline.Pointer, forwardState.UserData);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
         finally
         {
@@ -482,8 +492,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Caps? GetAllowedCaps()
     {
         nint nativeResult = GstPadGetAllowedCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -497,8 +508,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Caps? GetCurrentCaps()
     {
         nint nativeResult = GstPadGetCurrentCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -510,8 +522,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.PadDirection GetDirection()
     {
         int nativeResult = GstPadGetDirection(Handle);
+        Gst.PadDirection result = (Gst.PadDirection)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.PadDirection)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -531,8 +544,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.FlowReturn GetLastFlowReturn()
     {
         int nativeResult = GstPadGetLastFlowReturn(Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -556,8 +570,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.PadTemplate? GetPadTemplate()
     {
         nint nativeResult = GstPadGetPadTemplate(Handle);
+        Gst.PadTemplate? result = Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.PadTemplate>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Gets the capabilities for @pad's template.</summary>
@@ -568,9 +583,10 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Caps GetPadTemplateCaps()
     {
         nint nativeResult = GstPadGetPadTemplateCaps(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_pad_get_pad_template_caps returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -585,8 +601,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Element? GetParentElement()
     {
         nint nativeResult = GstPadGetParentElement(Handle);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -597,8 +614,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Pad? GetPeer()
     {
         nint nativeResult = GstPadGetPeer(Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -646,9 +664,10 @@ public unsafe partial class Pad : Gst.Object
     {
         nint bufferNative = default;
         int nativeResult = GstPadGetRange(Handle, offset, size, &bufferNative);
-        System.GC.KeepAlive(this);
         buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -663,8 +682,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Pad? GetSingleInternalLink()
     {
         nint nativeResult = GstPadGetSingleInternalLink(Handle);
+        Gst.Pad? result = Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Pad>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -681,8 +701,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Event? GetStickyEvent(Gst.EventType eventType, uint idx)
     {
         nint nativeResult = GstPadGetStickyEvent(Handle, (int)eventType, idx);
+        Gst.Event? result = Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Event.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -702,8 +723,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Stream? GetStream()
     {
         nint nativeResult = GstPadGetStream(Handle);
+        Gst.Stream? result = Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Stream>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -728,8 +750,9 @@ public unsafe partial class Pad : Gst.Object
     public string? GetStreamId()
     {
         nint nativeResult = GstPadGetStreamId(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -740,8 +763,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.TaskState GetTaskState()
     {
         int nativeResult = GstPadGetTaskState(Handle);
+        Gst.TaskState result = (Gst.TaskState)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.TaskState)nativeResult;
+        return result;
     }
 
     /// <summary>Check if @pad has caps set on it with a #GST_EVENT_CAPS event.</summary>
@@ -749,8 +773,9 @@ public unsafe partial class Pad : Gst.Object
     public bool HasCurrentCaps()
     {
         int nativeResult = GstPadHasCurrentCaps(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Query if a pad is active</summary>
@@ -758,8 +783,9 @@ public unsafe partial class Pad : Gst.Object
     public bool IsActive()
     {
         int nativeResult = GstPadIsActive(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -771,8 +797,9 @@ public unsafe partial class Pad : Gst.Object
     public bool IsBlocked()
     {
         int nativeResult = GstPadIsBlocked(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -783,8 +810,9 @@ public unsafe partial class Pad : Gst.Object
     public bool IsBlocking()
     {
         int nativeResult = GstPadIsBlocking(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if a @pad is linked to another pad or not.</summary>
@@ -792,8 +820,9 @@ public unsafe partial class Pad : Gst.Object
     public bool IsLinked()
     {
         int nativeResult = GstPadIsLinked(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -815,8 +844,9 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Iterator? IterateInternalLinks()
     {
         nint nativeResult = GstPadIterateInternalLinks(Handle);
+        Gst.Iterator? result = Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -836,9 +866,10 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Iterator? IterateInternalLinksDefault(Gst.Object? parent)
     {
         nint nativeResult = GstPadIterateInternalLinksDefault(Handle, parent is null ? 0 : parent.Handle);
+        Gst.Iterator? result = Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(parent);
-        return Gst.Iterator.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Links the source pad and the sink pad.</summary>
@@ -851,9 +882,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadLink(Handle, sinkpad.Handle);
+        Gst.PadLinkReturn result = (Gst.PadLinkReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sinkpad);
-        return (Gst.PadLinkReturn)nativeResult;
+        return result;
     }
 
     /// <summary>Links the source pad and the sink pad.</summary>
@@ -877,9 +909,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadLinkFull(Handle, sinkpad.Handle, (int)flags);
+        Gst.PadLinkReturn result = (Gst.PadLinkReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sinkpad);
-        return (Gst.PadLinkReturn)nativeResult;
+        return result;
     }
 
     /// <summary>Links @src to @sink, creating any #GstGhostPad's in between as necessary.</summary>
@@ -899,9 +932,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(sink);
         int nativeResult = GstPadLinkMaybeGhosting(Handle, sink.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sink);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Links @src to @sink, creating any #GstGhostPad's in between as necessary.</summary>
@@ -927,9 +961,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(sink);
         int nativeResult = GstPadLinkMaybeGhostingFull(Handle, sink.Handle, (int)flags);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sink);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -950,8 +985,9 @@ public unsafe partial class Pad : Gst.Object
     public bool NeedsReconfigure()
     {
         int nativeResult = GstPadNeedsReconfigure(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -966,8 +1002,9 @@ public unsafe partial class Pad : Gst.Object
     public bool PauseTask()
     {
         int nativeResult = GstPadPauseTask(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Performs gst_pad_query() on the peer of @pad.</summary>
@@ -986,9 +1023,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadPeerQuery(Handle, query.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(query);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1001,9 +1039,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstPadPeerQueryAcceptCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1028,10 +1067,11 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Caps PeerQueryCaps(Gst.Caps? filter)
     {
         nint nativeResult = GstPadPeerQueryCaps(Handle, filter is null ? 0 : filter.Handle);
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_pad_peer_query_caps returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(filter);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_pad_peer_query_caps returned no value.");
+        return result;
     }
 
     /// <summary>
@@ -1047,9 +1087,10 @@ public unsafe partial class Pad : Gst.Object
     {
         long destValNative = default;
         int nativeResult = GstPadPeerQueryConvert(Handle, (int)srcFormat, srcVal, (int)destFormat, &destValNative);
-        System.GC.KeepAlive(this);
         destVal = destValNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Queries the peer pad of a given sink pad for the total stream duration.</summary>
@@ -1063,9 +1104,10 @@ public unsafe partial class Pad : Gst.Object
     {
         long durationNative = default;
         int nativeResult = GstPadPeerQueryDuration(Handle, (int)format, &durationNative);
-        System.GC.KeepAlive(this);
         duration = durationNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Queries the peer of a given sink pad for the stream position.</summary>
@@ -1079,9 +1121,10 @@ public unsafe partial class Pad : Gst.Object
     {
         long curNative = default;
         int nativeResult = GstPadPeerQueryPosition(Handle, (int)format, &curNative);
-        System.GC.KeepAlive(this);
         cur = curNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -1101,9 +1144,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadProxyQueryAcceptCaps(Handle, query.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(query);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1123,9 +1167,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadProxyQueryCaps(Handle, query.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(query);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Pulls a @buffer from the peer pad or fills up a provided buffer.</summary>
@@ -1171,9 +1216,10 @@ public unsafe partial class Pad : Gst.Object
     {
         nint bufferNative = default;
         int nativeResult = GstPadPullRange(Handle, offset, size, &bufferNative);
-        System.GC.KeepAlive(this);
         buffer = Gst.Buffer.FromNative(bufferNative, Gst.Interop.Transfer.Full);
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Pushes a buffer to the peer of @pad.</summary>
@@ -1219,9 +1265,10 @@ public unsafe partial class Pad : Gst.Object
         nint bufferNative = buffer.Handle;
         nint bufferOwned = Gst.GstNative.MiniObjectRef(bufferNative);
         int nativeResult = GstPadPush(instanceHandle, bufferOwned);
-        System.GC.KeepAlive(this);
         buffer.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Pushes a buffer list to the peer of @pad.</summary>
@@ -1269,9 +1316,10 @@ public unsafe partial class Pad : Gst.Object
         nint listNative = list.Handle;
         nint listOwned = Gst.GstNative.MiniObjectRef(listNative);
         int nativeResult = GstPadPushList(instanceHandle, listOwned);
-        System.GC.KeepAlive(this);
         list.Dispose();
-        return (Gst.FlowReturn)nativeResult;
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -1294,9 +1342,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadQuery(Handle, query.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(query);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if the given pad accepts the caps.</summary>
@@ -1306,9 +1355,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstPadQueryAcceptCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1337,10 +1387,11 @@ public unsafe partial class Pad : Gst.Object
     public Gst.Caps QueryCaps(Gst.Caps? filter)
     {
         nint nativeResult = GstPadQueryCaps(Handle, filter is null ? 0 : filter.Handle);
+        Gst.Caps result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_pad_query_caps returned no value.");
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(filter);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_pad_query_caps returned no value.");
+        return result;
     }
 
     /// <summary>Queries a pad to convert @src_val in @src_format to @dest_format.</summary>
@@ -1353,9 +1404,10 @@ public unsafe partial class Pad : Gst.Object
     {
         long destValNative = default;
         int nativeResult = GstPadQueryConvert(Handle, (int)srcFormat, srcVal, (int)destFormat, &destValNative);
-        System.GC.KeepAlive(this);
         destVal = destValNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -1372,10 +1424,11 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(query);
         int nativeResult = GstPadQueryDefault(Handle, parent is null ? 0 : parent.Handle, query.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(parent);
         System.GC.KeepAlive(query);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Queries a pad for the total stream duration.</summary>
@@ -1389,9 +1442,10 @@ public unsafe partial class Pad : Gst.Object
     {
         long durationNative = default;
         int nativeResult = GstPadQueryDuration(Handle, (int)format, &durationNative);
-        System.GC.KeepAlive(this);
         duration = durationNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Queries a pad for the stream position.</summary>
@@ -1402,9 +1456,10 @@ public unsafe partial class Pad : Gst.Object
     {
         long curNative = default;
         int nativeResult = GstPadQueryPosition(Handle, (int)format, &curNative);
-        System.GC.KeepAlive(this);
         cur = curNative;
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Remove the probe with @id from @pad.</summary>
@@ -1480,8 +1535,9 @@ public unsafe partial class Pad : Gst.Object
     public bool SetActive(bool active)
     {
         int nativeResult = GstPadSetActive(Handle, active ? 1 : 0);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1708,8 +1764,9 @@ public unsafe partial class Pad : Gst.Object
         nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         int nativeResult = GstPadStartTask(instanceHandle, Gst.TaskFunctionTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -1731,8 +1788,9 @@ public unsafe partial class Pad : Gst.Object
     public bool StopTask()
     {
         int nativeResult = GstPadStopTask(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Store the sticky @event on @pad</summary>
@@ -1745,9 +1803,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(@event);
         int nativeResult = GstPadStoreStickyEvent(Handle, @event.Handle);
+        Gst.FlowReturn result = (Gst.FlowReturn)nativeResult;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(@event);
-        return (Gst.FlowReturn)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -1763,9 +1822,10 @@ public unsafe partial class Pad : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(sinkpad);
         int nativeResult = GstPadUnlink(Handle, sinkpad.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(sinkpad);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

@@ -55,8 +55,9 @@ public sealed unsafe partial class AudioChannelMixer
     public bool IsPassthrough()
     {
         int nativeResult = GstAudioChannelMixerIsPassthrough(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_audio_channel_mixer_free</c> entry point.</summary>

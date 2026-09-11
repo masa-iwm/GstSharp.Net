@@ -130,8 +130,6 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         ArgumentNullException.ThrowIfNull(bytes);
         nint errorNative = 0;
         nint nativeResult = GstMikeyMessageNewFromBytes(bytes.Handle, info is null ? 0 : info.Handle, &errorNative);
-        System.GC.KeepAlive(bytes);
-        System.GC.KeepAlive(info);
         if (errorNative != 0 && nativeResult != 0)
         {
             // The call failed and transferred a value all the same. The throw
@@ -139,7 +137,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
             Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
         }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        Gst.Sdp.MIKEYMessage? result = Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(bytes);
+        System.GC.KeepAlive(info);
+        return result;
     }
 
     /// <summary>
@@ -157,8 +158,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstMikeyMessageNewFromCaps(caps.Handle);
+        Gst.Sdp.MIKEYMessage? result = Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(caps);
-        return Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -178,7 +180,6 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         fixed (byte* dataPointer = data)
         {
             nint nativeResult = GstMikeyMessageNewFromData(dataPointer, (nuint)data.Length, info is null ? 0 : info.Handle, &errorNative);
-            System.GC.KeepAlive(info);
             if (errorNative != 0 && nativeResult != 0)
             {
                 // The call failed and transferred a value all the same. The throw
@@ -186,8 +187,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
                 Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
             }
             Gst.GLib.GException.ThrowIfSet(ref errorNative);
-            return Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            Gst.Sdp.MIKEYMessage result = Gst.Sdp.MIKEYMessage.FromNative(nativeResult, Gst.Interop.Transfer.Full)
                 ?? throw new InvalidOperationException("gst_mikey_message_new_from_data returned no value.");
+            System.GC.KeepAlive(info);
+            return result;
         }
     }
 
@@ -199,8 +202,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public bool AddCsSrtp(byte policy, uint ssrc, uint roc)
     {
         int nativeResult = GstMikeyMessageAddCsSrtp(Handle, policy, ssrc, roc);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Add a new payload to @msg.</summary>
@@ -232,9 +236,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         nint payloadNative = payload.Handle;
         nint payloadOwned = Gst.GstNative.MiniObjectRef(payloadNative);
         int nativeResult = GstMikeyMessageAddPayload(instanceHandle, payloadOwned);
-        System.GC.KeepAlive(this);
         payload.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Add a new PKE payload to @msg with the given parameters.</summary>
@@ -255,8 +260,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstMikeyMessageAddPke(Handle, (int)c, (ushort)data.Length, dataPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -277,8 +283,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         fixed (byte* randPointer = rand)
         {
             int nativeResult = GstMikeyMessageAddRand(Handle, (byte)rand.Length, randPointer);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -288,8 +295,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public bool AddRandLen(byte len)
     {
         int nativeResult = GstMikeyMessageAddRandLen(Handle, len);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -300,8 +308,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public bool AddTNowNtpUtc()
     {
         int nativeResult = GstMikeyMessageAddTNowNtpUtc(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_mikey_message_base64_encode</c> function.</summary>
@@ -309,9 +318,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public string Base64Encode()
     {
         nint nativeResult = GstMikeyMessageBase64Encode(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_mikey_message_base64_encode returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Find the @nth occurrence of the payload with @type in @msg.</summary>
@@ -326,8 +336,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public Gst.Sdp.MIKEYPayload? FindPayload(Gst.Sdp.MIKEYPayloadType type, uint nth)
     {
         nint nativeResult = GstMikeyMessageFindPayload(Handle, (int)type, nth);
+        Gst.Sdp.MIKEYPayload? result = Gst.Sdp.MIKEYPayload.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Sdp.MIKEYPayload.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Get the number of crypto sessions in @msg.</summary>
@@ -360,8 +371,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public Gst.Sdp.MIKEYPayload? GetPayload(uint idx)
     {
         nint nativeResult = GstMikeyMessageGetPayload(Handle, idx);
+        Gst.Sdp.MIKEYPayload? result = Gst.Sdp.MIKEYPayload.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Sdp.MIKEYPayload.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Insert a Crypto Session map for SRTP in @msg at @idx</summary>
@@ -375,8 +387,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     {
         Gst.Sdp.MIKEYMapSRTP mapNative = map;
         int nativeResult = GstMikeyMessageInsertCsSrtp(Handle, idx, &mapNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -412,9 +425,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         nint payloadNative = payload.Handle;
         nint payloadOwned = Gst.GstNative.MiniObjectRef(payloadNative);
         int nativeResult = GstMikeyMessageInsertPayload(instanceHandle, idx, payloadOwned);
-        System.GC.KeepAlive(this);
         payload.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Remove the SRTP policy at @idx.</summary>
@@ -423,8 +437,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public bool RemoveCsSrtp(int idx)
     {
         int nativeResult = GstMikeyMessageRemoveCsSrtp(Handle, idx);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove the payload in @msg at @idx</summary>
@@ -433,8 +448,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public bool RemovePayload(uint idx)
     {
         int nativeResult = GstMikeyMessageRemovePayload(Handle, idx);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Replace a Crypto Session map for SRTP in @msg at @idx with @map.</summary>
@@ -445,8 +461,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     {
         Gst.Sdp.MIKEYMapSRTP mapNative = map;
         int nativeResult = GstMikeyMessageReplaceCsSrtp(Handle, idx, &mapNative);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Replace the payload at @idx in @msg with @payload.</summary>
@@ -479,9 +496,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         nint payloadNative = payload.Handle;
         nint payloadOwned = Gst.GstNative.MiniObjectRef(payloadNative);
         int nativeResult = GstMikeyMessageReplacePayload(instanceHandle, idx, payloadOwned);
-        System.GC.KeepAlive(this);
         payload.Dispose();
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Set the information in @msg.</summary>
@@ -495,8 +513,9 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     public bool SetInfo(byte version, Gst.Sdp.MIKEYType type, bool v, Gst.Sdp.MIKEYPRFFunc prfFunc, uint cSBId, Gst.Sdp.MIKEYMapType mapType)
     {
         int nativeResult = GstMikeyMessageSetInfo(Handle, version, (int)type, v ? 1 : 0, (int)prfFunc, cSBId, (int)mapType);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Convert @msg to a #GBytes.</summary>
@@ -507,8 +526,6 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     {
         nint errorNative = 0;
         nint nativeResult = GstMikeyMessageToBytes(Handle, info is null ? 0 : info.Handle, &errorNative);
-        System.GC.KeepAlive(this);
-        System.GC.KeepAlive(info);
         if (errorNative != 0 && nativeResult != 0)
         {
             // The call failed and transferred a value all the same. The throw
@@ -516,8 +533,11 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
             Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full)?.Dispose();
         }
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.GLib.Bytes result = Gst.GLib.Bytes.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_mikey_message_to_bytes returned no value.");
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(info);
+        return result;
     }
 
     /// <summary>The <c>gst_mikey_message_to_caps</c> function.</summary>
@@ -529,9 +549,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstMikeyMessageToCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_mikey_message_new</c> entry point.</summary>

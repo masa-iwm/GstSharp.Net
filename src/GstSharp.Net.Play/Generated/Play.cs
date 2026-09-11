@@ -114,9 +114,10 @@ public unsafe partial class Play : Gst.Object
     public Gst.Structure GetConfig()
     {
         nint nativeResult = GstPlayGetConfig(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Structure result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_play_get_config returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>A Function to get current audio #GstPlayAudioInfo instance.</summary>
@@ -124,8 +125,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.Play.PlayAudioInfo? GetCurrentAudioTrack()
     {
         nint nativeResult = GstPlayGetCurrentAudioTrack(Handle);
+        Gst.Play.PlayAudioInfo? result = Gst.GObject.Object.FromNative<Gst.Play.PlayAudioInfo>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Play.PlayAudioInfo>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>A Function to get current subtitle #GstPlaySubtitleInfo instance.</summary>
@@ -133,8 +135,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.Play.PlaySubtitleInfo? GetCurrentSubtitleTrack()
     {
         nint nativeResult = GstPlayGetCurrentSubtitleTrack(Handle);
+        Gst.Play.PlaySubtitleInfo? result = Gst.GObject.Object.FromNative<Gst.Play.PlaySubtitleInfo>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Play.PlaySubtitleInfo>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>A Function to get current video #GstPlayVideoInfo instance.</summary>
@@ -142,8 +145,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.Play.PlayVideoInfo? GetCurrentVideoTrack()
     {
         nint nativeResult = GstPlayGetCurrentVideoTrack(Handle);
+        Gst.Play.PlayVideoInfo? result = Gst.GObject.Object.FromNative<Gst.Play.PlayVideoInfo>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Play.PlayVideoInfo>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_play_get_current_visualization</c> function.</summary>
@@ -155,8 +159,9 @@ public unsafe partial class Play : Gst.Object
     public string? GetCurrentVisualization()
     {
         nint nativeResult = GstPlayGetCurrentVisualization(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Retrieves the duration of the media stream that self represents.</summary>
@@ -167,8 +172,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.ClockTime GetDuration()
     {
         ulong nativeResult = GstPlayGetDuration(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>A Function to get the current media info #GstPlayMediaInfo instance.</summary>
@@ -176,8 +182,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.Play.PlayMediaInfo? GetMediaInfo()
     {
         nint nativeResult = GstPlayGetMediaInfo(Handle);
+        Gst.Play.PlayMediaInfo? result = Gst.GObject.Object.FromNative<Gst.Play.PlayMediaInfo>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Play.PlayMediaInfo>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -202,9 +209,10 @@ public unsafe partial class Play : Gst.Object
     public Gst.Bus GetMessageBus()
     {
         nint nativeResult = GstPlayGetMessageBus(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Bus result = Gst.GObject.Object.FromNative<Gst.Bus>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_play_get_message_bus returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Retrieve the current value of the indicated @type.</summary>
@@ -212,8 +220,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.Video.VideoMultiviewFlags GetMultiviewFlags()
     {
         int nativeResult = GstPlayGetMultiviewFlags(Handle);
+        Gst.Video.VideoMultiviewFlags result = (Gst.Video.VideoMultiviewFlags)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Video.VideoMultiviewFlags)nativeResult;
+        return result;
     }
 
     /// <summary>Retrieve the current value of the indicated @type.</summary>
@@ -221,8 +230,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.Video.VideoMultiviewFramePacking GetMultiviewMode()
     {
         int nativeResult = GstPlayGetMultiviewMode(Handle);
+        Gst.Video.VideoMultiviewFramePacking result = (Gst.Video.VideoMultiviewFramePacking)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Video.VideoMultiviewFramePacking)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_play_get_mute</c> function.</summary>
@@ -230,8 +240,9 @@ public unsafe partial class Play : Gst.Object
     public bool GetMute()
     {
         int nativeResult = GstPlayGetMute(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_play_get_pipeline</c> function.</summary>
@@ -239,9 +250,10 @@ public unsafe partial class Play : Gst.Object
     public Gst.Element GetPipeline()
     {
         nint nativeResult = GstPlayGetPipeline(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_play_get_pipeline returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_play_get_position</c> function.</summary>
@@ -252,8 +264,9 @@ public unsafe partial class Play : Gst.Object
     public Gst.ClockTime GetPosition()
     {
         ulong nativeResult = GstPlayGetPosition(Handle);
+        Gst.ClockTime result = new Gst.ClockTime(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.ClockTime(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_play_get_rate</c> function.</summary>
@@ -273,8 +286,9 @@ public unsafe partial class Play : Gst.Object
     public string? GetSubtitleUri()
     {
         nint nativeResult = GstPlayGetSubtitleUri(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Retrieve the current value of subtitle-video-offset property</summary>
@@ -294,8 +308,9 @@ public unsafe partial class Play : Gst.Object
     public string? GetUri()
     {
         nint nativeResult = GstPlayGetUri(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>
@@ -312,9 +327,10 @@ public unsafe partial class Play : Gst.Object
     public Gst.Sample? GetVideoSnapshot(Gst.Play.PlaySnapshotFormat format, Gst.Structure? config)
     {
         nint nativeResult = GstPlayGetVideoSnapshot(Handle, (int)format, config is null ? 0 : config.Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(config);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Returns the current volume level, as a percentage between 0 and 1.</summary>
@@ -334,8 +350,9 @@ public unsafe partial class Play : Gst.Object
     public bool HasColorBalance()
     {
         int nativeResult = GstPlayHasColorBalance(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Pauses the current stream.</summary>
@@ -370,8 +387,9 @@ public unsafe partial class Play : Gst.Object
     public bool SetAudioTrack(int streamIndex)
     {
         int nativeResult = GstPlaySetAudioTrack(Handle, streamIndex);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Enable or disable the current audio track.</summary>
@@ -393,8 +411,9 @@ public unsafe partial class Play : Gst.Object
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         int nativeResult = GstPlaySetAudioTrackId(Handle, streamIdScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets audio-video-offset property by value of @offset</summary>
@@ -462,8 +481,9 @@ public unsafe partial class Play : Gst.Object
     public bool SetSubtitleTrack(int streamIndex)
     {
         int nativeResult = GstPlaySetSubtitleTrack(Handle, streamIndex);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Enable or disable the current subtitle track.</summary>
@@ -485,8 +505,9 @@ public unsafe partial class Play : Gst.Object
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         int nativeResult = GstPlaySetSubtitleTrackId(Handle, streamIdScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -528,8 +549,9 @@ public unsafe partial class Play : Gst.Object
         System.Span<byte> subtitleStreamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope subtitleStreamIdScope = Gst.Interop.GMarshal.StackUtf8(subtitleStreamId, subtitleStreamIdBuffer);
         int nativeResult = GstPlaySetTrackIds(Handle, audioStreamIdScope.Pointer, videoStreamIdScope.Pointer, subtitleStreamIdScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Sets the next URI to play.</summary>
@@ -549,8 +571,9 @@ public unsafe partial class Play : Gst.Object
     public bool SetVideoTrack(int streamIndex)
     {
         int nativeResult = GstPlaySetVideoTrack(Handle, streamIndex);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Enable or disable the current video track.</summary>
@@ -572,8 +595,9 @@ public unsafe partial class Play : Gst.Object
         System.Span<byte> streamIdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope streamIdScope = Gst.Interop.GMarshal.StackUtf8(streamId, streamIdBuffer);
         int nativeResult = GstPlaySetVideoTrackId(Handle, streamIdScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_play_set_visualization</c> function.</summary>
@@ -590,8 +614,9 @@ public unsafe partial class Play : Gst.Object
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         int nativeResult = GstPlaySetVisualization(Handle, nameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Enable or disable the visualization.</summary>
@@ -630,8 +655,9 @@ public unsafe partial class Play : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         int nativeResult = GstPlayConfigGetLoop(config.Handle);
+        Gst.Play.PlayLoop result = (Gst.Play.PlayLoop)nativeResult;
         System.GC.KeepAlive(config);
-        return (Gst.Play.PlayLoop)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_play_config_get_pipeline_dump_in_error_details</c> function.</summary>
@@ -644,8 +670,9 @@ public unsafe partial class Play : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         int nativeResult = GstPlayConfigGetPipelineDumpInErrorDetails(config.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(config);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_play_config_get_position_update_interval</c> function.</summary>
@@ -666,8 +693,9 @@ public unsafe partial class Play : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         int nativeResult = GstPlayConfigGetSeekAccurate(config.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(config);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -680,8 +708,9 @@ public unsafe partial class Play : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(config);
         nint nativeResult = GstPlayConfigGetUserAgent(config.Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(config);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Sets the looping mode.</summary>
@@ -773,8 +802,9 @@ public unsafe partial class Play : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(msg);
         int nativeResult = GstPlayIsPlayMessage(msg.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(msg);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>audio-video-offset</c> property.</summary>

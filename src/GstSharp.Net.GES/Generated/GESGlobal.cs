@@ -31,9 +31,10 @@ public static unsafe partial class GESGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GesBufferAddFrameCompositionMeta(buffer.Handle);
-        System.GC.KeepAlive(buffer);
-        return GES.FrameCompositionMeta.FromNative(nativeResult)
+        GES.FrameCompositionMeta result = GES.FrameCompositionMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("ges_buffer_add_frame_composition_meta returned no value.");
+        System.GC.KeepAlive(buffer);
+        return result;
     }
 
     /// <summary>Get the error quark for GES errors.</summary>
@@ -150,9 +151,10 @@ public static unsafe partial class GESGlobal
         ArgumentNullException.ThrowIfNull(playsink);
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GesPlaySinkConvertFrame(playsink.Handle, caps.Handle);
+        Gst.Sample? result = Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(playsink);
         System.GC.KeepAlive(caps);
-        return Gst.Sample.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>ges_pspec_equal</c> function.</summary>

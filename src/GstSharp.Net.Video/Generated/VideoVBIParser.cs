@@ -66,9 +66,10 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
     public Gst.Video.VideoVBIParser Copy()
     {
         nint nativeResult = GstVideoVbiParserCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Video.VideoVBIParser.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.Video.VideoVBIParser result = Gst.Video.VideoVBIParser.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_video_vbi_parser_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Parse the line provided previously by gst_video_vbi_parser_add_line().</summary>
@@ -82,9 +83,10 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
     {
         Gst.Video.VideoAncillary ancNative = default;
         int nativeResult = GstVideoVbiParserGetAncillary(Handle, &ancNative);
-        System.GC.KeepAlive(this);
         anc = ancNative;
-        return (Gst.Video.VideoVBIParserResult)nativeResult;
+        Gst.Video.VideoVBIParserResult result = (Gst.Video.VideoVBIParserResult)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_video_vbi_parser_new</c> entry point.</summary>

@@ -47,9 +47,10 @@ public unsafe partial class CommandLineFormatter : GES.Formatter, GES.IExtractab
     {
         ArgumentNullException.ThrowIfNull(timeline);
         nint nativeResult = GesCommandLineFormatterGetTimelineUri(timeline.Handle);
-        System.GC.KeepAlive(timeline);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("ges_command_line_formatter_get_timeline_uri returned no value.");
+        System.GC.KeepAlive(timeline);
+        return result;
     }
 
     /// <summary>The <c>ges_command_line_formatter_get_timeline_uri</c> entry point.</summary>

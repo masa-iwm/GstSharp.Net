@@ -145,8 +145,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
         System.Span<byte> featureBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope featureScope = Gst.Interop.GMarshal.StackUtf8(feature, featureBuffer);
         int nativeResult = GstCapsFeaturesContains(Handle, featureScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if @features contains @feature.</summary>
@@ -156,8 +157,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public bool ContainsId(Gst.GLib.Quark feature)
     {
         int nativeResult = GstCapsFeaturesContainsId(Handle, feature.Value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if @features contains @feature.</summary>
@@ -170,9 +172,10 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(feature);
         int nativeResult = GstCapsFeaturesContainsIdStr(Handle, feature.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(feature);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Duplicates a #GstCapsFeatures and all its values.</summary>
@@ -180,9 +183,10 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public Gst.CapsFeatures Copy()
     {
         nint nativeResult = GstCapsFeaturesCopy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.CapsFeatures result = Gst.CapsFeatures.FromNative(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_caps_features_copy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
@@ -191,8 +195,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public string? GetNth(uint i)
     {
         nint nativeResult = GstCapsFeaturesGetNth(Handle, i);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
@@ -202,8 +207,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public Gst.GLib.Quark GetNthId(uint i)
     {
         uint nativeResult = GstCapsFeaturesGetNthId(Handle, i);
+        Gst.GLib.Quark result = new Gst.GLib.Quark(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.GLib.Quark(nativeResult);
+        return result;
     }
 
     /// <summary>Returns the @i-th feature of @features.</summary>
@@ -220,9 +226,10 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public Gst.IdStr GetNthIdStr(uint i)
     {
         nint nativeResult = GstCapsFeaturesGetNthIdStr(Handle, i);
-        System.GC.KeepAlive(this);
-        return Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
+        Gst.IdStr result = Gst.IdStr.FromNative(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_caps_features_get_nth_id_str returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Returns the number of features in @features.</summary>
@@ -239,8 +246,9 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public bool IsAny()
     {
         int nativeResult = GstCapsFeaturesIsAny(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if @features1 and @features2 are equal.</summary>
@@ -250,9 +258,10 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(features2);
         int nativeResult = GstCapsFeaturesIsEqual(Handle, features2.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(features2);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Removes @feature from @features.</summary>
@@ -302,9 +311,10 @@ public sealed unsafe partial class CapsFeatures : Gst.GObject.Boxed
     public override string ToString()
     {
         nint nativeResult = GstCapsFeaturesToString(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_caps_features_to_string returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Creates a #GstCapsFeatures from a string representation.</summary>

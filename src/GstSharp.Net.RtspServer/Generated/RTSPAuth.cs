@@ -98,8 +98,9 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     public Gst.RtspServer.RTSPToken? GetDefaultToken()
     {
         nint nativeResult = GstRtspAuthGetDefaultToken(Handle);
+        Gst.RtspServer.RTSPToken? result = Gst.RtspServer.RTSPToken.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.RtspServer.RTSPToken.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_rtsp_auth_get_realm</c> function.</summary>
@@ -107,8 +108,9 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     public string? GetRealm()
     {
         nint nativeResult = GstRtspAuthGetRealm(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Gets the supported authentication methods of @auth.</summary>
@@ -116,8 +118,9 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     public Gst.Rtsp.RTSPAuthMethod GetSupportedMethods()
     {
         int nativeResult = GstRtspAuthGetSupportedMethods(Handle);
+        Gst.Rtsp.RTSPAuthMethod result = (Gst.Rtsp.RTSPAuthMethod)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtsp.RTSPAuthMethod)nativeResult;
+        return result;
     }
 
     /// <summary>Get the #GTlsAuthenticationMode.</summary>
@@ -125,8 +128,9 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     public Gst.Gio.TlsAuthenticationMode GetTlsAuthenticationMode()
     {
         int nativeResult = GstRtspAuthGetTlsAuthenticationMode(Handle);
+        Gst.Gio.TlsAuthenticationMode result = (Gst.Gio.TlsAuthenticationMode)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Gio.TlsAuthenticationMode)nativeResult;
+        return result;
     }
 
     /// <summary>Get the #GTlsCertificate used for negotiating TLS @auth.</summary>
@@ -137,8 +141,9 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     public Gst.Gio.TlsCertificate? GetTlsCertificate()
     {
         nint nativeResult = GstRtspAuthGetTlsCertificate(Handle);
+        Gst.Gio.TlsCertificate? result = Gst.GObject.Object.FromNative<Gst.Gio.TlsCertificate>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.TlsCertificate>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Get the #GTlsDatabase used for verifying client certificate.</summary>
@@ -149,8 +154,9 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
     public Gst.Gio.TlsDatabase? GetTlsDatabase()
     {
         nint nativeResult = GstRtspAuthGetTlsDatabase(Handle);
+        Gst.Gio.TlsDatabase? result = Gst.GObject.Object.FromNative<Gst.Gio.TlsDatabase>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Gio.TlsDatabase>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -174,9 +180,10 @@ public unsafe partial class RTSPAuth : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         ArgumentNullException.ThrowIfNull(token);
         int nativeResult = GstRtspAuthParseHtdigest(Handle, pathScope.Pointer, token.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(token);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Removes @basic authentication token.</summary>

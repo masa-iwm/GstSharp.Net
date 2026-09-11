@@ -62,8 +62,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     public Gst.WebRTC.WebRTCICEStream? AddStream(uint sessionId)
     {
         nint nativeResult = GstWebrtcIceAddStream(Handle, sessionId);
+        Gst.WebRTC.WebRTCICEStream? result = Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICEStream>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICEStream>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_add_turn_server</c> function.</summary>
@@ -75,8 +76,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
         System.Span<byte> uriBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope uriScope = Gst.Interop.GMarshal.StackUtf8(uri, uriBuffer);
         int nativeResult = GstWebrtcIceAddTurnServer(Handle, uriScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -105,9 +107,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(stream);
         nint nativeResult = GstWebrtcIceFindTransport(Handle, stream.Handle, (int)component);
+        Gst.WebRTC.WebRTCICETransport? result = Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICETransport>(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(stream);
-        return Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICETransport>(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_gather_candidates</c> function.</summary>
@@ -117,9 +120,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     {
         ArgumentNullException.ThrowIfNull(stream);
         int nativeResult = GstWebrtcIceGatherCandidates(Handle, stream.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(stream);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_get_http_proxy</c> function.</summary>
@@ -130,9 +134,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     public string GetHttpProxy()
     {
         nint nativeResult = GstWebrtcIceGetHttpProxy(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_webrtc_ice_get_http_proxy returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_get_is_controller</c> function.</summary>
@@ -140,8 +145,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     public bool GetIsController()
     {
         int nativeResult = GstWebrtcIceGetIsController(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_get_selected_pair</c> function.</summary>
@@ -156,11 +162,12 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
         nint localStatsNative = default;
         nint remoteStatsNative = default;
         int nativeResult = GstWebrtcIceGetSelectedPair(Handle, stream.Handle, &localStatsNative, &remoteStatsNative);
-        System.GC.KeepAlive(this);
-        System.GC.KeepAlive(stream);
         localStats = Gst.WebRTC.WebRTCICECandidateStats.FromNative(localStatsNative, Gst.Interop.Transfer.Full);
         remoteStats = Gst.WebRTC.WebRTCICECandidateStats.FromNative(remoteStatsNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(stream);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_get_stun_server</c> function.</summary>
@@ -168,8 +175,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     public string? GetStunServer()
     {
         nint nativeResult = GstWebrtcIceGetStunServer(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_get_turn_server</c> function.</summary>
@@ -177,8 +185,9 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     public string? GetTurnServer()
     {
         nint nativeResult = GstWebrtcIceGetTurnServer(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_force_relay</c> function.</summary>
@@ -226,9 +235,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
         System.Span<byte> pwdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope pwdScope = Gst.Interop.GMarshal.StackUtf8(pwd, pwdBuffer);
         int nativeResult = GstWebrtcIceSetLocalCredentials(Handle, stream.Handle, ufragScope.Pointer, pwdScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(stream);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_on_ice_candidate</c> function.</summary>
@@ -257,9 +267,10 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
         System.Span<byte> pwdBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope pwdScope = Gst.Interop.GMarshal.StackUtf8(pwd, pwdBuffer);
         int nativeResult = GstWebrtcIceSetRemoteCredentials(Handle, stream.Handle, ufragScope.Pointer, pwdScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(stream);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>The <c>gst_webrtc_ice_set_stun_server</c> function.</summary>

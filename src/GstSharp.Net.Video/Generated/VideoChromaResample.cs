@@ -47,9 +47,9 @@ public sealed unsafe partial class VideoChromaResample
         uint nLinesNative = default;
         int offsetNative = default;
         GstVideoChromaResampleGetInfo(Handle, &nLinesNative, &offsetNative);
-        System.GC.KeepAlive(this);
         nLines = nLinesNative;
         offset = offsetNative;
+        System.GC.KeepAlive(this);
     }
 
     /// <summary>The <c>gst_video_chroma_resample_free</c> entry point.</summary>

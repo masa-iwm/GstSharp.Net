@@ -223,9 +223,10 @@ public static unsafe partial class Global
     {
         ArgumentNullException.ThrowIfNull(bin);
         nint nativeResult = GstDebugBinToDotData(bin.Handle, (uint)details);
-        System.GC.KeepAlive(bin);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_debug_bin_to_dot_data returned no value.");
+        System.GC.KeepAlive(bin);
+        return result;
     }
 
     /// <summary>
@@ -420,11 +421,12 @@ public static unsafe partial class Global
         using Gst.Interop.Utf8Scope functionScope = Gst.Interop.GMarshal.StackUtf8(function, functionBuffer);
         ArgumentNullException.ThrowIfNull(message);
         nint nativeResult = GstDebugLogGetLine(category.Handle, (int)level, fileScope.Pointer, functionScope.Pointer, line, @object is null ? 0 : @object.Handle, message.Handle);
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+            ?? throw new InvalidOperationException("gst_debug_log_get_line returned no value.");
         System.GC.KeepAlive(category);
         System.GC.KeepAlive(@object);
         System.GC.KeepAlive(message);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
-            ?? throw new InvalidOperationException("gst_debug_log_get_line returned no value.");
+        return result;
     }
 
     /// <summary>Logs the given message using the currently registered debugging handlers.</summary>
@@ -597,9 +599,10 @@ public static unsafe partial class Global
     public static string DebugPrintSegment(Gst.Segment? segment)
     {
         nint nativeResult = GstDebugPrintSegment(segment is null ? 0 : segment.Handle);
-        System.GC.KeepAlive(segment);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult)
             ?? throw new InvalidOperationException("gst_debug_print_segment returned no value.");
+        System.GC.KeepAlive(segment);
+        return result;
     }
 
     /// <summary>
@@ -779,8 +782,9 @@ public static unsafe partial class Global
     {
         ArgumentNullException.ThrowIfNull(plugin);
         int nativeResult = GstDynamicTypeRegister(plugin.Handle, type.Value);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(plugin);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Get a string describing the error message in the current locale.</summary>
@@ -969,10 +973,11 @@ public static unsafe partial class Global
         using Gst.Interop.Utf8Scope binDescriptionScope = Gst.Interop.GMarshal.StackUtf8(binDescription, binDescriptionBuffer);
         nint errorNative = 0;
         nint nativeResult = GstParseBinFromDescriptionFull(binDescriptionScope.Pointer, ghostUnlinkedPads ? 1 : 0, context is null ? 0 : context.Handle, (int)flags, &errorNative);
-        System.GC.KeepAlive(context);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_parse_bin_from_description_full returned no value.");
+        System.GC.KeepAlive(context);
+        return result;
     }
 
     /// <summary>
@@ -1040,10 +1045,11 @@ public static unsafe partial class Global
         using Gst.Interop.Utf8Scope pipelineDescriptionScope = Gst.Interop.GMarshal.StackUtf8(pipelineDescription, pipelineDescriptionBuffer);
         nint errorNative = 0;
         nint nativeResult = GstParseLaunchFull(pipelineDescriptionScope.Pointer, context is null ? 0 : context.Handle, (int)flags, &errorNative);
-        System.GC.KeepAlive(context);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_parse_launch_full returned no value.");
+        System.GC.KeepAlive(context);
+        return result;
     }
 
     /// <summary>
@@ -1093,10 +1099,11 @@ public static unsafe partial class Global
         using Gst.Interop.StrvScope argvScope = Gst.Interop.GMarshal.AllocStrv(argv);
         nint errorNative = 0;
         nint nativeResult = GstParseLaunchvFull(argvScope.Pointer, context is null ? 0 : context.Handle, (int)flags, &errorNative);
-        System.GC.KeepAlive(context);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
+        Gst.Element result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None)
             ?? throw new InvalidOperationException("gst_parse_launchv_full returned no value.");
+        System.GC.KeepAlive(context);
+        return result;
     }
 
     /// <summary>
@@ -1650,9 +1657,10 @@ public static unsafe partial class Global
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint arrayNative = default;
         int nativeResult = GstUtilGetObjectArray(@object.Handle, nameScope.Pointer, &arrayNative);
-        System.GC.KeepAlive(@object);
         array = Gst.GObject.ValueArray.FromNative(arrayNative, Gst.Interop.Transfer.Full);
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(@object);
+        return result;
     }
 
     /// <summary>
@@ -1799,9 +1807,10 @@ public static unsafe partial class Global
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         ArgumentNullException.ThrowIfNull(array);
         int nativeResult = GstUtilSetObjectArray(@object.Handle, nameScope.Pointer, array.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(@object);
         System.GC.KeepAlive(array);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -2237,8 +2246,9 @@ public static unsafe partial class Global
         fixed (Gst.GObject.GValueNative* destPointer = &dest.NativeValue)
         {
             int nativeResult = GstValueDeserializeWithPspec(destPointer, srcScope.Pointer, pspec is null ? 0 : pspec.Handle);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(pspec);
-            return nativeResult != 0;
+            return result;
         }
     }
 

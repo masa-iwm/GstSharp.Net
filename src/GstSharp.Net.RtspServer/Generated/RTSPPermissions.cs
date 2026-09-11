@@ -123,8 +123,9 @@ public sealed unsafe partial class RTSPPermissions : Gst.MiniObject
         System.Span<byte> roleBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope roleScope = Gst.Interop.GMarshal.StackUtf8(role, roleBuffer);
         nint nativeResult = GstRtspPermissionsGetRole(Handle, roleScope.Pointer);
+        Gst.Structure? result = Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.Structure.FromNative(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>Check if @role in @permissions is given permission for @permission.</summary>
@@ -140,8 +141,9 @@ public sealed unsafe partial class RTSPPermissions : Gst.MiniObject
         System.Span<byte> permissionBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope permissionScope = Gst.Interop.GMarshal.StackUtf8(permission, permissionBuffer);
         int nativeResult = GstRtspPermissionsIsAllowed(Handle, roleScope.Pointer, permissionScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Remove all permissions for @role in @permissions.</summary>

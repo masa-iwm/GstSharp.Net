@@ -119,8 +119,9 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     {
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstVideoInfoDmaDrmNewFromCaps(caps.Handle);
+        Gst.Video.VideoInfoDmaDrm? result = Gst.Video.VideoInfoDmaDrm.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(caps);
-        return Gst.Video.VideoInfoDmaDrm.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -136,8 +137,9 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
     public Gst.Caps? ToCaps()
     {
         nint nativeResult = GstVideoInfoDmaDrmToCaps(Handle);
+        Gst.Caps? result = Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
-        return Gst.Caps.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -159,7 +161,6 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
         nint instanceHandle = Handle;
         nint infoNative = GstVideoInfoNew();
         int nativeResult = GstVideoInfoDmaDrmToVideoInfo(instanceHandle, infoNative);
-        System.GC.KeepAlive(this);
         if (nativeResult != 0)
         {
             info = Gst.Video.VideoInfo.FromNative(infoNative, Gst.Interop.Transfer.Full);
@@ -171,7 +172,9 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
             Gst.Video.VideoInfo.FromNative(infoNative, Gst.Interop.Transfer.Full)?.Dispose();
             info = null;
         }
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>
@@ -193,7 +196,6 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
         nint infoNative = info.Handle;
         nint drmInfoNative = GstVideoInfoDmaDrmNew();
         int nativeResult = GstVideoInfoDmaDrmFromVideoInfo(drmInfoNative, infoNative, modifier);
-        System.GC.KeepAlive(info);
         if (nativeResult != 0)
         {
             drmInfo = Gst.Video.VideoInfoDmaDrm.FromNative(drmInfoNative, Gst.Interop.Transfer.Full);
@@ -205,7 +207,9 @@ public sealed unsafe partial class VideoInfoDmaDrm : Gst.GObject.Boxed
             Gst.Video.VideoInfoDmaDrm.FromNative(drmInfoNative, Gst.Interop.Transfer.Full)?.Dispose();
             drmInfo = null;
         }
-        return nativeResult != 0;
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(info);
+        return result;
     }
 
     /// <summary>The <c>gst_video_info_dma_drm_new</c> entry point.</summary>

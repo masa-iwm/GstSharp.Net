@@ -257,8 +257,9 @@ public sealed class ArrayOverrideTests
                 fixed (byte* mappingPointer = mapping)
                 {
                     int nativeResult = GstWidgetPackChannels(Handle, (byte)mapping.Length, mappingPointer);
+                    bool result = nativeResult != 0;
                     System.GC.KeepAlive(this);
-                    return nativeResult != 0;
+                    return result;
                 }
             }
             """,
@@ -388,8 +389,9 @@ public sealed class ArrayOverrideTests
                 fixed (int* mappingPointer = mapping)
                 {
                     int nativeResult = GstWidgetPackChannels(Handle, (byte)mapping.Length, mappingPointer);
+                    bool result = nativeResult != 0;
                     System.GC.KeepAlive(this);
-                    return nativeResult != 0;
+                    return result;
                 }
             }
             """,
@@ -531,7 +533,6 @@ public sealed class ArrayOverrideTests
             {
                 uint lenNative = default;
                 nint nativeResult = GstWidgetGetFormats(Handle, &lenNative);
-                System.GC.KeepAlive(this);
                 Gst.Shape[]? result = null;
                 if (nativeResult != 0)
                 {
@@ -539,6 +540,7 @@ public sealed class ArrayOverrideTests
                     new System.ReadOnlySpan<Gst.Shape>((void*)nativeResult, (int)lenNative).CopyTo(result);
                     Gst.Interop.GMarshal.Free(nativeResult);
                 }
+                System.GC.KeepAlive(this);
                 return result;
             }
             """,
@@ -618,8 +620,8 @@ public sealed class ArrayOverrideTests
             {
                 Gst.Widget.SizesArray sizesNative = default;
                 GstWidgetGetSizes(Handle, &sizesNative);
-                System.GC.KeepAlive(this);
                 sizes = sizesNative;
+                System.GC.KeepAlive(this);
             }
             """,
             run.Member("Widget.cs", "public void GetSizes("),
@@ -654,7 +656,6 @@ public sealed class ArrayOverrideTests
             public byte[]? GetSignature()
             {
                 nint nativeResult = GstWidgetGetSignature(Handle);
-                System.GC.KeepAlive(this);
                 byte[]? result = null;
                 if (nativeResult != 0)
                 {
@@ -662,6 +663,7 @@ public sealed class ArrayOverrideTests
                     new System.ReadOnlySpan<byte>((void*)nativeResult, 4).CopyTo(result);
                     Gst.Interop.GMarshal.Free(nativeResult);
                 }
+                System.GC.KeepAlive(this);
                 return result;
             }
             """,

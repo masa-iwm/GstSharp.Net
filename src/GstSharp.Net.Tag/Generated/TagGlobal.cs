@@ -459,8 +459,9 @@ public static unsafe partial class TagGlobal
         fixed (byte* imageDataPointer = imageData)
         {
             int nativeResult = GstTagListAddId3Image(tagList.Handle, imageDataPointer, (uint)imageData.Length, id3PictureType);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(tagList);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -478,8 +479,9 @@ public static unsafe partial class TagGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstTagListFromExifBuffer(buffer.Handle, byteOrder, baseOffset);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(buffer);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Parses the exif tags starting with a tiff header structure.</summary>
@@ -489,8 +491,9 @@ public static unsafe partial class TagGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstTagListFromExifBufferWithTiffHeader(buffer.Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(buffer);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -506,8 +509,9 @@ public static unsafe partial class TagGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstTagListFromId3v2Tag(buffer.Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(buffer);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -559,9 +563,10 @@ public static unsafe partial class TagGlobal
         fixed (byte* idDataPointer = idData)
         {
             nint nativeResult = GstTagListFromVorbiscommentBuffer(buffer.Handle, idDataPointer, (uint)idData.Length, &vendorStringNative);
-            System.GC.KeepAlive(buffer);
             vendorString = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(vendorStringNative);
-            return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+            Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+            System.GC.KeepAlive(buffer);
+            return result;
         }
     }
 
@@ -572,8 +577,9 @@ public static unsafe partial class TagGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         nint nativeResult = GstTagListFromXmpBuffer(buffer.Handle);
+        Gst.TagList? result = Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(buffer);
-        return Gst.TagList.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -615,8 +621,9 @@ public static unsafe partial class TagGlobal
     {
         ArgumentNullException.ThrowIfNull(taglist);
         nint nativeResult = GstTagListToExifBuffer(taglist.Handle, byteOrder, baseOffset);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(taglist);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -629,8 +636,9 @@ public static unsafe partial class TagGlobal
     {
         ArgumentNullException.ThrowIfNull(taglist);
         nint nativeResult = GstTagListToExifBufferWithTiffHeader(taglist.Handle);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(taglist);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>Creates a new vorbiscomment buffer from a tag list.</summary>
@@ -649,9 +657,10 @@ public static unsafe partial class TagGlobal
         fixed (byte* idDataPointer = idData)
         {
             nint nativeResult = GstTagListToVorbiscommentBuffer(list.Handle, idDataPointer, (uint)idData.Length, vendorStringScope.Pointer);
-            System.GC.KeepAlive(list);
-            return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
+            Gst.Buffer result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
                 ?? throw new InvalidOperationException("gst_tag_list_to_vorbiscomment_buffer returned no value.");
+            System.GC.KeepAlive(list);
+            return result;
         }
     }
 
@@ -669,8 +678,9 @@ public static unsafe partial class TagGlobal
         ArgumentNullException.ThrowIfNull(list);
         using Gst.Interop.StrvScope schemasScope = Gst.Interop.GMarshal.AllocStrv(schemas);
         nint nativeResult = GstTagListToXmpBuffer(list.Handle, readOnly ? 1 : 0, schemasScope.Pointer);
+        Gst.Buffer? result = Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(list);
-        return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full);
+        return result;
     }
 
     /// <summary>
@@ -746,7 +756,6 @@ public static unsafe partial class TagGlobal
         System.Span<byte> tagBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope tagScope = Gst.Interop.GMarshal.StackUtf8(tag, tagBuffer);
         nint nativeResult = GstTagToVorbisComments(list.Handle, tagScope.Pointer);
-        System.GC.KeepAlive(list);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<string> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -757,6 +766,7 @@ public static unsafe partial class TagGlobal
             }
         }
 
+        System.GC.KeepAlive(list);
         return result;
     }
 

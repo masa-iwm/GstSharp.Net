@@ -74,8 +74,9 @@ public sealed unsafe partial class SDPZone
     public Gst.Sdp.SDPResult Clear()
     {
         int nativeResult = GstSdpZoneClear(Handle);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>Set zone information in @zone.</summary>
@@ -91,8 +92,9 @@ public sealed unsafe partial class SDPZone
         System.Span<byte> typedTimeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope typedTimeScope = Gst.Interop.GMarshal.StackUtf8(typedTime, typedTimeBuffer);
         int nativeResult = GstSdpZoneSet(Handle, adjTimeScope.Pointer, typedTimeScope.Pointer);
+        Gst.Sdp.SDPResult result = (Gst.Sdp.SDPResult)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Sdp.SDPResult)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_sdp_zone_clear</c> entry point.</summary>

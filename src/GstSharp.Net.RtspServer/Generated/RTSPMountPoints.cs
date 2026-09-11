@@ -56,9 +56,10 @@ public unsafe partial class RTSPMountPoints : Gst.GObject.Object
     {
         ArgumentNullException.ThrowIfNull(url);
         nint nativeResult = GstRtspMountPointsMakePath(Handle, url.Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(url);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Find the factory in @mounts that has the longest match with @path.</summary>
@@ -81,9 +82,10 @@ public unsafe partial class RTSPMountPoints : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         int matchedNative = default;
         nint nativeResult = GstRtspMountPointsMatch(Handle, pathScope.Pointer, &matchedNative);
-        System.GC.KeepAlive(this);
         matched = matchedNative;
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMediaFactory>(nativeResult, Gst.Interop.Transfer.Full);
+        Gst.RtspServer.RTSPMediaFactory? result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPMediaFactory>(nativeResult, Gst.Interop.Transfer.Full);
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Remove the #GstRTSPMediaFactory associated with @path in @mounts.</summary>

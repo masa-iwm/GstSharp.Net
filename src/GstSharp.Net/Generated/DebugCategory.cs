@@ -57,9 +57,10 @@ public sealed unsafe partial class DebugCategory
     public string GetDescription()
     {
         nint nativeResult = GstDebugCategoryGetDescription(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_debug_category_get_description returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Returns the name of a debug category.</summary>
@@ -67,9 +68,10 @@ public sealed unsafe partial class DebugCategory
     public string GetName()
     {
         nint nativeResult = GstDebugCategoryGetName(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
+        string result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult)
             ?? throw new InvalidOperationException("gst_debug_category_get_name returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Returns the threshold of a #GstDebugCategory.</summary>
@@ -77,8 +79,9 @@ public sealed unsafe partial class DebugCategory
     public Gst.DebugLevel GetThreshold()
     {
         int nativeResult = GstDebugCategoryGetThreshold(Handle);
+        Gst.DebugLevel result = (Gst.DebugLevel)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.DebugLevel)nativeResult;
+        return result;
     }
 
     /// <summary>

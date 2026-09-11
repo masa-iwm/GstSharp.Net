@@ -45,8 +45,9 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     public Gst.Rtp.RTPHeaderExtensionDirection GetDirection()
     {
         int nativeResult = GstRtpHeaderExtensionGetDirection(Handle);
+        Gst.Rtp.RTPHeaderExtensionDirection result = (Gst.Rtp.RTPHeaderExtensionDirection)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtp.RTPHeaderExtensionDirection)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtp_header_extension_get_id</c> function.</summary>
@@ -85,8 +86,9 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     public string? GetSdpCapsFieldName()
     {
         nint nativeResult = GstRtpHeaderExtensionGetSdpCapsFieldName(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>The <c>gst_rtp_header_extension_get_supported_flags</c> function.</summary>
@@ -94,8 +96,9 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     public Gst.Rtp.RTPHeaderExtensionFlags GetSupportedFlags()
     {
         int nativeResult = GstRtpHeaderExtensionGetSupportedFlags(Handle);
+        Gst.Rtp.RTPHeaderExtensionFlags result = (Gst.Rtp.RTPHeaderExtensionFlags)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.Rtp.RTPHeaderExtensionFlags)nativeResult;
+        return result;
     }
 
     /// <summary>The <c>gst_rtp_header_extension_get_uri</c> function.</summary>
@@ -103,8 +106,9 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     public string? GetUri()
     {
         nint nativeResult = GstRtpHeaderExtensionGetUri(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Read the RTP header extension from @data.</summary>
@@ -121,9 +125,10 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
         fixed (byte* dataPointer = data)
         {
             int nativeResult = GstRtpHeaderExtensionRead(Handle, (int)readFlags, dataPointer, (nuint)data.Length, buffer.Handle);
+            bool result = nativeResult != 0;
             System.GC.KeepAlive(this);
             System.GC.KeepAlive(buffer);
-            return nativeResult != 0;
+            return result;
         }
     }
 
@@ -143,9 +148,10 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstRtpHeaderExtensionSetAttributesFromCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -167,9 +173,10 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstRtpHeaderExtensionSetCapsFromAttributes(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -193,9 +200,10 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
         System.Span<byte> attributesBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope attributesScope = Gst.Interop.GMarshal.StackUtf8(attributes, attributesBuffer);
         int nativeResult = GstRtpHeaderExtensionSetCapsFromAttributesHelper(Handle, caps.Handle, attributesScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -229,9 +237,10 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstRtpHeaderExtensionSetNonRtpSinkCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -259,9 +268,10 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstRtpHeaderExtensionUpdateNonRtpSrcCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -273,8 +283,9 @@ public abstract unsafe partial class RTPHeaderExtension : Gst.Element
     public bool WantsUpdateNonRtpSrcCaps()
     {
         int nativeResult = GstRtpHeaderExtensionWantsUpdateNonRtpSrcCaps(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>

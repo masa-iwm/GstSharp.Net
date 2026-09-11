@@ -77,9 +77,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSinkAllCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if the factory can sink any possible capability.</summary>
@@ -89,9 +90,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSinkAnyCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if the factory can src all possible capabilities.</summary>
@@ -101,9 +103,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSrcAllCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Checks if the factory can src any possible capability.</summary>
@@ -113,9 +116,10 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     {
         ArgumentNullException.ThrowIfNull(caps);
         int nativeResult = GstElementFactoryCanSrcAnyCaps(Handle, caps.Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(caps);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -136,8 +140,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         System.Span<byte> nameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint nativeResult = GstElementFactoryCreate(Handle, nameScope.Pointer);
+        Gst.Element? result = Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
         System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.Element>(nativeResult, Gst.Interop.Transfer.None);
+        return result;
     }
 
     /// <summary>
@@ -152,8 +157,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public Gst.GObject.GType GetElementType()
     {
         nuint nativeResult = GstElementFactoryGetElementType(Handle);
+        Gst.GObject.GType result = new Gst.GObject.GType(nativeResult);
         System.GC.KeepAlive(this);
-        return new Gst.GObject.GType(nativeResult);
+        return result;
     }
 
     /// <summary>Get the metadata on @factory with @key.</summary>
@@ -168,8 +174,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         System.Span<byte> keyBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope keyScope = Gst.Interop.GMarshal.StackUtf8(key, keyBuffer);
         nint nativeResult = GstElementFactoryGetMetadata(Handle, keyScope.Pointer);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8(nativeResult);
+        return result;
     }
 
     /// <summary>Get the available keys for the metadata on @factory.</summary>
@@ -180,8 +187,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public string[]? GetMetadataKeys()
     {
         nint nativeResult = GstElementFactoryGetMetadataKeys(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: true);
+        return result;
     }
 
     /// <summary>Gets the number of pad_templates in this factory.</summary>
@@ -201,8 +209,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public bool GetSkipDocumentation()
     {
         int nativeResult = GstElementFactoryGetSkipDocumentation(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Gets the #GList of #GstStaticPadTemplate for this factory.</summary>
@@ -213,7 +222,6 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public System.Collections.Generic.IReadOnlyList<Gst.StaticPadTemplate> GetStaticPadTemplates()
     {
         nint nativeResult = GstElementFactoryGetStaticPadTemplates(Handle);
-        System.GC.KeepAlive(this);
         nint[] nativeItems = Gst.Interop.GListMarshal.Collect(nativeResult);
         System.Collections.Generic.List<Gst.StaticPadTemplate> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -224,6 +232,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
             }
         }
 
+        System.GC.KeepAlive(this);
         return result;
     }
 
@@ -240,8 +249,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public string[]? GetUriProtocols()
     {
         nint nativeResult = GstElementFactoryGetUriProtocols(Handle);
+        string[]? result = Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.StrvToArray(nativeResult, free: false);
+        return result;
     }
 
     /// <summary>Gets the type of URIs the element supports or #GST_URI_UNKNOWN if none.</summary>
@@ -249,8 +259,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public Gst.URIType GetUriType()
     {
         int nativeResult = GstElementFactoryGetUriType(Handle);
+        Gst.URIType result = (Gst.URIType)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.URIType)nativeResult;
+        return result;
     }
 
     /// <summary>Check if @factory implements the interface with name @interfacename.</summary>
@@ -262,8 +273,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         System.Span<byte> interfacenameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope interfacenameScope = Gst.Interop.GMarshal.StackUtf8(interfacename, interfacenameBuffer);
         int nativeResult = GstElementFactoryHasInterface(Handle, interfacenameScope.Pointer);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>Check if @factory is of the given types.</summary>
@@ -272,8 +284,9 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
     public bool ListIsType(ulong type)
     {
         int nativeResult = GstElementFactoryListIsType(Handle, type);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -326,7 +339,6 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
         using Gst.Interop.GListScope listScope = Gst.Interop.GMarshal.AllocList(list, singly: false);
         ArgumentNullException.ThrowIfNull(caps);
         nint nativeResult = GstElementFactoryListFilter(listScope.Head, caps.Handle, (int)direction, subsetonly ? 1 : 0);
-        System.GC.KeepAlive(caps);
         nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
         System.Collections.Generic.List<Gst.ElementFactory> result = new(nativeItems.Length);
         foreach (nint nativeItem in nativeItems)
@@ -337,6 +349,7 @@ public unsafe partial class ElementFactory : Gst.PluginFeature
             }
         }
 
+        System.GC.KeepAlive(caps);
         return result;
     }
 

@@ -34,9 +34,9 @@ public static unsafe partial class VideoColorRangeExtensions
         Gst.Video.VideoColorRangeExtensions.OffsetArray offsetNative = default;
         Gst.Video.VideoColorRangeExtensions.ScaleArray scaleNative = default;
         GstVideoColorRangeOffsets((int)range, info.Handle, &offsetNative, &scaleNative);
-        System.GC.KeepAlive(info);
         offset = offsetNative;
         scale = scaleNative;
+        System.GC.KeepAlive(info);
     }
 
     /// <summary>Inline storage of the 4 elements a call writes into the parameter this type is named after.</summary>

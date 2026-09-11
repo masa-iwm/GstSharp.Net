@@ -61,8 +61,9 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     public string? GetFontDesc()
     {
         nint nativeResult = GesTitleSourceGetFontDesc(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the horizontal aligment used by @source.</summary>
@@ -70,8 +71,9 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     public GES.TextHAlign GetHalignment()
     {
         int nativeResult = GesTitleSourceGetHalignment(Handle);
+        GES.TextHAlign result = (GES.TextHAlign)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TextHAlign)nativeResult;
+        return result;
     }
 
     /// <summary>Get the text currently set on the @source.</summary>
@@ -80,8 +82,9 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     public string? GetText()
     {
         nint nativeResult = GesTitleSourceGetText(Handle);
+        string? result = Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
         System.GC.KeepAlive(this);
-        return Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeResult);
+        return result;
     }
 
     /// <summary>Get the color used by @source.</summary>
@@ -98,8 +101,9 @@ public unsafe partial class TitleSource : GES.VideoSource, GES.IExtractable, GES
     public GES.TextVAlign GetValignment()
     {
         int nativeResult = GesTitleSourceGetValignment(Handle);
+        GES.TextVAlign result = (GES.TextVAlign)nativeResult;
         System.GC.KeepAlive(this);
-        return (GES.TextVAlign)nativeResult;
+        return result;
     }
 
     /// <summary>Get the horizontal position used by @source.</summary>

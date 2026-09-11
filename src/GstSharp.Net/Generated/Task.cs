@@ -136,9 +136,10 @@ public unsafe partial class Task : Gst.Object
     public Gst.TaskPool GetPool()
     {
         nint nativeResult = GstTaskGetPool(Handle);
-        System.GC.KeepAlive(this);
-        return Gst.GObject.Object.FromNative<Gst.TaskPool>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.TaskPool result = Gst.GObject.Object.FromNative<Gst.TaskPool>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_task_get_pool returned no value.");
+        System.GC.KeepAlive(this);
+        return result;
     }
 
     /// <summary>Get the current state of the task.</summary>
@@ -146,8 +147,9 @@ public unsafe partial class Task : Gst.Object
     public Gst.TaskState GetState()
     {
         int nativeResult = GstTaskGetState(Handle);
+        Gst.TaskState result = (Gst.TaskState)nativeResult;
         System.GC.KeepAlive(this);
-        return (Gst.TaskState)nativeResult;
+        return result;
     }
 
     /// <summary>
@@ -166,8 +168,9 @@ public unsafe partial class Task : Gst.Object
     public bool Join()
     {
         int nativeResult = GstTaskJoin(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -180,8 +183,9 @@ public unsafe partial class Task : Gst.Object
     public bool Pause()
     {
         int nativeResult = GstTaskPause(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -192,8 +196,9 @@ public unsafe partial class Task : Gst.Object
     public bool Resume()
     {
         int nativeResult = GstTaskResume(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -226,8 +231,9 @@ public unsafe partial class Task : Gst.Object
     public bool SetState(Gst.TaskState state)
     {
         int nativeResult = GstTaskSetState(Handle, (int)state);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -238,8 +244,9 @@ public unsafe partial class Task : Gst.Object
     public bool Start()
     {
         int nativeResult = GstTaskStart(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
@@ -251,8 +258,9 @@ public unsafe partial class Task : Gst.Object
     public bool Stop()
     {
         int nativeResult = GstTaskStop(Handle);
+        bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return nativeResult != 0;
+        return result;
     }
 
     /// <summary>
