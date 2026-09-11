@@ -1069,9 +1069,10 @@ public sealed class RejectionRulesTests
     public void AShadowedCallableIsEmittedWhenTheShadowingOneCannotBeBound()
     {
         // gst_adapter_copy is the real pair: it is shadowed by
-        // gst_adapter_copy_bytes, which returns a GBytes that this milestone
-        // cannot marshal. Skipping both would leave the function unbound, so
-        // the shadowed declaration takes the clean name. The fixture rejects
+        // gst_adapter_copy_bytes, which the overlays skip because the C hands
+        // out uninitialised memory for a range the adapter does not hold, so
+        // the pair is hand written instead. Skipping both would leave the
+        // function unbound, so the shadowed declaration takes the clean name. The fixture rejects
         // the shadowing one for another documented planner rule, an array
         // parameter whose elements the call takes over — a shape the planner
         // itself refuses, which is what keeps the shadow retry of the surface

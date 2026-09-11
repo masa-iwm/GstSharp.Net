@@ -171,10 +171,10 @@ internal static unsafe partial class BufferNative
     /// <remarks>
     /// The entry point is on the skip list of
     /// <c>girs/overlays/fixups.json</c>, and in its <c>handBound</c> array
-    /// beside it, for the reason the paragraph on <c>gst_buffer_map</c> above
-    /// describes: the generated member would be correct for every block but the
-    /// empty one, and the empty one is the block a caller builds from an empty
-    /// span. <see cref="Gst.Buffer.NewWrappedBytes"/> is the member.
+    /// beside it, following the convention the paragraph on
+    /// <c>gst_buffer_map</c> above describes, and for a reason of its own: the
+    /// generated member would be correct for every block but the empty one, and
+    /// the empty one is the block a caller builds from an empty span. <see cref="Gst.Buffer.NewWrappedBytes"/> is the member.
     /// </remarks>
     [LibraryImport("Gst", EntryPoint = "gst_buffer_new_wrapped_bytes")]
     internal static partial nint NewWrappedBytes(nint bytes);

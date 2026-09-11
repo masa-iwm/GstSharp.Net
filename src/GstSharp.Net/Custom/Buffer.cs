@@ -94,16 +94,24 @@ public sealed partial class Buffer
     /// </para>
     /// <para>
     /// The memory carries <see cref="Gst.MemoryFlags.Readonly"/>, which is what
-    /// the immutability of a block means to a pipeline: an element that needs
-    /// to write has to copy first, and
-    /// <see cref="Gst.Buffer.MakeWritable"/> answers a buffer over a copy of
-    /// the bytes rather than over these.
+    /// the immutability of a block means to a pipeline: a read mapping of that
+    /// memory is granted and a write mapping of it is refused. Nothing is
+    /// written through to the block, but the refusal is not what stops it.
+    /// Mapping the <em>buffer</em> for writing succeeds: when the write lock on
+    /// the memory is refused, the library copies the memory, hands out a span
+    /// over the copy and, if the buffer is writable, puts the copy in place of
+    /// the readonly one. <see cref="Gst.Buffer.MakeWritable"/> is not that
+    /// step and does not copy the bytes at all — a buffer this returned and
+    /// nothing else references is writable already, so it answers the same
+    /// buffer, and a buffer that does get copied carries the same readonly
+    /// memory over into the copy.
     /// </para>
     /// <para>
     /// <b>An empty block answers an empty buffer without calling the
     /// library.</b> The C reads the data pointer of the block and refuses a
     /// null one with a critical and no buffer at all, and a null pointer is
-    /// what every empty block carries: <c>g_bytes_new</c> discards the pointer
+    /// what every empty block <c>g_bytes_new</c> builds carries — which is
+    /// every block this binding builds: <c>g_bytes_new</c> discards the pointer
     /// it is given whenever the size is zero. An empty block therefore has no
     /// memory to wrap, and the buffer that wraps nothing is the empty one,
     /// which is why this is hand written rather than generated.

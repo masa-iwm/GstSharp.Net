@@ -247,7 +247,10 @@ The obligations, which the XML documentation on each constructor states as well:
   four bases and throws once the wrapper is disposed. Reading it is often the
   last use of the wrapper in a method, so the collector is free to finalize it
   while your native call is still running; every wrapper in this repository ends
-  such a method with `GC.KeepAlive(this)`, and so should yours.
+  such a method with `GC.KeepAlive(this)`, and so should yours. It belongs at
+  the end rather than right after the call: an out array copied out of storage
+  the instance owns, or a borrowed string that points into it, is read after
+  the call returns, and the barrier has to cover that read as well.
 
 Everything else a module needs is already public: `GMarshal` and `Utf8Scope` for
 UTF-8 parameters, `GException.ThrowIfSet` for a `GError**` out parameter,
@@ -384,8 +387,10 @@ asserts the crossing the hierarchy makes possible: the same source handed to
    factories that go through `FromNative`.
 5. Ownership documented for anything that is a `MiniObject` or a `Boxed`, and no
    owning wrapper behind a property.
-6. `GC.KeepAlive` after the last read of `Handle` in every method that calls
-   native code.
+6. `GC.KeepAlive` as the last statement before the return in every method that
+   calls native code — after every out parameter has been converted and after
+   the result has been converted into a local, not after the last read of
+   `Handle`. What those conversions read can be memory the wrapper owns.
 7. `IsAotCompatible` on, and a publish that produces no trimming or AOT
    warnings — the runtime is reflection-free and a module has no reason not to
    be.

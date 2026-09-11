@@ -88,8 +88,14 @@ public sealed class AdapterCopyBytesTests
 
     /// <summary>
     /// An offset near the top of the address space is refused rather than
-    /// wrapping around into a range that looks valid.
+    /// wrapping around into a range that looks valid, and a size of zero does
+    /// not excuse it.
     /// </summary>
+    /// <remarks>
+    /// The second row is the one the C would let through: it gives up on a
+    /// size of zero before it ever looks at the offset, so a start the adapter
+    /// does not hold is refused by the binding alone.
+    /// </remarks>
     [Fact]
     public void AnOffsetThatWouldWrapAroundIsRefused()
     {
@@ -99,6 +105,10 @@ public sealed class AdapterCopyBytesTests
         ArgumentOutOfRangeException thrown = Assert.Throws<ArgumentOutOfRangeException>(
             () => adapter.Copy(nuint.MaxValue, 4));
         Assert.Equal("offset", thrown.ParamName);
+
+        ArgumentOutOfRangeException empty = Assert.Throws<ArgumentOutOfRangeException>(
+            () => adapter.Copy(nuint.MaxValue, 0));
+        Assert.Equal("offset", empty.ParamName);
     }
 
     /// <summary>

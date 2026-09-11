@@ -255,7 +255,8 @@ public sealed class SkipRulesTests
         // The GBytes group is four entries, and none of them is a marshalling
         // gap: the planner marshals a GLib.Bytes in every position.
         // gst_buffer_new_wrapped_bytes and gst_webrtc_data_channel_send_data_full
-        // refuse the null data pointer that every empty block carries, with a
+        // refuse the null data pointer that every empty block g_bytes_new
+        // builds carries - which is every block this binding builds - with a
         // critical and no error, and gst_adapter_copy_bytes answers a range the
         // adapter does not hold with uninitialised memory, so all three are
         // hand written with the empty and the out of range case answered before

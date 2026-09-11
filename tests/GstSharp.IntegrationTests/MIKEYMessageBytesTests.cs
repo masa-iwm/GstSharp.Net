@@ -23,6 +23,20 @@ namespace GstSharp.IntegrationTests;
 /// <c>gstmikey.c</c> - so the throwing shape would have turned a malformed
 /// message into an exception whose message named the wrong cause.
 /// </para>
+/// <para>
+/// Two answers of the parse are not measured here and are worth knowing all
+/// the same. An empty block is the one malformed input that logs: the C reads
+/// the data pointer out of the block and refuses a null one with a critical,
+/// and a block built from an empty span carries a null pointer, so the answer
+/// is a critical and a null rather than the quiet null a short block gets. An
+/// empty span through <see cref="MIKEYMessage.NewFromData"/> is the same
+/// critical, followed by the <see cref="InvalidOperationException"/> of its
+/// non-nullable return. And the block below is short enough to be refused on
+/// the size check, which is what keeps this test off the parse loop: the fix
+/// for the loop over an unhandled payload type landed in 1.27.1 and is in no
+/// 1.24 or 1.26 release, so on the floor a message that reaches such a type
+/// never returns from the parse.
+/// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
 public sealed class MIKEYMessageBytesTests
@@ -93,6 +107,12 @@ public sealed class MIKEYMessageBytesTests
     /// A block that is not a message answers nothing, and does not throw: the
     /// library reports the refusal by returning NULL and sets no error.
     /// </summary>
+    /// <remarks>
+    /// Three bytes is a block the parse gives up on at its size check, before
+    /// the payload loop; it is neither the empty block, which is a critical,
+    /// nor an input that reaches the loop the 1.24 floor can hang in. See the
+    /// remarks of the class.
+    /// </remarks>
     [Fact]
     public void ABlockThatIsNotAMessageAnswersNothing()
     {

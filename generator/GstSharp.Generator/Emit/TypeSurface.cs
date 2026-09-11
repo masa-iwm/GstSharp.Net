@@ -384,7 +384,14 @@ internal sealed class SurfaceBuilder
             // neither, so the shadowed declaration is retried under the clean
             // name once the shadowing one is known not to bind. Every other
             // rule still applies to it, so one that is introspectable="0" stays
-            // out - which is what both halves of this very pair are.
+            // out - which is what the shadowed half of this very pair is, while
+            // the overlay skip is what keeps the shadowing half out. The retry
+            // is also why a pair whose shadowing half starts binding moves in
+            // the census without gaining a member: gst_rtp_buffer_get_payload
+            // and gst_rtp_buffer_get_extension_data used to reach it and be
+            // reported as NotIntrospectable, and now that their _bytes siblings
+            // bind, the retry is never taken and they are reported as
+            // ShadowedBy instead.
             if (plan is null && reason == SkipReason.ShadowedBy && !ShadowingBinds(callable, form))
             {
                 plan = _planner.TryPlan(callable, form, context, out reason, ignoreShadowedBy: true);

@@ -80,6 +80,11 @@ public unsafe partial class Adapter
     /// <see cref="ArgumentOutOfRangeException"/>. The sum is compared without
     /// forming it, so that an offset near <see cref="nuint.MaxValue"/> is
     /// refused rather than wrapping around into a range that looks valid.
+    /// <paramref name="offset"/> is checked before the size, so that a copy of
+    /// zero bytes from a position the adapter does not hold is refused as
+    /// well; the C gives up on the size first and never looks at such an
+    /// offset, and widening a refusal into an answer later is the change that
+    /// cannot be made.
     /// </para>
     /// <para>
     /// A <c>GstAdapter</c> is not thread safe, so reading
@@ -99,13 +104,26 @@ public unsafe partial class Adapter
         // anything is allocated.
         nint adapter = Handle;
 
+        nuint available = Available();
+
+        // An offset past the end is out of range whatever the size is. The C
+        // lets it through for a size of zero, because it gives up on the size
+        // before it looks at the offset at all; a start that is not in the
+        // adapter is refused here for every size, the way slicing refuses one.
+        if (offset > available)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(offset),
+                offset,
+                $"The adapter holds {available} bytes.");
+        }
+
         if (size == 0)
         {
             // See the remarks: the C answers an empty block and a critical.
             return Gst.GLib.Bytes.New(ReadOnlySpan<byte>.Empty);
         }
 
-        nuint available = Available();
         if (size > available)
         {
             throw new ArgumentOutOfRangeException(
