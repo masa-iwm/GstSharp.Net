@@ -116,6 +116,60 @@ public sealed class GesChildPropertyTests
     }
 
     /// <summary>
+    /// The specifications of every child property of a clip, which is the
+    /// block <c>ges_timeline_element_list_children_properties</c> answers: one
+    /// wrapper per element, the caller's to dispose, sorted by name.
+    /// </summary>
+    [Fact]
+    public void TheChildPropertiesOfAClipAreListedByName()
+    {
+        using Timeline timeline = Timeline.NewAudioVideo();
+        using Layer layer = timeline.AppendLayer();
+
+        TestClip? clip = TestClip.New();
+        Assert.NotNull(clip);
+
+        using (clip)
+        {
+            Assert.True(clip.SetDuration(ClockTime.FromSeconds(1)));
+            Assert.True(layer.AddClip(clip));
+
+            ParamSpec[] properties = clip.ListChildrenProperties();
+
+            try
+            {
+                Assert.NotEmpty(properties);
+
+                // GES sorts the block by name before it hands it back.
+                Assert.Equal(
+                    properties.Select(static property => property.Name).Order(StringComparer.Ordinal),
+                    properties.Select(static property => property.Name));
+
+                // The frequency of the audiotestsrc behind the clip is one of
+                // them, and it comes back as the derived wrapper that matches
+                // its G_PARAM_SPEC_TYPE rather than as a plain ParamSpec.
+                ParamSpec frequency = Assert.Single(
+                    properties,
+                    property => property.Name == "freq");
+                Assert.IsType<ParamSpecDouble>(frequency);
+
+                _output.WriteLine(
+                    $"the clip carries {properties.Length} child properties, "
+                    + $"{string.Join(", ", properties.Take(4).Select(static p => p.Name))}, ...");
+            }
+            finally
+            {
+                // Every specification is the caller's: the block transferred
+                // one reference per element and the wrapper owns it.
+                foreach (ParamSpec property in properties)
+                {
+                    property.Dispose();
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// A name no child carries is an <see cref="ArgumentException"/>, which is
     /// the answer <see cref="Object.GetProperty"/> gives for an unknown
     /// property of an object.

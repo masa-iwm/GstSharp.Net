@@ -26,12 +26,51 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
     /// <summary>The <c>GType</c> name, unique in the process.</summary>
     internal const string GTypeName = "GstSharpTestGesVideoSource";
 
+    /// <summary>The name of the child property the source registers for itself.</summary>
+    internal const string TagName = "probe-tag";
+
+    /// <summary>
+    /// The name of the specification the <c>lookup_child</c> override answers
+    /// and nothing registers.
+    /// </summary>
+    internal const string AliasName = "probe-alias";
+
+    /// <summary>The identifier of the <c>probe-tag</c> property.</summary>
+    internal const uint TagId = 1;
+
+    private static readonly ParamSpecString TagSpec = ParamSpecString.New(
+        TagName,
+        "Probe tag",
+        "A string the child property slots write and read",
+        null,
+        ParamFlags.Readable | ParamFlags.Writable);
+
+    /// <summary>
+    /// A specification no property of any class backs: it is what the
+    /// <c>list_children_properties</c> override adds to the block it answers
+    /// and what the <c>lookup_child</c> override answers for a name of its
+    /// own, so both are the produced half of the contract and nothing else.
+    /// </summary>
+    private static readonly ParamSpecInt AliasSpec = ParamSpecInt.New(
+        AliasName,
+        "Probe alias",
+        "A specification the overrides hand out and nothing registers",
+        0,
+        10,
+        3,
+        ParamFlags.Readable);
+
     private static readonly SubclassType Definition = DefineSubclass<ProbeVideoSource>(
         GTypeName,
-        null,
+        ConfigureClass,
         CreateSourceOverride,
         SetMaxDurationOverride,
-        SetParentOverride);
+        SetParentOverride,
+        ListChildrenPropertiesOverride,
+        LookupChildOverride,
+        SetChildPropertyOverride,
+        SetPropertyOverride,
+        GetPropertyOverride);
 
     private static int _wrappersBuilt;
 
@@ -42,9 +81,19 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
     private int _setParentCalls;
     private bool _lastParentWasNull;
 
+    private readonly List<string> _childPropertyWrites = [];
+
+    private string? _tag;
+
+    private int _lookupCalls;
+
     private ProbeVideoSource(SubclassCtorArgs args)
         : base(args)
     {
+        // A track element owns the registry its child property slots read, and
+        // the element itself is a child the C registration allows
+        // (ges-timeline-element.c:909-910).
+        _ = AddChildProperty(TagSpec, this);
     }
 
     /// <summary>Gets the registration of the source.</summary>
@@ -80,6 +129,30 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
 
     /// <summary>Gets a value indicating whether the last parent handed over was none.</summary>
     internal bool LastParentWasNull => Volatile.Read(ref _lastParentWasNull);
+
+    /// <summary>Gets what the last write of <c>probe-tag</c> stored.</summary>
+    internal string? Tag => _tag;
+
+    /// <summary>Gets how often <c>lookup_child</c> reached this wrapper.</summary>
+    internal int LookupCalls => Volatile.Read(ref _lookupCalls);
+
+    /// <summary>
+    /// Gets the specification the lookup last handed out, which the slot
+    /// consumes: the wrapper is disposed once its reference has been taken.
+    /// </summary>
+    internal ParamSpec? HandedOutSpec { get; private set; }
+
+    /// <summary>Gets the child properties the <c>set_child_property</c> override saw.</summary>
+    internal IReadOnlyList<string> ChildPropertyWrites
+    {
+        get
+        {
+            lock (_childPropertyWrites)
+            {
+                return [.. _childPropertyWrites];
+            }
+        }
+    }
 
     /// <summary>Builds an instance no asset describes, for the negative case.</summary>
     /// <returns>The new source, which has no asset.</returns>
@@ -137,4 +210,77 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
 
         return ChainUpSetParent(newParent);
     }
+
+    /// <inheritdoc/>
+    protected override ParamSpec[] OnListChildrenProperties()
+    {
+        ParamSpec[] registered = ChainUpListChildrenProperties();
+        ParamSpec[] answered = new ParamSpec[registered.Length + 1];
+        registered.CopyTo(answered, 0);
+
+        // The block is consumed: the trampoline references every element and
+        // disposes the wrapper it took the reference from. The class keeps
+        // AliasSpec, so what is handed over is a wrapper of its own.
+        answered[^1] = ParamSpec.FromNative(AliasSpec.Handle, Gst.Interop.Transfer.None);
+        return answered;
+    }
+
+    /// <inheritdoc/>
+    protected override bool OnLookupChild(string propName, out Gst.GObject.Object? child, out ParamSpec? pspec)
+    {
+        _ = Interlocked.Increment(ref _lookupCalls);
+
+        if (string.Equals(propName, AliasName, StringComparison.Ordinal))
+        {
+            // The child of a child property may be the element itself, and the
+            // interning hands the caller this very wrapper back.
+            child = this;
+            pspec = ParamSpec.FromNative(AliasSpec.Handle, Gst.Interop.Transfer.None);
+
+            // Kept so that a test can see what became of it: the wrapper is
+            // consumed, so this one answers nothing once the slot returned.
+            HandedOutSpec = pspec;
+            return true;
+        }
+
+        return ChainUpLookupChild(propName, out child, out pspec);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnSetChildProperty(Gst.GObject.Object child, ParamSpec pspec, ValueView value)
+    {
+        lock (_childPropertyWrites)
+        {
+            _childPropertyWrites.Add(pspec.Name);
+        }
+
+        ChainUpSetChildProperty(child, pspec, value);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnSetProperty(uint propertyId, ValueView value, ParamSpec pspec)
+    {
+        if (propertyId == TagId)
+        {
+            _tag = value.GetString();
+            return;
+        }
+
+        base.OnSetProperty(propertyId, value, pspec);
+    }
+
+    /// <inheritdoc/>
+    protected override void OnGetProperty(uint propertyId, ValueRef value, ParamSpec pspec)
+    {
+        if (propertyId == TagId)
+        {
+            value.SetString(_tag);
+            return;
+        }
+
+        base.OnGetProperty(propertyId, value, pspec);
+    }
+
+    private static void ConfigureClass(ObjectClassConfig config) =>
+        config.InstallProperty(TagId, TagSpec);
 }

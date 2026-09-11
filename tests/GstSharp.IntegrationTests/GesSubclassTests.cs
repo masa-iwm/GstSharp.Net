@@ -1,6 +1,9 @@
+using System.Runtime.InteropServices;
 using GES;
 using Gst;
+using Gst.GObject;
 using Xunit;
+using Value = Gst.GObject.Value;
 
 namespace GstSharp.IntegrationTests;
 
@@ -24,7 +27,7 @@ namespace GstSharp.IntegrationTests;
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
-public sealed class GesSubclassTests
+public sealed partial class GesSubclassTests
 {
     private static readonly ClockTime Length = ClockTime.FromSeconds(2);
 
@@ -62,6 +65,93 @@ public sealed class GesSubclassTests
             // until it is disposed, so it goes before the timeline does.
             child.Dispose();
         }
+    }
+
+    /// <summary>
+    /// The three child property slots of a managed track element: the block it answers
+    /// carries what the override added to what the registry holds, the lookup
+    /// answers a child and a specification of the override's own, and the
+    /// setter is reached through the public call that writes one.
+    /// </summary>
+    [Fact]
+    public void TheChildPropertySlotsOfAManagedTrackElementAreReached()
+    {
+        GstGES.Initialize();
+
+        using ProbeVideoSource source = ProbeVideoSource.New();
+
+        ParamSpec[] properties = source.ListChildrenProperties();
+
+        try
+        {
+            // The registered property and the one the override adds, in the
+            // order GES sorts them into (ges-timeline-element.c:2260).
+            Assert.Contains(properties, property => property.Name == ProbeVideoSource.TagName);
+            Assert.Contains(properties, property => property.Name == ProbeVideoSource.AliasName);
+            Assert.Equal(
+                properties.Select(static property => property.Name).Order(StringComparer.Ordinal),
+                properties.Select(static property => property.Name));
+
+            // Every element is a wrapper of the caller's, so the derived class
+            // that matches G_PARAM_SPEC_TYPE is what came back.
+            ParamSpec alias = Assert.Single(
+                properties,
+                property => property.Name == ProbeVideoSource.AliasName);
+            Assert.IsType<ParamSpecInt>(alias);
+        }
+        finally
+        {
+            foreach (ParamSpec property in properties)
+            {
+                property.Dispose();
+            }
+        }
+
+        // The lookup answers the element itself as the child, which the
+        // interning makes the very wrapper the test holds, and a specification
+        // the caller owns.
+        Assert.True(
+            source.LookupChild(ProbeVideoSource.AliasName, out Gst.GObject.Object? child, out ParamSpec? pspec));
+        Assert.Same(source, child);
+        Assert.NotNull(pspec);
+        Assert.Equal(ProbeVideoSource.AliasName, pspec.Name);
+        pspec.Dispose();
+
+        // The wrapper the override handed out is consumed: the trampoline took
+        // its reference and disposed it, so the one the override still holds
+        // answers nothing. The specification itself is alive - the class holds
+        // AliasSpec - and the reference the caller was handed is the one
+        // disposed above.
+        ParamSpec handedOut = Assert.IsAssignableFrom<ParamSpec>(source.HandedOutSpec);
+        Assert.Throws<ObjectDisposedException>(() => handedOut.Handle);
+
+        // The false path writes nothing. Measuring that through the forward
+        // binding proves nothing - it pre-nulls its own storage whatever the
+        // slot did - so the raw call is what the sentinels go through: the
+        // caller's two pointers still read 1 after the slot answered FALSE
+        // (ges-timeline-element.c:257-289).
+        nint missing = 1;
+        nint none = 1;
+        Assert.Equal(
+            0,
+            GesTimelineElementLookupChild(source.Handle, "no-such-child-property", ref missing, ref none));
+        Assert.Equal((nint)1, missing);
+        Assert.Equal((nint)1, none);
+        GC.KeepAlive(source);
+
+        int lookups = source.LookupCalls;
+        Assert.True(lookups >= 2, $"the lookup slot ran {lookups} times");
+
+        using (Value written = Value.New(GType.String))
+        {
+            written.SetString("through the slot");
+            source.SetChildProperty(ProbeVideoSource.TagName, written);
+        }
+
+        // The public setter went through the slot, and chaining up wrote the
+        // value onto the child the registry names - the clip itself.
+        Assert.Contains(ProbeVideoSource.TagName, source.ChildPropertyWrites);
+        Assert.Equal("through the slot", source.Tag);
     }
 
     /// <summary>
@@ -476,4 +566,14 @@ public sealed class GesSubclassTests
         Assert.True(clip.SetStart(ClockTime.Zero));
         Assert.True(clip.SetDuration(Length));
     }
+
+    [LibraryImport(
+        "GES",
+        EntryPoint = "ges_timeline_element_lookup_child",
+        StringMarshalling = StringMarshalling.Utf8)]
+    private static partial int GesTimelineElementLookupChild(
+        nint element,
+        string propName,
+        ref nint child,
+        ref nint pspec);
 }

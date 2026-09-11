@@ -316,6 +316,7 @@ reference or transferred one:
 | --- | --- | --- |
 | `ChildProxyExtensions.Lookup` | nothing; the specification belongs to the class of the child | takes a reference of its own |
 | `TimelineElement.LookupChild` | a reference (`g_param_spec_ref`) | adopts it |
+| `TimelineElement.ListChildrenProperties` | one reference per element and the block (`ges-timeline-element.c:293-310`) | adopts every element and frees the block |
 
 Both girs are right, and the difference is not smoothed over: the reference the
 wrapper holds is one reference either way, and disposing it is correct in both.
@@ -330,6 +331,22 @@ one in the runtime: an instance that is never disposed holds that reference
 until the process exits. Little is lost when that happens, since an installed
 specification belongs to a class and lives as long as the process anyway, but
 dispose it as you would any other wrapper.
+
+`ListChildrenProperties` is the plural of that row: it answers a
+`ParamSpec[]`, never `null` — an element with no child properties answers the
+empty array — sorted by name, with every element the caller's to dispose. A
+`foreach` that disposes as it goes is the shape, exactly as it is for
+`Object.ListProperties`, whose elements the class owns instead: the two look
+alike and release differently, and the wrapper is what makes them read the
+same.
+
+The same three shapes reach a managed override of the child property slots of
+a timeline element (`docs/subclassing.md`), with the ownership mirrored: a
+specification a slot is **lent** is call-scoped and the trampoline disposes the
+wrapper when the override returns, and one an override **produces** or
+**returns** is consumed — one reference is handed to the caller and the wrapper
+is disposed right after. Hand out a wrapper of your own there, never one a
+field of the class keeps.
 
 A lookup that finds nothing answers `false` and leaves **both** out parameters
 `null`. The C functions do not touch the storage they were given on that path,
@@ -694,7 +711,8 @@ after it. One rule per shape:
   still disposes it. An empty value has no type for the call to read and
   throws `ArgumentException`.
 * **A `ref` value has to arrive initialized** with the type the call expects:
-  `Global.ValueSetFraction` wants a `GST_TYPE_FRACTION`, and
+  `Global.ValueSetFraction` wants a `GST_TYPE_FRACTION` (`Value.SetFraction`
+  is the typed accessor over the same store), and
   `Global.ValueDeserialize` reads the type of its destination to pick the
   parser. Like the C API, the call raises a warning and does nothing on a
   value of the wrong type.

@@ -1158,7 +1158,7 @@ construction-property overload a `GstPad` needs, because `direction` is
 construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5);
 `Gst.Pad` and `GstBase.AggregatorPad` joined the allowlist, which is what
 un-skipped `Aggregator::create_new_pad`. Twenty eight classes are
-subclassable, with thirty class struct mirrors and 242 slots.
+subclassable, with thirty class struct mirrors and 245 slots.
 
 **Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
 construction (twenty `New` factories for the GObject kinds, plus the
@@ -1565,12 +1565,20 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Video.VideoFilter` | `set_info`, `transform_frame`, `transform_frame_ip` |
 | `Gst.Video.VideoDecoder` | `open`, `close`, `start`, `stop`, `parse`, `set_format`, `reset`, `finish`, `handle_frame`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `getcaps`, `drain`, `transform_meta`, `handle_missing_data` |
 | `Gst.Video.VideoEncoder` | `open`, `close`, `start`, `stop`, `set_format`, `handle_frame`, `reset`, `finish`, `pre_push`, `getcaps`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `transform_meta` |
+| `GES.TimelineElement` | `set_parent`, `set_start`, `set_inpoint`, `set_duration`, `set_max_duration`, `set_priority`, `ripple`, `ripple_end`, `roll_start`, `roll_end`, `trim`, `deep_copy`, `paste`, `list_children_properties`, `lookup_child`, `get_track_types`, `set_child_property`, `get_layer_priority`, `get_natural_framerate` |
+| `GES.TrackElement` | `create_gnl_object`, `create_element`, `active_changed`, `changed` |
+| `GES.Source` | `select_pad`, `create_source` |
+| `GES.Clip` | `create_track_element` |
 
 `Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
-type is answered from. Seven slots of those classes carry no `OnX` member, and
-all seven are the signal class closures of `Element` and `Bin`, which the base
-library never calls through the class pointer — subscribing to the signal is
-the same hook. `girs/skip-report.md` lists them with their reason.
+type is answered from. Seven slots of the GStreamer classes above carry no
+`OnX` member, and all seven are the signal class closures of `Element` and
+`Bin`, which the base library never calls through the class pointer —
+subscribing to the signal is the same hook. Four slots of the editing services
+classes above are left out as well: the throwing `set_child_property_full`, the two dead
+`TrackElement` twins of the child property slots, and
+`Clip::create_track_elements`. `girs/skip-report.md` lists all of them with
+their reason.
 
 `AudioSink::stop` is the one slot whose managed name is not the one its gir
 name derives. It shares that name with the `stop` of `BaseSink` and answers
@@ -1587,6 +1595,41 @@ equivalent hook, as it is for `Element`. They are bound anyway because they are
 the only two slots `GstPadClass` has, and a pad type has to be on the
 subclassing allowlist for a base class to be able to build one from a managed
 template at all.
+
+### The child property slots of a timeline element
+
+`list_children_properties`, `lookup_child` and `set_child_property` are the
+three slots that carry a `GParamSpec`, and the ownership of one is the whole
+difference between them. A `ParamSpec` wrapper owns exactly one reference and
+has **no finalizer**, so nothing gives that reference back later: every rule
+here is about who disposes.
+
+* **Borrowed is call-scoped.** The `pspec` `OnSetChildProperty` is handed is
+  wrapped for the duration of the call and disposed when the override returns.
+  Keep nothing beyond the call; `ParamSpec.FromNative(pspec.Handle,
+  Transfer.None)` is a wrapper of your own if a specification has to outlive
+  it. The `value` beside it is a `ValueView` over storage the caller of the
+  slot owns — a `ref struct` the compiler keeps from escaping — and it may hold
+  a **string** for a specification of another type, because the by-name setters
+  go through `gst_util_set_object_arg` (`ges-timeline-element.c:204-212`): read
+  `value.Type` before a typed getter, or chain up, which handles that case.
+  `self` may be the element that *owns* an inherited child property rather than
+  the one the public call named (`ges-timeline-element.c:821-823`).
+* **Produced and returned are consumed.** The specifications an override leaves
+  in the `pspec` of `OnLookupChild`, and every element of the array
+  `OnListChildrenProperties` answers, are handed to the caller with one added
+  reference and the wrapper is disposed right after. Answer a wrapper of your
+  own, not one the class keeps.
+* **The lookup writes on the true path only.** `OnLookupChild` fills its two
+  outs when it answers `true` and leaves them alone otherwise, which is the
+  contract the C callers rely on: they release both on `true`
+  (`ges-timeline-element.c:2022-2023`) and read neither on `false`. An override
+  that answers `true` and leaves one empty is reported through the exception
+  trap and the slot answers `false` instead.
+* **The array is never null.** `ChainUpListChildrenProperties()` answers the
+  empty array for an element with no child properties, and an override that
+  answers an empty array is the NULL block and the count of zero the C default
+  writes.
 
 The six slots that lend a boxed record by pointer — `BaseSrc::do_seek` and
 `prepare_seek_segment`, `BaseTransform::filter_meta`, `AudioFilter::setup`,
