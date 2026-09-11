@@ -288,4 +288,23 @@ internal static unsafe partial class TestNatives
     /// </remarks>
     [LibraryImport("Gst", EntryPoint = "gst_format_get_details")]
     internal static partial nint FormatGetDetails(int format);
+
+    /// <summary>
+    /// Emits the <c>on-message-data</c> signal of a data channel, as an
+    /// implementation of one would when a binary message arrives.
+    /// </summary>
+    /// <param name="channel">The channel to emit on.</param>
+    /// <param name="data">The block of the message, or <c>0</c> for none.</param>
+    /// <remarks>
+    /// The binding does not offer it and never will: it is the subclass side of
+    /// the class, declared in <c>webrtc-priv.h</c> and absent from the
+    /// introspection data, and it is exported all the same
+    /// (<c>GST_WEBRTC_API</c>, in 1.24 as in 1.28). Its only guard is the type
+    /// check of the channel, so it emits on any channel in any state, which is
+    /// what lets a test drive the generated trampoline of the signal without a
+    /// second peer. The block is borrowed: the emission takes no reference of
+    /// its own.
+    /// </remarks>
+    [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_data_channel_on_message_data")]
+    internal static partial void WebRTCDataChannelOnMessageData(nint channel, nint data);
 }

@@ -212,6 +212,108 @@ public sealed class WebRTCOfferTests
     }
 
     /// <summary>
+    /// The generated trampoline of <c>on-message-data</c> delivers a real
+    /// block to a handler, releases the wrapper when the handler returns, and
+    /// delivers a message with no payload as <see langword="null"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A message that arrives over a negotiated channel needs two peers, which
+    /// is not what the integration suite of a binding builds. What it does not
+    /// need is a peer: <c>gst_webrtc_data_channel_on_message_data</c> is the
+    /// call an implementation of the class makes when a binary message arrives,
+    /// its only guard is the type check of the channel, and it is exported by
+    /// the library although the introspection data does not describe it. Emitted
+    /// on a channel that never opened, it drives exactly the path a delivered
+    /// message drives: the trampoline the generator emits, the borrowed wrapper
+    /// it builds and the release when the handler returns.
+    /// </para>
+    /// <para>
+    /// Nothing is asserted inside the handler. An exception that leaves it is
+    /// reported through <see cref="Gst.Interop.ExceptionTrap"/> and does not
+    /// cross the native frame, so a failed assertion there would be swallowed
+    /// and the test would pass; the handler records what it saw and the
+    /// assertions are made after the emission returns, which is where the
+    /// synchronous <c>g_signal_emit</c> has put them back on this thread.
+    /// </para>
+    /// </remarks>
+    [RequiresElementFact("webrtcbin", "nicesrc", "dtlssrtpenc")]
+    public void AReceivedBlockIsLentToTheHandlerAndReleasedAfterwards()
+    {
+        using Pipeline pipeline = Pipeline.New("webrtc-data-receive");
+
+        Element webrtc = Assert.IsAssignableFrom<Element>(ElementFactory.Make("webrtcbin", "receiver"));
+        Assert.True(pipeline.Add(webrtc));
+
+        try
+        {
+            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Ready));
+
+            object? created = webrtc.EmitSignal("create-data-channel", "receive-channel", null);
+            WebRTCDataChannel channel = Assert.IsAssignableFrom<WebRTCDataChannel>(created);
+
+            int received = 0;
+            bool[] wasNull = new bool[2];
+            byte[]? kept = null;
+            Gst.GLib.Bytes? lent = null;
+
+            void OnMessage(object? sender, WebRTCDataChannel.OnMessageDataSignalArgs args)
+            {
+                int index = Interlocked.Increment(ref received) - 1;
+                if (index < wasNull.Length)
+                {
+                    wasNull[index] = args.Data is null;
+                }
+
+                kept = args.Data?.ToArray() ?? kept;
+                lent = args.Data ?? lent;
+            }
+
+            channel.OnMessageData += OnMessage;
+
+            try
+            {
+                byte[] payload = [7, 8, 9, 10];
+
+                using (Gst.GLib.Bytes block = Gst.GLib.Bytes.New(payload))
+                {
+                    TestNatives.WebRTCDataChannelOnMessageData(channel.Handle, block.Handle);
+                    GC.KeepAlive(block);
+                }
+
+                Assert.Equal(1, Volatile.Read(ref received));
+                Assert.False(wasNull[0]);
+                Assert.Equal(payload, kept);
+
+                // The wrapper is the handler's for the duration of the call and
+                // no longer: the trampoline releases it on the way out, which is
+                // why anything that outlives the handler has to be the copy
+                // above.
+                Assert.NotNull(lent);
+                Assert.True(lent.IsDisposed);
+
+                // A message with no payload is the null GBytes, which is what
+                // webrtcbin emits for an empty one, and it arrives as a null
+                // Data rather than as an empty block.
+                TestNatives.WebRTCDataChannelOnMessageData(channel.Handle, nint.Zero);
+
+                Assert.Equal(2, Volatile.Read(ref received));
+                Assert.True(wasNull[1]);
+                Assert.Equal(payload, kept);
+            }
+            finally
+            {
+                channel.OnMessageData -= OnMessage;
+                GC.KeepAlive(channel);
+            }
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+        }
+    }
+
+    /// <summary>
     /// Adds one audio transceiver, so that the offer has a media section.
     /// </summary>
     /// <param name="webrtc">The <c>webrtcbin</c> to add it to.</param>
