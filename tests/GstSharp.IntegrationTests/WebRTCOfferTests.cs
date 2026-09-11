@@ -129,11 +129,13 @@ public sealed class WebRTCOfferTests
     /// <para>
     /// A message that actually arrives needs two peers and a completed
     /// negotiation, which is not what the integration suite of a binding should
-    /// build. What is measured here is what the binding owns: that the signal
-    /// the generator skips can be connected and disconnected — connecting to a
-    /// signal that does not exist throws — and that
-    /// <see cref="WebRTCDataChannel.SendData"/> answers a channel that never
-    /// opened instead of following the library into a null dereference.
+    /// build. What is measured here is what the binding owns: that the
+    /// generated event can be connected and disconnected — connecting to a
+    /// signal that does not exist throws — and that both
+    /// <see cref="WebRTCDataChannel.SendData(ReadOnlySpan{byte})"/> and
+    /// <see cref="WebRTCDataChannel.SendData(Gst.GLib.Bytes)"/> answer a
+    /// channel that never opened instead of following the library into a null
+    /// dereference.
     /// </para>
     /// <para>
     /// <b>That last one is not a formality.</b> Both the deprecated
@@ -193,6 +195,21 @@ public sealed class WebRTCOfferTests
             {
                 Assert.False(channel.SendData([1, 2, 3, 4]));
                 Assert.False(channel.SendData([]));
+
+                // The block overload takes the same path: the state is read
+                // before the block is looked at, and an empty block and a null
+                // one are the same empty message.
+                using (Gst.GLib.Bytes block = Gst.GLib.Bytes.New([1, 2, 3, 4]))
+                {
+                    Assert.False(channel.SendData(block));
+                }
+
+                using (Gst.GLib.Bytes empty = Gst.GLib.Bytes.New(ReadOnlySpan<byte>.Empty))
+                {
+                    Assert.False(channel.SendData(empty));
+                }
+
+                Assert.False(channel.SendData((Gst.GLib.Bytes?)null));
 
                 Assert.Equal(0, Volatile.Read(ref received));
                 Assert.Null(kept);
