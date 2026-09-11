@@ -209,6 +209,65 @@ public sealed class GValueProjectionTests
     }
 
     /// <summary>
+    /// The typed accessors of the runtime over the same fraction the generated
+    /// members read above: what is written comes back reduced, because
+    /// <c>gst_value_set_fraction</c> divides the pair by its greatest common
+    /// divisor and moves a negative sign onto the numerator.
+    /// </summary>
+    [Fact]
+    public void AFractionRoundTripsThroughTheTypedAccessorsReduced()
+    {
+        using Value value = Value.New(GType.FromName("GstFraction"));
+
+        value.SetFraction(new Fraction(30, 1));
+        Assert.Equal(new Fraction(30, 1), value.GetFraction());
+
+        value.SetFraction(new Fraction(2, 100));
+        Assert.Equal(new Fraction(1, 50), value.GetFraction());
+
+        value.SetFraction(new Fraction(1, -2));
+        Assert.Equal(new Fraction(-1, 2), value.GetFraction());
+
+        // The boxing projection answers the pair as well: GST_TYPE_FRACTION is
+        // a fundamental of its own, which the fundamental switch cannot name.
+        Assert.Equal(new Fraction(-1, 2), Assert.IsType<Fraction>(value.GetContent()));
+    }
+
+    /// <summary>
+    /// A fraction crosses <see cref="Value.CreateFor"/> as itself and nothing
+    /// else, which is what lets <c>SetProperty</c> take one by name.
+    /// </summary>
+    [Fact]
+    public void AFractionIsTheOnlyContentAFractionValueAccepts()
+    {
+        GType fraction = GType.FromName("GstFraction");
+
+        using (Value created = Value.CreateFor(new Fraction(25, 1), fraction))
+        {
+            Assert.Equal(new Fraction(25, 1), created.GetFraction());
+        }
+
+        Assert.Throws<ArgumentException>(() => Value.CreateFor(2.5, fraction));
+    }
+
+    /// <summary>
+    /// The two refusals of the fraction accessors: a pair GStreamer would
+    /// answer with a critical, and a value that holds something else.
+    /// </summary>
+    [Fact]
+    public void TheFractionAccessorsRefuseWhatGStreamerAnswersWithACritical()
+    {
+        using Value value = Value.New(GType.FromName("GstFraction"));
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => value.SetFraction(new Fraction(1, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => value.SetFraction(new Fraction(int.MinValue, 1)));
+
+        using Value number = Value.New(GType.Int);
+        Assert.Throws<InvalidOperationException>(() => number.SetFraction(new Fraction(1, 2)));
+        Assert.Throws<InvalidOperationException>(() => _ = number.GetFraction());
+    }
+
+    /// <summary>
     /// The guard of the read-only shape: an empty value has no type for the
     /// call to read, and the C side would answer it with a critical warning
     /// and a meaningless result.

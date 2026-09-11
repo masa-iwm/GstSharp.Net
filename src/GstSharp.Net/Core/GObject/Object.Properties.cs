@@ -181,6 +181,11 @@ public partial class Object
     /// <c>GetProperty&lt;Gst.Structure&gt;("stats")</c>,
     /// <c>GetProperty&lt;Gst.Caps&gt;("caps")</c>.
     /// </description></item>
+    /// <item><description>
+    /// <see cref="Gst.Fraction"/> for a <c>GST_TYPE_FRACTION</c> property, such
+    /// as the <c>output-buffer-duration-fraction</c> of an audio mixer. The pair
+    /// comes back reduced, which is how GStreamer stored it.
+    /// </description></item>
     /// </list>
     /// <para>
     /// <b>What the property declares is what decides, never the number it
@@ -544,6 +549,14 @@ public partial class Object
         else if (fundamental == GType.BoxedValue)
         {
             return TryExtractBoxed(value, type, out result);
+        }
+        else if (typeof(T) == typeof(Gst.Fraction) && type == ValueAccess.FractionType)
+        {
+            // The one type here GStreamer rather than GLib registers, and it is
+            // its own fundamental, so it is compared against the type of the
+            // value itself.
+            result = (T)(object)value.GetFraction();
+            return true;
         }
 
         result = default!;

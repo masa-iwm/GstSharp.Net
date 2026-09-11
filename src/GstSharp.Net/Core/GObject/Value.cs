@@ -228,6 +228,11 @@ public struct Value : IDisposable
     /// the raw handle of either. The value takes a copy — a reference, for a
     /// mini object — so the wrapper stays the owner of what it holds.
     /// </description></item>
+    /// <item><description>
+    /// a <c>GST_TYPE_FRACTION</c> accepts a <see cref="Gst.Fraction"/> and
+    /// nothing else. It is the one type here GStreamer rather than GLib
+    /// registers, and the pair is stored reduced.
+    /// </description></item>
     /// </list>
     /// </remarks>
     /// <exception cref="ArgumentException">
@@ -390,6 +395,38 @@ public struct Value : IDisposable
     /// <summary>Reads a set of flags.</summary>
     /// <returns>The stored value.</returns>
     public readonly uint GetFlags() => ValueAccess.GetFlags(ref AsMutable());
+
+    /// <summary>
+    /// Stores a fraction, which GStreamer reduces and normalises the sign of.
+    /// </summary>
+    /// <param name="content">The fraction to store.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The denominator is zero, or one of the two terms is
+    /// <see cref="int.MinValue"/>.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not hold a <c>GST_TYPE_FRACTION</c>.
+    /// </exception>
+    /// <remarks>
+    /// The three terms GStreamer refuses are refused here, because
+    /// <c>gst_value_set_fraction</c> reports them with a critical and a write
+    /// that never happens (<c>gstvalue.c:3079-3082</c>), leaving the value at
+    /// whatever it held before. What is stored is the reduced pair:
+    /// <c>2/100</c> reads back as <c>1/50</c>.
+    /// </remarks>
+    public void SetFraction(Gst.Fraction content)
+    {
+        content.RequireStorable(nameof(content));
+        Require(ValueAccess.FractionType);
+        GstNative.ValueSetFraction(ref NativeValue, content.Numerator, content.Denominator);
+    }
+
+    /// <summary>Reads a fraction.</summary>
+    /// <returns>The stored fraction, as GStreamer reduced it.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not hold a <c>GST_TYPE_FRACTION</c>.
+    /// </exception>
+    public readonly Gst.Fraction GetFraction() => ValueAccess.GetFraction(ref AsMutable());
 
     /// <summary>
     /// Stores an object. The value takes its own reference.
@@ -654,8 +691,9 @@ public struct Value : IDisposable
     /// </summary>
     /// <returns>
     /// The content: a primitive for the numeric types, a
-    /// <see cref="string"/>, an <see cref="Object"/> wrapper, or the raw
-    /// pointer for boxed, parameter, variant and pointer types.
+    /// <see cref="string"/>, an <see cref="Object"/> wrapper, a
+    /// <see cref="Gst.Fraction"/>, or the raw pointer for boxed, parameter,
+    /// variant and pointer types.
     /// </returns>
     public readonly object? GetContent() => ValueAccess.GetContent(ref AsMutable());
 
@@ -996,6 +1034,21 @@ public struct Value : IDisposable
     private void Fill(object? content, GType expected)
     {
         nuint fundamental = GObjectNative.TypeFundamental(expected.Value);
+
+        // GST_TYPE_FRACTION is a fundamental type GStreamer registers at run
+        // time: it is its own fundamental and has no number the switch below
+        // could name, so it is asked before it, and only for a fundamental GLib
+        // does not define.
+        if (fundamental > GType.VariantValue && expected == ValueAccess.FractionType)
+        {
+            if (content is Gst.Fraction fraction)
+            {
+                SetFraction(fraction);
+                return;
+            }
+
+            throw Mismatch(content, expected);
+        }
 
         // An interface that has GObject among its prerequisites holds an object
         // as well, and its values are collected the same way.

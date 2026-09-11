@@ -145,6 +145,13 @@ public ref struct ValueRef
     /// <returns>The stored value.</returns>
     public readonly uint GetFlags() => ValueAccess.GetFlags(ref _native);
 
+    /// <summary>Reads a fraction.</summary>
+    /// <returns>The stored fraction, as GStreamer reduced it.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not hold a <c>GST_TYPE_FRACTION</c>.
+    /// </exception>
+    public readonly Gst.Fraction GetFraction() => ValueAccess.GetFraction(ref _native);
+
     /// <summary>Reads an object.</summary>
     /// <returns>
     /// The wrapper of the stored object, or <see langword="null"/> when the
@@ -379,6 +386,27 @@ public ref struct ValueRef
     {
         Require(GType.Flags);
         GObjectNative.ValueSetFlags(ref _native, content);
+    }
+
+    /// <summary>Stores a fraction, which GStreamer reduces and normalises the sign of.</summary>
+    /// <param name="content">The fraction to store.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The denominator is zero, or one of the two terms is
+    /// <see cref="int.MinValue"/>. GStreamer answers all three with a critical
+    /// and a write that never happens, so they are refused here.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not already hold a fraction.
+    /// </exception>
+    public readonly void SetFraction(Gst.Fraction content)
+    {
+        content.RequireStorable(nameof(content));
+
+        // GST_TYPE_FRACTION has no compile time value: GStreamer registers it
+        // at run time, so the type to compare against is asked for rather than
+        // named.
+        Require(ValueAccess.FractionType);
+        GstNative.ValueSetFraction(ref _native, content.Numerator, content.Denominator);
     }
 
     /// <summary>Stores an object. The value takes its own reference.</summary>

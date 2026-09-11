@@ -25,6 +25,20 @@ namespace Gst.GObject;
 /// </remarks>
 internal static class ValueAccess
 {
+    /// <summary>
+    /// Gets <c>GST_TYPE_FRACTION</c>, the type a value that holds a
+    /// <see cref="Gst.Fraction"/> is initialised to.
+    /// </summary>
+    /// <remarks>
+    /// GStreamer registers the type as a fundamental of its own at run time, so
+    /// it has no compile time number, and it is asked for on every use rather
+    /// than cached in a static field: the call is a <c>g_once</c> around a
+    /// lookup, while a field initialiser would reach for the native library the
+    /// moment anything in this file is touched — including in a process that
+    /// never loaded GStreamer.
+    /// </remarks>
+    internal static GType FractionType => new(GstNative.FractionGetType());
+
     /// <summary>Reads a signed 8 bit integer.</summary>
     /// <param name="value">The value to read.</param>
     /// <returns>The stored value.</returns>
@@ -126,6 +140,32 @@ internal static class ValueAccess
     /// <param name="value">The value to read.</param>
     /// <returns>The stored <c>GVariant</c>.</returns>
     internal static nint GetVariant(ref GValueNative value) => GObjectNative.ValueGetVariant(ref value);
+
+    /// <summary>Reads a fraction.</summary>
+    /// <param name="value">The value to read.</param>
+    /// <returns>The stored fraction, as GStreamer reduced it.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not hold a <c>GST_TYPE_FRACTION</c>.
+    /// </exception>
+    /// <remarks>
+    /// The two halves are read separately because that is how GStreamer offers
+    /// them, and the type is asked before either: the numerator of a value of
+    /// another type is a GLib critical answered with a zero, which would come
+    /// back as the fraction <c>0/0</c> rather than as a failure.
+    /// </remarks>
+    internal static Gst.Fraction GetFraction(ref GValueNative value)
+    {
+        GType type = value.Type;
+        if (type != FractionType)
+        {
+            throw new InvalidOperationException(
+                $"A value of type {type.Name} does not hold a fraction.");
+        }
+
+        return new Gst.Fraction(
+            GstNative.ValueGetFractionNumerator(ref value),
+            GstNative.ValueGetFractionDenominator(ref value));
+    }
 
     /// <summary>
     /// Reads a boxed value as the wrapper of the binding, as a copy of the
@@ -248,6 +288,16 @@ internal static class ValueAccess
     {
         GType type = value.Type;
         nuint fundamental = GObjectNative.TypeFundamental(value.TypeValue);
+
+        // GST_TYPE_FRACTION is a fundamental type GStreamer registers at run
+        // time, so it is its own fundamental and carries no number the switch
+        // below could name. It is asked before it, and only when the value is
+        // of a fundamental GLib does not define, so a process that never loaded
+        // GStreamer never reaches the call.
+        if (fundamental > GType.VariantValue && type == FractionType)
+        {
+            return GetFraction(ref value);
+        }
 
         return fundamental switch
         {

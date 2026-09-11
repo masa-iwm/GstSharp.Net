@@ -55,6 +55,41 @@ internal static unsafe partial class GstNative
     internal static partial nuint ParamSpecArrayGetType();
 
     /// <summary>
+    /// Registers and answers <c>GST_TYPE_FRACTION</c>, the type a value that
+    /// holds a <see cref="Fraction"/> is initialised to. GStreamer registers it
+    /// as a fundamental type of its own at run time
+    /// (<c>gstvalue.c:9583</c>), so it has no compile time number and is asked
+    /// for rather than named.
+    /// </summary>
+    [LibraryImport("Gst", EntryPoint = "gst_fraction_get_type")]
+    internal static partial nuint FractionGetType();
+
+    /// <summary>
+    /// Reads the numerator of a value that holds a fraction.
+    /// </summary>
+    /// <param name="value">The value to read.</param>
+    /// <returns>The numerator.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_fraction_numerator")]
+    internal static partial int ValueGetFractionNumerator(ref Gst.GObject.GValueNative value);
+
+    /// <summary>
+    /// Reads the denominator of a value that holds a fraction.
+    /// </summary>
+    /// <param name="value">The value to read.</param>
+    /// <returns>The denominator.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_value_get_fraction_denominator")]
+    internal static partial int ValueGetFractionDenominator(ref Gst.GObject.GValueNative value);
+
+    /// <summary>
+    /// Stores a fraction, reduced and with its sign on the numerator.
+    /// </summary>
+    /// <param name="value">The value to write, which has to hold a fraction.</param>
+    /// <param name="numerator">The numerator.</param>
+    /// <param name="denominator">The denominator, which may not be zero.</param>
+    [LibraryImport("Gst", EntryPoint = "gst_value_set_fraction")]
+    internal static partial void ValueSetFraction(ref Gst.GObject.GValueNative value, int numerator, int denominator);
+
+    /// <summary>
     /// Builds the specification of a fraction property. The result is null when
     /// the default lies outside the range, which GStreamer reports through
     /// <c>g_critical</c> alone.

@@ -119,6 +119,13 @@ public readonly ref struct ValueView
     /// <returns>The stored value.</returns>
     public uint GetFlags() => ValueAccess.GetFlags(ref _native);
 
+    /// <summary>Reads a fraction.</summary>
+    /// <returns>The stored fraction, as GStreamer reduced it.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// The value does not hold a <c>GST_TYPE_FRACTION</c>.
+    /// </exception>
+    public Gst.Fraction GetFraction() => ValueAccess.GetFraction(ref _native);
+
     /// <summary>Reads an object.</summary>
     /// <returns>
     /// The wrapper of the stored object, or <see langword="null"/> when the
