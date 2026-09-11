@@ -466,6 +466,18 @@ public abstract unsafe partial class TimelineElement : Gst.GObject.InitiallyUnow
     /// all the specifications passed to
     /// ges_timeline_element_add_child_property().
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// GES sorts the block by property name before it hands it back
+    /// (ges-timeline-element.c:2260), so the array reads in ascending name order. Every
+    /// specification carries a reference of its own: the default implementation references each
+    /// one as it copies the registry of the element (ges-timeline-element.c:293-310) and the
+    /// in-tree callers unreference every element and free the block
+    /// (ges-track-element.c:1649-1652), which is what the wrappers do here. An element that
+    /// registered no child property answers an empty array rather than nothing
+    /// (ges-timeline-element.c:2255-2256).
+    /// </para>
+    /// </remarks>
     /// <returns>
     /// The specifications the call answers.
     /// Every specification is the caller's to dispose: a <c>ParamSpec</c> wrapper

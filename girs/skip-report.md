@@ -46,9 +46,10 @@ disappears shows up here as an added line.
 - `ges_track_element_set_child_property_valist`
 - `ges_track_set_create_element_for_gap_func`
 
-### OverlaySkip (2)
+### OverlaySkip (3)
 
 - `ges_deinit`
+- `ges_track_element_list_children_properties`
 - `ges_track_element_lookup_child`
 
 ### OwningProperty (2)
@@ -1236,9 +1237,9 @@ managed surface and not the ABI.
 - `GES.TimelineElement::list_children_properties` — UnsupportedSignature
 - `GES.TimelineElement::lookup_child` — UnsupportedSignature
 - `GES.TimelineElement::set_child_property` — UnsupportedSignature
-- `GES.TimelineElement::set_child_property_full` — UnsupportedSignature
-- `GES.TrackElement::list_children_properties` — UnsupportedSignature
-- `GES.TrackElement::lookup_child` — UnsupportedSignature
+- `GES.TimelineElement::set_child_property_full` — the slot is throws="1" and PlanVirtualMethod refuses every throwing slot outright (MarshalPlanner.cs:4941-4945): carrying a GError back out of a managed override is a contract of its own that no slot of the corpus has yet, and the base class falls back to set_child_property when the slot is NULL (ges-timeline-element.c:828-836), so OnSetChildProperty is reached from every public setter in the meantime
+- `GES.TrackElement::list_children_properties` — the deprecated slot (Deprecated: 1.14) is dead: nothing in the 1.28 tree assigns it and nothing calls through it (the only list_children_properties slot ges reads is the timeline-element one, ges-timeline-element.c:650), so an override of it would never run
+- `GES.TrackElement::lookup_child` — the deprecated slot (Deprecated: 1.14) is assigned once, to a forwarder onto the timeline-element slot (ges-track-element.c:137-143, :497), and no code in ges calls through it; an OnLookupChild on the track element mirror would also hide the live inherited one, which is the steering hazard the deprecated method twin is skipped for
 - `GES.VideoSource::create_filters` — OpaqueSlot
 - `GES.VideoSource::create_source` — OpaqueSlot
 - `GES.VideoSource::get_natural_size` — OpaqueSlot
