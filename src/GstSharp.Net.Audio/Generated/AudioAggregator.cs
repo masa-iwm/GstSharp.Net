@@ -254,6 +254,34 @@ public abstract unsafe partial class AudioAggregator : Gst.Base.Aggregator
         }
     }
 
+    /// <summary>Output block size in nanoseconds, expressed as a fraction.</summary>
+    /// <remarks>
+    /// <para>
+    /// This property has no C accessor; it is read and written through the GObject
+    /// property system (<c>g_object_get_property</c> / <c>g_object_set_property</c>).
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <exception cref="System.ArgumentException">
+    /// The installed GStreamer declares no such property on this class, or
+    /// declares it read-only.
+    /// </exception>
+    public Gst.Fraction OutputBufferDurationFraction
+    {
+        get
+        {
+            using Gst.GObject.Value holder = GetProperty("output-buffer-duration-fraction");
+            return holder.GetFraction();
+        }
+
+        set
+        {
+            using Gst.GObject.Value holder = NewPropertyValue("output-buffer-duration-fraction");
+            holder.SetFraction(value);
+            SetPropertyValue("output-buffer-duration-fraction", in holder);
+        }
+    }
+
     /// <summary>The <c>gst_audio_aggregator_set_sink_caps</c> entry point.</summary>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_aggregator_set_sink_caps")]
     private static partial void GstAudioAggregatorSetSinkCaps(nint aagg, nint pad, nint caps);

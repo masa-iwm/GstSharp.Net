@@ -646,9 +646,8 @@ disappears shows up here as an added line.
 - `gst_dsd_info_from_caps`
 - `gst_dsd_info_init`
 
-### UnsupportedSignature (4)
+### UnsupportedSignature (3)
 
-- `GstAudio.AudioAggregator:output-buffer-duration-fraction`
 - `gst_audio_ring_buffer_set_callback_full`
 - `gst_audio_ring_buffer_set_channel_positions`
 - `gst_dsd_convert`

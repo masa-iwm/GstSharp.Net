@@ -881,10 +881,15 @@ internal sealed class SurfaceBuilder
     /// about each property rather than about the width of its value.
     /// </para>
     /// <para>
-    /// Everything the table does not name is left out: a fundamental such as
-    /// <c>GstFraction</c>, an array, a nested <c>GValue</c>, a bare pointer and
-    /// every container. Each of them needs a projection that the value
-    /// accessors of the runtime do not have.
+    /// <c>Gst.Fraction</c> is named there as well, and it is the one entry that
+    /// is not a GLib type: GStreamer registers <c>GST_TYPE_FRACTION</c> as a
+    /// fundamental of its own, and the runtime reads and writes it through the
+    /// <c>Gst.Fraction</c> pair.
+    /// </para>
+    /// <para>
+    /// Everything the table does not name is left out: an array, a nested
+    /// <c>GValue</c>, a bare pointer and every container. Each of them needs a
+    /// projection that the value accessors of the runtime do not have.
     /// </para>
     /// </remarks>
     /// <param name="property">The property to map.</param>
@@ -928,6 +933,15 @@ internal sealed class SurfaceBuilder
                     "Gst.GObject.GType",
                     "holder.GetGType()",
                     "holder.SetGType(value);",
+                    ValueOwnership.Plain);
+            // The one fundamental of GStreamer's own that a property carries.
+            // Its value is a pair of integers rather than a pointer, so it
+            // owns nothing and travels as the plain struct of the runtime.
+            case "Gst.Fraction":
+                return new ValueAccess(
+                    "Gst.Fraction",
+                    "holder.GetFraction()",
+                    "holder.SetFraction(value);",
                     ValueOwnership.Plain);
             default:
                 break;

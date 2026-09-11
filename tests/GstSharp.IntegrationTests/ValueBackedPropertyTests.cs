@@ -299,6 +299,38 @@ public sealed class ValueBackedPropertyTests
     }
 
     /// <summary>
+    /// The fraction property of an audio mixer: the pair goes in as it was
+    /// written and comes back reduced, because GStreamer divides it by its
+    /// greatest common divisor on the way into the value.
+    /// </summary>
+    /// <remarks>
+    /// <c>output-buffer-duration-fraction</c> is the only property of the
+    /// vendored gir files whose value type is <c>GST_TYPE_FRACTION</c>, and its
+    /// default is the <c>1/100</c> second the C installs.
+    /// </remarks>
+    [RequiresElementFact("audiomixer")]
+    public void AFractionPropertyRoundTripsReduced()
+    {
+        GstAudio.Initialize();
+        using Element element = Assert.IsAssignableFrom<Element>(ElementFactory.Make("audiomixer", "fraction"));
+        AudioAggregator mixer = Assert.IsAssignableFrom<AudioAggregator>(element);
+
+        Assert.Equal(new Fraction(1, 100), mixer.OutputBufferDurationFraction);
+
+        mixer.OutputBufferDurationFraction = new Fraction(2, 100);
+        Assert.Equal(new Fraction(1, 50), mixer.OutputBufferDurationFraction);
+
+        // The same property by name, which is the route an application takes
+        // for a property no binding covers: the content crosses as the pair.
+        mixer.SetProperty("output-buffer-duration-fraction", new Fraction(1, 25));
+        Assert.Equal(new Fraction(1, 25), mixer.OutputBufferDurationFraction);
+        Assert.Equal(new Fraction(1, 25), mixer.GetProperty<Fraction>("output-buffer-duration-fraction"));
+
+        using Gst.GObject.Value held = mixer.GetProperty("output-buffer-duration-fraction");
+        Assert.Equal(new Fraction(1, 25), Assert.IsType<Fraction>(held.GetContent()));
+    }
+
+    /// <summary>
     /// The <c>name</c> property of a control binding is emitted as
     /// <c>PropertyName</c>, because it holds the name of the controlled
     /// property and not the name of the binding, which
