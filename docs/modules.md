@@ -404,3 +404,15 @@ asserts the crossing the hierarchy makes possible: the same source handed to
    offset derivation written next to it and an integration test that drives the
    library into a state the field reflects on every CI leg (`AudioRingBufferHeadRaw`
    and the acquire probe are the model).
+10. A zero terminated `Record**` return that comes with a free of its own is
+    hand bound. Walk to the terminator, and wrap every element with the
+    transfer the C dictates: a deep boxed copy when one free releases the whole
+    block and its elements together, an adoption when every element was
+    allocated on its own and the boxed free of the type is exactly what
+    releases it. Free the block once, in a `finally`, and free the tail nothing
+    has adopted yet when the walk throws part way through — the wrappers
+    already built free their own. The gir states none of this: an array with no
+    length reads as zero terminated, so what refuses the shape is the element
+    type, and nothing in it names the free of the block
+    (`RTSPMessage.ParseAuthCredentials` and `WebRTCICE.GetLocalCandidates` are
+    the two forms).

@@ -287,6 +287,19 @@ describing what it described. The caller owns the result exactly as it owns a
 reference of its own. Disposing it before the slot returns would leave the
 container with nothing.
 
+A property getter can hand out a **floating** `GObject` as well, when the owner
+that created it never sank it. As of 1.28 `webrtcbin` builds its ICE agent with
+`g_object_new` and never calls `gst_object_ref_sink` on it, so the one
+reference the element holds for its `ice-agent` property is still the floating
+one, which GObject defines as owned by nobody. The binding does what it does
+everywhere and sinks the handle, after which the wrapper owns the only
+reference that exists. A caller of such a property must not dispose that
+wrapper while the owner is still using the object, and can hand the owner back
+the reference it should have taken with one `g_object_ref` that is never
+released; `tests/GstSharp.IntegrationTests/WebRTCICECandidateTests.cs` is the
+worked example, with the compensation documented beside the read and removable
+the day upstream sinks the agent.
+
 `Object.As<T>()` owns nothing of its own. When the wrapper class does not
 declare the interface, the cast hands back a small view that holds a strong
 reference to the wrapper it came from and reads the handle through it, so the

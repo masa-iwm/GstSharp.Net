@@ -9,9 +9,10 @@ namespace Gst.Rtsp;
 /// </content>
 /// <remarks>
 /// <c>gst_rtsp_message_parse_auth_credentials</c> answers a NULL terminated
-/// <c>GstRTSPAuthCredential**</c> and the gir states neither a length nor a
-/// zero termination on it, so the planner has no shape for the return; the
-/// block is also released by <c>gst_rtsp_auth_credentials_free</c> alone,
+/// <c>GstRTSPAuthCredential**</c>. The gir states no length and no zero
+/// termination on it, which the reader defaults to zero terminated, so what
+/// leaves the return without a shape is the element: a boxed record is not a
+/// blittable value the planner marshals. The block is also released by <c>gst_rtsp_auth_credentials_free</c> alone,
 /// which walks it to the terminator and frees every credential with a free
 /// that is static in C and reachable only through the boxed type. The member
 /// below is therefore the whole binding of both symbols: it copies what it

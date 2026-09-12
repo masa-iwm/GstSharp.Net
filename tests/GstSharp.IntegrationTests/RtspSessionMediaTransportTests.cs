@@ -27,6 +27,16 @@ namespace GstSharp.IntegrationTests;
 /// while this thread iterates that context, the same pump the server tests
 /// use: a blocking wait here would stop the very loop the preparation needs.
 /// </para>
+/// <para>
+/// The preparation is bounded twice over - the pump below gives up after its
+/// own deadline and <c>gst_rtsp_media_prepare</c> gives up after twenty
+/// seconds of its own - so a failure here is red rather than a hang. What a
+/// failed preparation does leave behind is the bus watch it attached to the
+/// default main context, which every later test of this collection then
+/// carries; the server tests run their own <c>MainContext</c> and are not
+/// affected. That is accepted for as long as <c>GstRTSPThread</c> has no
+/// managed spelling.
+/// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
 public sealed class RtspSessionMediaTransportTests
@@ -35,7 +45,7 @@ public sealed class RtspSessionMediaTransportTests
     /// One payloader, so the media collects exactly one stream and the array
     /// has exactly one slot.
     /// </summary>
-    private const string Launch = "( videotestsrc ! rtpvrawpay pt=96 name=pay0 )";
+    private const string Launch = "( audiotestsrc ! audioconvert ! rtpL16pay name=pay0 pt=96 )";
 
     /// <summary>How long a preparation or an unpreparation may take.</summary>
     private static readonly System.TimeSpan Deadline = System.TimeSpan.FromSeconds(30);
@@ -46,7 +56,7 @@ public sealed class RtspSessionMediaTransportTests
     /// one reference for the caller and the elements stay the session's, so a
     /// second read is not a second release.
     /// </summary>
-    [RequiresElementFact("videotestsrc", "rtpvrawpay")]
+    [RequiresElementFact("rtpL16pay")]
     public void ASessionMediaAnswersOneEmptySlotPerStreamBeforeSetup()
     {
         using RTSPMediaFactory factory = RTSPMediaFactory.New();
@@ -124,6 +134,11 @@ public sealed class RtspSessionMediaTransportTests
                 if (done())
                 {
                     return true;
+                }
+
+                if (System.DateTime.UtcNow >= end)
+                {
+                    return false;
                 }
             }
 

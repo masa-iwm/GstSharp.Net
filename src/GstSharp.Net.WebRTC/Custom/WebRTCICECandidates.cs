@@ -11,9 +11,12 @@ namespace Gst.WebRTC;
 /// </content>
 /// <remarks>
 /// Both entry points answer a NULL terminated
-/// <c>GstWebRTCICECandidateStats**</c> and the gir states neither a length nor
-/// a zero termination on the return, so the planner has no shape for either.
-/// The two frees differ as well: every element was allocated on its own and is
+/// <c>GstWebRTCICECandidateStats**</c>, and what the planner has no shape for
+/// is not the termination - the gir states no length and no zero termination,
+/// which the reader defaults to zero terminated - but the element: a boxed
+/// record is not a blittable value it marshals, and no annotation can say
+/// that the block and its elements are freed by different frees.
+/// The two frees do differ: every element was allocated on its own and is
 /// released by <c>gst_webrtc_ice_candidate_stats_free</c>, which is the boxed
 /// free of the type, while the block that holds them is a plain buffer the
 /// caller releases with <c>g_free</c>. The members below are the whole binding

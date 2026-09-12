@@ -46,14 +46,21 @@ public sealed class WebRTCICECandidateTests
 
         using WebRTCICE ice = webrtc.GetProperty<WebRTCICE>("ice-agent");
 
-        // webrtcbin builds its agent with g_object_new and keeps the floating
-        // reference that comes out of it, without ever sinking one
-        // (gstwebrtcbin.c: the agent is built in constructed and released with
-        // gst_object_unref in dispose). Wrapping the object sinks that
-        // reference into the wrapper, which leaves the element holding a
-        // pointer it no longer owns, so the reference the element is counted
-        // on to have is handed back here. It is deliberately never released:
-        // gst_webrtc_bin_dispose is what releases it.
+        // webrtcbin creates its ICE agent with g_object_new and never sinks
+        // it. It is built in constructed out of gst_webrtc_nice_new
+        // (gstwebrtcbin.c:9069), which is a bare g_object_new
+        // (nice.c:1935), and unlike every other child the element owns it is
+        // never handed to gst_object_ref_sink, while dispose releases it with
+        // gst_object_unref (gstwebrtcbin.c:9092). The one reference the
+        // element holds is therefore still the floating one, which GObject
+        // defines as owned by nobody. Reading the property adds a temporary
+        // reference of its own, the binding sinks the floating handle into the
+        // wrapper as it must, and once that temporary reference is dropped the
+        // wrapper holds the only reference there is. The g_object_ref below
+        // restores the reference webrtcbin should have taken, and is
+        // deliberately never released, because gst_webrtc_bin_dispose is what
+        // releases it. Remove it when upstream sinks the agent: it is then one
+        // leaked object per run.
         Gst.Interop.GObjectNative.ObjectRef(ice.Handle);
 
         using WebRTCICEStream? stream = ice.AddStream(1);
@@ -64,13 +71,18 @@ public sealed class WebRTCICECandidateTests
             WebRTCICECandidateStats[] local = ice.GetLocalCandidates(stream);
             WebRTCICECandidateStats[] remote = ice.GetRemoteCandidates(stream);
 
-            Assert.NotNull(local);
-            Assert.NotNull(remote);
+            // Nothing has gathered and no peer has answered, so both listings
+            // are the empty array the walk produces for a block that holds
+            // nothing but its terminator. That is the whole measurement here:
+            // a candidate of a peer, handed in by name, is not visible to the
+            // agent until it has gathered, so there is no non-empty answer
+            // this test can produce without a network.
+            Assert.Empty(local);
+            Assert.Empty(remote);
 
-            // A stream that has gathered nothing answers the empty array, and
-            // one that has gathered answers candidates the caller owns; both
-            // are a pass, and disposing what came back is what the ownership
-            // of the elements means.
+            // Disposing what came back is what the ownership of the elements
+            // means, and the second round is what says releasing the block did
+            // not take the state of the agent with it.
             foreach (WebRTCICECandidateStats candidate in local)
             {
                 candidate.Dispose();
