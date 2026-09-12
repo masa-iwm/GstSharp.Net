@@ -508,6 +508,9 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _consumedDocNotes;
     private readonly HashSet<string> _consumedSignalDocNotes;
 
+    /// <summary>The keys of the precondition entries this run has emitted.</summary>
+    private readonly HashSet<string> _consumedPreconditions;
+
     /// <summary>The sibling argument keys this run has matched, shared for the same reason.</summary>
     private readonly HashSet<string> _consumedSiblingArguments;
 
@@ -567,6 +570,10 @@ internal sealed class MarshalPlanner
     /// The set the signal documentation notes that were attached are recorded
     /// in, shared for the same reason.
     /// </param>
+    /// <param name="consumedPreconditions">
+    /// The set the precondition entries that were emitted are recorded in,
+    /// shared for the same reason.
+    /// </param>
     /// <param name="consumedSiblingArguments">
     /// The set the sibling argument entries that matched a parameter of the
     /// shape they describe are recorded in, shared for the same reason.
@@ -588,6 +595,7 @@ internal sealed class MarshalPlanner
         HashSet<string>? consumedInstanceKeyedCallbacks = null,
         HashSet<string>? consumedDocNotes = null,
         HashSet<string>? consumedSignalDocNotes = null,
+        HashSet<string>? consumedPreconditions = null,
         HashSet<string>? consumedSiblingArguments = null,
         HashSet<string>? lentOpaqueRecords = null)
     {
@@ -606,6 +614,8 @@ internal sealed class MarshalPlanner
         _consumedDocNotes = consumedDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedSignalDocNotes =
             consumedSignalDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedPreconditions =
+            consumedPreconditions ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedSiblingArguments =
             consumedSiblingArguments ?? new HashSet<string>(StringComparer.Ordinal);
         _lentOpaqueRecords = lentOpaqueRecords ?? new HashSet<string>(StringComparer.Ordinal);
@@ -882,6 +892,7 @@ internal sealed class MarshalPlanner
                 ? AnnotationOverrideFor(annotationKey)?.Obsolete
                 : null,
             DocNote = DocNoteFor(callable.CIdentifier),
+            Preconditions = PreconditionsFor(callable.CIdentifier),
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
             InstanceConsumption = consumption,
             InstanceIsBorrowable = context.OwnerKind == TypeKind.MiniObject,
@@ -1505,6 +1516,24 @@ internal sealed class MarshalPlanner
 
         _consumedDocNotes.Add(cIdentifier);
         return note;
+    }
+
+    /// <summary>
+    /// Reads the statements the body of a callable opens with, and records that
+    /// the entry was emitted.
+    /// </summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable, when it has one.</param>
+    /// <returns>The statements, or an empty list.</returns>
+    private IReadOnlyList<string> PreconditionsFor(string? cIdentifier)
+    {
+        if (cIdentifier is null
+            || !_overlays.TryGetPreconditions(cIdentifier, out IReadOnlyList<string>? statements))
+        {
+            return [];
+        }
+
+        _consumedPreconditions.Add(cIdentifier);
+        return statements;
     }
 
     /// <summary>Reads the documentation note of a signal, and records that it was read.</summary>

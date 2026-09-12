@@ -156,6 +156,36 @@ internal sealed class ArrayOverride
 }
 
 /// <summary>
+/// The statements the generated body of a callable runs before it marshals
+/// anything.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The generator does not read the statements: it writes them out verbatim, in
+/// the order they are given, between the argument guards and the first
+/// marshalling statement of the body. What validates them is the C# compiler,
+/// and that is the contract of the overlay - the helper a statement calls is
+/// hand written in the <c>Custom/</c> partial of the type that carries the
+/// member, so a statement that names nothing fails the build rather than
+/// quietly guarding nothing.
+/// </para>
+/// <para>
+/// The position is what the entry buys: a guard that throws has to find
+/// nothing allocated yet, so it stands after the null checks - which is what
+/// lets a statement dereference the very parameter it validates - and before
+/// the first <c>stackalloc</c>, scope or handle read.
+/// </para>
+/// </remarks>
+internal sealed class Precondition
+{
+    /// <summary>
+    /// Gets or sets the statements, each of which is written on a line of its
+    /// own. The list may not be empty, and no element of it may be blank.
+    /// </summary>
+    public List<string>? Statements { get; set; }
+}
+
+/// <summary>
 /// A record field the ledger must not count as a missing binding, because
 /// something else already hands the same value out.
 /// </summary>
@@ -403,6 +433,16 @@ internal sealed class PlatformSupport
 /// that neither the gir nor the marshalling states. It is the key the nullable
 /// signal argument overrides use without the <c>#argument</c>
 /// suffix.</description></item>
+/// <item><description><c>preconditions</c>: <c>c:identifier</c> of a callable
+/// mapped onto the C# statements the generated body runs before it marshals
+/// anything, after the argument guards. They are emitted verbatim and in the
+/// order they are written, and the C# compiler is what validates them: the
+/// helper each one calls is hand written in the <c>Custom/</c> partial of the
+/// type that carries the member, so a statement that names nothing is a build
+/// failure rather than a silent omission. It is how a member whose C
+/// dereferences what it must not - the meta adders that use the NULL
+/// gst_buffer_add_meta answers for a shared buffer - refuses the call instead
+/// of crashing the process.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -437,6 +477,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _instanceKeyedCallbacks;
     private readonly Dictionary<string, string> _docNotes;
     private readonly Dictionary<string, string> _signalDocNotes;
+    private readonly Dictionary<string, IReadOnlyList<string>> _preconditions;
 
     private Overlays(
         HashSet<string> skip,
@@ -461,7 +502,8 @@ internal sealed class Overlays
         Dictionary<string, string> vfuncFailureValues,
         Dictionary<string, string> instanceKeyedCallbacks,
         Dictionary<string, string> docNotes,
-        Dictionary<string, string> signalDocNotes)
+        Dictionary<string, string> signalDocNotes,
+        Dictionary<string, IReadOnlyList<string>> preconditions)
     {
         _skip = skip;
         _handBound = handBound;
@@ -486,6 +528,7 @@ internal sealed class Overlays
         _instanceKeyedCallbacks = instanceKeyedCallbacks;
         _docNotes = docNotes;
         _signalDocNotes = signalDocNotes;
+        _preconditions = preconditions;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -512,7 +555,8 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
-        new Dictionary<string, string>(StringComparer.Ordinal));
+        new Dictionary<string, string>(StringComparer.Ordinal),
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -606,6 +650,9 @@ internal sealed class Overlays
 
     /// <summary>Gets the signals that carry a hand written note in their documentation.</summary>
     internal IReadOnlyCollection<string> SignalDocNoteKeys => _signalDocNotes.Keys;
+
+    /// <summary>Gets the callables whose generated body opens with hand written statements.</summary>
+    internal IReadOnlyCollection<string> PreconditionKeys => _preconditions.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -752,6 +799,34 @@ internal sealed class Overlays
             signalDocNotes[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, IReadOnlyList<string>> preconditions = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, Precondition> entry in fixups.Preconditions ?? [])
+        {
+            // An entry with nothing to emit would be a key that reads as a
+            // guard and guards nothing, which is worse than no entry at all:
+            // the stale key report would stay silent about it, because the key
+            // is consumed by the very member it leaves unguarded.
+            if (entry.Value.Statements is not { Count: > 0 } statements)
+            {
+                throw new InvalidDataException(
+                    $"The precondition entry '{entry.Key}' declares no statements; "
+                    + "a precondition without a statement guards nothing.");
+            }
+
+            // A blank element is the same silence one entry further in: it
+            // writes an empty line and guards nothing. A null one is worse,
+            // because the writer reads its length and the failure names no key
+            // at all.
+            if (statements.Any(static statement => string.IsNullOrWhiteSpace(statement)))
+            {
+                throw new InvalidDataException(
+                    $"The precondition entry '{entry.Key}' declares a blank statement; "
+                    + "a precondition without a statement guards nothing.");
+            }
+
+            preconditions[entry.Key] = [.. statements];
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -781,7 +856,8 @@ internal sealed class Overlays
             vfuncFailureValues,
             instanceKeyedCallbacks,
             docNotes,
-            signalDocNotes);
+            signalDocNotes,
+            preconditions);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -1021,6 +1097,18 @@ internal sealed class Overlays
     internal bool TryGetSignalDocNote(string key, [NotNullWhen(true)] out string? note) =>
         _signalDocNotes.TryGetValue(key, out note);
 
+    /// <summary>
+    /// Looks up the statements the generated body of a callable runs before it
+    /// marshals anything.
+    /// </summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable.</param>
+    /// <param name="statements">Receives the statements, in the order they are written.</param>
+    /// <returns>Whether the callable carries preconditions.</returns>
+    internal bool TryGetPreconditions(
+        string cIdentifier,
+        [NotNullWhen(true)] out IReadOnlyList<string>? statements) =>
+        _preconditions.TryGetValue(cIdentifier, out statements);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -1084,6 +1172,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? DocNotes { get; set; }
 
         public Dictionary<string, string>? SignalDocNotes { get; set; }
+
+        public Dictionary<string, Precondition>? Preconditions { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

@@ -815,14 +815,24 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Each of the five names an overlay entry that matched nothing: an
+        // Each of the eight names an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
         // field of an emitted record (GEN0025), a field annotation that
-        // corrected no field (GEN0026). Every one of them describes a gir that
-        // has moved on, and every one of them is a warning, which the verbs do
-        // not fail on - so this is what holds the committed overlays to them.
+        // corrected no field (GEN0026), a documentation note on no rendered
+        // callable (GEN0042) or on no rendered signal (GEN0048), and a
+        // precondition on no rendered callable (GEN0049). Every one of them
+        // describes a gir that has moved on, and every one of them is a
+        // warning, which the verbs do not fail on - so this is what holds the
+        // committed overlays to them.
+        //
+        // GEN0049 is the one with teeth. A key a gir refresh renamed stops
+        // being applied, the member is regenerated without the statement that
+        // kept it off a NULL dereference or off a bus that cannot deliver, and
+        // nothing else moves: the helper in Custom/ is still there, so the
+        // build stays warning free, and verify is clean the moment the new
+        // output is committed.
         //
         // GEN0026 is the one that goes wrong most quietly. A stale
         // 'nullable: false' key - a field a gir refresh renamed or removed -
@@ -838,6 +848,9 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0024", diagnostic.Code);
             Assert.NotEqual("GEN0025", diagnostic.Code);
             Assert.NotEqual("GEN0026", diagnostic.Code);
+            Assert.NotEqual("GEN0042", diagnostic.Code);
+            Assert.NotEqual("GEN0048", diagnostic.Code);
+            Assert.NotEqual("GEN0049", diagnostic.Code);
         }
     }
 

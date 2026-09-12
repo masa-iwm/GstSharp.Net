@@ -100,6 +100,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedInstanceKeyedCallbacks = new(StringComparer.Ordinal);
         HashSet<string> consumedDocNotes = new(StringComparer.Ordinal);
         HashSet<string> consumedSignalDocNotes = new(StringComparer.Ordinal);
+        HashSet<string> consumedPreconditions = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
         HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
 
@@ -137,6 +138,7 @@ internal static class GenerationPipeline
                     consumedInstanceKeyedCallbacks,
                     consumedDocNotes,
                     consumedSignalDocNotes,
+                    consumedPreconditions,
                     consumedSiblingArguments,
                     lentOpaqueRecords,
                     subclasses,
@@ -245,6 +247,30 @@ internal static class GenerationPipeline
             diagnostics.Warn(
                 "GEN0048",
                 $"The documentation note '{key}' names no planned signal; the entry is stale.");
+        }
+
+        // A precondition is consumed where the callable it guards was
+        // rendered, so a key nothing consumed guards nothing: a misspelled
+        // c:identifier, one the overlays skip, one a hand written member
+        // replaced, or one that names a slot or a signal rather than a
+        // callable. The member it was written for would go on calling the C
+        // that the entry exists to keep it out of.
+        List<string> stalePreconditions = [];
+        foreach (string key in overlays.PreconditionKeys)
+        {
+            if (!consumedPreconditions.Contains(key))
+            {
+                stalePreconditions.Add(key);
+            }
+        }
+
+        stalePreconditions.Sort(StringComparer.Ordinal);
+        foreach (string key in stalePreconditions)
+        {
+            diagnostics.Warn(
+                "GEN0049",
+                $"The preconditions of '{key}' name a callable that was not rendered by this run; "
+                + "the entry is stale.");
         }
 
         // A sibling argument entry is only consumed where it named the shape it
@@ -420,6 +446,7 @@ internal static class GenerationPipeline
             shared.ConsumedInstanceKeyedCallbacks,
             shared.ConsumedDocNotes,
             shared.ConsumedSignalDocNotes,
+            shared.ConsumedPreconditions,
             shared.ConsumedSiblingArguments,
             shared.LentOpaqueRecords);
 
@@ -550,6 +577,10 @@ internal static class GenerationPipeline
     /// The keys of the signal documentation notes the run has attached, shared
     /// for the same reason.
     /// </param>
+    /// <param name="ConsumedPreconditions">
+    /// The keys of the precondition entries the run has emitted, shared for
+    /// the same reason.
+    /// </param>
     /// <param name="ConsumedSiblingArguments">
     /// The keys of the sibling argument entries the run has matched, shared
     /// for the same reason.
@@ -574,6 +605,7 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedInstanceKeyedCallbacks,
         HashSet<string> ConsumedDocNotes,
         HashSet<string> ConsumedSignalDocNotes,
+        HashSet<string> ConsumedPreconditions,
         HashSet<string> ConsumedSiblingArguments,
         HashSet<string> LentOpaqueRecords,
         SubclassModel Subclasses,

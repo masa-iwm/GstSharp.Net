@@ -694,6 +694,19 @@ internal sealed class MarshalPlan
     /// </summary>
     internal string? DocNote { get; init; }
 
+    /// <summary>
+    /// Gets the hand written statements the body runs before it marshals
+    /// anything, in the order they are written.
+    /// </summary>
+    /// <remarks>
+    /// They stand between the argument guards and the first marshalling
+    /// statement: a precondition that throws has to find nothing allocated
+    /// yet, and it has to run after the null checks so that it may read the
+    /// parameter it refuses. The generator writes them out verbatim; the C#
+    /// compiler is what validates them.
+    /// </remarks>
+    internal IReadOnlyList<string> Preconditions { get; init; } = [];
+
     /// <summary>Gets the C# type of the instance, for an extension method.</summary>
     internal string? InstanceType { get; init; }
 

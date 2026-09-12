@@ -1962,6 +1962,8 @@ internal static class CallableRenderer
                 WriteGuard(writer, plan, argument);
             }
 
+            WritePreconditions(writer, plan);
+
             foreach (ArgumentPlan argument in plan.Arguments)
             {
                 WriteHandleLocal(writer, plan, argument);
@@ -1997,6 +1999,26 @@ internal static class CallableRenderer
                 {
                     WritePrologue(writer, plan, argument);
                 }
+            }
+        }
+        else if (plan.Preconditions.Count > 0)
+        {
+            // The overlay buys a position, so the one pass prologue is split
+            // into its two halves here rather than everywhere: the statements
+            // stand after every guard and before the first marshalling
+            // statement. Splitting it for a member that carries no
+            // precondition would rewrite bodies for nothing, which is why the
+            // interleaved pass below is kept as it is.
+            foreach (ArgumentPlan argument in plan.Arguments)
+            {
+                WriteGuard(writer, plan, argument);
+            }
+
+            WritePreconditions(writer, plan);
+
+            foreach (ArgumentPlan argument in plan.Arguments)
+            {
+                WritePrologue(writer, plan, argument);
             }
         }
         else
@@ -2464,6 +2486,29 @@ internal static class CallableRenderer
     /// <returns>The expression to read.</returns>
     private static string InstanceHandle(MarshalPlan plan, string name) =>
         plan.Form == CallableForm.ExtensionMethod ? name + ".Handle" : "Handle";
+
+    /// <summary>
+    /// Writes the hand written statements the body opens with, if the overlays
+    /// gave the member any.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <remarks>
+    /// The statements are written out verbatim and in the order they were
+    /// given. They stand after every argument guard, so that one may read the
+    /// parameter it refuses, and before the first marshalling statement, so
+    /// that one which throws finds nothing allocated. The generator validates
+    /// nothing about them: the helper each one calls is hand written beside the
+    /// generated member, and the C# compiler is what reports a statement that
+    /// names nothing.
+    /// </remarks>
+    private static void WritePreconditions(CodeWriter writer, MarshalPlan plan)
+    {
+        foreach (string statement in plan.Preconditions)
+        {
+            writer.WriteLine(statement);
+        }
+    }
 
     /// <summary>
     /// Writes the validation guards of one argument, which every prologue puts
