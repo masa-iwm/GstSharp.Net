@@ -48,30 +48,6 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
     internal static VideoVBIParser? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
-    /// <summary>Create a new #GstVideoVBIParser for the specified @format and @pixel_width.</summary>
-    /// <param name="format">a #GstVideoFormat</param>
-    /// <param name="pixelWidth">The width in pixel to use</param>
-    /// <returns>
-    /// The new #GstVideoVBIParser or %NULL if the @format and/or @pixel_width
-    /// is not supported.
-    /// </returns>
-    public static Gst.Video.VideoVBIParser? New(Gst.Video.VideoFormat format, uint pixelWidth)
-    {
-        nint nativeResult = GstVideoVbiParserNew((int)format, pixelWidth);
-        return Gst.Video.VideoVBIParser.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
-    /// <summary>The <c>gst_video_vbi_parser_copy</c> function.</summary>
-    /// <returns>The result of <c>gst_video_vbi_parser_copy</c>.</returns>
-    public Gst.Video.VideoVBIParser Copy()
-    {
-        nint nativeResult = GstVideoVbiParserCopy(Handle);
-        Gst.Video.VideoVBIParser result = Gst.Video.VideoVBIParser.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_video_vbi_parser_copy returned no value.");
-        System.GC.KeepAlive(this);
-        return result;
-    }
-
     /// <summary>Parse the line provided previously by gst_video_vbi_parser_add_line().</summary>
     /// <param name="anc">a #GstVideoAncillary to start the eventual ancillary data</param>
     /// <returns>
@@ -88,14 +64,6 @@ public sealed unsafe partial class VideoVBIParser : Gst.GObject.Boxed
         System.GC.KeepAlive(this);
         return result;
     }
-
-    /// <summary>The <c>gst_video_vbi_parser_new</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_parser_new")]
-    private static partial nint GstVideoVbiParserNew(int format, uint pixelWidth);
-
-    /// <summary>The <c>gst_video_vbi_parser_copy</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_parser_copy")]
-    private static partial nint GstVideoVbiParserCopy(nint parser);
 
     /// <summary>The <c>gst_video_vbi_parser_get_ancillary</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_parser_get_ancillary")]

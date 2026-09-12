@@ -175,7 +175,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstBase", 11, 4, 0, 7, 0, 176, 31, 2, 10)]
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 1, 2, 212, 33, 0, 48)]
-    [InlineData("GstVideo", 12, 42, 5, 0, 10, 382, 14, 2, 122)]
+    [InlineData("GstVideo", 12, 42, 5, 0, 10, 378, 14, 2, 122)]
     [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 166, 0, 0, 51)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 8, 21)]
@@ -222,7 +222,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstBase", 0, 11, 0, 20, 3, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 0, 1)]
     [InlineData("GstAudio", 0, 22, 0, 7, 3, 0)]
-    [InlineData("GstVideo", 0, 96, 1, 6, 5, 0)]
+    [InlineData("GstVideo", 0, 96, 1, 6, 3, 0)]
     [InlineData("GstPbutils", 0, 1, 0, 0, 2, 0)]
     [InlineData("GstSdp", 0, 8, 0, 0, 2, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 2, 0)]
@@ -610,13 +610,19 @@ public sealed class ClassEmitterTests
         // and in any module.
         Assert.Contains("### HandBound (66)\n", report, StringComparison.Ordinal);
         Assert.Contains(
-            "### HandBound (6)\n\n"
+            "### HandBound (12)\n\n"
             + "- `gst_buffer_add_video_gl_texture_upload_meta`\n"
             + "- `gst_video_codec_frame_set_user_data`\n"
             + "- `gst_video_frame_map`\n"
             + "- `gst_video_frame_map_id`\n"
             + "- `gst_video_frame_unmap`\n"
-            + "- `gst_video_gl_texture_upload_meta_upload`\n",
+            + "- `gst_video_gl_texture_upload_meta_upload`\n"
+            + "- `gst_video_vbi_encoder_copy`\n"
+            + "- `gst_video_vbi_encoder_new`\n"
+            + "- `gst_video_vbi_encoder_write_line`\n"
+            + "- `gst_video_vbi_parser_add_line`\n"
+            + "- `gst_video_vbi_parser_copy`\n"
+            + "- `gst_video_vbi_parser_new`\n",
             report,
             StringComparison.Ordinal);
 
@@ -1046,7 +1052,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 3)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 7)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 7)]
-    [InlineData("GstVideo", 9, 0, 10, 0, 0, 0, 8)]
+    [InlineData("GstVideo", 9, 0, 10, 0, 0, 0, 14)]
     [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 2)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 2)]
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0, 2)]

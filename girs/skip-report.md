@@ -1033,7 +1033,7 @@ disappears shows up here as an added line.
 
 ## GstVideo
 
-### HandBound (6)
+### HandBound (12)
 
 - `gst_buffer_add_video_gl_texture_upload_meta`
 - `gst_video_codec_frame_set_user_data`
@@ -1041,6 +1041,12 @@ disappears shows up here as an added line.
 - `gst_video_frame_map_id`
 - `gst_video_frame_unmap`
 - `gst_video_gl_texture_upload_meta_upload`
+- `gst_video_vbi_encoder_copy`
+- `gst_video_vbi_encoder_new`
+- `gst_video_vbi_encoder_write_line`
+- `gst_video_vbi_parser_add_line`
+- `gst_video_vbi_parser_copy`
+- `gst_video_vbi_parser_new`
 
 ### LifetimePrimitive (10)
 
@@ -1171,13 +1177,11 @@ disappears shows up here as an added line.
 - `gst_video_info_from_caps`
 - `gst_video_info_init`
 
-### UnsupportedSignature (5)
+### UnsupportedSignature (3)
 
 - `gst_video_color_primaries_get_info`
 - `gst_video_convert_sample_async`
 - `gst_video_overlay_install_properties`
-- `gst_video_vbi_encoder_write_line`
-- `gst_video_vbi_parser_add_line`
 
 ### VarArgs (1)
 

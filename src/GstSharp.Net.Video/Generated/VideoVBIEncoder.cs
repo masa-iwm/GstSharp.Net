@@ -48,19 +48,6 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
     internal static VideoVBIEncoder? FromNative(nint handle, Gst.Interop.Transfer transfer) =>
         handle == 0 ? null : new(handle, transfer);
 
-    /// <summary>Create a new #GstVideoVBIEncoder for the specified @format and @pixel_width.</summary>
-    /// <param name="format">a #GstVideoFormat</param>
-    /// <param name="pixelWidth">The width in pixel to use</param>
-    /// <returns>
-    /// The new #GstVideoVBIEncoder or %NULL if the @format and/or @pixel_width
-    /// is not supported.
-    /// </returns>
-    public static Gst.Video.VideoVBIEncoder? New(Gst.Video.VideoFormat format, uint pixelWidth)
-    {
-        nint nativeResult = GstVideoVbiEncoderNew((int)format, pixelWidth);
-        return Gst.Video.VideoVBIEncoder.FromNative(nativeResult, Gst.Interop.Transfer.Full);
-    }
-
     /// <summary>Stores Video Ancillary data, according to SMPTE-291M specification.</summary>
     /// <remarks>
     /// <para>
@@ -93,28 +80,9 @@ public sealed unsafe partial class VideoVBIEncoder : Gst.GObject.Boxed
         }
     }
 
-    /// <summary>The <c>gst_video_vbi_encoder_copy</c> function.</summary>
-    /// <returns>The result of <c>gst_video_vbi_encoder_copy</c>.</returns>
-    public Gst.Video.VideoVBIEncoder Copy()
-    {
-        nint nativeResult = GstVideoVbiEncoderCopy(Handle);
-        Gst.Video.VideoVBIEncoder result = Gst.Video.VideoVBIEncoder.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_video_vbi_encoder_copy returned no value.");
-        System.GC.KeepAlive(this);
-        return result;
-    }
-
-    /// <summary>The <c>gst_video_vbi_encoder_new</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_encoder_new")]
-    private static partial nint GstVideoVbiEncoderNew(int format, uint pixelWidth);
-
     /// <summary>The <c>gst_video_vbi_encoder_add_ancillary</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_encoder_add_ancillary")]
     private static partial int GstVideoVbiEncoderAddAncillary(nint encoder, int composite, byte dID, byte sDIDBlockNumber, byte* data, uint dataCount);
-
-    /// <summary>The <c>gst_video_vbi_encoder_copy</c> entry point.</summary>
-    [LibraryImport("GstVideo", EntryPoint = "gst_video_vbi_encoder_copy")]
-    private static partial nint GstVideoVbiEncoderCopy(nint encoder);
 
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstVideoVBIEncoder</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
