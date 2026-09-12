@@ -57,6 +57,7 @@
   "$comment-step9-skip-formats-contains": "gst_formats_contains is the one symbol in the whole tree whose array is a zero terminated array of an enumeration: the gir states no length, no fixed size and no zero-terminated attribute, so the reader defaults it to zero terminated, and the count the C reads is in the data rather than in the signature. The planner has no shape for an enumeration array without a length parameter, so the call is skipped and hand bound as Gst.Global.FormatsContains in src/GstSharp.Net/Custom/Global.Formats.cs, which copies the formats into a buffer with the trailing GST_FORMAT_UNDEFINED the C walks to.",
   "$comment-step11-skip-auth-credentials": "gst_rtsp_message_parse_auth_credentials returns a NULL terminated GstRTSPAuthCredential** whose whole block is released by one call of gst_rtsp_auth_credentials_free (gstrtspmessage.c:1562-1572). The gir states neither a length nor a zero-terminated attribute on that return - the NULL termination is in the prose alone - and the element is a boxed record rather than a blittable value, so the planner refuses the shape twice over and would in any case have no way to say which free releases the block. It is skipped here and hand bound as Gst.Rtsp.RTSPMessage.ParseAuthCredentials in src/GstSharp.Net.Rtsp/Custom/RTSPMessageAuthCredentials.cs, which walks to the terminator, takes a g_boxed_copy of every credential - gst_rtsp_auth_credential_copy is a deep copy of the scheme, of every parameter and of the authorization (gstrtspmessage.c:1532-1551) - and frees the block once. The C answers NULL rather than an empty array when the header is absent or carries no basic or digest scheme, which the member reads as the empty array.",
   "$comment-step11-skip-ice-candidates": "gst_webrtc_ice_get_local_candidates and gst_webrtc_ice_get_remote_candidates return a NULL terminated GstWebRTCICECandidateStats** whose elements are individually g_malloc0 allocated and whose outer block is a plain g_free buffer (nice.c:1263-1289). The gir carries no zero-terminated and no length attribute on either return and the element is a boxed record, so the planner refuses both. They are hand bound as Gst.WebRTC.WebRTCICE.GetLocalCandidates and GetRemoteCandidates in src/GstSharp.Net.WebRTC/Custom/WebRTCICECandidates.cs, which adopt every element as a transfer full boxed value - the boxed free of the type is gst_webrtc_ice_candidate_stats_free, which is exactly what allocated each element - and then g_free the block the elements sat in. A generated shape could neither walk to the terminator nor tell those two frees apart.",
+  "$comment-step11-skip-session-media-transports": "gst_rtsp_session_media_get_transports answers a GPtrArray, which the planner only ever dispatches inside the signal emitters, and the gir states transfer-ownership=full on it. That full is on the container alone: the C hands the internal array back with one extra reference and the elements stay owned by the g_object_unref free function the array was built with (rtsp-session-media.c:164-165, :440), so a generated shape that released the elements as well would free every stream transport the session still uses. It is hand bound as Gst.RtspServer.RTSPSessionMedia.GetTransports in src/GstSharp.Net.RtspServer/Custom/RTSPSessionMediaTransports.cs, which wraps every element as a reference of its own, keeps the empty slots of the streams that were never set up, and drops the container with one g_ptr_array_unref.",
   "skip": [
     "Gst.BusSyncHandler",
     "Gst.MetaClearFunction",
@@ -180,6 +181,7 @@
     "gst_rtsp_mount_points_add_factory",
     "gst_rtsp_range_free",
     "gst_rtsp_range_parse",
+    "gst_rtsp_session_media_get_transports",
     "gst_rtsp_thread_new",
     "gst_rtsp_thread_pool_get_thread",
     "gst_rtsp_token_writable_structure",
@@ -242,6 +244,7 @@
   "$comment-step9-hand-bound-formats-contains": "gst_formats_contains is hand bound as Gst.Global.FormatsContains in src/GstSharp.Net/Custom/Global.Formats.cs. The skip above is what keeps it out of the generated surface; this entry is what files it under the hand bound ledger instead of the unsupported signatures.",
   "$comment-step11-hand-bound-auth-credentials": "gst_rtsp_message_parse_auth_credentials is hand bound as Gst.Rtsp.RTSPMessage.ParseAuthCredentials in src/GstSharp.Net.Rtsp/Custom/RTSPMessageAuthCredentials.cs. The skip above is what keeps it out of the generated surface; this entry is what files it under the hand bound ledger instead of the unsupported signatures. The params field of GstRTSPAuthCredential, which is what makes the answer readable, is filed under fieldSkips below.",
   "$comment-step11-hand-bound-ice-candidates": "The two GstWebRTCICE candidate getters are hand bound in src/GstSharp.Net.WebRTC/Custom/WebRTCICECandidates.cs. The skips above are what keep them out of the generated surface; these entries are what file them under the hand bound ledger instead of the unsupported signatures.",
+  "$comment-step11-hand-bound-session-media-transports": "gst_rtsp_session_media_get_transports is hand bound as Gst.RtspServer.RTSPSessionMedia.GetTransports in src/GstSharp.Net.RtspServer/Custom/RTSPSessionMediaTransports.cs. The skip above is what keeps it out of the generated surface; this entry is what files it under the hand bound ledger instead of the unsupported signatures.",
   "handBound": [
     "Gst.Bus:enable-async",
     "ges_asset_extract",
@@ -355,6 +358,7 @@
     "gst_rtsp_message_append_headers",
     "gst_rtsp_message_parse_auth_credentials",
     "gst_rtsp_mount_points_add_factory",
+    "gst_rtsp_session_media_get_transports",
     "gst_rtsp_transport_parse",
     "gst_sample_copy",
     "gst_structure_get_value",

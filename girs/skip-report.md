@@ -929,9 +929,10 @@ disappears shows up here as an added line.
 
 ## GstRtspServer
 
-### HandBound (1)
+### HandBound (2)
 
 - `gst_rtsp_mount_points_add_factory`
+- `gst_rtsp_session_media_get_transports`
 
 ### LifetimePrimitive (2)
 
@@ -961,7 +962,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_permissions_add_role`
 - `gst_rtsp_token_new`
 
-### UnsupportedSignature (14)
+### UnsupportedSignature (13)
 
 - `gst_rtsp_client_set_connection`
 - `gst_rtsp_media_complete_pipeline`
@@ -969,7 +970,6 @@ disappears shows up here as an added line.
 - `gst_rtsp_server_create_source`
 - `gst_rtsp_server_io_func`
 - `gst_rtsp_session_is_expired`
-- `gst_rtsp_session_media_get_transports`
 - `gst_rtsp_session_media_set_transport`
 - `gst_rtsp_session_next_timeout`
 - `gst_rtsp_session_pool_create_watch`
