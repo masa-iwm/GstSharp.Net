@@ -394,3 +394,13 @@ asserts the crossing the hierarchy makes possible: the same source handed to
 7. `IsAotCompatible` on, and a publish that produces no trimming or AOT
    warnings — the runtime is reflection-free and a module has no reason not to
    be.
+8. No lock-taking accessor inside a member the library can reach while it
+   holds `GST_OBJECT_LOCK` itself — a ring buffer's `acquire` runs the sink's
+   `prepare` under the object lock, so `AudioRingBuffer.SetChannelPositions`
+   reads the acquired flag raw instead of calling `IsAcquired()`, which would
+   wait for the lock the caller already holds.
+9. A public instance field of a GObject read without an accessor goes through a
+   `[StructLayout(LayoutKind.Sequential)]` mirror of the instance head, with the
+   offset derivation written next to it and an integration test that drives the
+   library into a state the field reflects on every CI leg (`AudioRingBufferHeadRaw`
+   and the acquire probe are the model).
