@@ -581,12 +581,13 @@ disappears shows up here as an added line.
 
 ## GstAudio
 
-### HandBound (6)
+### HandBound (7)
 
 - `gst_audio_base_sink_set_custom_slaving_callback`
 - `gst_audio_buffer_map`
 - `gst_audio_buffer_unmap`
 - `gst_audio_ring_buffer_read`
+- `gst_audio_ring_buffer_set_channel_positions`
 - `gst_buffer_add_audio_downmix_meta`
 - `gst_buffer_add_audio_meta`
 
@@ -640,10 +641,9 @@ disappears shows up here as an added line.
 - `gst_dsd_info_from_caps`
 - `gst_dsd_info_init`
 
-### UnsupportedSignature (3)
+### UnsupportedSignature (2)
 
 - `gst_audio_ring_buffer_set_callback_full`
-- `gst_audio_ring_buffer_set_channel_positions`
 - `gst_dsd_convert`
 
 ## GstBase
