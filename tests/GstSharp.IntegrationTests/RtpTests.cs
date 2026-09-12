@@ -545,4 +545,49 @@ public sealed class RtpTests
             Assert.Equal(Sentinel, value);
         }
     }
+
+    /// <summary>
+    /// RTCPBuffer.NewTakeData copies the block it is given: the buffer carries
+    /// the bytes, and the managed array they came out of is untouched after the
+    /// buffer is gone.
+    /// </summary>
+    /// <remarks>
+    /// The C takes the block over and hands it to <c>g_free</c> when the buffer
+    /// is unreferenced (gstrtcpbuffer.c:60-71 through gstbuffer.c:1038-1042),
+    /// which is why the binding hands it a copy of its own rather than the
+    /// address of the caller's array. The collection after the dispose is what
+    /// makes the second half of that a fact: a block the library had freed
+    /// would be the array itself.
+    /// </remarks>
+    [Fact]
+    public void TakeDataCopiesTheBlockAndLeavesTheArrayAlone()
+    {
+        byte[] data = [0x80, 0xC9, 0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF];
+        byte[] expected = [0x80, 0xC9, 0x00, 0x01, 0xDE, 0xAD, 0xBE, 0xEF];
+
+        using (Gst.Buffer buffer = RTCPBuffer.NewTakeData(data))
+        {
+            Assert.Equal((nuint)data.Length, buffer.GetSize());
+
+            byte[] read = new byte[data.Length];
+            Assert.Equal((nuint)data.Length, buffer.Extract(0, read));
+            Assert.Equal(expected, read);
+        }
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        Assert.Equal(expected, data);
+        _output.WriteLine("NewTakeData copied " + data.Length + " bytes.");
+    }
+
+    /// <summary>
+    /// An empty block is refused before the call. The C answers NULL through a
+    /// <c>g_return_val_if_fail (len &gt; 0, NULL)</c> (gstrtcpbuffer.c:63), and
+    /// the binding raises rather than letting that critical be printed.
+    /// </summary>
+    [Fact]
+    public void TakeDataRefusesAnEmptyBlock() =>
+        Assert.Throws<ArgumentException>(static () => RTCPBuffer.NewTakeData(Span<byte>.Empty));
 }

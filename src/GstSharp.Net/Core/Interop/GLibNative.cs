@@ -26,6 +26,16 @@ internal static unsafe partial class GLibNative
     [LibraryImport("GLib", EntryPoint = "g_malloc0")]
     internal static partial nint Malloc0(nuint size);
 
+    /// <summary>Copies a block of memory into one the GLib allocator made.</summary>
+    /// <param name="memory">The bytes to copy.</param>
+    /// <param name="size">How many of them there are.</param>
+    /// <returns>
+    /// The copy, which goes back through <see cref="Free"/> unless native code
+    /// takes it over, or <c>0</c> when <paramref name="size"/> is zero.
+    /// </returns>
+    [LibraryImport("GLib", EntryPoint = "g_memdup2")]
+    internal static partial nint Memdup2(void* memory, nuint size);
+
     [LibraryImport("GLib", EntryPoint = "g_strdup")]
     internal static partial nint StrDup(byte* text);
 

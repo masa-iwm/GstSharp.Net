@@ -181,7 +181,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 37, 38, 8, 21)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 4)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 28)]
-    [InlineData("GstRtp", 5, 5, 0, 0, 0, 189, 21, 2, 9)]
+    [InlineData("GstRtp", 5, 5, 0, 0, 0, 188, 21, 2, 9)]
     [InlineData("GstRtspServer", 19, 6, 0, 8, 0, 384, 58, 41, 21)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 2, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
@@ -218,7 +218,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 1, 90, 53, 112, 34, 10)]
+    [InlineData("Gst", 1, 90, 53, 112, 33, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 3, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 0, 1)]
     [InlineData("GstAudio", 0, 22, 0, 7, 1, 0)]
@@ -227,8 +227,8 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 0, 8, 0, 0, 0, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 0, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
-    [InlineData("GstRtsp", 0, 13, 0, 0, 11, 0)]
-    [InlineData("GstRtp", 2, 24, 1, 0, 3, 0)]
+    [InlineData("GstRtsp", 0, 13, 0, 0, 10, 0)]
+    [InlineData("GstRtp", 2, 22, 1, 0, 2, 0)]
     [InlineData("GstRtspServer", 2, 1, 1, 3, 13, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
@@ -599,7 +599,7 @@ public sealed class ClassEmitterTests
         // from the report and the entry points the overlays took over are
         // named under the overlay skips instead.
         Assert.DoesNotContain("### CallerAllocates", report, StringComparison.Ordinal);
-        Assert.Contains("### OverlaySkip (26)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### OverlaySkip (27)\n", report, StringComparison.Ordinal);
         Assert.Contains("- `GstApp.AppSrc::push-buffer`\n", report, StringComparison.Ordinal);
 
         // The hand bound ledger takes precedence over the reason that kept a
@@ -1048,7 +1048,7 @@ public sealed class ClassEmitterTests
     /// than under the reason that kept them out of the emitters, which is why the overlay skips of a module
     /// fall by the number of its hand bound entries that reach the census through the skip list.</param>
     [Theory]
-    [InlineData("Gst", 27, 0, 21, 0, 0, 5, 69)]
+    [InlineData("Gst", 28, 0, 21, 0, 0, 5, 69)]
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 3)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 7)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 9)]
@@ -1057,8 +1057,8 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 2)]
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0, 4)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
-    [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 4)]
-    [InlineData("GstRtp", 0, 0, 0, 0, 4, 0, 8)]
+    [InlineData("GstRtsp", 8, 0, 3, 0, 0, 0, 4)]
+    [InlineData("GstRtp", 2, 0, 0, 0, 4, 0, 10)]
     [InlineData("GstRtspServer", 5, 0, 2, 0, 0, 0, 2)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]

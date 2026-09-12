@@ -194,23 +194,6 @@ public unsafe partial struct RTCPBuffer
     }
 
     /// <summary>
-    /// Create a new buffer and set the data and size of the buffer to @data and @len
-    /// respectively. @data will be freed when the buffer is unreffed, so this
-    /// function transfers ownership of @data to the new buffer.
-    /// </summary>
-    /// <param name="data">data for the new buffer</param>
-    /// <returns>A newly allocated buffer with @data and of size @len.</returns>
-    public static Gst.Buffer NewTakeData(System.Span<byte> data)
-    {
-        fixed (byte* dataPointer = data)
-        {
-            nint nativeResult = GstRtcpBufferNewTakeData(dataPointer, (uint)data.Length);
-            return Gst.Buffer.FromNative(nativeResult, Gst.Interop.Transfer.Full)
-                ?? throw new InvalidOperationException("gst_rtcp_buffer_new_take_data returned no value.");
-        }
-    }
-
-    /// <summary>
     /// Check if the data pointed to by @buffer is a valid RTCP packet using
     /// gst_rtcp_buffer_validate_data().
     /// </summary>
@@ -307,10 +290,6 @@ public unsafe partial struct RTCPBuffer
     /// <summary>The <c>gst_rtcp_buffer_new_copy_data</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_buffer_new_copy_data")]
     private static partial nint GstRtcpBufferNewCopyData(byte* data, uint len);
-
-    /// <summary>The <c>gst_rtcp_buffer_new_take_data</c> entry point.</summary>
-    [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_buffer_new_take_data")]
-    private static partial nint GstRtcpBufferNewTakeData(byte* data, uint len);
 
     /// <summary>The <c>gst_rtcp_buffer_validate</c> entry point.</summary>
     [LibraryImport("GstRtp", EntryPoint = "gst_rtcp_buffer_validate")]

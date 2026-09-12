@@ -397,9 +397,10 @@ disappears shows up here as an added line.
 - `gst_tag_setter_add_tag_valist`
 - `gst_tag_setter_add_tag_valist_values`
 
-### OverlaySkip (26)
+### OverlaySkip (27)
 
 - `gst_allocator_free`
+- `gst_buffer_new_wrapped`
 - `gst_buffer_pool_release_buffer`
 - `gst_caps_features_add_static_str`
 - `gst_caps_features_new_single_static_str`
@@ -438,12 +439,11 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (34)
+### UnsupportedSignature (33)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
 - `gst_buffer_list_take`
-- `gst_buffer_new_wrapped`
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
 - `gst_context_replace`
@@ -820,9 +820,10 @@ disappears shows up here as an added line.
 - `GstRtp.RTPBasePayload::add-extension`
 - `GstRtp.RTPBasePayload::clear-extensions`
 
-### HandBound (8)
+### HandBound (9)
 
 - `gst_buffer_add_rtp_source_meta`
+- `gst_rtcp_buffer_new_take_data`
 - `gst_rtcp_packet_app_get_data`
 - `gst_rtcp_packet_app_get_name`
 - `gst_rtcp_packet_app_set_name`
@@ -831,12 +832,11 @@ disappears shows up here as an added line.
 - `gst_rtp_hdrext_set_ntp_64`
 - `gst_rtp_source_meta_set_ssrc`
 
-### MovedTo (24)
+### MovedTo (22)
 
 - `gst_rtcp_buffer_map`
 - `gst_rtcp_buffer_new`
 - `gst_rtcp_buffer_new_copy_data`
-- `gst_rtcp_buffer_new_take_data`
 - `gst_rtcp_buffer_validate`
 - `gst_rtcp_buffer_validate_data`
 - `gst_rtcp_buffer_validate_data_reduced`
@@ -853,21 +853,23 @@ disappears shows up here as an added line.
 - `gst_rtp_buffer_new_allocate`
 - `gst_rtp_buffer_new_allocate_len`
 - `gst_rtp_buffer_new_copy_data`
-- `gst_rtp_buffer_new_take_data`
 - `gst_rtp_payload_info_for_name`
 - `gst_rtp_payload_info_for_pt`
 - `gst_rtp_source_meta_get_info`
+
+### OverlaySkip (1)
+
+- `gst_rtp_buffer_new_take_data`
 
 ### ShadowedBy (2)
 
 - `gst_rtp_buffer_get_extension_data`
 - `gst_rtp_buffer_get_payload`
 
-### UnsupportedSignature (3)
+### UnsupportedSignature (2)
 
 - `GstRtp.RTPBaseDepayload:extensions`
 - `GstRtp.RTPBasePayload:extensions`
-- `gst_rtp_buffer_new_take_data`
 
 ### VarArgs (1)
 
@@ -903,14 +905,15 @@ disappears shows up here as an added line.
 - `gst_rtsp_version_as_text`
 - `gst_rtsp_watch_new`
 
-### OverlaySkip (4)
+### OverlaySkip (5)
 
 - `gst_rtsp_auth_credentials_free`
+- `gst_rtsp_message_take_body`
 - `gst_rtsp_range_free`
 - `gst_rtsp_range_parse`
 - `gst_rtsp_transport_init`
 
-### UnsupportedSignature (11)
+### UnsupportedSignature (10)
 
 - `gst_rtsp_connection_connect`
 - `gst_rtsp_connection_connect_with_response`
@@ -922,7 +925,6 @@ disappears shows up here as an added line.
 - `gst_rtsp_connection_send_messages`
 - `gst_rtsp_connection_send_messages_usec`
 - `gst_rtsp_connection_write`
-- `gst_rtsp_message_take_body`
 
 ## GstRtspServer
 
