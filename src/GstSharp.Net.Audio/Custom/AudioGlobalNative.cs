@@ -60,4 +60,36 @@ internal static unsafe partial class AudioGlobalNative
         Gst.Audio.AudioChannelPosition* toPosition,
         int toChannels,
         float** matrix);
+
+    /// <summary>Converts DSD data from one format and layout to another.</summary>
+    /// <param name="inputData">The data to read.</param>
+    /// <param name="outputData">Where the converted data is written.</param>
+    /// <param name="inputFormat">The format the input carries.</param>
+    /// <param name="outputFormat">The format to write.</param>
+    /// <param name="inputLayout">The layout the input carries.</param>
+    /// <param name="outputLayout">The layout to write.</param>
+    /// <param name="inputPlaneOffsets">
+    /// Where each input plane starts, in bytes, with one entry per channel, or
+    /// <see langword="null"/> for an interleaved input.
+    /// </param>
+    /// <param name="outputPlaneOffsets">
+    /// Where each output plane starts, in bytes, with one entry per channel,
+    /// or <see langword="null"/> for an interleaved output.
+    /// </param>
+    /// <param name="numDsdBytes">How many bytes of DSD data are converted, over all channels.</param>
+    /// <param name="numChannels">How many channels the data carries.</param>
+    /// <param name="reverseByteBits">Whether the bits of each byte are reversed on the way.</param>
+    [LibraryImport("GstAudio", EntryPoint = "gst_dsd_convert")]
+    internal static partial void DsdConvert(
+        byte* inputData,
+        byte* outputData,
+        int inputFormat,
+        int outputFormat,
+        int inputLayout,
+        int outputLayout,
+        nuint* inputPlaneOffsets,
+        nuint* outputPlaneOffsets,
+        nuint numDsdBytes,
+        int numChannels,
+        int reverseByteBits);
 }
