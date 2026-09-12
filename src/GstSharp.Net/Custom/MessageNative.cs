@@ -40,6 +40,13 @@ namespace Gst;
 /// <see cref="Message.NewCustom"/> and <c>docs/ownership.md</c>.
 /// </para>
 /// <para>
+/// <c>gst_message_new_property_notify</c> is here for a fifth: its <c>val</c>
+/// is a <c>GValue*</c> the call takes over, and a managed
+/// <see cref="Gst.GObject.Value"/> is storage the caller allocated and
+/// disposes, so nothing generated can hand one over. See
+/// <see cref="Message.NewPropertyNotify"/>, which copies instead.
+/// </para>
+/// <para>
 /// <c>gst_message_copy</c> is imported for a different reason, the one
 /// <c>gst_buffer_copy</c> has: the gir marks it <c>introspectable="0"</c>, so
 /// the generator skips it and no overlay can bring it back. It is a static
@@ -140,6 +147,19 @@ internal static unsafe partial class MessageNative
     /// <returns>The message, which the caller owns.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_message_new_custom")]
     internal static partial nint NewCustom(uint type, nint src, nint structure);
+
+    /// <summary>
+    /// Creates the message that says a property of an object changed.
+    /// </summary>
+    /// <param name="src">The object whose property changed, never <c>0</c>.</param>
+    /// <param name="propertyName">The name of the property, never <c>0</c>.</param>
+    /// <param name="value">
+    /// The new value, which the call takes over, or <c>0</c> for a
+    /// notification without one.
+    /// </param>
+    /// <returns>The message, which the caller owns.</returns>
+    [LibraryImport("Gst", EntryPoint = "gst_message_new_property_notify")]
+    internal static partial nint NewPropertyNotify(nint src, byte* propertyName, Gst.GObject.GValueNative* value);
 
     /// <summary>
     /// Releases a <c>GError</c> that the caller owns.

@@ -251,6 +251,122 @@ public sealed unsafe partial class Message
     }
 
     /// <summary>
+    /// Creates the message an element posts when a property of it changed,
+    /// carrying the name of the property and, when the watch asked for it, the
+    /// value it changed to.
+    /// </summary>
+    /// <param name="src">The object whose property changed.</param>
+    /// <param name="propertyName">The name of the property.</param>
+    /// <param name="value">
+    /// The new value of the property, or <see langword="null"/> for a
+    /// notification that only says that something changed. The value is read,
+    /// never taken: it stays initialized, stays the caller's and still has to
+    /// be disposed by whoever created it.
+    /// </param>
+    /// <returns>The new property notify message.</returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_message_new_property_notify</c>. The library itself
+    /// builds one of these from the watch that
+    /// <see cref="Element.AddPropertyNotifyWatch"/> installs, so an application
+    /// normally reads these messages with
+    /// <see cref="ParsePropertyNotify"/> rather than writing one; the
+    /// constructor is here for an element that posts the notification itself
+    /// and for a test that feeds a bus loop one.
+    /// </para>
+    /// <para>
+    /// The C takes the <c>GValue</c> over — <c>gst_structure_take_value</c>
+    /// moves the contents into the structure of the message and leaves the
+    /// caller's storage invalid (gststructure.c:1100-1116) — which is not a
+    /// contract a managed <see cref="Gst.GObject.Value"/> can keep, because a
+    /// value is a struct the caller allocated and disposes. The binding
+    /// therefore hands the call a copy of its own: the value is read exactly
+    /// the way every other <c>in</c> value of the binding is read, and what the
+    /// message consumes is the copy. Reading the value again after this call,
+    /// posting it in a second message and disposing it are all still correct.
+    /// </para>
+    /// <para>
+    /// A value with no type is the empty value rather than a value of its own,
+    /// so it is refused the way every other <c>in</c> value refuses one. The
+    /// spelling for "no value" is <see langword="null"/>, which is what
+    /// <see cref="ParsePropertyNotify"/> reports as an empty value on the
+    /// way back.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="src"/> or <paramref name="propertyName"/> is
+    /// <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="value"/> holds the empty value, which has no type to
+    /// copy.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException"><paramref name="src"/> was disposed.</exception>
+    public static Gst.Message NewPropertyNotify(
+        Gst.Object src,
+        string propertyName,
+        in Gst.GObject.Value? value)
+    {
+        ArgumentNullException.ThrowIfNull(src);
+        ArgumentNullException.ThrowIfNull(propertyName);
+
+        // The copy the call adopts. It is built after every precondition has
+        // been answered, so that no path leaves an initialized GValue behind
+        // that nobody unsets: once gst_message_new_property_notify has been
+        // called the contents belong to the structure of the message, once it
+        // has not there is nothing to release, and the one path on which the
+        // call answers nothing releases the copy below.
+        Gst.GObject.Value source = value.GetValueOrDefault();
+        bool hasValue = value.HasValue;
+
+        if (hasValue && source.IsEmpty)
+        {
+            throw new ArgumentException(
+                "A property notify value must be initialized. Pass null for a notification without a value.",
+                nameof(value));
+        }
+
+        nint owner = src.Handle;
+
+        System.Span<byte> buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope name = Gst.Interop.GMarshal.StackUtf8(propertyName, buffer);
+
+        Gst.GObject.GValueNative copy = default;
+        if (hasValue)
+        {
+            _ = Gst.Interop.GObjectNative.ValueInit(ref copy, source.Type.Value);
+            Gst.Interop.GObjectNative.ValueCopy(ref source.NativeValue, ref copy);
+        }
+
+        nint message = MessageNative.NewPropertyNotify(
+            owner,
+            name.Pointer,
+            hasValue ? &copy : null);
+
+        if (message == nint.Zero)
+        {
+            // Unreachable: the two paths on which the C answers nothing are its
+            // preconditions on src and on the name (gstmessage.c:2953-2954),
+            // both of which are answered above. If one of them fired all the
+            // same the call returned before gst_structure_take_value
+            // (gstmessage.c:2961-2962), so the copy is an initialized GValue
+            // nobody owns and this is where it is released.
+            if (hasValue)
+            {
+                Gst.Interop.GObjectNative.ValueUnset(ref copy);
+            }
+
+            throw new InvalidOperationException("gst_message_new_property_notify returned no message.");
+        }
+
+        Gst.Message result = Gst.Message.FromNative(message, Gst.Interop.Transfer.Full)
+            ?? throw new InvalidOperationException("gst_message_new_property_notify returned no message.");
+
+        GC.KeepAlive(src);
+        return result;
+    }
+
+    /// <summary>
     /// Reads the error and the debug string of a
     /// <see cref="MessageType.Error"/> message.
     /// </summary>

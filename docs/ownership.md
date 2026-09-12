@@ -734,7 +734,11 @@ after it. One rule per shape:
 * **An `in` value is read.** The callee copies what it keeps —
   `caps.SetValue`, `Global.ValueIsFixed` — so the caller keeps the value and
   still disposes it. An empty value has no type for the call to read and
-  throws `ArgumentException`.
+  throws `ArgumentException`. `Message.NewPropertyNotify` is read the same way
+  although its C function takes the `GValue` over: what the message adopts is a
+  copy the member initialises for it, because the storage of a managed value
+  belongs to the caller and cannot be given away. Its value is nullable, and
+  `null` is the notification that carries no value at all.
 * **A `ref` value has to arrive initialized** with the type the call expects:
   `Global.ValueSetFraction` wants a `GST_TYPE_FRACTION` (`Value.SetFraction`
   is the typed accessor over the same store), and

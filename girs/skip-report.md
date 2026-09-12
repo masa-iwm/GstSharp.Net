@@ -83,7 +83,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (66)
+### HandBound (67)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_copy`
@@ -115,6 +115,7 @@ disappears shows up here as an added line.
 - `gst_message_copy`
 - `gst_message_new_application`
 - `gst_message_new_custom`
+- `gst_message_new_property_notify`
 - `gst_message_parse_error`
 - `gst_message_parse_info`
 - `gst_message_parse_property_notify`
@@ -439,7 +440,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (33)
+### UnsupportedSignature (32)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
@@ -450,7 +451,6 @@ disappears shows up here as an added line.
 - `gst_init`
 - `gst_iterator_filter`
 - `gst_iterator_find_custom`
-- `gst_message_new_property_notify`
 - `gst_message_take`
 - `gst_mini_object_add_parent`
 - `gst_mini_object_lock`
