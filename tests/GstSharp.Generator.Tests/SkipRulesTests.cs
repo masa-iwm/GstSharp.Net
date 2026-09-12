@@ -235,7 +235,7 @@ public sealed class SkipRulesTests
         // gpointer beside its size, which no array override may turn into an
         // array. All six are hand written in src/GstSharp.Net.Rtp/Custom
         // beside the two guint8* returns the planner already refuses.
-        // The RTSP server group is six entries. gst_rtsp_client_set_send_func
+        // The RTSP server group is eight entries. gst_rtsp_client_set_send_func
         // and gst_rtsp_client_set_send_messages_func are unreachable on every
         // path that exists: the attach of a client installs the send functions
         // of the server over whatever was there, and the client-connected
@@ -244,11 +244,17 @@ public sealed class SkipRulesTests
         // overwritten a moment later. gst_rtsp_token_writable_structure hands
         // the structure of a token out to be written through, which a value
         // projection cannot carry; the typed setters are the writing path.
-        // gst_rtsp_thread_pool_get_thread and gst_rtsp_thread_new mint a
-        // GstRTSPThread whose loop is only ever stopped by
-        // gst_rtsp_thread_stop, the release the LifetimePrimitive rule keeps
-        // out, so a wrapper that only unrefs on Dispose leaks one OS thread per
-        // call. gst_rtsp_mount_points_add_factory consumes the factory it is
+        // gst_rtsp_thread_pool_get_thread, gst_rtsp_thread_stop and
+        // gst_rtsp_media_prepare are the stop based lifetime of a pooled
+        // thread, written by hand in src/GstSharp.Net.RtspServer/Custom: one
+        // get_thread hands out one reference and one reuse count, exactly one
+        // stop releases both, and prepare consumes the thread on every path it
+        // takes, so a wrapper that only unrefs on Dispose leaks one OS thread
+        // per call and a generated prepare could only ever be handed the null
+        // thread that blocks its caller on the default main context.
+        // gst_rtsp_thread_new stays out beside them: it exists for a get_thread
+        // override this binding offers no vfunc for, and what it mints is
+        // released by an unref rather than by a stop. gst_rtsp_mount_points_add_factory consumes the factory it is
         // handed, and the generated shape would dispose the wrapper whose
         // signal handlers the caller has just attached; it is hand written in
         // src/GstSharp.Net.RtspServer/Custom.
@@ -391,6 +397,7 @@ public sealed class SkipRulesTests
                 "gst_rtsp_auth_credentials_free",
                 "gst_rtsp_client_set_send_func",
                 "gst_rtsp_client_set_send_messages_func",
+                "gst_rtsp_media_prepare",
                 "gst_rtsp_message_parse_auth_credentials",
                 "gst_rtsp_message_take_body",
                 "gst_rtsp_mount_points_add_factory",
@@ -399,6 +406,7 @@ public sealed class SkipRulesTests
                 "gst_rtsp_session_media_get_transports",
                 "gst_rtsp_thread_new",
                 "gst_rtsp_thread_pool_get_thread",
+                "gst_rtsp_thread_stop",
                 "gst_rtsp_token_writable_structure",
                 "gst_rtsp_transport_init",
                 "gst_rtsp_transport_parse",
@@ -618,10 +626,13 @@ public sealed class SkipRulesTests
                 "gst_rtp_hdrext_set_ntp_56",
                 "gst_rtp_hdrext_set_ntp_64",
                 "gst_rtp_source_meta_set_ssrc",
+                "gst_rtsp_media_prepare",
                 "gst_rtsp_message_append_headers",
                 "gst_rtsp_message_parse_auth_credentials",
                 "gst_rtsp_mount_points_add_factory",
                 "gst_rtsp_session_media_get_transports",
+                "gst_rtsp_thread_pool_get_thread",
+                "gst_rtsp_thread_stop",
                 "gst_rtsp_transport_parse",
                 "gst_sample_copy",
                 "gst_structure_get_value",

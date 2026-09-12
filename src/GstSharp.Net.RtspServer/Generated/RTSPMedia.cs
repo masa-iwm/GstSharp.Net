@@ -580,48 +580,6 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     }
 
     /// <summary>
-    /// Prepare @media for streaming. This function will create the objects
-    /// to manage the streaming. A pipeline must have been set on @media with
-    /// gst_rtsp_media_take_pipeline().
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// It will preroll the pipeline and collect vital information about the streams
-    /// such as the duration.
-    /// </para>
-    /// <para>
-    /// The <c>thread</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a reference of its own and the wrapper is disposed afterwards, which
-    /// leaves the native reference count exactly where the C call leaves it.
-    /// <see cref="Gst.MiniObject.Dispose()"/> is idempotent, so a <c>using</c>
-    /// declaration around the argument stays correct.
-    /// </para>
-    /// </remarks>
-    /// <param name="thread">
-    /// a #GstRTSPThread to run the
-    ///   bus handler or %NULL
-    /// The call consumes it: <paramref name="thread"/> is disposed when this
-    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
-    /// It may be <see langword="null"/>, which is the absence of a payload and leaves
-    /// nothing to consume.
-    /// </param>
-    /// <returns>%TRUE on success.</returns>
-    /// <exception cref="ObjectDisposedException">
-    /// This wrapper or <paramref name="thread"/> was disposed.
-    /// </exception>
-    public bool Prepare(Gst.RtspServer.RTSPThread? thread)
-    {
-        nint instanceHandle = Handle;
-        nint threadNative = thread is null ? 0 : thread.Handle;
-        nint threadOwned = thread is null ? 0 : Gst.GstNative.MiniObjectRef(threadNative);
-        int nativeResult = GstRtspMediaPrepare(instanceHandle, threadOwned);
-        thread?.Dispose();
-        bool result = nativeResult != 0;
-        System.GC.KeepAlive(this);
-        return result;
-    }
-
-    /// <summary>
     /// Seek the pipeline of @media to @range. @media must be prepared with
     /// gst_rtsp_media_prepare().
     /// </summary>
@@ -1751,10 +1709,6 @@ public unsafe partial class RTSPMedia : Gst.GObject.Object
     /// <summary>The <c>gst_rtsp_media_n_streams</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_media_n_streams")]
     private static partial uint GstRtspMediaNStreams(nint media);
-
-    /// <summary>The <c>gst_rtsp_media_prepare</c> entry point.</summary>
-    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_media_prepare")]
-    private static partial int GstRtspMediaPrepare(nint media, nint thread);
 
     /// <summary>The <c>gst_rtsp_media_seek</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_media_seek")]

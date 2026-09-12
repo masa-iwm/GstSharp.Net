@@ -1,4 +1,4 @@
-using Gst;
+﻿using Gst;
 using Gst.GLib;
 using Gst.Rtsp;
 using Gst.RtspServer;
@@ -652,6 +652,114 @@ public sealed unsafe class RtspServerTests
 
             Thread.Sleep(5);
         }
+    }
+
+    /// <summary>
+    /// A thread of the pool answers what it was taken for and a main context
+    /// of its own, and stopping it releases exactly one reference and one use
+    /// count, whether the caller stops it or disposes it.
+    /// </summary>
+    /// <remarks>
+    /// This is the only producer of a <see cref="RTSPThread"/> in the binding.
+    /// Nothing else has to be running for it: the pool starts an OS thread of
+    /// its own and hands back the loop of it.
+    /// </remarks>
+    [RequiresGStreamerFact(28)]
+    public void AThreadOfThePoolCarriesItsTypeAndContextAndIsStoppedOnce()
+    {
+        using RTSPServer server = RTSPServer.New();
+
+        RTSPThreadPool? pool = server.GetThreadPool();
+        Assert.NotNull(pool);
+
+        RTSPThread? thread = pool.GetThread(RTSPThreadType.Media);
+        Assert.NotNull(thread);
+
+        Assert.Equal(RTSPThreadType.Media, thread.Type);
+
+        using (MainContext context = thread.Context)
+        {
+            Assert.NotEqual(nint.Zero, context.Handle);
+        }
+
+        // The stop is what releases the reference and the use count the
+        // get_thread added, and disposing afterwards is the same call again,
+        // which a stopped wrapper no longer owes.
+        thread.Stop();
+        thread.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => thread.Handle);
+
+        RTSPThreadPool.Cleanup();
+    }
+
+    /// <summary>
+    /// <see cref="RTSPMedia.Prepare"/> runs the bus watch of a media on a
+    /// thread of the pool and consumes that thread, whether it succeeds or
+    /// not.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the first prepare of the suite, and it is the reason the member
+    /// is hand written: with a null thread the bus watch is attached to the
+    /// default main context, which nothing here iterates, and the call would
+    /// wait for the preroll for twenty seconds before failing. With a thread it
+    /// returns as soon as the pipeline prerolls, which the audio only launch
+    /// line needs no encoder for.
+    /// </para>
+    /// <para>
+    /// The call is bounded by GStreamer itself - the wait inside it times out -
+    /// and by the <c>--blame-hang-timeout 5m</c> the workflow runs the
+    /// integration suite with, which is the only per test bound there is: a
+    /// prepare that never returns fails the run rather than hanging it for
+    /// good.
+    /// </para>
+    /// </remarks>
+    [RequiresElementFact("rtpL16pay", "audiotestsrc")]
+    public void PrepareRunsAMediaOnAThreadOfThePoolAndConsumesIt()
+    {
+        using RTSPServer server = RTSPServer.New();
+        using RTSPMediaFactory factory = RTSPMediaFactory.New();
+
+        factory.SetLaunch(Launch);
+        factory.SetShared(true);
+
+        RTSPMountPoints? mounts = server.GetMountPoints();
+        Assert.NotNull(mounts);
+        mounts.AddFactory("/prepared", factory);
+
+        RTSPThreadPool? pool = server.GetThreadPool();
+        Assert.NotNull(pool);
+
+        Assert.Equal(RTSPResult.Ok, RTSPUrl.Parse("rtsp://127.0.0.1:8554/prepared", out RTSPUrl? url));
+        Assert.NotNull(url);
+
+        using (url)
+        {
+            using RTSPMedia? media = factory.Construct(url);
+            Assert.NotNull(media);
+            media.Unlock();
+
+            RTSPThread? thread = pool.GetThread(RTSPThreadType.Media);
+            Assert.NotNull(thread);
+
+            System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew();
+            Assert.True(media.Prepare(thread));
+            watch.Stop();
+            _output.WriteLine($"prepare took {watch.ElapsedMilliseconds} ms");
+
+            // The media stopped the thread on its way through, so the wrapper
+            // owns nothing any more.
+            Assert.Throws<ObjectDisposedException>(() => thread.Handle);
+
+            // A wrapper that was consumed is refused by the very first line of
+            // the member, before anything is handed over a second time.
+            Assert.Throws<ObjectDisposedException>(() => media.Prepare(thread));
+
+            Assert.True(media.Unprepare());
+        }
+
+        RTSPThreadPool.Cleanup();
     }
 
     /// <summary>

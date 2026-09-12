@@ -1362,6 +1362,24 @@ consuming rule above still holds everywhere else in the module, including
 `RTSPSessionMedia.New` and `RTSPMedia.Prepare`, whose arguments — a socket, an
 internal media, a thread — are handed over and not expected back.
 
+**A thread the pool hands out is released by a stop and not by an unreference.**
+`RTSPThreadPool.GetThread` answers a wrapper that owes exactly one
+`gst_rtsp_thread_stop`: one `get_thread` adds one reference and one reuse
+count, and one stop releases both — straight away, or from the destroy
+notification of the idle source that quits the loop
+(`rtsp-thread-pool.c:174-190`). `RTSPThread.Stop`, and disposing the wrapper,
+perform that stop; a second call is a no operation, and the OS thread behind it
+stays alive while any other holder still counts a use of it.
+`RTSPMedia.Prepare` **consumes** such a thread on every path it takes, whether
+it reports success or failure, so the wrapper is detached when the call
+returns; a thread that owes no stop is refused with `ArgumentException` rather
+than consumed. `RTSPThread.Reuse` is the one member that steps outside this
+ledger: a `true` answer adds a reference that disposal does not release, so a
+caller that reuses a thread owes one stop per reuse. `RTSPThread.Context` is a
+read of the main context the thread runs its sources on; the loop is not
+offered, because quitting it from outside leaves the idle source of a stop with
+nothing to run it.
+
 `RTSPMedia.New` reads the other way round. Its generated XML documentation
 repeats the gir remark "Ownership is taken of @element", but the binding hands
 the element over with transfer none, because the C constructor takes a

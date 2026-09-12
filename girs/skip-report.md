@@ -922,15 +922,17 @@ disappears shows up here as an added line.
 
 ## GstRtspServer
 
-### HandBound (2)
+### HandBound (5)
 
+- `gst_rtsp_media_prepare`
 - `gst_rtsp_mount_points_add_factory`
 - `gst_rtsp_session_media_get_transports`
+- `gst_rtsp_thread_pool_get_thread`
+- `gst_rtsp_thread_stop`
 
-### LifetimePrimitive (2)
+### LifetimePrimitive (1)
 
 - `gst_rtsp_address_free`
-- `gst_rtsp_thread_stop`
 
 ### MovedTo (1)
 
@@ -942,12 +944,11 @@ disappears shows up here as an added line.
 - `gst_rtsp_permissions_add_role_valist`
 - `gst_rtsp_token_new_valist`
 
-### OverlaySkip (5)
+### OverlaySkip (4)
 
 - `gst_rtsp_client_set_send_func`
 - `gst_rtsp_client_set_send_messages_func`
 - `gst_rtsp_thread_new`
-- `gst_rtsp_thread_pool_get_thread`
 - `gst_rtsp_token_writable_structure`
 
 ### ShadowedBy (2)
