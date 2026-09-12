@@ -249,7 +249,7 @@ public partial struct PollFD
     /// is not a failure of the wait, and the main loop of GLib treats it as
     /// none (gmain.c:4824-4825). Windows has no such answer: an interrupted
     /// wait is <c>WAIT_IO_COMPLETION</c> there, which <c>g_poll</c> already
-    /// reports as zero descriptors (gpoll.c:209-210).
+    /// reports as zero descriptors (gpoll.c:201-203).
     /// </remarks>
     /// <exception cref="InvalidOperationException">The wait itself failed.</exception>
     private static int Wait(nint fds, uint count, int timeoutMs)

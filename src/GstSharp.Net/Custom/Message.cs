@@ -359,8 +359,8 @@ public sealed unsafe partial class Message
             throw new InvalidOperationException("gst_message_new_property_notify returned no message.");
         }
 
-        Gst.Message result = Gst.Message.FromNative(message, Gst.Interop.Transfer.Full)
-            ?? throw new InvalidOperationException("gst_message_new_property_notify returned no message.");
+        // The handle was answered above, so the wrapper cannot be missing.
+        Gst.Message result = Gst.Message.FromNative(message, Gst.Interop.Transfer.Full)!;
 
         GC.KeepAlive(src);
         return result;
