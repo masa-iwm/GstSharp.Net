@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
 

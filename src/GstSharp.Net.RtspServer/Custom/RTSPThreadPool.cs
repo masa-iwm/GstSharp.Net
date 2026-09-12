@@ -20,18 +20,27 @@ public unsafe partial class RTSPThreadPool
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
     /// <remarks>
     /// <para>
-    /// The answer carries one reference and one <c>reused</c> count
-    /// (rtsp-thread-pool.c:455-463, :474), and both leave together when the
-    /// wrapper is disposed or <see cref="RTSPThread.Stop"/> is called. A
-    /// thread the pool recycles is shared: the count is what says how many
-    /// holders it has, and the loop only quits once the last of them has let
-    /// go.
+    /// The answer carries one reference and one <c>reused</c> count - a thread
+    /// that is made for the call starts at both (rtsp-thread-pool.c:107,
+    /// :119-131 through :415), and a thread the pool recycles is reused, which
+    /// adds one of each (rtsp-thread-pool.c:151-153, reached from :455-463) -
+    /// and both leave together when the wrapper is disposed or
+    /// <see cref="RTSPThread.Stop"/> is called. The reference the worker of the
+    /// pool holds beside them (rtsp-thread-pool.c:474, :486) is not the
+    /// caller's and is released by the loop itself. A thread the pool recycles
+    /// is shared: the count is what says how many holders it has, and the loop
+    /// only quits once the last of them has let go.
     /// </para>
     /// <para>
-    /// <see langword="null"/> is a normal answer rather than a failure: a pool
-    /// whose maximum is zero allows no thread of its own and expects the caller
-    /// to run the work on the thread it is already on
-    /// (rtsp-thread-pool.c:449-452).
+    /// <see langword="null"/> is a normal answer rather than a failure. A pool
+    /// whose maximum is zero allows no <see cref="RTSPThreadType.Client"/>
+    /// thread of its own and expects the caller to run the work on the thread
+    /// it is already on (rtsp-thread-pool.c:447-452); a
+    /// <see cref="RTSPThreadType.Media"/> thread is made whatever the maximum
+    /// is (rtsp-thread-pool.c:483-489). A type the pool does not know
+    /// (rtsp-thread-pool.c:490-491) and a thread the pool could not push to its
+    /// worker pool (rtsp-thread-pool.c:497-505) answer <see langword="null"/>
+    /// as well.
     /// </para>
     /// <para>
     /// The <c>GstRTSPContext</c> the C takes beside the type is not offered.

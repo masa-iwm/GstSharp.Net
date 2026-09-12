@@ -62,7 +62,11 @@ public abstract unsafe partial class Container
     /// being split has one (ges-clip.c:2170-2177): a clip outside a layer
     /// therefore answers copies that are in no layer, and each wrapper here
     /// settles that floating reference so that every element of the answer is
-    /// owned exactly once.
+    /// owned exactly once. The member settles it itself rather than leaving it
+    /// to the wrapper: a fresh wrapper does sink a handle that arrives floating
+    /// (Core/GObject/Object.cs:215-219), but it sinks it without releasing the
+    /// reference that came with the transfer, which would leave a copy of the
+    /// split owned twice.
     /// </para>
     /// </remarks>
     public System.Collections.Generic.IReadOnlyList<GES.Container> Ungroup(bool recursive)

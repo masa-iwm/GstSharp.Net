@@ -1,4 +1,4 @@
-﻿using Gst;
+using Gst;
 using Gst.GLib;
 using Gst.Rtsp;
 using Gst.RtspServer;
@@ -35,11 +35,13 @@ namespace GstSharp.IntegrationTests;
 /// none of them is touched here.
 /// </para>
 /// <para>
-/// <see cref="RTSPThreadPool.Cleanup"/> is never called. It joins every thread
-/// of the class-wide pool, which the whole test assembly shares, and nothing
-/// here needs it: a media thread stops itself when the session media that owns
+/// <see cref="RTSPThreadPool.Cleanup"/> is called by the two thread tests at
+/// the end of this file and by nothing else. It joins every thread of the
+/// class-wide pool, which the whole test assembly shares, and the client tests
+/// do not need it: a media thread stops itself when the session media that owns
 /// it is finalised, which the session pool filter of the shutdown order below
-/// makes happen.
+/// makes happen. The two thread tests take a thread of that pool themselves, so
+/// they join it back before they leave.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -664,12 +666,12 @@ public sealed unsafe class RtspServerTests
     /// Nothing else has to be running for it: the pool starts an OS thread of
     /// its own and hands back the loop of it.
     /// </remarks>
-    [RequiresGStreamerFact(28)]
+    [Fact]
     public void AThreadOfThePoolCarriesItsTypeAndContextAndIsStoppedOnce()
     {
         using RTSPServer server = RTSPServer.New();
 
-        RTSPThreadPool? pool = server.GetThreadPool();
+        using RTSPThreadPool? pool = server.GetThreadPool();
         Assert.NotNull(pool);
 
         RTSPThread? thread = pool.GetThread(RTSPThreadType.Media);
@@ -696,7 +698,8 @@ public sealed unsafe class RtspServerTests
     /// <summary>
     /// <see cref="RTSPMedia.Prepare"/> runs the bus watch of a media on a
     /// thread of the pool and consumes that thread, whether it succeeds or
-    /// not.
+    /// not: the prepare that succeeds and the prepare that a media which was
+    /// used once refuses both leave the wrapper detached.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -724,11 +727,11 @@ public sealed unsafe class RtspServerTests
         factory.SetLaunch(Launch);
         factory.SetShared(true);
 
-        RTSPMountPoints? mounts = server.GetMountPoints();
+        using RTSPMountPoints? mounts = server.GetMountPoints();
         Assert.NotNull(mounts);
         mounts.AddFactory("/prepared", factory);
 
-        RTSPThreadPool? pool = server.GetThreadPool();
+        using RTSPThreadPool? pool = server.GetThreadPool();
         Assert.NotNull(pool);
 
         Assert.Equal(RTSPResult.Ok, RTSPUrl.Parse("rtsp://127.0.0.1:8554/prepared", out RTSPUrl? url));
@@ -757,6 +760,19 @@ public sealed unsafe class RtspServerTests
             Assert.Throws<ObjectDisposedException>(() => media.Prepare(thread));
 
             Assert.True(media.Unprepare());
+
+            // The other half of the same sentence: a prepare that fails
+            // consumes the thread too. Finishing the unprepare marked the media
+            // used (rtsp-media.c:4365) and nothing here made it reusable, which
+            // it is not by default (rtsp-media.c:175, :550), so the second
+            // prepare takes the is_reused exit (rtsp-media.c:4218-4219): it
+            // stops the thread it was handed and answers false without waiting
+            // for anything (rtsp-media.c:4280-4288).
+            RTSPThread? reprepare = pool.GetThread(RTSPThreadType.Media);
+            Assert.NotNull(reprepare);
+
+            Assert.False(media.Prepare(reprepare));
+            Assert.Throws<ObjectDisposedException>(() => reprepare.Handle);
         }
 
         RTSPThreadPool.Cleanup();

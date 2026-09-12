@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using Gst.Interop;
 
 namespace Gst.RtspServer;
@@ -10,24 +10,37 @@ namespace Gst.RtspServer;
 /// <para>
 /// A pooled thread is not released by an unreference. One
 /// <c>gst_rtsp_thread_pool_get_thread</c> hands out one reference and one
-/// <c>reused</c> count (rtsp-thread-pool.c:455-463, :474), and exactly one
-/// <c>gst_rtsp_thread_stop</c> releases both: the last stop attaches an idle
-/// source that quits the loop and unreferences the thread from its destroy
-/// notification, and every other stop unreferences it straight away
-/// (rtsp-thread-pool.c:174-190). Unreferencing without stopping therefore
-/// leaves the OS thread running for good, and stopping twice on one reference
-/// releases one that was never taken.
+/// <c>reused</c> count: a thread that is made for the call starts at both
+/// (rtsp-thread-pool.c:107, :119-131 through :415), and a thread the pool
+/// recycles is reused, which adds one of each (rtsp-thread-pool.c:151-153,
+/// reached from :455-463). Exactly one <c>gst_rtsp_thread_stop</c> releases
+/// both: the last stop attaches an idle source that quits the loop and
+/// unreferences the thread from its destroy notification, and every other stop
+/// unreferences it straight away (rtsp-thread-pool.c:174-190). Unreferencing
+/// without stopping therefore leaves the OS thread running for good - the
+/// worker of the pool holds a reference of its own (rtsp-thread-pool.c:474 for
+/// a client thread, :486 for a media one) and only lets go once the loop has
+/// quit - and stopping twice on one reference releases one that was never
+/// taken.
 /// </para>
 /// <para>
 /// The wrapper <see cref="RTSPThreadPool.GetThread"/> mints owes exactly one
 /// stop, which <see cref="Stop"/> and disposal perform. A wrapper that was
-/// handed a thread some other way - the lent one of a virtual method - owes
-/// none and is released the ordinary way.
+/// handed a thread some other way - the one type resolution builds for a
+/// thread that arrives from elsewhere - owes none and is released the ordinary
+/// way.
 /// </para>
 /// </remarks>
 public sealed unsafe partial class RTSPThread
 {
-    private bool _stopOnDispose;
+    /// <summary>
+    /// One while this wrapper still owes the thread a stop, zero once the stop
+    /// was performed or the reference was handed over. It is an integer
+    /// because it is taken with <see cref="System.Threading.Interlocked.Exchange(ref int, int)"/>,
+    /// the way the base class takes the handle it releases, so that two racing
+    /// disposals cannot both stop.
+    /// </summary>
+    private int _stopOnDispose;
 
     /// <summary>
     /// Gets the main context the thread runs its sources on.
@@ -66,7 +79,7 @@ public sealed unsafe partial class RTSPThread
     /// <summary>
     /// Gets a value indicating whether this wrapper owes the thread a stop.
     /// </summary>
-    internal bool OwesStop => _stopOnDispose;
+    internal bool OwesStop => System.Threading.Volatile.Read(ref _stopOnDispose) != 0;
 
     /// <summary>
     /// Releases this reference of the thread, together with the <c>reused</c>
@@ -91,7 +104,7 @@ public sealed unsafe partial class RTSPThread
     /// taking one of its own (Custom/MiniObject.cs:82-87), so the wrapper owns
     /// exactly what <c>gst_rtsp_thread_pool_get_thread</c> handed over.
     /// </remarks>
-    internal static RTSPThread FromPool(nint handle) => new(handle, Transfer.Full) { _stopOnDispose = true };
+    internal static RTSPThread FromPool(nint handle) => new(handle, Transfer.Full) { _stopOnDispose = 1 };
 
     /// <summary>
     /// Hands the reference of this wrapper over to a call that consumes it.
@@ -103,7 +116,7 @@ public sealed unsafe partial class RTSPThread
     /// </remarks>
     internal void Consumed()
     {
-        _stopOnDispose = false;
+        _ = System.Threading.Interlocked.Exchange(ref _stopOnDispose, 0);
         _ = HandOver();
     }
 
@@ -122,13 +135,16 @@ public sealed unsafe partial class RTSPThread
     /// finalizer thread may perform the stop as well: it decrements the reuse
     /// count atomically and either attaches the source that quits the loop to
     /// the context of the thread or unreferences it, and neither needs the
-    /// thread the loop runs on (rtsp-thread-pool.c:182-189).
+    /// thread the loop runs on (rtsp-thread-pool.c:182-189). The debt is taken
+    /// atomically, the way the base class takes the handle it releases, so two
+    /// disposals that race - or a disposal that races the hand over of the
+    /// reference to a call that consumes it - perform one stop between them and
+    /// never one too many.
     /// </remarks>
     protected override void Dispose(bool disposing)
     {
-        if (_stopOnDispose && !IsDisposed)
+        if (System.Threading.Interlocked.Exchange(ref _stopOnDispose, 0) == 1 && !IsDisposed)
         {
-            _stopOnDispose = false;
             nint thread = Handle;
             _ = Gst.GstNative.MiniObjectRef(thread);
             GstRtspThreadStop(thread);

@@ -1,4 +1,4 @@
-﻿using GstSharp.Generator.Emit;
+using GstSharp.Generator.Emit;
 using GstSharp.Generator.GirParsing;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
@@ -254,8 +254,9 @@ public sealed class SkipRulesTests
         // thread that blocks its caller on the default main context.
         // gst_rtsp_thread_new stays out beside them: it exists for a get_thread
         // override this binding offers no vfunc for, and what it mints is
-        // released by an unref rather than by a stop. gst_rtsp_mount_points_add_factory consumes the factory it is
-        // handed, and the generated shape would dispose the wrapper whose
+        // released by an unref rather than by a stop.
+        // gst_rtsp_mount_points_add_factory consumes the factory it is handed,
+        // and the generated shape would dispose the wrapper whose
         // signal handlers the caller has just attached; it is hand written in
         // src/GstSharp.Net.RtspServer/Custom.
         // The GBytes group is four entries, and none of them is a marshalling

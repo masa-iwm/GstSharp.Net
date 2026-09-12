@@ -1,4 +1,4 @@
-﻿using GstSharp.Generator.GirParsing.Model;
+using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Planning;
 using GstSharp.Generator.Semantic;
 

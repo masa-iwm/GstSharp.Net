@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Planning;
 

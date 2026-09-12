@@ -1,4 +1,4 @@
-﻿using Gst;
+using Gst;
 using Gst.Sdp;
 using Gst.WebRTC;
 using Xunit;

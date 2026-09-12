@@ -1374,8 +1374,9 @@ stays alive while any other holder still counts a use of it.
 it reports success or failure, so the wrapper is detached when the call
 returns; a thread that owes no stop is refused with `ArgumentException` rather
 than consumed. `RTSPThread.Reuse` is the one member that steps outside this
-ledger: a `true` answer adds a reference that disposal does not release, so a
-caller that reuses a thread owes one stop per reuse. `RTSPThread.Context` is a
+ledger: a `true` answer adds one reference and one reuse count that the single
+stop of this wrapper does not release, and the binding offers no second stop to
+release them with, so calling it leaves the thread held for good. `RTSPThread.Context` is a
 read of the main context the thread runs its sources on; the loop is not
 offered, because quitting it from outside leaves the idle source of a stop with
 nothing to run it.

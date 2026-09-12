@@ -1,4 +1,4 @@
-﻿using GstSharp.Generator.Emit;
+using GstSharp.Generator.Emit;
 using GstSharp.Generator.Semantic;
 using Xunit;
 
