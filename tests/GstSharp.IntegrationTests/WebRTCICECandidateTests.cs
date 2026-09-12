@@ -74,9 +74,9 @@ public sealed class WebRTCICECandidateTests
             // Nothing has gathered and no peer has answered, so both listings
             // are the empty array the walk produces for a block that holds
             // nothing but its terminator. That is the whole measurement here:
-            // a candidate of a peer, handed in by name, is not visible to the
-            // agent until it has gathered, so there is no non-empty answer
-            // this test can produce without a network.
+            // a candidate handed to the agent by name did not become visible
+            // to these getters before gathering when this test was written, so
+            // there is no non-empty answer to be had without a network.
             Assert.Empty(local);
             Assert.Empty(remote);
 
