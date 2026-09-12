@@ -704,6 +704,7 @@
     "gst_rtsp_permissions_get_role#return": { "nullable": true },
     "gst_rtsp_range_convert_units#range": { "direction": "ref" },
     "gst_rtsp_range_to_string#return": { "nullable": true },
+    "gst_rtsp_thread_reuse": { "obsolete": "A true answer adds one reference and one reuse count that the single stop of this wrapper does not release, and the binding offers no second stop, so the thread stays held for good (rtsp-thread-pool.c:142-156). It will be removed in 1.30." },
     "gst_sdp_media_add_media_from_structure#media": { "direction": "in", "callerAllocates": false, "transfer": "none" },
     "gst_sdp_media_set_media_from_caps#media": { "direction": "in", "callerAllocates": false, "transfer": "none" },
     "gst_sdp_message_add_time#repeat": { "nullable": true },

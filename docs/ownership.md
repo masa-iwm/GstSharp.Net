@@ -1376,7 +1376,10 @@ returns; a thread that owes no stop is refused with `ArgumentException` rather
 than consumed. `RTSPThread.Reuse` is the one member that steps outside this
 ledger: a `true` answer adds one reference and one reuse count that the single
 stop of this wrapper does not release, and the binding offers no second stop to
-release them with, so calling it leaves the thread held for good. `RTSPThread.Context` is a
+release them with, so calling it leaves the thread held for good. The member is
+therefore `[Obsolete]` and is scheduled for removal in `1.30`; it stays in
+`1.28.x` because it is part of the published surface the packages promise.
+`RTSPThread.Context` is a
 read of the main context the thread runs its sources on; the loop is not
 offered, because quitting it from outside leaves the idle source of a stop with
 nothing to run it.

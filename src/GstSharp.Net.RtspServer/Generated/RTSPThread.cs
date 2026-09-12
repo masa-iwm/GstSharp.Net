@@ -58,6 +58,7 @@ public sealed unsafe partial class RTSPThread : Gst.MiniObject
 
     /// <summary>Reuse the mainloop of @thread</summary>
     /// <returns>%TRUE if the mainloop could be reused</returns>
+    [Obsolete("A true answer adds one reference and one reuse count that the single stop of this wrapper does not release, and the binding offers no second stop, so the thread stays held for good (rtsp-thread-pool.c:142-156). It will be removed in 1.30.")]
     public bool Reuse()
     {
         int nativeResult = GstRtspThreadReuse(Handle);
