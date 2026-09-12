@@ -191,9 +191,10 @@ internal sealed class CallbackPlan
 /// it is built out of an <c>IEnumerable</c> in exactly two shapes: borrowed,
 /// where a scope releases the spine and everything allocated for it once the
 /// call returns, and consumed, where one value is minted per element and the
-/// callee owns all of it from the moment of the call. A <c>GSList</c> parameter
-/// takes the same route; a <c>GSList</c> return stays
-/// unsupported.</description></item>
+/// callee owns all of it from the moment of the call. A <c>GSList</c> is bound
+/// in both positions on the same rules: the two node layouts agree on the
+/// fields a walk reads, so only the function that releases the spine
+/// differs.</description></item>
 /// <item><description>The four callback scopes are bound as four different
 /// lifetimes of the managed state, and a callback with no closure argument to
 /// attach that state to is not bound at all. <c>call</c> keeps the state for
@@ -3574,9 +3575,10 @@ internal sealed class MarshalPlanner
         }
 
         // Before the array branch: a gir may spell a GLib container as an
-        // <array name="GLib.List">, and reading that as a C array would take the
-        // head of a linked list for the first element of a block.
-        if (mapped.Kind == MarshalKind.GList)
+        // <array name="GLib.List"> or an <array name="GLib.SList">, and reading
+        // either as a C array would take the head of a linked list for the
+        // first element of a block.
+        if (mapped.Kind is MarshalKind.GList or MarshalKind.GSList)
         {
             return PlanListReturn(value, mapped, transfer);
         }
@@ -3786,9 +3788,14 @@ internal sealed class MarshalPlanner
     /// Only the return position is planned here. A <c>GList</c> parameter is
     /// built in managed code and handed over by
     /// <see cref="PlanListArgument"/>, which is the mirror of this method and
-    /// carries the ownership rules of that direction. A <c>GSList</c> return is
-    /// skipped: the only one in a bound module carries an element this
-    /// projection would refuse anyway.
+    /// carries the ownership rules of that direction. A <c>GSList</c> return
+    /// takes this very route and differs in one flag: the node layouts agree on
+    /// <c>data</c> at offset zero and <c>next</c> one pointer further in, so the
+    /// walk is shared and <see cref="ReturnPlan.IsSinglyLinked"/> only says
+    /// which of <c>g_list_free</c> and <c>g_slist_free</c> releases the spine.
+    /// <c>gst_debug_get_all_categories</c> is the one such return in the bound
+    /// modules: a <c>container</c> list of the debug categories the library
+    /// keeps.
     /// </para>
     /// <para>
     /// The element decides everything: a wrapper that the runtime can adopt
@@ -3866,6 +3873,7 @@ internal sealed class MarshalPlanner
             ElementKind = elementKind,
             Flavor = flavor,
             IsNullable = false,
+            IsSinglyLinked = mapped.Kind == MarshalKind.GSList,
             Doc = ReturnDoc(value, transfer),
         };
     }
@@ -3901,10 +3909,15 @@ internal sealed class MarshalPlanner
     /// <para>
     /// Only the <c>in</c> direction is planned. An out or inout list comes back
     /// through the address of the caller's own variable, which is a different
-    /// marshaller altogether, and a <c>GSList</c> return has to be refused here
-    /// rather than fall through: <see cref="PlanReturn"/> intercepts a
-    /// <c>GList</c> before this method is reached but leaves a <c>GSList</c> to
-    /// the scalar switch. A <c>c:type</c> that ends in two stars is refused for
+    /// marshaller altogether. <see cref="PlanReturn"/> intercepts a list of
+    /// either type that a <em>call</em> answers before this method is reached,
+    /// so that route now ends in <see cref="PlanListReturn"/>; a slot or a
+    /// signal that answers a list still arrives here, because
+    /// <see cref="PlanVirtualMethodReturn"/> and
+    /// <see cref="PlanSignalReturn"/> plan their return through
+    /// <see cref="PlanScalar"/> with <paramref name="isReturn"/> set, and the
+    /// refusal below is what keeps the reverse direction out.
+    /// A <c>c:type</c> that ends in two stars is refused for
     /// the same family of reasons — <c>gst_iterator_new_list</c> keeps the
     /// address it is given and re-reads it on every resync, so the caller's
     /// list variable has to stay valid and mutable for the life of the

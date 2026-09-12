@@ -42,11 +42,15 @@ namespace Gst.Interop;
 /// </para>
 /// <para>
 /// The layout this walks is the one <c>GList</c> has had since GLib 1.2:
-/// <c>{ gpointer data; GList *next; GList *prev; }</c>, so <c>data</c> sits at
-/// offset zero and <c>next</c> one pointer further in. Only the forward links
-/// are read, and the walk starts at the head the call returned; a list that
-/// native code corrupted into a cycle would spin here, which is a bug that
-/// belongs to whoever built the list.
+/// <c>{ gpointer data; GList *next; GList *prev; }</c> (<c>glib/glist.h</c>),
+/// so <c>data</c> sits at offset zero and <c>next</c> one pointer further in. A
+/// <c>GSList</c> is <c>{ gpointer data; GSList *next; }</c>
+/// (<c>glib/gslist.h</c>), which puts the same two fields at the same two
+/// offsets and only leaves the backward link out, so one walk reads both and
+/// the list type is told apart where the spine is released rather than where it
+/// is read. Only the forward links are read, and the walk starts at the head
+/// the call returned; a list that native code corrupted into a cycle would spin
+/// here, which is a bug that belongs to whoever built the list.
 /// </para>
 /// </remarks>
 internal static partial class GListMarshal
@@ -112,6 +116,34 @@ internal static partial class GListMarshal
     }
 
     /// <summary>
+    /// Copies the element pointers of a list whose spine the caller owns, and
+    /// releases the spine with the function that belongs to its list type.
+    /// </summary>
+    /// <param name="head">The first node, or <see cref="nint.Zero"/> for an empty list.</param>
+    /// <param name="singly">
+    /// <see langword="true"/> for a <c>GSList</c>, <see langword="false"/> for a
+    /// <c>GList</c>.
+    /// </param>
+    /// <returns>The <c>data</c> pointer of every node, in list order.</returns>
+    /// <remarks>
+    /// The walk is the one of <see cref="CollectAndFreeSpine(nint)"/>, because
+    /// the two node layouts agree on everything it reads; only the release
+    /// differs, and mixing the two would hand a <c>GSList</c> node to the slice
+    /// allocator of the wrong size.
+    /// </remarks>
+    internal static nint[] CollectAndFreeSpine(nint head, bool singly)
+    {
+        if (head == nint.Zero)
+        {
+            return [];
+        }
+
+        nint[] items = Collect(head);
+        FreeSpine(head, singly);
+        return items;
+    }
+
+    /// <summary>
     /// Builds a list of freshly allocated UTF-8 strings for the length of a
     /// single native call.
     /// </summary>
@@ -169,7 +201,7 @@ internal static partial class GListMarshal
     /// than imported so that no function pointer to a native deallocator has to
     /// be handed back to GLib. The pointers are copied out and the spine is
     /// released before the first string is freed, in the order
-    /// <see cref="CollectAndFreeSpine"/> already establishes, so nothing walks
+    /// <see cref="CollectAndFreeSpine(nint)"/> already establishes, so nothing walks
     /// memory that was released a line earlier.
     /// </remarks>
     internal static void FreeStringList(nint head)

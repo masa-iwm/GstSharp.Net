@@ -1262,28 +1262,63 @@ public sealed class MarshalPlannerTests
         // neighbours of the fixture now bind. No introspectable in parameter of
         // the real girs carries the container transfer, so this synthetic one
         // is the only thing that keeps the rejection honest — a regression
-        // here produces no committed diff at all. The four containers are
-        // refused for reasons of their own: a list of a plain record has no
-        // projection of its elements, a list that hands over opaque records has
-        // nobody to release them, a GSList return is not bound, and a list that
-        // is passed in is now built by the borrowed list marshaller, which is
-        // why add_children binds and is asserted present rather than absent;
-        // ListArgumentTests owns that shape and every refusal of it.
+        // here produces no committed diff at all. The two containers beside it
+        // are refused for reasons of their own: a list of a plain record has no
+        // projection of its elements, and a list that hands over opaque records
+        // has nobody to release them. The other two list shapes of the fixture
+        // bind and are asserted present rather than absent - a list that is
+        // passed in is built by the borrowed list marshaller, which is why
+        // add_children is here and why ListArgumentTests owns that shape and
+        // every refusal of it, and list_tags is the singly linked return whose
+        // body ASinglyLinkedReturnOfOwnedStringsFreesBothHalves reads.
         Assert.DoesNotContain("StealCaps", source, StringComparison.Ordinal);
         Assert.Contains("public void TakeCaps(", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ListExtents", source, StringComparison.Ordinal);
         Assert.DoesNotContain("TakeAnchors", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("ListTags", source, StringComparison.Ordinal);
+        Assert.Contains("public System.Collections.Generic.IReadOnlyList<string> ListTags(", source, StringComparison.Ordinal);
         Assert.Contains("public void AddChildren(", source, StringComparison.Ordinal);
 
-        // The eight: steal_caps, list_extents, take_anchors and list_tags
-        // above, the two GValue parameter rejections that
-        // TheTakeValueShapeStaysUnbound and ANullableGValueParameterStaysUnbound
-        // pin, and the two GValue callback argument rejections of
+        // The seven: steal_caps, list_extents and take_anchors above, the two
+        // GValue parameter rejections that TheTakeValueShapeStaysUnbound and
+        // ANullableGValueParameterStaysUnbound pin, and the two GValue callback
+        // argument rejections of
         // AGValueCallbackArgumentThatTransfersOrIsNullableStaysUnbound. The
         // plain GValue taking callback now binds as a view, which
         // AGValueTakingCallbackIsHandedAView pins.
-        Assert.Equal(8, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.Equal(7, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    }
+
+    /// <summary>
+    /// A <c>GSList</c> return of strings the call hands over: the spine goes
+    /// back to <c>g_slist_free</c> rather than to <c>g_list_free</c>, and every
+    /// string is freed as it is copied. Both halves of the
+    /// <c>transfer-ownership="full"</c> are read, which is what tells this shape
+    /// from the <c>container</c> one beside it.
+    /// </summary>
+    [Fact]
+    public void ASinglyLinkedReturnOfOwnedStringsFreesBothHalves()
+    {
+        Assert.Equal(
+            """
+            public System.Collections.Generic.IReadOnlyList<string> ListTags()
+            {
+                nint nativeResult = GstWidgetListTags(Handle);
+                nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult, singly: true);
+                System.Collections.Generic.List<string> result = new(nativeItems.Length);
+                foreach (nint nativeItem in nativeItems)
+                {
+                    if (nativeItem != 0 && Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeItem) is { } adopted)
+                    {
+                        result.Add(adopted);
+                    }
+                }
+
+                System.GC.KeepAlive(this);
+                return result;
+            }
+            """,
+            Run.Member("Widget.cs", "public System.Collections.Generic.IReadOnlyList<string> ListTags("),
+            StringComparer.Ordinal);
     }
 
     [Fact]

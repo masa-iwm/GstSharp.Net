@@ -304,6 +304,31 @@ public static unsafe partial class Global
         return nativeResult;
     }
 
+    /// <summary>
+    /// Returns a snapshot of a all categories that are currently in use . This list
+    /// may change anytime.
+    /// The caller has to free the list after use.
+    /// </summary>
+    /// <returns>
+    /// the list of
+    ///     debug categories
+    /// </returns>
+    public static System.Collections.Generic.IReadOnlyList<Gst.DebugCategory> DebugGetAllCategories()
+    {
+        nint nativeResult = GstDebugGetAllCategories();
+        nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult, singly: true);
+        System.Collections.Generic.List<Gst.DebugCategory> result = new(nativeItems.Length);
+        foreach (nint nativeItem in nativeItems)
+        {
+            if (nativeItem != 0 && Gst.DebugCategory.FromNative(nativeItem) is { } adopted)
+            {
+                result.Add(adopted);
+            }
+        }
+
+        return result;
+    }
+
     /// <summary>Changes the coloring mode for debug output.</summary>
     /// <returns>see @GstDebugColorMode for possible values.</returns>
     public static Gst.DebugColorMode DebugGetColorMode()
@@ -3588,6 +3613,10 @@ public static unsafe partial class Global
     /// <summary>The <c>gst_debug_construct_win_color</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_construct_win_color")]
     private static partial int GstDebugConstructWinColor(uint colorinfo);
+
+    /// <summary>The <c>gst_debug_get_all_categories</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_debug_get_all_categories")]
+    private static partial nint GstDebugGetAllCategories();
 
     /// <summary>The <c>gst_debug_get_color_mode</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_debug_get_color_mode")]

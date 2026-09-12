@@ -435,7 +435,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (39)
+### UnsupportedSignature (38)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
@@ -445,7 +445,6 @@ disappears shows up here as an added line.
 - `gst_bus_get_pollfd`
 - `gst_context_replace`
 - `gst_control_binding_get_g_value_array`
-- `gst_debug_get_all_categories`
 - `gst_format_get_details`
 - `gst_formats_contains`
 - `gst_init`

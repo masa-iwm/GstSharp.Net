@@ -3443,6 +3443,12 @@ internal static class CallableRenderer
     /// null entry, and a <c>NULL</c> list is an empty list, which is why the
     /// member never returns <see langword="null"/>.
     /// </para>
+    /// <para>
+    /// A <c>GSList</c> comes back through this very method. The walk reads
+    /// <c>data</c> at offset zero and <c>next</c> one pointer further in, which
+    /// both node layouts have, so the singly linked list differs in the release
+    /// alone and says so at the call that frees the spine.
+    /// </para>
     /// </remarks>
     private static void WriteListConversion(CodeWriter writer, ReturnPlan value, string target)
     {
@@ -3450,13 +3456,21 @@ internal static class CallableRenderer
         GirTransfer elementTransfer = value.Transfer is GirTransfer.Full or GirTransfer.Floating
             ? GirTransfer.Full
             : GirTransfer.None;
+        // GList and GSList are walked by the same code - glist.h spells a node
+        // { data, next, prev } and gslist.h { data, next }, so data sits at
+        // offset zero and next one pointer further in for both - but a spine
+        // the caller owns has to go back to the allocator of its own list type.
         string collect = value.Transfer == GirTransfer.None ? "Collect" : "CollectAndFreeSpine";
         string conversion = value.ElementKind == ArgumentKind.Utf8
             ? StringConversion(elementTransfer, ItemLocal)
             : HandleConversion(value.Flavor, elementType, ItemLocal, elementTransfer);
 
+        string spine = value.IsSinglyLinked && value.Transfer != GirTransfer.None
+            ? ResultLocal + ", singly: true"
+            : ResultLocal;
+
         writer.WriteLine(
-            "nint[] " + ItemsLocal + " = Gst.Interop.GListMarshal." + collect + "(" + ResultLocal + ");");
+            "nint[] " + ItemsLocal + " = Gst.Interop.GListMarshal." + collect + "(" + spine + ");");
         writer.WriteLine(
             "System.Collections.Generic.List<" + elementType + "> " + target
             + " = new(" + ItemsLocal + ".Length);");

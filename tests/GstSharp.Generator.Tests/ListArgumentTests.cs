@@ -6,7 +6,7 @@ namespace GstSharp.Generator.Tests;
 
 /// <summary>
 /// The projection of a <c>GList</c> or a <c>GSList</c> a call is given: the
-/// borrowed shape, the consumed shape, and the twelve shapes that stay
+/// borrowed shape, the consumed shape, and the eleven shapes that stay
 /// rejected.
 /// </summary>
 /// <remarks>
@@ -26,7 +26,9 @@ public sealed class ListArgumentTests
     /// <c>take_buffers</c> are the two consumed shapes, and
     /// <c>to_string_with_keys</c> borrows the entry point of a real member so
     /// that the upstream paragraph it carries is written by the run rather than
-    /// asserted against the committed sources. Everything below it is a
+    /// asserted against the committed sources, and <c>get_categories</c> is the
+    /// singly linked list in the return position, which binds. Everything below
+    /// <c>to_string_with_keys</c> other than <c>get_categories</c> is a
     /// refusal; <c>take_tags_and_name</c> and <c>take_both_lists</c> are
     /// refused for the order of the prologue rather than for the shape of a
     /// single argument.
@@ -295,7 +297,7 @@ public sealed class ListArgumentTests
                 </parameters>
               </method>
               <method name="get_categories" c:identifier="gst_widget_get_categories">
-                <return-value transfer-ownership="none">
+                <return-value transfer-ownership="container">
                   <type name="GLib.SList" c:type="GSList*">
                     <type name="utf8"/>
                   </type>
@@ -649,13 +651,36 @@ public sealed class ListArgumentTests
         Assert.DoesNotContain("PeekBuffers", Run.File("Widget.cs"), StringComparison.Ordinal);
 
     /// <summary>
-    /// The return planner intercepts a <c>GList</c> before the scalar switch
-    /// and leaves a <c>GSList</c> to it, so the new case has to refuse a return
-    /// itself or a singly linked one would be planned as a parameter.
+    /// A <c>GSList</c> comes back through the same materializer as a
+    /// <c>GList</c>, because the two node layouts agree on the two fields the
+    /// walk reads. What the list type decides is the release, so the one
+    /// literal that differs is at the call that frees the spine.
     /// </summary>
     [Fact]
-    public void ASinglyLinkedReturnStaysUnbound() =>
-        Assert.DoesNotContain("GetCategories", Run.File("Widget.cs"), StringComparison.Ordinal);
+    public void ASinglyLinkedReturnFreesTheSpineOfItsOwnListType()
+    {
+        Assert.Equal(
+            """
+            public System.Collections.Generic.IReadOnlyList<string> GetCategories()
+            {
+                nint nativeResult = GstWidgetGetCategories(Handle);
+                nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult, singly: true);
+                System.Collections.Generic.List<string> result = new(nativeItems.Length);
+                foreach (nint nativeItem in nativeItems)
+                {
+                    if (nativeItem != 0 && Gst.Interop.GMarshal.PtrToStringUtf8(nativeItem) is { } adopted)
+                    {
+                        result.Add(adopted);
+                    }
+                }
+
+                System.GC.KeepAlive(this);
+                return result;
+            }
+            """,
+            Run.Member("Widget.cs", "public System.Collections.Generic.IReadOnlyList<string> GetCategories("),
+            StringComparer.Ordinal);
+    }
 
     /// <summary>
     /// A trampoline that is handed a list would have to project it into managed
@@ -691,11 +716,11 @@ public sealed class ListArgumentTests
         Assert.DoesNotContain("TakeBothLists", Run.File("Widget.cs"), StringComparison.Ordinal);
 
     /// <summary>
-    /// The twelve refusals above, counted: nothing else of the fixture is
+    /// The eleven refusals above, counted: nothing else of the fixture is
     /// dropped, so a rule that widens shows up here as well as in the member
     /// assertions.
     /// </summary>
     [Fact]
-    public void OnlyTheTwelveRejectedShapesAreSkipped() =>
-        Assert.Equal(12, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+    public void OnlyTheElevenRejectedShapesAreSkipped() =>
+        Assert.Equal(11, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
 }

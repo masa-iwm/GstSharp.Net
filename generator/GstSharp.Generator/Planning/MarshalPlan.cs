@@ -198,9 +198,12 @@ internal enum ArgumentKind
     ListIn,
 
     /// <summary>
-    /// A <c>GList</c> that a call returned, materialized into a read only list.
-    /// The element projection is carried by <see cref="ReturnPlan.ElementKind"/>
-    /// and <see cref="ReturnPlan.Flavor"/>.
+    /// A <c>GList</c> or a <c>GSList</c> that a call returned, materialized into
+    /// a read only list. The element projection is carried by
+    /// <see cref="ReturnPlan.ElementKind"/> and
+    /// <see cref="ReturnPlan.Flavor"/>, and
+    /// <see cref="ReturnPlan.IsSinglyLinked"/> says which of the two GLib list
+    /// types the spine is.
     /// </summary>
     GListReturn,
 
@@ -558,6 +561,14 @@ internal sealed class ReturnPlan
 
     /// <summary>Gets the wrapper flavour of a handle.</summary>
     internal HandleFlavor Flavor { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether a returned list is a <c>GSList</c>
+    /// rather than a <c>GList</c>. The two differ in nothing the walk reads,
+    /// which is why one materializer serves both; what the flag decides is the
+    /// function that releases the spine.
+    /// </summary>
+    internal bool IsSinglyLinked { get; init; }
 
     /// <summary>
     /// Gets the static class whose <c>ToNative</c> and <c>FromNative</c> convert
