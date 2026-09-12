@@ -23,11 +23,21 @@ public static unsafe partial class VideoGlobal
     /// Adds a new #GstAncillaryMeta to the @buffer. The caller is responsible for setting the appropriate
     /// fields.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_ancillary_meta passes that result through a g_assert rather than checking
+    /// it (video-anc.c:1241), which would abort the process. The check is not atomic with the
+    /// add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">A #GstBuffer</param>
     /// <returns>A new #GstAncillaryMeta, or %NULL if an error happened.</returns>
     public static Gst.Video.AncillaryMeta BufferAddAncillaryMeta(Gst.Buffer buffer)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_ancillary_meta");
         nint nativeResult = GstBufferAddAncillaryMeta(buffer.Handle);
         Gst.Video.AncillaryMeta result = Gst.Video.AncillaryMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_ancillary_meta returned no value.");
@@ -39,6 +49,15 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoAFDMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_video_afd_meta asserts that result is not NULL and then writes through it
+    /// (video-anc.c:1376-1378), which would crash the process. The check is not atomic with the
+    /// add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="field">0 for progressive or field 1 and 1 for field 2</param>
     /// <param name="spec">#GstVideoAFDSpec that applies to AFD value</param>
@@ -47,6 +66,7 @@ public static unsafe partial class VideoGlobal
     public static Gst.Video.VideoAFDMeta BufferAddVideoAfdMeta(Gst.Buffer buffer, byte field, Gst.Video.VideoAFDSpec spec, Gst.Video.VideoAFDValue afd)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_video_afd_meta");
         nint nativeResult = GstBufferAddVideoAfdMeta(buffer.Handle, field, (int)spec, (int)afd);
         Gst.Video.VideoAFDMeta result = Gst.Video.VideoAFDMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_afd_meta returned no value.");
@@ -74,6 +94,15 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoBarMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_video_bar_meta asserts that result is not NULL and then writes through it
+    /// (video-anc.c:1488-1490), which would crash the process. The check is not atomic with the
+    /// add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="field">0 for progressive or field 1 and 1 for field 2</param>
     /// <param name="isLetterbox">if true then bar data specifies letterbox, otherwise pillarbox</param>
@@ -93,6 +122,7 @@ public static unsafe partial class VideoGlobal
     public static Gst.Video.VideoBarMeta BufferAddVideoBarMeta(Gst.Buffer buffer, byte field, bool isLetterbox, uint barData1, uint barData2)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_video_bar_meta");
         nint nativeResult = GstBufferAddVideoBarMeta(buffer.Handle, field, isLetterbox ? 1 : 0, barData1, barData2);
         Gst.Video.VideoBarMeta result = Gst.Video.VideoBarMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_bar_meta returned no value.");
@@ -259,6 +289,17 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoRegionOfInterestMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_video_region_of_interest_meta delegates to
+    /// gst_buffer_add_video_region_of_interest_meta_id (gstvideometa.c:1491-1496), which uses
+    /// that result without checking it (gstvideometa.c:1522) and would crash the process. The
+    /// check is not atomic with the add; a concurrent reference taken by another thread is the
+    /// caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="roiType">Type of the region of interest (e.g. "face")</param>
     /// <param name="x">X position</param>
@@ -270,6 +311,7 @@ public static unsafe partial class VideoGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentNullException.ThrowIfNull(roiType);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_video_region_of_interest_meta");
         System.Span<byte> roiTypeBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope roiTypeScope = Gst.Interop.GMarshal.StackUtf8(roiType, roiTypeBuffer);
         nint nativeResult = GstBufferAddVideoRegionOfInterestMeta(buffer.Handle, roiTypeScope.Pointer, x, y, w, h);
@@ -283,6 +325,15 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoRegionOfInterestMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_video_region_of_interest_meta_id uses that result without checking it
+    /// (gstvideometa.c:1522), which would crash the process. The check is not atomic with the
+    /// add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="roiType">Type of the region of interest (e.g. "face")</param>
     /// <param name="x">X position</param>
@@ -293,6 +344,7 @@ public static unsafe partial class VideoGlobal
     public static Gst.Video.VideoRegionOfInterestMeta BufferAddVideoRegionOfInterestMetaId(Gst.Buffer buffer, Gst.GLib.Quark roiType, uint x, uint y, uint w, uint h)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_video_region_of_interest_meta_id");
         nint nativeResult = GstBufferAddVideoRegionOfInterestMetaId(buffer.Handle, roiType.Value, x, y, w, h);
         Gst.Video.VideoRegionOfInterestMeta result = Gst.Video.VideoRegionOfInterestMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_video_region_of_interest_meta_id returned no value.");
@@ -304,6 +356,16 @@ public static unsafe partial class VideoGlobal
     /// Attaches #GstVideoSEIUserDataUnregisteredMeta metadata to @buffer with the given
     /// parameters.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_video_sei_user_data_unregistered_meta asserts that result is not NULL and
+    /// then writes through it (video-sei.c:178-179), which would crash the process. The check
+    /// is not atomic with the add; a concurrent reference taken by another thread is the
+    /// caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="uuid">
     /// User Data Unregistered UUID
@@ -323,6 +385,7 @@ public static unsafe partial class VideoGlobal
                 "uuid must have exactly 16 elements.",
                 nameof(uuid));
         }
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_video_sei_user_data_unregistered_meta");
         fixed (byte* uuidPointer = uuid)
         {
             fixed (byte* dataPointer = data)

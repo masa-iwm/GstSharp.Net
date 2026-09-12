@@ -59,10 +59,13 @@ public static unsafe partial class AudioGlobal
     /// member is written by hand rather than generated.
     /// </para>
     /// <para>
-    /// The writability of the buffer is checked before anything is called. The
-    /// sibling <c>gst_buffer_add_video_region_of_interest_meta_id</c>
-    /// dereferences the NULL that <c>gst_buffer_add_meta</c> answers on a shared
-    /// buffer, so a pre-check is what keeps this family off a process crash.
+    /// The writability of the buffer is checked before anything is called.
+    /// <c>gst_buffer_add_meta</c> answers NULL for a shared buffer
+    /// (gstbuffer.c:2335) and <c>gst_buffer_add_audio_meta</c> writes
+    /// <c>meta-&gt;info</c> through that answer without checking it
+    /// (gstaudiometa.c:493-511), which would crash the process. The check is not
+    /// atomic with the add; a concurrent reference taken by another thread is
+    /// the caller's race.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">

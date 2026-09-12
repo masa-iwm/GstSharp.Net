@@ -391,6 +391,15 @@ public static unsafe partial class AudioGlobal
     }
 
     /// <summary>Attaches #GstAudioClippingMeta metadata to @buffer with the given parameters.</summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_audio_clipping_meta uses that result without checking it
+    /// (gstaudiometa.c:274), which would crash the process. The check is not atomic with the
+    /// add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="format">GstFormat of @start and @stop, GST_FORMAT_DEFAULT is samples</param>
     /// <param name="start">Amount of audio to clip from start of buffer</param>
@@ -399,6 +408,7 @@ public static unsafe partial class AudioGlobal
     public static Gst.Audio.AudioClippingMeta BufferAddAudioClippingMeta(Gst.Buffer buffer, Gst.Format format, ulong start, ulong end)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_audio_clipping_meta");
         nint nativeResult = GstBufferAddAudioClippingMeta(buffer.Handle, (int)format, start, end);
         Gst.Audio.AudioClippingMeta result = Gst.Audio.AudioClippingMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_audio_clipping_meta returned no value.");
@@ -446,6 +456,13 @@ public static unsafe partial class AudioGlobal
     /// that you must add enough memory on the @buffer before adding this meta.
     /// </para>
     /// <para>This meta is only needed for non-interleaved (= planar) DSD data.</para>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_dsd_plane_offset_meta uses that result without checking it
+    /// (gstdsd.c:231), which would crash the process. The check is not atomic with the add; a
+    /// concurrent reference taken by another thread is the caller's race.
+    /// </para>
     /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="numBytesPerChannel">Number of bytes per channel</param>
@@ -460,6 +477,7 @@ public static unsafe partial class AudioGlobal
     public static Gst.Audio.DsdPlaneOffsetMeta BufferAddDsdPlaneOffsetMeta(Gst.Buffer buffer, nuint numBytesPerChannel, System.Span<nuint> offsets)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_dsd_plane_offset_meta");
         fixed (nuint* offsetsPointer = offsets)
         {
             nint nativeResult = GstBufferAddDsdPlaneOffsetMeta(buffer.Handle, (int)offsets.Length, numBytesPerChannel, offsetsPointer);

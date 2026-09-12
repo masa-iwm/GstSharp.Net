@@ -446,6 +446,45 @@ public sealed partial class Buffer
     }
 
     /// <summary>
+    /// Refuses a buffer that a meta adder would crash the process over.
+    /// </summary>
+    /// <param name="buffer">The buffer the adder was given.</param>
+    /// <param name="cIdentifier">
+    /// The C function the generated member calls, which is what the message
+    /// names: the fault is in that function rather than in this binding.
+    /// </param>
+    /// <exception cref="InvalidOperationException">The buffer is not writable.</exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <remarks>
+    /// <para>
+    /// <c>gst_buffer_add_meta</c> answers NULL for a buffer that is not
+    /// writable (gstbuffer.c:2335), and several adders of the library use that
+    /// answer without checking it — they write a field of it, or assert it is
+    /// not NULL and then write one. Either is a crash rather than an error a
+    /// caller could see, so the members that reach one of them refuse the call
+    /// here instead, through a <c>preconditions</c> overlay entry.
+    /// </para>
+    /// <para>
+    /// The check is not atomic with the add: a reference another thread takes
+    /// between this and the call makes the buffer shared again, and that race
+    /// is the caller's. Nothing is locked, because nothing could be — the
+    /// library takes no lock over the pair either.
+    /// </para>
+    /// </remarks>
+    internal static void ThrowIfNotWritable(Gst.Buffer buffer, string cIdentifier)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+
+        if (!buffer.IsWritable)
+        {
+            throw new InvalidOperationException(
+                $"The buffer is not writable, so {cIdentifier} would dereference the NULL that "
+                + "gst_buffer_add_meta answers for a shared buffer and crash the process. Take the "
+                + "buffer through MakeWritable, or release the other references to it, first.");
+        }
+    }
+
+    /// <summary>
     /// A buffer that is mapped into the address space of the process, and the
     /// span over the memory it was mapped to.
     /// </summary>

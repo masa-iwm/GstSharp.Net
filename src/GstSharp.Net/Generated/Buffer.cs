@@ -352,6 +352,13 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_protection_meta uses that result without checking it
+    /// (gstprotection.c:162), which would crash the process. The check is not atomic with the
+    /// add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
     /// </remarks>
     /// <param name="info">
     /// a #GstStructure holding cryptographic
@@ -370,6 +377,7 @@ public sealed unsafe partial class Buffer : Gst.MiniObject
     public Gst.ProtectionMeta AddProtectionMeta(Gst.Structure info)
     {
         ArgumentNullException.ThrowIfNull(info);
+        Gst.Buffer.ThrowIfNotWritable(this, "gst_buffer_add_protection_meta");
         nint instanceHandle = Handle;
         nint infoNative = info.Handle;
         nuint infoType = info.BoxedType.Value;

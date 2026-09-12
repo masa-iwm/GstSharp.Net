@@ -12,6 +12,15 @@ namespace Gst.Net;
 public static unsafe partial class NetGlobal
 {
     /// <summary>Attaches @addr as metadata in a #GstNetAddressMeta to @buffer.</summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_net_address_meta uses that result without checking it
+    /// (gstnetaddressmeta.c:122), which would crash the process. The check is not atomic with
+    /// the add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="addr">a @GSocketAddress to connect to @buffer</param>
     /// <returns>a #GstNetAddressMeta connected to @buffer</returns>
@@ -19,6 +28,7 @@ public static unsafe partial class NetGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentNullException.ThrowIfNull(addr);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_net_address_meta");
         nint nativeResult = GstBufferAddNetAddressMeta(buffer.Handle, addr.Handle);
         Gst.Net.NetAddressMeta result = Gst.Net.NetAddressMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_net_address_meta returned no value.");
@@ -28,6 +38,15 @@ public static unsafe partial class NetGlobal
     }
 
     /// <summary>Attaches @message as metadata in a #GstNetControlMessageMeta to @buffer.</summary>
+    /// <remarks>
+    /// <para>
+    /// The binding throws InvalidOperationException when the buffer is not writable:
+    /// gst_buffer_add_meta returns NULL for a shared buffer (gstbuffer.c:2335) and
+    /// gst_buffer_add_net_control_message_meta uses that result without checking it
+    /// (gstnetcontrolmessagemeta.c:129), which would crash the process. The check is not atomic
+    /// with the add; a concurrent reference taken by another thread is the caller's race.
+    /// </para>
+    /// </remarks>
     /// <param name="buffer">a #GstBuffer</param>
     /// <param name="message">a @GSocketControlMessage to attach to @buffer</param>
     /// <returns>a #GstNetControlMessageMeta connected to @buffer</returns>
@@ -35,6 +54,7 @@ public static unsafe partial class NetGlobal
     {
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentNullException.ThrowIfNull(message);
+        Gst.Buffer.ThrowIfNotWritable(buffer, "gst_buffer_add_net_control_message_meta");
         nint nativeResult = GstBufferAddNetControlMessageMeta(buffer.Handle, message.Handle);
         Gst.Net.NetControlMessageMeta result = Gst.Net.NetControlMessageMeta.FromNative(nativeResult)
             ?? throw new InvalidOperationException("gst_buffer_add_net_control_message_meta returned no value.");
