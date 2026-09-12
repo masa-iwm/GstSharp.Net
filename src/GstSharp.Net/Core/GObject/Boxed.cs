@@ -31,6 +31,18 @@ public abstract class Boxed : IDisposable
     /// is nobody else's, and disposing it frees that value.
     /// </para>
     /// <para>
+    /// What that copy costs is decided by the type: <c>g_boxed_copy</c>
+    /// dispatches to the copy function of the registration, and while most
+    /// types duplicate the value, some registered their own <c>_ref</c> —
+    /// <c>GDateTime</c>, <c>GBytes</c>, <c>GstVideoCodecFrame</c>,
+    /// <c>GstVideoCodecState</c>, <c>GstAtomicQueue</c>,
+    /// <c>GstFlowCombiner</c>. For those, <see cref="Transfer.None"/> takes a
+    /// reference and disposing drops it again rather than freeing the value
+    /// outright. The rule of a wrapper is the same from the caller's side
+    /// either way: the wrapper owns what it was handed and its owner disposes
+    /// it.
+    /// </para>
+    /// <para>
     /// <b>The type has to be the boxed type of the value.</b> It is not read
     /// back from the value — a boxed value is a plain structure whose first word
     /// is a field rather than a pointer to a class — so it is what the copy and

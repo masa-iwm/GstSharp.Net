@@ -310,6 +310,60 @@ internal sealed class MarshalPlanner
     };
 
     /// <summary>
+    /// The boxed records whose registered <c>GBoxedCopyFunc</c> is the type's
+    /// own <c>_ref</c>, keyed by gir qualified record name, with the name of
+    /// that function as the value.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A boxed type is copied through <c>g_boxed_copy</c>, which dispatches to
+    /// whatever the type registered, so the emitted call site is the same for
+    /// every boxed value. What the registration decides is what the copy
+    /// <em>costs</em>: most types duplicate the value — <c>GstStructure</c>
+    /// through <c>gst_structure_copy</c>, <c>GstCapsFeatures</c> through
+    /// <c>gst_caps_features_copy</c> — while the types listed here registered a
+    /// reference count increment instead, so that copying one of them is taking
+    /// a reference. Only the documentation of a consumed argument tells the two
+    /// apart, which is what <see cref="ConsumedFamily.RefCountedBoxed"/> is
+    /// for; nothing about the generated code changes.
+    /// </para>
+    /// <para>
+    /// The table is curated, because no gir attribute carries the copy function
+    /// of a boxed record: every entry was read off the registration in the C
+    /// sources of GStreamer 1.28 and GLib 2.86, cited per row. Every key has to
+    /// name a <c>&lt;record&gt;</c> of the vendored reference girs, which
+    /// <c>RefCountedBoxedRemarkTests</c> keeps true.
+    /// </para>
+    /// </remarks>
+    internal static readonly IReadOnlyDictionary<string, string> RefCountedBoxedTypes =
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            // GLib registers these three in its own boxed table, each with the
+            // type's _ref as the copy function (gobject/gboxed.c:105-152).
+            ["GLib.DateTime"] = "g_date_time_ref",
+            ["GLib.Bytes"] = "g_bytes_ref",
+            ["GLib.TimeZone"] = "g_time_zone_ref",
+
+            // G_DEFINE_BOXED_TYPE (GstAtomicQueue, gst_atomic_queue,
+            // (GBoxedCopyFunc) gst_atomic_queue_ref, ...) —
+            // gst/gstatomicqueue.c:40-42.
+            ["Gst.AtomicQueue"] = "gst_atomic_queue_ref",
+
+            // libs/gst/base/gstflowcombiner.c:81-85; the record is declared by
+            // the GstBase namespace, not by Gst.
+            ["GstBase.FlowCombiner"] = "gst_flow_combiner_ref",
+
+            // gst-libs/gst/video/gstvideoutils.c:36-38 and :201-203; both
+            // records carry their own ref_count field.
+            ["GstVideo.VideoCodecFrame"] = "gst_video_codec_frame_ref",
+            ["GstVideo.VideoCodecState"] = "gst_video_codec_state_ref",
+
+            // gst-libs/gst/app/gstappsrc.c:141-142 and gstappsink.c:113-114.
+            ["GstApp.AppSrcSimpleCallbacks"] = "gst_app_src_simple_callbacks_ref",
+            ["GstApp.AppSinkSimpleCallbacks"] = "gst_app_sink_simple_callbacks_ref",
+        };
+
+    /// <summary>
     /// Enumerations of the hand written runtime that generated code may refer to
     /// even though their module is not generated.
     /// </summary>
@@ -3127,10 +3181,18 @@ internal sealed class MarshalPlanner
         // handle is the other way round and the wrapper adopts it.
         if (!isReturn && transfer == GirTransfer.Full)
         {
+            // A boxed record whose registered copy function is its own _ref is
+            // minted exactly like any other boxed value - g_boxed_copy
+            // dispatches to the registration - and is told apart only so that
+            // the remark says "taking a reference" rather than "a copy".
+            bool refCounted = RefCountedBoxedTypes.TryGetValue(symbol.QualifiedName, out string? copyFunction);
+
             ConsumedFamily family = flavor switch
             {
                 HandleFlavor.GObject => ConsumedFamily.GObject,
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.MiniObject => ConsumedFamily.MiniObject,
+                HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed && refCounted =>
+                    ConsumedFamily.RefCountedBoxed,
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed => ConsumedFamily.Boxed,
                 _ => ConsumedFamily.None,
             };
@@ -3150,6 +3212,10 @@ internal sealed class MarshalPlanner
                 Transfer = transfer,
                 Flavor = flavor,
                 ConsumedFamily = family,
+                BoxedCopyFunction = family == ConsumedFamily.RefCountedBoxed ? copyFunction : null,
+                BoxedCTypeName = family == ConsumedFamily.RefCountedBoxed
+                    ? (symbol.Declaration as GirTypeDeclaration)?.CType ?? publicType
+                    : null,
                 IsNullable = nullable,
             };
         }
@@ -4461,6 +4527,8 @@ internal sealed class MarshalPlanner
                     Transfer = argument.Transfer,
                     Flavor = argument.Flavor,
                     ConsumedFamily = argument.ConsumedFamily,
+                    BoxedCopyFunction = argument.BoxedCopyFunction,
+                    BoxedCTypeName = argument.BoxedCTypeName,
                     IsNullable = argument.IsNullable,
                     Doc = argument.Doc,
                 };

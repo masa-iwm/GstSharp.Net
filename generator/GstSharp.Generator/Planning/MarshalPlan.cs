@@ -300,10 +300,20 @@ internal enum ConsumedFamily
     MiniObject,
 
     /// <summary>
-    /// A boxed value; the call is handed a copy, because a boxed value has no
-    /// reference count to raise — the copy is what a reference is there.
+    /// A boxed value whose registered copy function is a real copy; the call is
+    /// handed a copy, because such a value has no reference count to raise —
+    /// the copy is what a reference is there.
     /// </summary>
     Boxed,
+
+    /// <summary>
+    /// A boxed value whose registered <c>GBoxedCopyFunc</c> is the type's own
+    /// <c>_ref</c>, such as <c>GDateTime</c> or <c>GstVideoCodecFrame</c>; the
+    /// call is handed the same <c>g_boxed_copy</c> as
+    /// <see cref="Boxed"/>, which for these types takes a reference rather than
+    /// duplicating the value. Only the documentation differs.
+    /// </summary>
+    RefCountedBoxed,
 
     /// <summary>A <c>GObject</c>; the call is handed a reference of its own.</summary>
     GObject,
@@ -446,6 +456,23 @@ internal sealed record ArgumentPlan
     /// value. <see cref="ConsumedFamily.None"/> for every other kind.
     /// </summary>
     internal ConsumedFamily ConsumedFamily { get; init; }
+
+    /// <summary>
+    /// Gets the name of the C function a
+    /// <see cref="ConsumedFamily.RefCountedBoxed"/> argument's boxed type
+    /// registered as its <c>GBoxedCopyFunc</c>, which is that type's own
+    /// <c>_ref</c>. <see langword="null"/> for every other family; it is
+    /// documentation only.
+    /// </summary>
+    internal string? BoxedCopyFunction { get; init; }
+
+    /// <summary>
+    /// Gets the <c>c:type</c> of the record a
+    /// <see cref="ConsumedFamily.RefCountedBoxed"/> argument names, which is
+    /// the spelling the copy function belongs to (<c>GDateTime</c>, ...).
+    /// <see langword="null"/> for every other family.
+    /// </summary>
+    internal string? BoxedCTypeName { get; init; }
 
     /// <summary>
     /// Gets the constructor a <see cref="ArgumentKind.CallerAllocatedBoxed"/>

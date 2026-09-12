@@ -1774,6 +1774,22 @@ internal static class CallableRenderer
                     lines.Add("<c>using</c> declaration around the argument stays correct.");
                     break;
 
+                case ConsumedFamily.RefCountedBoxed:
+                {
+                    string boxedType = argument.BoxedCTypeName ?? argument.PublicType;
+                    string copyFunction = argument.BoxedCopyFunction
+                        ?? throw new InvalidOperationException(
+                            "A ref counted boxed argument carries no copy function name.");
+
+                    lines.Add("handed a reference of its own and the wrapper is disposed afterwards, which");
+                    lines.Add("leaves the native reference count exactly where the C call leaves it.");
+                    lines.Add("<c>" + boxedType + "</c> is a boxed type whose registered copy function is");
+                    lines.Add("<c>" + copyFunction + "</c>, so copying it is taking a reference.");
+                    lines.Add("<see cref=\"Gst.GObject.Boxed.Dispose()\"/> is idempotent, so a");
+                    lines.Add("<c>using</c> declaration around the argument stays correct.");
+                    break;
+                }
+
                 case ConsumedFamily.GObject:
                     lines.Add("handed a reference of its own and the wrapper is disposed afterwards, which");
                     lines.Add("leaves the native reference count exactly where the C call leaves it. A");
@@ -2752,7 +2768,7 @@ internal static class CallableRenderer
 
             case ArgumentKind.ConsumedHandle:
                 writer.WriteLine("nint " + argument.Name + "Native = " + HandleRead(argument) + ";");
-                if (argument.ConsumedFamily == ConsumedFamily.Boxed)
+                if (argument.ConsumedFamily is ConsumedFamily.Boxed or ConsumedFamily.RefCountedBoxed)
                 {
                     writer.WriteLine(
                         "nuint " + argument.Name + "Type = "
@@ -2799,7 +2815,8 @@ internal static class CallableRenderer
         string mint = argument.ConsumedFamily switch
         {
             ConsumedFamily.MiniObject => "Gst.GstNative.MiniObjectRef(" + name + "Native)",
-            ConsumedFamily.Boxed => "Gst.Interop.GObjectNative.BoxedCopy(" + name + "Type, " + name + "Native)",
+            ConsumedFamily.Boxed or ConsumedFamily.RefCountedBoxed =>
+                "Gst.Interop.GObjectNative.BoxedCopy(" + name + "Type, " + name + "Native)",
             _ => "Gst.Interop.GObjectNative.ObjectRef(" + name + "Native)",
         };
 

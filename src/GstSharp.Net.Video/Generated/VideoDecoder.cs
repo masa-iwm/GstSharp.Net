@@ -249,10 +249,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <remarks>
     /// <para>
     /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a copy of the value and the wrapper is disposed afterwards, which
-    /// leaves the caller with exactly what the C call leaves it with. A boxed
-    /// value has no reference count to raise, so the copy is what a reference is
-    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <c>GstVideoCodecFrame</c> is a boxed type whose registered copy function is
+    /// <c>gst_video_codec_frame_ref</c>, so copying it is taking a reference.
+    /// <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
@@ -290,10 +291,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <remarks>
     /// <para>
     /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a copy of the value and the wrapper is disposed afterwards, which
-    /// leaves the caller with exactly what the C call leaves it with. A boxed
-    /// value has no reference count to raise, so the copy is what a reference is
-    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <c>GstVideoCodecFrame</c> is a boxed type whose registered copy function is
+    /// <c>gst_video_codec_frame_ref</c>, so copying it is taking a reference.
+    /// <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
@@ -337,10 +339,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// </para>
     /// <para>
     /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a copy of the value and the wrapper is disposed afterwards, which
-    /// leaves the caller with exactly what the C call leaves it with. A boxed
-    /// value has no reference count to raise, so the copy is what a reference is
-    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <c>GstVideoCodecFrame</c> is a boxed type whose registered copy function is
+    /// <c>gst_video_codec_frame_ref</c>, so copying it is taking a reference.
+    /// <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
@@ -379,10 +382,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <remarks>
     /// <para>
     /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a copy of the value and the wrapper is disposed afterwards, which
-    /// leaves the caller with exactly what the C call leaves it with. A boxed
-    /// value has no reference count to raise, so the copy is what a reference is
-    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <c>GstVideoCodecFrame</c> is a boxed type whose registered copy function is
+    /// <c>gst_video_codec_frame_ref</c>, so copying it is taking a reference.
+    /// <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>
@@ -758,10 +762,11 @@ public abstract unsafe partial class VideoDecoder : Gst.Element
     /// <remarks>
     /// <para>
     /// The <c>frame</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a copy of the value and the wrapper is disposed afterwards, which
-    /// leaves the caller with exactly what the C call leaves it with. A boxed
-    /// value has no reference count to raise, so the copy is what a reference is
-    /// there. <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
+    /// handed a reference of its own and the wrapper is disposed afterwards, which
+    /// leaves the native reference count exactly where the C call leaves it.
+    /// <c>GstVideoCodecFrame</c> is a boxed type whose registered copy function is
+    /// <c>gst_video_codec_frame_ref</c>, so copying it is taking a reference.
+    /// <see cref="Gst.GObject.Boxed.Dispose()"/> is idempotent, so a
     /// <c>using</c> declaration around the argument stays correct.
     /// </para>
     /// </remarks>

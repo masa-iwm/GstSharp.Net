@@ -575,11 +575,17 @@ A call whose C function takes ownership of a parameter
 borrowing it. **The generator emits these members**, for a mini object, a boxed
 value or a GObject, and every one of them follows one contract: the call is
 handed a value minted for it — a mini object and a GObject are handed a
-reference of their own, a boxed value is handed a copy, since it has no
-reference count to raise — and the argument is disposed when the member
-returns, **whatever the call answered**, because the C function offers no way
-back. After the call the wrapper owns nothing, which is precisely what its
-disposed state means, and the member says so on its parameter:
+reference of their own, a boxed value is handed a copy through `g_boxed_copy`
+— and the argument is disposed when the member returns, **whatever the call
+answered**, because the C function offers no way back. After the call the
+wrapper owns nothing, which is precisely what its disposed state means. What a
+copy of a boxed value costs is decided by the copy function its type
+registered: most boxed types duplicate the value, so the copy is what a
+reference is there, while some — `GDateTime`, `GBytes`, `GstVideoCodecFrame`,
+`GstVideoCodecState`, `GstAtomicQueue`, `GstFlowCombiner` — registered their
+own `_ref`, so copying one of them takes a reference. The contract is the same
+either way, and the generated remark says which of the two it is. The member
+states the consumption on its parameter:
 `Caps.Append(caps2)` consumes the caps it appends,
 `StreamCollection.AddStream(stream)` the stream, `Pad.Push(buffer)` the buffer.
 
