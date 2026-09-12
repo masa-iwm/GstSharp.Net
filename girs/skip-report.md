@@ -83,7 +83,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (64)
+### HandBound (66)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_copy`
@@ -99,6 +99,7 @@ disappears shows up here as an added line.
 - `gst_bus_set_sync_handler`
 - `gst_caps_fixate`
 - `gst_clock_id_wait_async`
+- `gst_control_binding_get_g_value_array`
 - `gst_element_factory_create_with_properties`
 - `gst_element_factory_make_with_properties`
 - `gst_element_post_message`
@@ -131,6 +132,7 @@ disappears shows up here as an added line.
 - `gst_mini_object_ref`
 - `gst_mini_object_steal_qdata`
 - `gst_mini_object_unref`
+- `gst_object_get_g_value_array`
 - `gst_pad_push_event`
 - `gst_pad_send_event`
 - `gst_pad_set_event_full_function_full`
@@ -436,7 +438,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (37)
+### UnsupportedSignature (35)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
@@ -445,7 +447,6 @@ disappears shows up here as an added line.
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
 - `gst_context_replace`
-- `gst_control_binding_get_g_value_array`
 - `gst_format_get_details`
 - `gst_init`
 - `gst_iterator_filter`
@@ -458,7 +459,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_replace`
 - `gst_mini_object_take`
 - `gst_mini_object_unlock`
-- `gst_object_get_g_value_array`
 - `gst_object_replace`
 - `gst_pad_sticky_events_foreach`
 - `gst_poll_get_read_gpollfd`
