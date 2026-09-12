@@ -1,4 +1,4 @@
-using GstSharp.Generator.GirParsing.Model;
+﻿using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Planning;
 using GstSharp.Generator.Semantic;
 
@@ -99,6 +99,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedAnnotationOverrides = new(StringComparer.Ordinal);
         HashSet<string> consumedInstanceKeyedCallbacks = new(StringComparer.Ordinal);
         HashSet<string> consumedDocNotes = new(StringComparer.Ordinal);
+        HashSet<string> consumedSignalDocNotes = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
         HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
 
@@ -135,6 +136,7 @@ internal static class GenerationPipeline
                     consumedAnnotationOverrides,
                     consumedInstanceKeyedCallbacks,
                     consumedDocNotes,
+                    consumedSignalDocNotes,
                     consumedSiblingArguments,
                     lentOpaqueRecords,
                     subclasses,
@@ -224,6 +226,25 @@ internal static class GenerationPipeline
             diagnostics.Warn(
                 "GEN0042",
                 $"The documentation note '{key}' names no planned callable; the entry is stale.");
+        }
+
+        // A note on a signal is consumed where the signal was planned, so one
+        // that named no planned signal is a sentence nothing says either.
+        List<string> staleSignalDocNotes = [];
+        foreach (string key in overlays.SignalDocNoteKeys)
+        {
+            if (!consumedSignalDocNotes.Contains(key))
+            {
+                staleSignalDocNotes.Add(key);
+            }
+        }
+
+        staleSignalDocNotes.Sort(StringComparer.Ordinal);
+        foreach (string key in staleSignalDocNotes)
+        {
+            diagnostics.Warn(
+                "GEN0048",
+                $"The documentation note '{key}' names no planned signal; the entry is stale.");
         }
 
         // A sibling argument entry is only consumed where it named the shape it
@@ -398,6 +419,7 @@ internal static class GenerationPipeline
             shared.ConsumedAnnotationOverrides,
             shared.ConsumedInstanceKeyedCallbacks,
             shared.ConsumedDocNotes,
+            shared.ConsumedSignalDocNotes,
             shared.ConsumedSiblingArguments,
             shared.LentOpaqueRecords);
 
@@ -524,6 +546,10 @@ internal static class GenerationPipeline
     /// The keys of the documentation notes the run has attached, shared for
     /// the same reason.
     /// </param>
+    /// <param name="ConsumedSignalDocNotes">
+    /// The keys of the signal documentation notes the run has attached, shared
+    /// for the same reason.
+    /// </param>
     /// <param name="ConsumedSiblingArguments">
     /// The keys of the sibling argument entries the run has matched, shared
     /// for the same reason.
@@ -547,6 +573,7 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedAnnotationOverrides,
         HashSet<string> ConsumedInstanceKeyedCallbacks,
         HashSet<string> ConsumedDocNotes,
+        HashSet<string> ConsumedSignalDocNotes,
         HashSet<string> ConsumedSiblingArguments,
         HashSet<string> LentOpaqueRecords,
         SubclassModel Subclasses,

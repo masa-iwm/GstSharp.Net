@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Planning;
 
@@ -1687,7 +1687,11 @@ internal static class CallableRenderer
     /// <summary>Breaks a sentence into lines short enough for a documentation comment.</summary>
     /// <param name="text">The sentence.</param>
     /// <returns>The lines, at least one.</returns>
-    private static List<string> WrapNote(string text)
+    /// <remarks>
+    /// The notes of a signal are wrapped by the same measure as the notes of a
+    /// member, so that one overlay sentence reads the same wherever it lands.
+    /// </remarks>
+    internal static List<string> WrapNote(string text)
     {
         const int Width = 88;
         List<string> lines = [];

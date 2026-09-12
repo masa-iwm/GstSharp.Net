@@ -1257,6 +1257,13 @@ public unsafe partial class Timeline : Gst.Bin, GES.IExtractable, GES.IMetaConta
     /// </para>
     /// </remarks>
     /// <remarks>
+    /// From GStreamer 1.28 a timeline with a SelectElementTrack handler connected does not
+    /// raise this event at all, not even after that handler answered null; on 1.24 and 1.26
+    /// only an answer that names a track suppresses it. A track named twice, or one that
+    /// belongs to another timeline, is dropped with a warning and the element joins the tracks
+    /// that are left; null or an empty array puts it in no track.
+    /// </remarks>
+    /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is

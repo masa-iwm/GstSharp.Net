@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
 
@@ -506,6 +506,7 @@ internal sealed class MarshalPlanner
 
     /// <summary>The keys of the documentation notes this run has attached.</summary>
     private readonly HashSet<string> _consumedDocNotes;
+    private readonly HashSet<string> _consumedSignalDocNotes;
 
     /// <summary>The sibling argument keys this run has matched, shared for the same reason.</summary>
     private readonly HashSet<string> _consumedSiblingArguments;
@@ -562,6 +563,10 @@ internal sealed class MarshalPlanner
     /// The set the documentation notes that were attached are recorded in,
     /// shared for the same reason.
     /// </param>
+    /// <param name="consumedSignalDocNotes">
+    /// The set the signal documentation notes that were attached are recorded
+    /// in, shared for the same reason.
+    /// </param>
     /// <param name="consumedSiblingArguments">
     /// The set the sibling argument entries that matched a parameter of the
     /// shape they describe are recorded in, shared for the same reason.
@@ -582,6 +587,7 @@ internal sealed class MarshalPlanner
         HashSet<string>? consumedAnnotationOverrides = null,
         HashSet<string>? consumedInstanceKeyedCallbacks = null,
         HashSet<string>? consumedDocNotes = null,
+        HashSet<string>? consumedSignalDocNotes = null,
         HashSet<string>? consumedSiblingArguments = null,
         HashSet<string>? lentOpaqueRecords = null)
     {
@@ -598,6 +604,8 @@ internal sealed class MarshalPlanner
         _consumedInstanceKeyedCallbacks =
             consumedInstanceKeyedCallbacks ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedDocNotes = consumedDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedSignalDocNotes =
+            consumedSignalDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedSiblingArguments =
             consumedSiblingArguments ?? new HashSet<string>(StringComparer.Ordinal);
         _lentOpaqueRecords = lentOpaqueRecords ?? new HashSet<string>(StringComparer.Ordinal);
@@ -1293,6 +1301,7 @@ internal sealed class MarshalPlanner
             Arguments = arguments,
             Return = returnPlan,
             IsDetailed = signal.IsDetailed,
+            DocNote = SignalDocNoteFor(signalKey),
         };
     }
 
@@ -1495,6 +1504,20 @@ internal sealed class MarshalPlanner
         }
 
         _consumedDocNotes.Add(cIdentifier);
+        return note;
+    }
+
+    /// <summary>Reads the documentation note of a signal, and records that it was read.</summary>
+    /// <param name="signalKey">The GObject spelling of the signal, <c>Ns.Type::signal-name</c>.</param>
+    /// <returns>The note, or <see langword="null"/>.</returns>
+    private string? SignalDocNoteFor(string signalKey)
+    {
+        if (!_overlays.TryGetSignalDocNote(signalKey, out string? note))
+        {
+            return null;
+        }
+
+        _consumedSignalDocNotes.Add(signalKey);
         return note;
     }
 

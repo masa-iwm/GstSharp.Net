@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -397,6 +397,12 @@ internal sealed class PlatformSupport
 /// contract that neither the gir nor the marshalling states. It is the
 /// counterpart of <c>vfuncDocNotes</c> for a member rather than a
 /// slot.</description></item>
+/// <item><description><c>signalDocNotes</c>: the GObject spelling of a signal
+/// (<c>GES.Timeline::select-tracks-for-object</c>) mapped onto a sentence the
+/// generated documentation of its event carries, for a part of its contract
+/// that neither the gir nor the marshalling states. It is the key the nullable
+/// signal argument overrides use without the <c>#argument</c>
+/// suffix.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -430,6 +436,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _vfuncFailureValues;
     private readonly Dictionary<string, string> _instanceKeyedCallbacks;
     private readonly Dictionary<string, string> _docNotes;
+    private readonly Dictionary<string, string> _signalDocNotes;
 
     private Overlays(
         HashSet<string> skip,
@@ -453,7 +460,8 @@ internal sealed class Overlays
         HashSet<string> lentOpaqueRecords,
         Dictionary<string, string> vfuncFailureValues,
         Dictionary<string, string> instanceKeyedCallbacks,
-        Dictionary<string, string> docNotes)
+        Dictionary<string, string> docNotes,
+        Dictionary<string, string> signalDocNotes)
     {
         _skip = skip;
         _handBound = handBound;
@@ -477,6 +485,7 @@ internal sealed class Overlays
         _vfuncFailureValues = vfuncFailureValues;
         _instanceKeyedCallbacks = instanceKeyedCallbacks;
         _docNotes = docNotes;
+        _signalDocNotes = signalDocNotes;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -500,6 +509,7 @@ internal sealed class Overlays
         new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal));
@@ -593,6 +603,9 @@ internal sealed class Overlays
 
     /// <summary>Gets the callables that carry a hand written note in their documentation.</summary>
     internal IReadOnlyCollection<string> DocNoteKeys => _docNotes.Keys;
+
+    /// <summary>Gets the signals that carry a hand written note in their documentation.</summary>
+    internal IReadOnlyCollection<string> SignalDocNoteKeys => _signalDocNotes.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -733,6 +746,12 @@ internal sealed class Overlays
             docNotes[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, string> signalDocNotes = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.SignalDocNotes ?? [])
+        {
+            signalDocNotes[entry.Key] = entry.Value;
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -761,7 +780,8 @@ internal sealed class Overlays
             lentOpaqueRecords,
             vfuncFailureValues,
             instanceKeyedCallbacks,
-            docNotes);
+            docNotes,
+            signalDocNotes);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -990,6 +1010,17 @@ internal sealed class Overlays
     internal bool TryGetDocNote(string key, [NotNullWhen(true)] out string? note) =>
         _docNotes.TryGetValue(key, out note);
 
+    /// <summary>
+    /// Looks up the hand written note the documentation of a signal carries,
+    /// for the part of its contract that neither the gir nor the marshalling
+    /// states.
+    /// </summary>
+    /// <param name="key">The GObject spelling of the signal, <c>Ns.Type::signal-name</c>.</param>
+    /// <param name="note">Receives the sentence.</param>
+    /// <returns>Whether the signal has a note.</returns>
+    internal bool TryGetSignalDocNote(string key, [NotNullWhen(true)] out string? note) =>
+        _signalDocNotes.TryGetValue(key, out note);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -1051,6 +1082,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? InstanceKeyedCallbacks { get; set; }
 
         public Dictionary<string, string>? DocNotes { get; set; }
+
+        public Dictionary<string, string>? SignalDocNotes { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

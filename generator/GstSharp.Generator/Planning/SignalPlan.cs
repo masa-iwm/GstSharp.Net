@@ -1,4 +1,4 @@
-using GstSharp.Generator.GirParsing.Model;
+﻿using GstSharp.Generator.GirParsing.Model;
 
 namespace GstSharp.Generator.Planning;
 
@@ -70,4 +70,11 @@ internal sealed class SignalPlan
     /// the handler of a detailed signal sees every detail.
     /// </summary>
     internal bool IsDetailed { get; init; }
+
+    /// <summary>
+    /// Gets the sentence the overlays add to the documentation of the event,
+    /// for a part of the contract of the signal that neither the gir nor the
+    /// marshalling states, or <see langword="null"/> when there is none.
+    /// </summary>
+    internal string? DocNote { get; init; }
 }

@@ -1,4 +1,4 @@
-using GstSharp.Generator.GirParsing.Model;
+﻿using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Planning;
 using GstSharp.Generator.Semantic;
 
@@ -561,6 +561,7 @@ internal static class SignalEmitter
             writer.WriteLine("/// </remarks>");
         }
 
+        WriteDocNoteRemark(writer, plan);
         WriteRemovalIdentityRemark(writer);
         XmlDocWriter.WriteObsolete(writer, plan.Signal);
         writer.WriteLine(
@@ -599,6 +600,7 @@ internal static class SignalEmitter
             writer.WriteLine("/// </remarks>");
         }
 
+        WriteDocNoteRemark(writer, plan);
         WriteRemovalIdentityRemark(writer);
         XmlDocWriter.WriteObsolete(writer, plan.Signal);
         writer.WriteLine(
@@ -620,6 +622,33 @@ internal static class SignalEmitter
             + plan.EventType + " handler) =>");
         writer.WriteLine(
             "    " + connections + ".Remove((Gst.GObject.Object)self, \"" + plan.SignalName + "\", handler);");
+    }
+
+    /// <summary>
+    /// Writes the note the overlays carry for the signal, when it has one.
+    /// </summary>
+    /// <param name="writer">The writer of the file being emitted.</param>
+    /// <param name="plan">The signal being documented.</param>
+    /// <remarks>
+    /// The sentence states a part of the contract of the signal that neither
+    /// the gir nor the marshalling carries, so it is written as a remark of its
+    /// own beside the documentation the gir supplies, and by the same measure
+    /// the note of a member is wrapped at.
+    /// </remarks>
+    private static void WriteDocNoteRemark(CodeWriter writer, SignalPlan plan)
+    {
+        if (plan.DocNote is not { } note)
+        {
+            return;
+        }
+
+        writer.WriteLine("/// <remarks>");
+        foreach (string line in CallableRenderer.WrapNote(XmlDocWriter.Escape(note)))
+        {
+            writer.WriteLine("/// " + line);
+        }
+
+        writer.WriteLine("/// </remarks>");
     }
 
     /// <summary>

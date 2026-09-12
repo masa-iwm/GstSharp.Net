@@ -1128,6 +1128,11 @@ public static unsafe partial class MetaContainerExtensions
     /// without a detail, so it runs for every detail of the signal.
     /// </remarks>
     /// <remarks>
+    /// The signal is declared detailed, but the library only ever emits it with detail 0, so
+    /// connecting never narrows it to one key; a handler that cares about one field tests Key
+    /// itself.
+    /// </remarks>
+    /// <remarks>
     /// The handler is remembered on the wrapper it was added to and has to be
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is
