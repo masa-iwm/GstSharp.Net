@@ -878,9 +878,10 @@ disappears shows up here as an added line.
 
 ## GstRtsp
 
-### HandBound (2)
+### HandBound (3)
 
 - `gst_rtsp_message_append_headers`
+- `gst_rtsp_message_parse_auth_credentials`
 - `gst_rtsp_transport_parse`
 
 ### LifetimePrimitive (3)
@@ -912,7 +913,7 @@ disappears shows up here as an added line.
 - `gst_rtsp_range_parse`
 - `gst_rtsp_transport_init`
 
-### UnsupportedSignature (12)
+### UnsupportedSignature (11)
 
 - `gst_rtsp_connection_connect`
 - `gst_rtsp_connection_connect_with_response`
@@ -924,7 +925,6 @@ disappears shows up here as an added line.
 - `gst_rtsp_connection_send_messages`
 - `gst_rtsp_connection_send_messages_usec`
 - `gst_rtsp_connection_write`
-- `gst_rtsp_message_parse_auth_credentials`
 - `gst_rtsp_message_take_body`
 
 ## GstRtspServer
@@ -1254,7 +1254,7 @@ managed surface and not the ABI.
 - `Gst.Element::pad_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 
-## Fields (143)
+## Fields (142)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1357,9 +1357,8 @@ it unbound, and this ledger is where that is counted.
 - `RTPBuffer.data` — InlineArray(pointer element)
 - `RTPSourceMeta.meta` — EmbeddedStruct
 
-### GstRtsp (2)
+### GstRtsp (1)
 
-- `RTSPAuthCredential.params` — Pointer
 - `RTSPMessage.type_data` — Union
 
 ### GstRtspServer (5)
@@ -1442,7 +1441,7 @@ it unbound, and this ledger is where that is counted.
 - `VideoSEIUserDataUnregisteredMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 
-## Fields exposed elsewhere (18)
+## Fields exposed elsewhere (19)
 
 Public record fields that another member of the binding answers, with the
 member that answers them. They are declared in `girs/overlays/fixups.json`
@@ -1472,6 +1471,10 @@ there is what the bindings do not cover, and these are covered.
 
 - `PlayVisualization.description` — hand written
 - `PlayVisualization.name` — hand written
+
+### GstRtsp (1)
+
+- `RTSPAuthCredential.params` — hand written
 
 ### GstVideo (5)
 

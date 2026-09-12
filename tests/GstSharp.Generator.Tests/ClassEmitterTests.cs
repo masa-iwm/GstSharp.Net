@@ -227,7 +227,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 0, 8, 0, 0, 2, 0)]
     [InlineData("GstWebRTC", 0, 2, 0, 0, 2, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
-    [InlineData("GstRtsp", 0, 13, 0, 0, 12, 0)]
+    [InlineData("GstRtsp", 0, 13, 0, 0, 11, 0)]
     [InlineData("GstRtp", 2, 24, 1, 0, 5, 0)]
     [InlineData("GstRtspServer", 2, 1, 1, 3, 14, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0)]
@@ -637,7 +637,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 33)]
     [InlineData("GstWebRTC", 0)]
     [InlineData("GstNet", 2)]
-    [InlineData("GstRtsp", 2)]
+    [InlineData("GstRtsp", 1)]
     [InlineData("GstRtp", 3)]
     [InlineData("GstRtspServer", 5)]
     [InlineData("GstAllocators", 0)]
@@ -663,8 +663,8 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(143, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (143)\n", report, StringComparison.Ordinal);
+        Assert.Equal(142, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (142)\n", report, StringComparison.Ordinal);
         Assert.Contains("### GstVideo (33)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
@@ -763,8 +763,8 @@ public sealed class ClassEmitterTests
         // C accessor already answers.
         string report = Generated.SkipReport;
 
-        Assert.Equal(18, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (18)\n", report, StringComparison.Ordinal);
+        Assert.Equal(19, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (19)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### Gst (6)\n\n- `CustomMeta.structure` — GetStructure\n"
             + "- `Message.src` — hand written\n"
@@ -1057,7 +1057,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 2)]
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0, 2)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
-    [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 3)]
+    [InlineData("GstRtsp", 7, 0, 3, 0, 0, 0, 4)]
     [InlineData("GstRtp", 0, 0, 0, 0, 4, 0, 8)]
     [InlineData("GstRtspServer", 5, 0, 2, 0, 0, 0, 1)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]

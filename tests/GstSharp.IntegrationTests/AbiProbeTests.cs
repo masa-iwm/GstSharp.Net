@@ -1520,6 +1520,43 @@ public sealed class AbiProbeTests
     }
 
     /// <summary>
+    /// <c>struct _GstRTSPAuthCredential</c> of <c>gstrtspmessage.h</c>: the
+    /// <c>GstRTSPAuthMethod</c> at 0, then the two pointers <c>params</c> and
+    /// <c>authorization</c> at 8 and 16 over the four bytes of padding the
+    /// enumeration is followed by, for 24 bytes. The <c>params</c> offset is
+    /// the one <see cref="Gst.Rtsp.RTSPAuthCredential.GetParams"/> reads
+    /// through.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspAuthCredentialRawMatchesTheHeaderLayout()
+    {
+        Gst.Rtsp.RTSPAuthCredentialRaw raw = default;
+
+        _output.WriteLine(Format("RTSPAuthCredentialRaw", Unsafe.SizeOf<Gst.Rtsp.RTSPAuthCredentialRaw>()));
+        Assert.Equal(24, Unsafe.SizeOf<Gst.Rtsp.RTSPAuthCredentialRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Scheme));
+        Assert.Equal(8L, Offset(&raw, &raw.Params));
+        Assert.Equal(16L, Offset(&raw, &raw.Authorization));
+    }
+
+    /// <summary>
+    /// <c>struct _GstRTSPAuthParam</c> of <c>gstrtspmessage.h</c>: the two
+    /// strings <c>name</c> and <c>value</c> at 0 and 8, for 16 bytes.
+    /// </summary>
+    [Fact]
+    public unsafe void RtspAuthParamRawMatchesTheHeaderLayout()
+    {
+        Gst.Rtsp.RTSPAuthParamRaw raw = default;
+
+        _output.WriteLine(Format("RTSPAuthParamRaw", Unsafe.SizeOf<Gst.Rtsp.RTSPAuthParamRaw>()));
+        Assert.Equal(16, Unsafe.SizeOf<Gst.Rtsp.RTSPAuthParamRaw>());
+
+        Assert.Equal(0L, Offset(&raw, &raw.Name));
+        Assert.Equal(8L, Offset(&raw, &raw.Value));
+    }
+
+    /// <summary>
     /// <c>struct _GstNetTimePacket</c> of <c>gstnettimepacket.h</c>: the two
     /// <c>GstClockTime</c> values <c>local_time</c> and <c>remote_time</c> at 0
     /// and 8, for 16 bytes.
