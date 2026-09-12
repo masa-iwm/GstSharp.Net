@@ -727,8 +727,10 @@ disappears shows up here as an added line.
 
 ## GstPbutils
 
-### HandBound (2)
+### HandBound (4)
 
+- `gst_discoverer_info_from_variant`
+- `gst_discoverer_info_to_variant`
 - `gst_encoding_container_profile_add_profile`
 - `gst_install_plugins_async`
 
@@ -747,11 +749,6 @@ disappears shows up here as an added line.
 ### OwningProperty (1)
 
 - `GstPbutils.EncodingProfile:element-properties`
-
-### UnsupportedSignature (2)
-
-- `gst_discoverer_info_from_variant`
-- `gst_discoverer_info_to_variant`
 
 ## GstPlay
 

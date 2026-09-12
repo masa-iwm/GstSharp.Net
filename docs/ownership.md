@@ -998,6 +998,29 @@ nullable because a `true` answer does not promise a date: a generic structure ma
 hold a date field whose value is `NULL`. A year beyond 9999 has no `DateOnly` and
 throws `ArgumentOutOfRangeException`, after the native value was released.
 
+## Variants that cross the boundary
+
+A `GVariant` is **owned, and its ownership starts out unclaimed**. Every
+`g_variant_new_*` constructor — including the `g_variant_new_variant` that
+`gst_discoverer_info_to_variant` returns — answers a *floating* reference,
+which is a reference nobody owns yet and which the first owner claims rather
+than adds to. `Gst.GLib.Variant` therefore never plainly refs what it is
+handed: a transferred value is claimed with `g_variant_take_ref`, the API GLib
+provides for a return that may or may not be floating, and a borrowed one with
+`g_variant_ref_sink`, which sinks a floating value and references an owned one.
+Either way the wrapper ends up owning exactly one reference and releases it on
+`Dispose`, with a finalizer as the safety net — releasing a variant is an
+atomic decrement that reaches no GStreamer state.
+
+The annotation of `gst_discoverer_info_to_variant` says `transfer full` and the
+C sinks nothing, so a wrapper that believed the annotation would leave the
+value floating forever; `DiscovererInfo.ToVariant` hands out a value that
+`g_variant_is_floating` answers `false` for. `DiscovererInfo.FromVariant` only
+reads its argument, so the caller keeps it and still disposes it, and the bytes
+of `Variant.ToBytes` are a `GLib.Bytes` of the caller's own. `Variant.FromBytes`
+references the block it is given rather than copying it, which the block's own
+wrapper is unaffected by.
+
 ## Properties without a C accessor
 
 Some properties exist only on the GObject property system: the gir names no C
