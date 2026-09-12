@@ -91,10 +91,10 @@ public sealed class RecordStringFieldTests
     [Fact]
     public unsafe void AFormatDefinitionDescribesItselfByNickAndDescription()
     {
-        // The binding hands no GstFormatDefinition out - the return of
-        // gst_format_get_details is a pointer to a plain structure, which the
-        // planner refuses - so the test calls the C function and reads the
-        // structure the registry keeps for the life of the process.
+        // The C function is called directly so that the strings are read off
+        // the very structure the registry keeps for the life of the process,
+        // beside the copy FormatExtensions.GetDetails hands out of the same
+        // row.
         nint details = TestNatives.FormatGetDetails((int)Format.Bytes);
 
         Assert.NotEqual(nint.Zero, details);
@@ -108,6 +108,13 @@ public sealed class RecordStringFieldTests
         // The address the registry filled in is still there beside the
         // accessor: the raw field is public API that shipped and is left alone.
         Assert.NotEqual(nint.Zero, definition.NickPtr);
+
+        // The generated member copies the same row out, so its two strings
+        // read the same as the ones off the registry's own storage.
+        FormatDefinition? copied = FormatExtensions.GetDetails(Format.Bytes);
+        Assert.NotNull(copied);
+        Assert.Equal(definition.Nick, copied.Value.Nick);
+        Assert.Equal(definition.Description, copied.Value.Description);
     }
 
     /// <summary>

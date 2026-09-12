@@ -438,7 +438,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (35)
+### UnsupportedSignature (34)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
@@ -447,7 +447,6 @@ disappears shows up here as an added line.
 - `gst_bus_create_watch`
 - `gst_bus_get_pollfd`
 - `gst_context_replace`
-- `gst_format_get_details`
 - `gst_init`
 - `gst_iterator_filter`
 - `gst_iterator_find_custom`
@@ -864,13 +863,11 @@ disappears shows up here as an added line.
 - `gst_rtp_buffer_get_extension_data`
 - `gst_rtp_buffer_get_payload`
 
-### UnsupportedSignature (5)
+### UnsupportedSignature (3)
 
 - `GstRtp.RTPBaseDepayload:extensions`
 - `GstRtp.RTPBasePayload:extensions`
 - `gst_rtp_buffer_new_take_data`
-- `gst_rtp_payload_info_for_name`
-- `gst_rtp_payload_info_for_pt`
 
 ### VarArgs (1)
 
@@ -1008,11 +1005,6 @@ disappears shows up here as an added line.
 
 - `gst_sdp_media_init`
 - `gst_sdp_message_init`
-
-### UnsupportedSignature (2)
-
-- `gst_mikey_message_get_cs_srtp`
-- `gst_mikey_payload_sp_get_param`
 
 ## GstTranscoder
 
@@ -1177,9 +1169,8 @@ disappears shows up here as an added line.
 - `gst_video_info_from_caps`
 - `gst_video_info_init`
 
-### UnsupportedSignature (3)
+### UnsupportedSignature (2)
 
-- `gst_video_color_primaries_get_info`
 - `gst_video_convert_sample_async`
 - `gst_video_overlay_install_properties`
 

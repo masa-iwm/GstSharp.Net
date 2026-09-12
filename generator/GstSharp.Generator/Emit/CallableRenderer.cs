@@ -98,6 +98,19 @@ internal static class CallableRenderer
     ];
 
     /// <summary>
+    /// What the documentation of a copied out structure says about the memory
+    /// it was read from, which the gir does not describe: it documents a C
+    /// function that hands out a pointer into a row the library owns.
+    /// </summary>
+    private static readonly string[] CopiedStructNote =
+    [
+        "The structure is a copy of a row the library owns, taken at the moment of",
+        "the call: writing into it changes nothing native, and the string and",
+        "pointer fields it carries are read from the memory of the library at the",
+        "time they are accessed.",
+    ];
+
+    /// <summary>
     /// What the documentation of a counted block of parameter specifications
     /// says about the array it is read out into, none of which the gir
     /// describes: it documents a C function whose caller holds pointers. It
@@ -677,7 +690,11 @@ internal static class CallableRenderer
                     ? null
                     : answersBlock
                         ? ParamSpecArrayNote
-                        : AdoptsWrapper(plan.Return) ? AdoptedWrapperNote : GValueReturnNote(plan.Return);
+                        : AdoptsWrapper(plan.Return)
+                            ? AdoptedWrapperNote
+                            : plan.Return.Kind == ArgumentKind.PlainStructCopy
+                                ? CopiedStructNote
+                                : GValueReturnNote(plan.Return);
             XmlDocWriter.WriteReturns(
                 writer,
                 adoptsInPlace
@@ -3359,6 +3376,31 @@ internal static class CallableRenderer
         if (value.Kind == ArgumentKind.HashTableReturn)
         {
             WriteHashTableConversion(writer, value, converted);
+            WriteKeepAlive(writer, plan);
+            writer.WriteLine("return " + converted + ";");
+            return;
+        }
+
+        // The structure the call points at is copied out before the barriers
+        // run, because the copy reads memory the instance of the call owns. A
+        // member the gir promises a structure guards the null pointer the way
+        // every other non-nullable pointer return is guarded; a nullable one
+        // reads the null pointer as no value.
+        if (value.Kind == ArgumentKind.PlainStructCopy)
+        {
+            string copy = "*(" + TrimNullable(value.PublicType) + "*)" + ResultLocal;
+            string structure = value.IsNullable
+                ? ResultLocal + " == 0 ? null : " + copy
+                : ResultLocal + " == 0"
+                    + " ? throw new InvalidOperationException(\"" + plan.EntryPoint + " returned no value.\")"
+                    + " : " + copy;
+            if (!barriers)
+            {
+                writer.WriteLine("return " + structure + ";");
+                return;
+            }
+
+            writer.WriteLine(value.PublicType + " " + converted + " = " + structure + ";");
             WriteKeepAlive(writer, plan);
             writer.WriteLine("return " + converted + ";");
             return;

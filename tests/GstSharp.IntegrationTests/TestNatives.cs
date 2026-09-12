@@ -278,13 +278,12 @@ internal static unsafe partial class TestNatives
     /// registry and lives as long as the process.
     /// </returns>
     /// <remarks>
-    /// The binding does not offer this one: the return is a pointer to a plain
-    /// structure, which the planner refuses because there is no projection of a
-    /// bare address into one that it can check
-    /// (<c>UnsupportedSignature</c> in <c>girs/skip-report.md</c>). It is the
-    /// only producer of a <c>GstFormatDefinition</c> in the C API that hands one
-    /// out singly, so it is what the accessors of its two string fields are
-    /// measured against.
+    /// The binding offers this one as <c>FormatExtensions.GetDetails</c>, which
+    /// copies the row out. The import is kept beside it because the copy is not
+    /// what the string accessors have to be measured against: it is the only
+    /// producer of a <c>GstFormatDefinition</c> in the C API that hands one out
+    /// singly, so it is what lets a test read the two strings off the storage
+    /// the registry itself keeps.
     /// </remarks>
     [LibraryImport("Gst", EntryPoint = "gst_format_get_details")]
     internal static partial nint FormatGetDetails(int format);

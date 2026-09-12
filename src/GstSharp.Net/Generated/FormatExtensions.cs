@@ -26,6 +26,22 @@ public static unsafe partial class FormatExtensions
         return (Gst.Format)nativeResult;
     }
 
+    /// <summary>Get details about the given format.</summary>
+    /// <param name="format">The format to get details of</param>
+    /// <returns>
+    /// The #GstFormatDefinition for @format or %NULL
+    /// on failure.
+    /// The structure is a copy of a row the library owns, taken at the moment of
+    /// the call: writing into it changes nothing native, and the string and
+    /// pointer fields it carries are read from the memory of the library at the
+    /// time they are accessed.
+    /// </returns>
+    public static Gst.FormatDefinition? GetDetails(Gst.Format format)
+    {
+        nint nativeResult = GstFormatGetDetails((int)format);
+        return nativeResult == 0 ? null : *(Gst.FormatDefinition*)nativeResult;
+    }
+
     /// <summary>Get a printable name for the given format. Do not modify or free.</summary>
     /// <param name="format">a #GstFormat</param>
     /// <returns>
@@ -87,6 +103,10 @@ public static unsafe partial class FormatExtensions
     /// <summary>The <c>gst_format_get_by_nick</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_format_get_by_nick")]
     private static partial int GstFormatGetByNick(byte* nick);
+
+    /// <summary>The <c>gst_format_get_details</c> entry point.</summary>
+    [LibraryImport("Gst", EntryPoint = "gst_format_get_details")]
+    private static partial nint GstFormatGetDetails(int format);
 
     /// <summary>The <c>gst_format_get_name</c> entry point.</summary>
     [LibraryImport("Gst", EntryPoint = "gst_format_get_name")]

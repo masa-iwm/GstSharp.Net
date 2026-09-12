@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -10,7 +11,7 @@ namespace Gst.Rtp;
 
 /// <summary>Structure holding default payload type information.</summary>
 [StructLayout(LayoutKind.Sequential)]
-public partial struct RTPPayloadInfo
+public unsafe partial struct RTPPayloadInfo
 {
     /// <summary>payload type, -1 means dynamic</summary>
     public byte PayloadType;
@@ -102,4 +103,69 @@ public partial struct RTPPayloadInfo
             return value;
         }
     }
+
+    /// <summary>
+    /// Get the #GstRTPPayloadInfo for @media and @encoding_name. This function is
+    /// mostly used to get the default clock-rate and bandwidth for dynamic payload
+    /// types specified with @media and @encoding name.
+    /// </summary>
+    /// <remarks>
+    /// <para>The search for @encoding_name will be performed in a case insensitive way.</para>
+    /// </remarks>
+    /// <param name="media">the media to find</param>
+    /// <param name="encodingName">the encoding name to find</param>
+    /// <returns>
+    /// a #GstRTPPayloadInfo or NULL when no info could be found.
+    /// The structure is a copy of a row the library owns, taken at the moment of
+    /// the call: writing into it changes nothing native, and the string and
+    /// pointer fields it carries are read from the memory of the library at the
+    /// time they are accessed.
+    /// </returns>
+    public static Gst.Rtp.RTPPayloadInfo? ForName(string media, string encodingName)
+    {
+        ArgumentNullException.ThrowIfNull(media);
+        System.Span<byte> mediaBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope mediaScope = Gst.Interop.GMarshal.StackUtf8(media, mediaBuffer);
+        ArgumentNullException.ThrowIfNull(encodingName);
+        System.Span<byte> encodingNameBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope encodingNameScope = Gst.Interop.GMarshal.StackUtf8(encodingName, encodingNameBuffer);
+        nint nativeResult = GstRtpPayloadInfoForName(mediaScope.Pointer, encodingNameScope.Pointer);
+        return nativeResult == 0 ? null : *(Gst.Rtp.RTPPayloadInfo*)nativeResult;
+    }
+
+    /// <summary>
+    /// Get the #GstRTPPayloadInfo for @payload_type. This function is
+    /// mostly used to get the default clock-rate and bandwidth for static payload
+    /// types specified with @payload_type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The dynamic payload types of the table all carry 255 (G_MAXUINT8) in their payload_type
+    /// field as the marker of a type that is negotiated rather than fixed
+    /// (gstrtppayloads.c:88-176), and the search compares that field like any other number
+    /// (gstrtppayloads.c:198-202). A payload type of 255 therefore answers the first of those
+    /// rows, application/parityfec, rather than nothing.
+    /// </para>
+    /// </remarks>
+    /// <param name="payloadType">the payload_type to find</param>
+    /// <returns>
+    /// a #GstRTPPayloadInfo or NULL when no info could be found.
+    /// The structure is a copy of a row the library owns, taken at the moment of
+    /// the call: writing into it changes nothing native, and the string and
+    /// pointer fields it carries are read from the memory of the library at the
+    /// time they are accessed.
+    /// </returns>
+    public static Gst.Rtp.RTPPayloadInfo? ForPt(byte payloadType)
+    {
+        nint nativeResult = GstRtpPayloadInfoForPt(payloadType);
+        return nativeResult == 0 ? null : *(Gst.Rtp.RTPPayloadInfo*)nativeResult;
+    }
+
+    /// <summary>The <c>gst_rtp_payload_info_for_name</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtp_payload_info_for_name")]
+    private static partial nint GstRtpPayloadInfoForName(byte* media, byte* encodingName);
+
+    /// <summary>The <c>gst_rtp_payload_info_for_pt</c> entry point.</summary>
+    [LibraryImport("GstRtp", EntryPoint = "gst_rtp_payload_info_for_pt")]
+    private static partial nint GstRtpPayloadInfoForPt(byte payloadType);
 }

@@ -3784,10 +3784,30 @@ internal sealed class MarshalPlanner
             return null;
         }
 
-        // A returned structure is only understood when it comes back by value.
+        // A returned structure that comes back by value is handed over as it
+        // stands. One that comes back by pointer is copied out of the memory
+        // the pointer addresses, which the library keeps owning: the row is
+        // borrowed, so a transfer of it - full or container - stays unsupported,
+        // because nothing names the free the caller would then owe. The copy is
+        // the same null check and dereference a plain structure field of a
+        // record is projected through, so a borrowed row reads the same way
+        // wherever it is handed out.
         if (scalar.Kind == ArgumentKind.PlainStruct && effective.IsPointer)
         {
-            return null;
+            if (transfer != GirTransfer.None)
+            {
+                return null;
+            }
+
+            return new ReturnPlan
+            {
+                Kind = ArgumentKind.PlainStructCopy,
+                PublicType = nullable ? scalar.PublicType + "?" : scalar.PublicType,
+                RawType = NativeInt,
+                Transfer = transfer,
+                IsNullable = nullable,
+                Doc = ReturnDoc(value, transfer),
+            };
         }
 
         return new ReturnPlan

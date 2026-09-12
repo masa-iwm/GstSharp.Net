@@ -150,6 +150,20 @@ internal enum ArgumentKind
     /// <summary>A blittable structure, passed by value or through a pointer.</summary>
     PlainStruct,
 
+    /// <summary>
+    /// A blittable structure a call hands back by pointer and keeps owning,
+    /// copied out of the memory the pointer addresses at the moment of the
+    /// call. Only the return position carries this kind: the row belongs to the
+    /// library, so nothing is freed, and what the member answers is the
+    /// caller's own copy of it. A gir that spells the return
+    /// <c>nullable</c> makes the public type a nullable structure and the null
+    /// pointer reads as no value; a return the gir promises is guarded like
+    /// every other non-nullable pointer return. A structure the call transfers
+    /// - <c>full</c> or <c>container</c> - stays unsupported, because nothing
+    /// names the free the caller would owe.
+    /// </summary>
+    PlainStructCopy,
+
     /// <summary>A C array the callee only reads, passed as a span.</summary>
     Span,
 

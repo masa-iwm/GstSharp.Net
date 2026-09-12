@@ -493,7 +493,13 @@ something different about what the caller is left holding.
   `VideoCodecState.ContentLightLevel` and `.MasteringDisplayInfo` answer the
   HDR metadata of a stream that has some and `null` for one that has not. Only
   a wrapper reads a pointer this way; a value projected structure keeps the
-  address it publishes, which is why `RTCPPacket.RtcpPtr` is still a `nint`.
+  address it publishes, which is why `RTCPPacket.RtcpPtr` is still a `nint`. A
+  borrowed pointer **return** of a plain structure is copied out the same way —
+  `FormatExtensions.GetDetails`, `RTPPayloadInfo.ForName`,
+  `MIKEYMessage.GetCsSrtp` and `VideoColorPrimariesExtensions.GetInfo` answer a
+  copy of a row the library goes on owning, nullable exactly when the gir says
+  the call may find none — while a return the call transfers stays unbound,
+  because nothing names the free the caller would then owe.
 
 A public field the generator binds nothing for is listed in the `## Fields`
 section of `girs/skip-report.md`, under the shape that kept it out, or — when

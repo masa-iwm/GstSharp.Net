@@ -370,6 +370,39 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     }
 
     /// <summary>
+    /// Get the Security Policy parameter in a %GST_MIKEY_PT_SP @payload
+    /// at @idx.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is copied out of the GArray the payload keeps its security policy
+    /// parameters in (gstmikey.c:489-499 answers the address of the element at the index), but
+    /// the value bytes are not: ValPtr addresses the block the payload owns (gstmikey.c:539-557
+    /// duplicates the bytes into it) and Val reads them from there at the time it is asked. The
+    /// parameter, and the bytes with it, are valid until the parameters of the payload are
+    /// changed - adding a parameter may move every later entry and removing one frees its bytes
+    /// (gstmikey.c:508-524) - or until the payload or the message that carries it is freed. An
+    /// index past the last parameter answers nothing; a payload that is not a security policy
+    /// payload raises a critical and answers nothing as well.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">an index</param>
+    /// <returns>
+    /// the #GstMIKEYPayloadSPParam at @idx in @payload
+    /// The structure is a copy of a row the library owns, taken at the moment of
+    /// the call: writing into it changes nothing native, and the string and
+    /// pointer fields it carries are read from the memory of the library at the
+    /// time they are accessed.
+    /// </returns>
+    public Gst.Sdp.MIKEYPayloadSPParam? SpGetParam(uint idx)
+    {
+        nint nativeResult = GstMikeyPayloadSpGetParam(Handle, idx);
+        Gst.Sdp.MIKEYPayloadSPParam? result = nativeResult == 0 ? null : *(Gst.Sdp.MIKEYPayloadSPParam*)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
+    }
+
+    /// <summary>
     /// Remove the Security Policy parameters from a %GST_MIKEY_PT_SP
     /// @payload at @idx.
     /// </summary>
@@ -450,6 +483,10 @@ public sealed unsafe partial class MIKEYPayload : Gst.MiniObject
     /// <summary>The <c>gst_mikey_payload_sp_get_n_params</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_payload_sp_get_n_params")]
     private static partial uint GstMikeyPayloadSpGetNParams(nint payload);
+
+    /// <summary>The <c>gst_mikey_payload_sp_get_param</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_payload_sp_get_param")]
+    private static partial nint GstMikeyPayloadSpGetParam(nint payload, uint idx);
 
     /// <summary>The <c>gst_mikey_payload_sp_remove_param</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_payload_sp_remove_param")]

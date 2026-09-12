@@ -341,6 +341,35 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
         return result;
     }
 
+    /// <summary>Get the policy information of @msg at @idx.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is copied out of the GArray the message keeps its crypto session map in
+    /// (gstmikey.c:1004-1014 answers the address of the element at the index), so it is a
+    /// snapshot of the entry as it stood at the call and nothing of it points back into the
+    /// message. The entry itself is valid until the map of the message is changed - inserting,
+    /// removing or replacing a session (gstmikey.c:1030-1045, :1059-1070, :1082-1093) may move
+    /// every later entry - or until the message is freed, so an index read again after a change
+    /// may name a different entry. An index past the last entry answers nothing; a message
+    /// whose map type is not SRTP raises a critical and answers nothing as well.
+    /// </para>
+    /// </remarks>
+    /// <param name="idx">an index</param>
+    /// <returns>
+    /// a #GstMIKEYMapSRTP
+    /// The structure is a copy of a row the library owns, taken at the moment of
+    /// the call: writing into it changes nothing native, and the string and
+    /// pointer fields it carries are read from the memory of the library at the
+    /// time they are accessed.
+    /// </returns>
+    public Gst.Sdp.MIKEYMapSRTP? GetCsSrtp(uint idx)
+    {
+        nint nativeResult = GstMikeyMessageGetCsSrtp(Handle, idx);
+        Gst.Sdp.MIKEYMapSRTP? result = nativeResult == 0 ? null : *(Gst.Sdp.MIKEYMapSRTP*)nativeResult;
+        System.GC.KeepAlive(this);
+        return result;
+    }
+
     /// <summary>Get the number of crypto sessions in @msg.</summary>
     /// <returns>the number of crypto sessions</returns>
     public uint GetNCs()
@@ -602,6 +631,10 @@ public sealed unsafe partial class MIKEYMessage : Gst.MiniObject
     /// <summary>The <c>gst_mikey_message_find_payload</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_find_payload")]
     private static partial nint GstMikeyMessageFindPayload(nint msg, int type, uint nth);
+
+    /// <summary>The <c>gst_mikey_message_get_cs_srtp</c> entry point.</summary>
+    [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_get_cs_srtp")]
+    private static partial nint GstMikeyMessageGetCsSrtp(nint msg, uint idx);
 
     /// <summary>The <c>gst_mikey_message_get_n_cs</c> entry point.</summary>
     [LibraryImport("GstSdp", EntryPoint = "gst_mikey_message_get_n_cs")]

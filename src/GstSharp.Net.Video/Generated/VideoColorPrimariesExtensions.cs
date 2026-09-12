@@ -25,6 +25,21 @@ public static unsafe partial class VideoColorPrimariesExtensions
         return (Gst.Video.VideoColorPrimaries)nativeResult;
     }
 
+    /// <summary>Get information about the chromaticity coordinates of @primaries.</summary>
+    /// <param name="primaries">a #GstVideoColorPrimaries</param>
+    /// <returns>
+    /// a #GstVideoColorPrimariesInfo for @primaries.
+    /// The structure is a copy of a row the library owns, taken at the moment of
+    /// the call: writing into it changes nothing native, and the string and
+    /// pointer fields it carries are read from the memory of the library at the
+    /// time they are accessed.
+    /// </returns>
+    public static Gst.Video.VideoColorPrimariesInfo GetInfo(Gst.Video.VideoColorPrimaries primaries)
+    {
+        nint nativeResult = GstVideoColorPrimariesGetInfo((int)primaries);
+        return nativeResult == 0 ? throw new InvalidOperationException("gst_video_color_primaries_get_info returned no value.") : *(Gst.Video.VideoColorPrimariesInfo*)nativeResult;
+    }
+
     /// <summary>Checks whether @primaries and @other are functionally equivalent</summary>
     /// <param name="primaries">a #GstVideoColorPrimaries</param>
     /// <param name="other">another #GstVideoColorPrimaries</param>
@@ -52,6 +67,10 @@ public static unsafe partial class VideoColorPrimariesExtensions
     /// <summary>The <c>gst_video_color_primaries_from_iso</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_color_primaries_from_iso")]
     private static partial int GstVideoColorPrimariesFromIso(uint value);
+
+    /// <summary>The <c>gst_video_color_primaries_get_info</c> entry point.</summary>
+    [LibraryImport("GstVideo", EntryPoint = "gst_video_color_primaries_get_info")]
+    private static partial nint GstVideoColorPrimariesGetInfo(int primaries);
 
     /// <summary>The <c>gst_video_color_primaries_is_equivalent</c> entry point.</summary>
     [LibraryImport("GstVideo", EntryPoint = "gst_video_color_primaries_is_equivalent")]
