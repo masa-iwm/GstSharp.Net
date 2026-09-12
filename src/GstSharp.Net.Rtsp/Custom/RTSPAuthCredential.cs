@@ -16,7 +16,7 @@ namespace Gst.Rtsp;
 /// the hand bound entries of <c>girs/overlays/fixups.json</c> and answered
 /// here instead.
 /// </remarks>
-public sealed partial class RTSPAuthCredential
+public sealed unsafe partial class RTSPAuthCredential
 {
     /// <summary>
     /// Reads the parameters of this credential.
@@ -42,7 +42,7 @@ public sealed partial class RTSPAuthCredential
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
-    public unsafe RTSPAuthParam[] GetParams()
+    public RTSPAuthParam[] GetParams()
     {
         nint block = ((RTSPAuthCredentialRaw*)Handle)->Params;
         if (block == 0)

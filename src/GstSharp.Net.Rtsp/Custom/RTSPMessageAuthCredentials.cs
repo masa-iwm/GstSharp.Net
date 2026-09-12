@@ -17,7 +17,7 @@ namespace Gst.Rtsp;
 /// below is therefore the whole binding of both symbols: it copies what it
 /// reads and frees the block once.
 /// </remarks>
-public sealed partial class RTSPMessage
+public sealed unsafe partial class RTSPMessage
 {
     /// <summary>
     /// Reads the authentication credentials of one header of this message.
@@ -60,7 +60,7 @@ public sealed partial class RTSPMessage
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
-    public unsafe RTSPAuthCredential[] ParseAuthCredentials(RTSPHeaderField field)
+    public RTSPAuthCredential[] ParseAuthCredentials(RTSPHeaderField field)
     {
         nint block = GstRtspMessageParseAuthCredentials(Handle, (int)field);
         if (block == 0)
