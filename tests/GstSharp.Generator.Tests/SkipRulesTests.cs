@@ -1,4 +1,4 @@
-using GstSharp.Generator.Emit;
+﻿using GstSharp.Generator.Emit;
 using GstSharp.Generator.GirParsing;
 using GstSharp.Generator.GirParsing.Model;
 using GstSharp.Generator.Semantic;
@@ -284,6 +284,7 @@ public sealed class SkipRulesTests
                 "GstRtsp.RTSPWatch",
                 "GstRtsp.RTSPWatchFuncs",
                 "GstVideo.VideoGLTextureUpload",
+                "ges_container_ungroup",
                 "ges_deinit",
                 "ges_timeline_element_get_child_property",
                 "ges_timeline_element_set_child_property",
@@ -505,6 +506,7 @@ public sealed class SkipRulesTests
                 "ges_asset_extract",
                 "ges_asset_request_async",
                 "ges_asset_request_finish",
+                "ges_container_ungroup",
                 "ges_timeline_element_get_child_property",
                 "ges_timeline_element_set_child_property",
                 "ges_uri_clip_asset_finish",

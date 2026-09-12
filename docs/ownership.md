@@ -724,6 +724,14 @@ the family that refuses ANY caps without consuming anything; it raises
 `InvalidOperationException` on them, and `Caps.IsAny()` is the test to make
 first.
 
+`GES.Container.Ungroup` is the counter example of the whole section: the gir
+marks its instance `transfer full` and the C releases nothing at all, so the
+consuming shape would dispose a wrapper the caller still owns. It is hand
+written for that and for the answer it hands back, whose elements do not share
+one ownership - a childless clip is returned without the added reference every
+other element carries. An annotation alone therefore never decides that a call
+consumes its instance: the C has to be read.
+
 ## Members that take or return a `GValue`
 
 A `Gst.GObject.Value` is a struct that owns its contents, and a generated

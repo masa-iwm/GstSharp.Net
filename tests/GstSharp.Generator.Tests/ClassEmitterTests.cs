@@ -1,4 +1,4 @@
-using GstSharp.Generator.Emit;
+﻿using GstSharp.Generator.Emit;
 using GstSharp.Generator.Semantic;
 using Xunit;
 
@@ -1064,7 +1064,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]
     [InlineData("GstPlay", 6, 0, 1, 0, 0, 0, 16)]
-    [InlineData("GES", 3, 0, 1, 0, 0, 2, 7)]
+    [InlineData("GES", 3, 0, 0, 0, 0, 2, 8)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,

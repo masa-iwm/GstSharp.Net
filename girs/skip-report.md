@@ -8,19 +8,16 @@ disappears shows up here as an added line.
 
 ## GES
 
-### HandBound (7)
+### HandBound (8)
 
 - `ges_asset_extract`
 - `ges_asset_request_async`
 - `ges_asset_request_finish`
+- `ges_container_ungroup`
 - `ges_timeline_element_get_child_property`
 - `ges_timeline_element_set_child_property`
 - `ges_uri_clip_asset_finish`
 - `ges_uri_clip_asset_new`
-
-### LifetimePrimitive (1)
-
-- `ges_container_ungroup`
 
 ### MovedTo (3)
 
