@@ -984,6 +984,11 @@ disappears shows up here as an added line.
 
 ## GstSdp
 
+### HandBound (2)
+
+- `gst_mikey_message_add_t`
+- `gst_mikey_payload_t_set`
+
 ### LifetimePrimitive (1)
 
 - `gst_sdp_message_free`
@@ -1004,12 +1009,10 @@ disappears shows up here as an added line.
 - `gst_sdp_media_init`
 - `gst_sdp_message_init`
 
-### UnsupportedSignature (4)
+### UnsupportedSignature (2)
 
-- `gst_mikey_message_add_t`
 - `gst_mikey_message_get_cs_srtp`
 - `gst_mikey_payload_sp_get_param`
-- `gst_mikey_payload_t_set`
 
 ## GstTranscoder
 
