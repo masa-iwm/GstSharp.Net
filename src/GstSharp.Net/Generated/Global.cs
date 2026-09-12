@@ -309,6 +309,21 @@ public static unsafe partial class Global
     /// may change anytime.
     /// The caller has to free the list after use.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The list is a snapshot of the category registry taken under the lock that guards it
+    /// (gstinfo.c:2663-2682 copies the spine of the static list), so a category registered
+    /// afterwards is not in it and a second call may answer a longer list. The categories
+    /// themselves belong to the library: one is kept per name (gstinfo.c:2513-2546 dedups under
+    /// the same lock and frees the loser), none is reference counted, and they are released in
+    /// one sweep by gst_deinit and nowhere else, so the wrappers here are borrowed handles that
+    /// must never be disposed and the deliberately empty gst_debug_category_free is not to be
+    /// called on one either. Only the spine is the caller's, which this frees. The list is
+    /// never empty after gst_init, which creates the default category among others
+    /// (gstinfo.c:613-678); a build with the debug system compiled out is the one that answers
+    /// nothing.
+    /// </para>
+    /// </remarks>
     /// <returns>
     /// the list of
     ///     debug categories
