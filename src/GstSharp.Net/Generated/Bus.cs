@@ -114,9 +114,16 @@ public unsafe partial class Bus : Gst.Object
     /// responsible for calling gst_bus_remove_signal_watch() as many times as this
     /// function is called.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException on a bus created by Bus.New(false). That
+    /// bus has no GstPoll, and the C installs the watch all the same (gstbus.c:1396-1408
+    /// through gst_bus_create_watch_unlocked, :889-910): the source watches a GPollFD nothing
+    /// ever fills, so the Message event never fires and the call reports no failure.
+    /// </para>
     /// </remarks>
     public void AddSignalWatch()
     {
+        ThrowIfNoAsyncDelivery(nameof(AddSignalWatch));
         GstBusAddSignalWatch(Handle);
         System.GC.KeepAlive(this);
     }
@@ -142,10 +149,17 @@ public unsafe partial class Bus : Gst.Object
     /// There can only be a single bus watch per bus, you must remove any signal
     /// watch before you can set another type of watch.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException on a bus created by Bus.New(false). That
+    /// bus has no GstPoll, and the C installs the watch all the same (gstbus.c:1396-1408
+    /// through gst_bus_create_watch_unlocked, :889-910): the source watches a GPollFD nothing
+    /// ever fills, so the Message event never fires and the call reports no failure.
+    /// </para>
     /// </remarks>
     /// <param name="priority">The priority of the watch.</param>
     public void AddSignalWatchFull(int priority)
     {
+        ThrowIfNoAsyncDelivery(nameof(AddSignalWatchFull));
         GstBusAddSignalWatchFull(Handle, priority);
         System.GC.KeepAlive(this);
     }
@@ -177,6 +191,12 @@ public unsafe partial class Bus : Gst.Object
     /// The bus watch will take its own reference to the @bus, so it is safe to unref
     /// @bus using gst_object_unref() after setting the bus watch.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException on a bus created by Bus.New(false). That
+    /// bus has no GstPoll, and the C installs the source all the same (gstbus.c:1011-1024
+    /// through gst_bus_create_watch_unlocked, :889-910) and answers an ordinary non-zero id:
+    /// the source watches a GPollFD nothing ever fills, so the handler is never called.
+    /// </para>
     /// </remarks>
     /// <param name="priority">The priority of the watch.</param>
     /// <param name="func">A function to call when a message is received.</param>
@@ -184,6 +204,7 @@ public unsafe partial class Bus : Gst.Object
     public uint AddWatch(int priority, Gst.BusFunc func)
     {
         ArgumentNullException.ThrowIfNull(func);
+        ThrowIfNoAsyncDelivery(nameof(AddWatch));
         nint instanceHandle = Handle;
         Gst.Interop.CallbackHandle funcState = Gst.Interop.CallbackHandle.Alloc(func);
         uint nativeResult = GstBusAddWatchFull(instanceHandle, priority, Gst.BusFuncTrampoline.Pointer, funcState.UserData, (nint)Gst.Interop.CallbackHandle.DestroyNotify);
@@ -328,6 +349,12 @@ public unsafe partial class Bus : Gst.Object
     /// better handled by setting up an asynchronous bus watch and doing things
     /// from there.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException on a bus created by Bus.New(false). That
+    /// bus has no GstPoll, and the C carries no guard for it (gstbus.c:1217-1219): no message
+    /// ever wakes the nested main loop this runs, and only its own timeout source ends it, so
+    /// the call waits out its timeout, or never returns at all for ClockTime.None.
+    /// </para>
     /// </remarks>
     /// <param name="events">
     /// a mask of #GstMessageType, representing the set of message types to
@@ -343,6 +370,7 @@ public unsafe partial class Bus : Gst.Object
     /// </returns>
     public Gst.Message? Poll(Gst.MessageType events, Gst.ClockTime timeout)
     {
+        ThrowIfNoAsyncDelivery(nameof(Poll));
         nint nativeResult = GstBusPoll(Handle, (uint)events, timeout.Nanoseconds);
         Gst.Message? result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
@@ -474,6 +502,12 @@ public unsafe partial class Bus : Gst.Object
     /// #GST_CLOCK_TIME_NONE, this function will block forever until a message was
     /// posted on the bus.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException on a bus created by Bus.New(false), unless
+    /// the timeout is zero. That bus has no GstPoll, and the C guard reads timeout == 0 ||
+    /// bus-&gt;priv-&gt;poll != NULL (gstbus.c:550): every other timeout answers nothing after
+    /// a GLib critical. A timeout of zero is the non-blocking pop and is passed through.
+    /// </para>
     /// </remarks>
     /// <param name="timeout">a timeout</param>
     /// <returns>
@@ -483,6 +517,7 @@ public unsafe partial class Bus : Gst.Object
     /// </returns>
     public Gst.Message? TimedPop(Gst.ClockTime timeout)
     {
+        ThrowIfNoAsyncDelivery(timeout, nameof(TimedPop));
         nint nativeResult = GstBusTimedPop(Handle, timeout.Nanoseconds);
         Gst.Message? result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);
@@ -500,6 +535,12 @@ public unsafe partial class Bus : Gst.Object
     /// @timeout is #GST_CLOCK_TIME_NONE, this function will block forever until a
     /// matching message was posted on the bus.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException on a bus created by Bus.New(false), unless
+    /// the timeout is zero. That bus has no GstPoll, and the C guard reads timeout == 0 ||
+    /// bus-&gt;priv-&gt;poll != NULL (gstbus.c:550): every other timeout answers nothing after
+    /// a GLib critical. A timeout of zero is the non-blocking pop and is passed through.
+    /// </para>
     /// </remarks>
     /// <param name="timeout">a timeout in nanoseconds, or %GST_CLOCK_TIME_NONE to wait forever</param>
     /// <param name="types">message types to take into account, %GST_MESSAGE_ANY for any type</param>
@@ -510,6 +551,7 @@ public unsafe partial class Bus : Gst.Object
     /// </returns>
     public Gst.Message? TimedPopFiltered(Gst.ClockTime timeout, Gst.MessageType types)
     {
+        ThrowIfNoAsyncDelivery(timeout, nameof(TimedPopFiltered));
         nint nativeResult = GstBusTimedPopFiltered(Handle, timeout.Nanoseconds, (uint)types);
         Gst.Message? result = Gst.Message.FromNative(nativeResult, Gst.Interop.Transfer.Full);
         System.GC.KeepAlive(this);

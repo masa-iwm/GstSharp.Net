@@ -68,6 +68,12 @@ public unsafe partial class Bus
     private SyncSubscription? _syncSubscription;
 
     /// <summary>
+    /// The quark of the marker a bus without asynchronous delivery carries, or
+    /// zero while it has not been resolved yet.
+    /// </summary>
+    private static uint _noAsyncDeliveryQuark;
+
+    /// <summary>
     /// Creates a bus, choosing whether it delivers messages asynchronously.
     /// </summary>
     /// <param name="enableAsync">
@@ -97,13 +103,39 @@ public unsafe partial class Bus
     /// machinery.
     /// </para>
     /// <para>
-    /// What the rest of the surface then does is worth spelling out per
-    /// member, because <b>the binding cannot guard any of it</b>:
-    /// <c>enable-async</c> is write only, so a wrapper cannot ask a bus it was
-    /// handed how it was built, and every member that misbehaves below is a
-    /// generated one that no hand written override intercepts today. What
-    /// works is everything that never reaches for the <c>GstPoll</c> that was
-    /// not created: <see cref="Pop"/>, <see cref="PopFiltered"/>,
+    /// <b>A bus built here with <see langword="false"/> is marked</b>, so the
+    /// members that would misbehave refuse the call instead: the wrapper
+    /// attaches a word to the GObject itself, under the
+    /// <c>gstsharp-bus-no-async-delivery</c> quark, and
+    /// <see cref="AddWatch"/>, <see cref="AddSignalWatch"/>,
+    /// <see cref="AddSignalWatchFull"/>, <see cref="Poll"/>,
+    /// <see cref="GetPollfd"/>, and <see cref="TimedPop"/> and
+    /// <see cref="TimedPopFiltered"/> with a timeout other than zero all throw
+    /// <see cref="InvalidOperationException"/> on such a bus. The marker is on
+    /// the object rather than on the wrapper, so it survives the wrapper: a bus
+    /// handed to <see cref="Gst.Element.SetBus"/> and fetched back with
+    /// <see cref="Gst.Element.GetBus"/> is still marked. What it cannot cover
+    /// is a bus without asynchronous delivery that this binding did not build,
+    /// and one of those is publicly reachable: a bin builds its child bus with
+    /// <c>enable-async</c> off (gstbin.c:495) and <c>gst_bin_add_func</c> hands
+    /// that bus to every element added to the bin (<c>gst_element_set_bus</c>,
+    /// gstbin.c:1225), so <see cref="Gst.Element.GetBus"/> on a child of a bin
+    /// or a pipeline answers an unmarked bus without asynchronous delivery. A
+    /// pipeline's own bus is not one of those: <c>gst_pipeline_init</c> uses
+    /// <c>gst_bus_new</c> (gstpipeline.c:241), which leaves the option on.
+    /// </para>
+    /// <para>
+    /// An unmarked bus behaves exactly as the C does: a watch is installed and
+    /// never fires, <see cref="Poll"/> waits out its timeout and answers
+    /// nothing - or never returns at all for
+    /// <see cref="Gst.ClockTime.None"/> - and a timed pop with a timeout other
+    /// than zero answers null after a GLib critical. That is what the rest of
+    /// this remark describes.
+    /// </para>
+    /// <para>
+    /// What works whatever the option says is everything that never reaches for
+    /// the <c>GstPoll</c> that was not created: <see cref="Pop"/>,
+    /// <see cref="PopFiltered"/>,
     /// <see cref="Peek"/>, <see cref="HavePending"/> and
     /// <see cref="SetFlushing"/>, which read the queue that exists and is
     /// simply always empty; <see cref="SetSyncHandler(Gst.BusSyncHandler)"/>,
@@ -122,10 +154,9 @@ public unsafe partial class Bus
     /// carries the <c>bus-&gt;priv-&gt;poll != NULL</c> guard.
     /// <c>gst_bus_create_watch</c> and <c>gst_bus_get_pollfd</c> do carry it.
     /// <c>gst_bus_create_watch</c> is not bound; <c>gst_bus_get_pollfd</c> is
-    /// <see cref="GetPollfd"/>, which cannot pre-check the guard because
-    /// <c>enable-async</c> is write only: the C raises its critical over the
-    /// missing poll all the same (gstbus.c:791) and the member reports the out
-    /// parameter it left untouched as an exception.
+    /// <see cref="GetPollfd"/>, which raises the critical over the missing poll
+    /// (gstbus.c:790-791) and reports the out parameter it left untouched as an
+    /// exception.
     /// <c>gst_bus_add_watch_full</c> and
     /// <c>gst_bus_add_signal_watch_full</c> reach
     /// <c>gst_bus_create_watch_unlocked</c> instead, which guards only against
@@ -175,6 +206,18 @@ public unsafe partial class Bus
                 &names,
                 &value.NativeValue);
 
+            // The marker goes on the object rather than on the wrapper,
+            // because a GObject wrapper is replaced whenever the last one was
+            // disposed and the bus is fetched again. It is written before the
+            // wrapper exists, so nothing can observe the bus unmarked, and only
+            // for the option that needs it: a bus with asynchronous delivery
+            // carries no word at all, which is what makes the absence of the
+            // marker the default.
+            if (!enableAsync && handle != nint.Zero)
+            {
+                Gst.Interop.GObjectNative.ObjectSetQdata(handle, NoAsyncDeliveryQuark(), 1);
+            }
+
             return Gst.GObject.Object.FromNative<Gst.Bus>(handle, Gst.Interop.Transfer.Full)
                 ?? throw new InvalidOperationException("g_object_new_with_properties returned no bus.");
         }
@@ -182,6 +225,98 @@ public unsafe partial class Bus
         {
             value.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Refuses a member that needs the <c>GstPoll</c> a bus without
+    /// asynchronous delivery does not have.
+    /// </summary>
+    /// <param name="member">The member being called, which the message names.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The bus was created by <see cref="New(bool)"/> with
+    /// <see langword="false"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <remarks>
+    /// This is what the <c>preconditions</c> overlay entries of the poll backed
+    /// members call. The C refuses none of them: a watch is installed over a
+    /// <c>GPollFD</c> that was never filled and never fires,
+    /// <c>gst_bus_poll</c> runs a nested loop that no message ever wakes and
+    /// only its own timeout source ends (gstbus.c:1217-1219), and
+    /// <c>gst_bus_timed_pop_filtered</c> answers NULL
+    /// after a critical (gstbus.c:550). None of those is something a caller
+    /// could act on, which is why the binding answers instead.
+    /// </remarks>
+    private void ThrowIfNoAsyncDelivery(string member)
+    {
+        nint handle = Handle;
+        bool marked =
+            Gst.Interop.GObjectNative.ObjectGetQdata(handle, NoAsyncDeliveryQuark()) != nint.Zero;
+
+        // Reading Handle is the last use of this wrapper, so without this the
+        // collector may finalize it while the lookup is still running.
+        GC.KeepAlive(this);
+
+        if (marked)
+        {
+            throw new InvalidOperationException(
+                $"{member} needs a bus with asynchronous delivery. This bus was created with "
+                + "Bus.New(false), so it has no GstPoll: the call would install a watch that never "
+                + "fires, wait for a message that is never queued, or raise a GLib critical, "
+                + "rather than deliver anything.");
+        }
+    }
+
+    /// <summary>
+    /// Refuses a timed pop that would wait on a bus without asynchronous
+    /// delivery.
+    /// </summary>
+    /// <param name="timeout">The timeout the caller gave.</param>
+    /// <param name="member">The member being called, which the message names.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The timeout is not zero and the bus was created by
+    /// <see cref="New(bool)"/> with <see langword="false"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <remarks>
+    /// A timeout of zero is the non-blocking pop, which the C accepts on any
+    /// bus: its own guard reads
+    /// <c>timeout == 0 || bus-&gt;priv-&gt;poll != NULL</c> (gstbus.c:550), and
+    /// a queue nothing is ever pushed onto simply answers nothing. Every other
+    /// timeout is refused, <see cref="Gst.ClockTime.None"/> included: that
+    /// guard fails for it exactly as it does for a millisecond, so the C would
+    /// answer null after a critical rather than wait.
+    /// </remarks>
+    private void ThrowIfNoAsyncDelivery(Gst.ClockTime timeout, string member)
+    {
+        if (timeout.Nanoseconds == 0)
+        {
+            return;
+        }
+
+        ThrowIfNoAsyncDelivery(member);
+    }
+
+    /// <summary>
+    /// Answers the quark of the marker a bus without asynchronous delivery
+    /// carries, resolving it once.
+    /// </summary>
+    /// <returns>The quark of <c>gstsharp-bus-no-async-delivery</c>.</returns>
+    /// <remarks>
+    /// Resolving it twice answers the same quark, which is why the race between
+    /// two threads that both find the field unset is not worth a lock.
+    /// </remarks>
+    private static uint NoAsyncDeliveryQuark()
+    {
+        uint quark = _noAsyncDeliveryQuark;
+        if (quark != 0)
+        {
+            return quark;
+        }
+
+        quark = Gst.GLib.Quark.FromString("gstsharp-bus-no-async-delivery").Value;
+        _noAsyncDeliveryQuark = quark;
+        return quark;
     }
 
     /// <summary>
@@ -219,10 +354,12 @@ public unsafe partial class Bus
     /// <para>
     /// A bus built with <see cref="New(bool)"/> and <see langword="false"/>
     /// has no <c>GstPoll</c> at all and there is no descriptor to hand out.
-    /// The C answers that with a critical and writes nothing, and
-    /// <c>enable-async</c> is write only, so the wrapper cannot ask beforehand
-    /// — it hands the call a sentinel instead and reports the untouched
-    /// sentinel as an <see cref="InvalidOperationException"/>.
+    /// Such a bus is marked, so this refuses the call before it is made and the
+    /// C critical (gstbus.c:790-791) is never raised. The sentinel path is kept
+    /// behind that check, for a bus without asynchronous delivery that this
+    /// binding did not build: the call is made, the C writes nothing, and the
+    /// untouched sentinel is reported as the same
+    /// <see cref="InvalidOperationException"/>.
     /// </para>
     /// </remarks>
     /// <exception cref="InvalidOperationException">
@@ -232,6 +369,8 @@ public unsafe partial class Bus
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
     public Gst.GLib.PollFD GetPollfd()
     {
+        ThrowIfNoAsyncDelivery(nameof(GetPollfd));
+
         // Allocated as longs so that the block is aligned for the gint64 the
         // C writes into it on 64 bit Windows.
         long* block = stackalloc long[Gst.GLib.PollFD.RawSize / sizeof(long)];
