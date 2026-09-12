@@ -300,9 +300,11 @@ internal enum ConsumedFamily
     MiniObject,
 
     /// <summary>
-    /// A boxed value whose registered copy function is a real copy; the call is
-    /// handed a copy, because such a value has no reference count to raise —
-    /// the copy is what a reference is there.
+    /// A boxed value the curated
+    /// <see cref="MarshalPlanner.RefCountedBoxedTypes"/> table does not list,
+    /// so that its registered copy function is a copy as far as the binding
+    /// knows; the call is handed a copy, because such a value has no reference
+    /// count to raise — the copy is what a reference is there.
     /// </summary>
     Boxed,
 

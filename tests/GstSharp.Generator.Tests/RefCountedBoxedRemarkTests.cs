@@ -16,8 +16,9 @@ namespace GstSharp.Generator.Tests;
 /// key that no longer names a record of the vendored girs is a stale entry, and
 /// the two fixtures below pin both halves of the split — the listed record gets
 /// the reference wording, an unlisted boxed record keeps the copy wording — as
-/// well as the fact that the emitted code is the same <c>BoxedCopy</c> either
-/// way.
+/// well as the fact that the unlisted record is emitted as the same
+/// <c>BoxedCopy</c> the listed one is minted with in
+/// <c>GLibDateTimeRuntimeTypeTests</c>.
 /// </remarks>
 public sealed class RefCountedBoxedRemarkTests
 {
@@ -97,8 +98,7 @@ public sealed class RefCountedBoxedRemarkTests
         Assert.NotEmpty(MarshalPlanner.RefCountedBoxedTypes);
         foreach (string name in MarshalPlanner.RefCountedBoxedTypes.Keys)
         {
-            GirSymbol? symbol = GirFixture.Repository.Resolve(name, context: null);
-            Assert.NotNull(symbol);
+            GirSymbol symbol = GirFixture.Symbol(name);
             Assert.Equal(GirSymbolKind.Record, symbol.Kind);
         }
     }
@@ -162,30 +162,15 @@ public sealed class RefCountedBoxedRemarkTests
     }
 
     /// <summary>
-    /// The split is documentation only: both families mint the argument with
-    /// the same <c>g_boxed_copy</c>, which dispatches to whatever the type
-    /// registered.
+    /// The split is documentation only: a plain boxed argument is minted with
+    /// the same <c>g_boxed_copy</c> as a listed one, which dispatches to
+    /// whatever the type registered. The other half of the claim — a listed
+    /// record minted the same way — is pinned by
+    /// <c>GLibDateTimeRuntimeTypeTests</c>.
     /// </summary>
     [Fact]
-    public void BothBoxedFamiliesMintTheArgumentWithTheSameBoxedCopy()
+    public void APlainBoxedArgumentIsMintedWithTheSameBoxedCopy()
     {
-        Assert.Equal(
-            """
-            public void TakeTime(Gst.GLib.DateTime time)
-            {
-                ArgumentNullException.ThrowIfNull(time);
-                nint instanceHandle = Handle;
-                nint timeNative = time.Handle;
-                nuint timeType = time.BoxedType.Value;
-                nint timeOwned = Gst.Interop.GObjectNative.BoxedCopy(timeType, timeNative);
-                GstStampTakeTime(instanceHandle, timeOwned);
-                time.Dispose();
-                System.GC.KeepAlive(this);
-            }
-            """,
-            Run.Member("Stamp.cs", "public void TakeTime("),
-            StringComparer.Ordinal);
-
         Assert.Equal(
             """
             public void TakeSegment(Gst.Segment segment)

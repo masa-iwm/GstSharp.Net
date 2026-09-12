@@ -338,11 +338,13 @@ internal sealed class MarshalPlanner
     internal static readonly IReadOnlyDictionary<string, string> RefCountedBoxedTypes =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            // GLib registers these three in its own boxed table, each with the
-            // type's _ref as the copy function (gobject/gboxed.c:105-152).
+            // GLib registers these in its own boxed table, each with the type's
+            // _ref as the copy function: gobject/gboxed.c:130 and :115.
+            // GTimeZone is registered the same way at :131, but no wrapper of
+            // the runtime bridges the record, so PlanHandle refuses it before
+            // the family switch and an entry for it would document nothing.
             ["GLib.DateTime"] = "g_date_time_ref",
             ["GLib.Bytes"] = "g_bytes_ref",
-            ["GLib.TimeZone"] = "g_time_zone_ref",
 
             // G_DEFINE_BOXED_TYPE (GstAtomicQueue, gst_atomic_queue,
             // (GBoxedCopyFunc) gst_atomic_queue_ref, ...) —

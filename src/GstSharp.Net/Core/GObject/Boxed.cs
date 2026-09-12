@@ -26,7 +26,7 @@ public abstract class Boxed : IDisposable
     /// binding module outside this repository; see
     /// <see href="https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/modules.md">docs/modules.md</see>.
     /// Boxed wrappers are not interned either, and unlike a mini object a boxed
-    /// value is not reference counted at all: <see cref="Transfer.None"/> makes
+    /// value is not reference counted as such: <see cref="Transfer.None"/> makes
     /// this take a <c>g_boxed_copy</c>, so the wrapper always owns a value that
     /// is nobody else's, and disposing it frees that value.
     /// </para>
