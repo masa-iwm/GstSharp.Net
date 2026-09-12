@@ -1196,9 +1196,11 @@ disappears shows up here as an added line.
 - `GstWebRTC.WebRTCDataChannel::send-string`
 - `GstWebRTC.WebRTCICE::add-local-ip-address`
 
-### HandBound (2)
+### HandBound (4)
 
 - `gst_webrtc_data_channel_send_data_full`
+- `gst_webrtc_ice_get_local_candidates`
+- `gst_webrtc_ice_get_remote_candidates`
 - `gst_webrtc_session_description_new`
 
 ### LifetimePrimitive (4)
@@ -1216,11 +1218,6 @@ disappears shows up here as an added line.
 ### OverlaySkip (1)
 
 - `gst_webrtc_data_channel_send_data`
-
-### UnsupportedSignature (2)
-
-- `gst_webrtc_ice_get_local_candidates`
-- `gst_webrtc_ice_get_remote_candidates`
 
 ## Virtuals (17)
 

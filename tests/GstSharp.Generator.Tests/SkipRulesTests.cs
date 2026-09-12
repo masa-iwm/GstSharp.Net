@@ -431,6 +431,8 @@ public sealed class SkipRulesTests
                 "gst_video_vbi_parser_new",
                 "gst_webrtc_data_channel_send_data",
                 "gst_webrtc_data_channel_send_data_full",
+                "gst_webrtc_ice_get_local_candidates",
+                "gst_webrtc_ice_get_remote_candidates",
                 "gst_webrtc_session_description_new",
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
@@ -625,6 +627,8 @@ public sealed class SkipRulesTests
                 "gst_video_vbi_parser_copy",
                 "gst_video_vbi_parser_new",
                 "gst_webrtc_data_channel_send_data_full",
+                "gst_webrtc_ice_get_local_candidates",
+                "gst_webrtc_ice_get_remote_candidates",
                 "gst_webrtc_session_description_new",
             ],
             GirFixture.Overlays.HandBoundIdentifiers.Order(StringComparer.Ordinal).ToArray());
