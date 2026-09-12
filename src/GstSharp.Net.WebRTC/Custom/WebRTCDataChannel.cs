@@ -1,10 +1,11 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace Gst.WebRTC;
 
 /// <content>
-/// The send half of the binary side of a data channel, which the generator
-/// skips because the C refuses the block an empty message would be built from.
+/// The send half of the binary side of a data channel - the two members that
+/// take a span and a block - which the generator skips because the C refuses
+/// the block an empty message would be built from.
 /// </content>
 /// <remarks>
 /// <para>
@@ -158,6 +159,80 @@ public abstract unsafe partial class WebRTCDataChannel
         // The handle was read before the call, so nothing keeps this wrapper
         // alive across it on its own.
         GC.KeepAlive(this);
+
+        Gst.GLib.GException.ThrowIfSet(ref errorNative);
+        return sent != 0;
+    }
+
+    /// <summary>
+    /// Sends a binary message over the channel, from a block the caller
+    /// already holds.
+    /// </summary>
+    /// <param name="data">
+    /// The block to send, or <see langword="null"/> for an empty message. The
+    /// block is referenced rather than copied, and the caller may dispose its
+    /// wrapper as soon as the call returns.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the channel was open and the message was
+    /// queued.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <see cref="SendData"/> for a caller that already has a
+    /// <see cref="Gst.GLib.Bytes"/> - the block an
+    /// <see cref="OnMessageData"/> handler copied out, for one - and it is a
+    /// member of its own rather than an overload, so that a call with an empty
+    /// collection expression keeps meaning the span.
+    /// </para>
+    /// <para>
+    /// The channel takes a reference of its own and holds it until the SCTP
+    /// path has consumed the message, so what the caller owns is its wrapper
+    /// and nothing else: disposing it after the call releases the caller's
+    /// reference and not the message.
+    /// </para>
+    /// <para>
+    /// <see langword="null"/> and an empty block are the same message here. An
+    /// empty <c>GBytes</c> has a null data pointer, which the C refuses with a
+    /// critical and a <see langword="false"/> that carries no error, so both
+    /// are passed as the null block the library documents as the empty
+    /// message - exactly as <see cref="SendData"/> passes an empty span.
+    /// </para>
+    /// <para>
+    /// A channel that is not open is answered here rather than by the library,
+    /// for the reason <see cref="SendData"/> states: the binary send of
+    /// <c>webrtcbin</c> reads the size of the message through a transport a
+    /// channel that never opened has not got.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="Gst.GLib.GException">The channel refused the message.</exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or the wrapper of <paramref name="data"/> was disposed.
+    /// </exception>
+    public bool SendBytes(Gst.GLib.Bytes? data)
+    {
+        // The handle is read first, so that a disposed wrapper throws before
+        // anything else happens.
+        nint channel = Handle;
+
+        // See the remarks of SendData: the library crashes rather than
+        // refusing here.
+        if (ReadyState != Gst.WebRTC.WebRTCDataChannelState.Open)
+        {
+            return false;
+        }
+
+        // An empty block carries the null data pointer the C refuses, so it
+        // travels as the null block that means the empty message.
+        nint block = data is null || data.Size == 0 ? nint.Zero : data.Handle;
+
+        nint errorNative = 0;
+        int sent = GstWebrtcDataChannelSendDataFull(channel, block, &errorNative);
+
+        // Both handles were read before the call, so nothing keeps either
+        // wrapper alive across it on its own.
+        GC.KeepAlive(this);
+        GC.KeepAlive(data);
 
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         return sent != 0;

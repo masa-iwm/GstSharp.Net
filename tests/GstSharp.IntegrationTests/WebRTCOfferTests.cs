@@ -1,4 +1,4 @@
-using Gst;
+﻿using Gst;
 using Gst.Sdp;
 using Gst.WebRTC;
 using Xunit;
@@ -132,7 +132,8 @@ public sealed class WebRTCOfferTests
     /// build. What is measured here is what the binding owns: that the
     /// generated event can be connected and disconnected — connecting to a
     /// signal that does not exist throws — and that
-    /// <see cref="WebRTCDataChannel.SendData(ReadOnlySpan{byte})"/> answers a
+    /// <see cref="WebRTCDataChannel.SendData(ReadOnlySpan{byte})"/> and
+    /// <see cref="WebRTCDataChannel.SendBytes(Gst.GLib.Bytes)"/> answer a
     /// channel that never opened instead of following the library into a null
     /// dereference.
     /// </para>
@@ -194,6 +195,17 @@ public sealed class WebRTCOfferTests
             {
                 Assert.False(channel.SendData([1, 2, 3, 4]));
                 Assert.False(channel.SendData([]));
+
+                // The block taking member is refused by the same check, and
+                // the block is only referenced by a send that happens, so the
+                // wrapper is still the caller's afterwards.
+                using (Gst.GLib.Bytes block = Gst.GLib.Bytes.New([1, 2, 3]))
+                {
+                    Assert.False(channel.SendBytes(block));
+                    Assert.Equal(3u, (uint)block.Size);
+                }
+
+                Assert.False(channel.SendBytes(null));
 
                 Assert.Equal(0, Volatile.Read(ref received));
                 Assert.Null(kept);
