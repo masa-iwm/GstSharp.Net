@@ -118,10 +118,15 @@ public unsafe partial class Bus
     /// <see cref="AddSignalWatchFull"/> install a source that never delivers
     /// anything, and none of the three says so: the two signal watches answer
     /// nothing at all, and <see cref="AddWatch"/> hands back the ordinary
-    /// non-zero source id. Of the entry points this binding reaches, none
+    /// non-zero source id. Of the entry points those three reach, none
     /// carries the <c>bus-&gt;priv-&gt;poll != NULL</c> guard.
-    /// <c>gst_bus_create_watch</c> and <c>gst_bus_get_pollfd</c> do carry it,
-    /// and neither is bound; <c>gst_bus_add_watch_full</c> and
+    /// <c>gst_bus_create_watch</c> and <c>gst_bus_get_pollfd</c> do carry it.
+    /// <c>gst_bus_create_watch</c> is not bound; <c>gst_bus_get_pollfd</c> is
+    /// <see cref="GetPollfd"/>, which cannot pre-check the guard because
+    /// <c>enable-async</c> is write only: the C raises its critical over the
+    /// missing poll all the same (gstbus.c:791) and the member reports the out
+    /// parameter it left untouched as an exception.
+    /// <c>gst_bus_add_watch_full</c> and
     /// <c>gst_bus_add_signal_watch_full</c> reach
     /// <c>gst_bus_create_watch_unlocked</c> instead, which guards only against
     /// a second <c>GSource</c> and not against the missing poll, and which
@@ -177,6 +182,71 @@ public unsafe partial class Bus
         {
             value.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Reads the descriptor that reports whether the bus has a message
+    /// waiting.
+    /// </summary>
+    /// <returns>
+    /// The descriptor, with the events the bus itself watches it for.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is <c>gst_bus_get_pollfd</c>, and it is how a bus joins an event
+    /// loop that is not a GLib one: wait on the descriptor with
+    /// <see cref="Gst.GLib.PollFD.Poll"/>, with <c>select</c>, with
+    /// <c>WaitForMultipleObjects</c> or with whatever the loop already uses,
+    /// and pop the messages with <see cref="Pop"/> once
+    /// <see cref="Gst.GLib.IOCondition.In"/> is reported.
+    /// </para>
+    /// <para>
+    /// <b>Never read from, write to or close the descriptor.</b> It belongs to
+    /// the <c>GstPoll</c> of the bus and is released when the bus is disposed
+    /// (gstbus.c:279-281); writing to it would consume the very notification
+    /// the bus counts. What sets it is a post that reached the queue, and what clears
+    /// it is the pop that emptied the queue again — GStreamer keeps a counter
+    /// beside it and only raises or releases the descriptor on the change
+    /// between nothing pending and something pending (gstpoll.c:281-330,
+    /// gstbus.c:396, :423, :560-563).
+    /// </para>
+    /// <para>
+    /// The structure the C hands back is the one the bus keeps for its own
+    /// <c>GSource</c>, so its <see cref="Gst.GLib.PollFD.Revents"/> is
+    /// whatever that source last wrote there rather than anything this call
+    /// measured. <see cref="Gst.GLib.PollFD.Poll"/> overwrites it.
+    /// </para>
+    /// <para>
+    /// A bus built with <see cref="New(bool)"/> and <see langword="false"/>
+    /// has no <c>GstPoll</c> at all and there is no descriptor to hand out.
+    /// The C answers that with a critical and writes nothing, and
+    /// <c>enable-async</c> is write only, so the wrapper cannot ask beforehand
+    /// — it hands the call a sentinel instead and reports the untouched
+    /// sentinel as an <see cref="InvalidOperationException"/>.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// The bus was created without asynchronous delivery, so it has no
+    /// descriptor.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.GLib.PollFD GetPollfd()
+    {
+        // Allocated as longs so that the block is aligned for the gint64 the
+        // C writes into it on 64 bit Windows.
+        long* block = stackalloc long[Gst.GLib.PollFD.RawSize / sizeof(long)];
+        byte* raw = (byte*)block;
+        Gst.GLib.PollFD.PrepareOut(raw);
+
+        BusNative.GetPollfd(Handle, raw);
+
+        Gst.GLib.PollFD fd = Gst.GLib.PollFD.FromNative(raw);
+        GC.KeepAlive(this);
+
+        return fd.Fd == -1
+            ? throw new InvalidOperationException(
+                "The bus was created without asynchronous delivery and has no poll descriptor.")
+            : fd;
     }
 
     /// <summary>

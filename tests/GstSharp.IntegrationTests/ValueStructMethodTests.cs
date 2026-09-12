@@ -209,7 +209,8 @@ public sealed class ValueStructMethodTests
     [Fact]
     public void InitializingAPollDescriptorSetsItToMinusOne()
     {
-        PollFD descriptor = default;
+        // Qualified: Gst.GLib.PollFD is the GPollFD of GLib and is in scope here too.
+        Gst.PollFD descriptor = default;
         Assert.Equal(0, descriptor.Fd);
 
         descriptor.Init();

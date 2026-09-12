@@ -83,7 +83,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (67)
+### HandBound (69)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_copy`
@@ -96,6 +96,7 @@ disappears shows up here as an added line.
 - `gst_buffer_new_wrapped_full`
 - `gst_buffer_pool_set_config`
 - `gst_buffer_remove_meta`
+- `gst_bus_get_pollfd`
 - `gst_bus_set_sync_handler`
 - `gst_caps_fixate`
 - `gst_clock_id_wait_async`
@@ -139,6 +140,7 @@ disappears shows up here as an added line.
 - `gst_pad_set_event_full_function_full`
 - `gst_param_spec_array`
 - `gst_param_spec_fraction`
+- `gst_poll_get_read_gpollfd`
 - `gst_promise_reply`
 - `gst_query_copy`
 - `gst_query_new_custom`
@@ -440,13 +442,12 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (32)
+### UnsupportedSignature (30)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
 - `gst_buffer_list_take`
 - `gst_bus_create_watch`
-- `gst_bus_get_pollfd`
 - `gst_context_replace`
 - `gst_init`
 - `gst_iterator_filter`
@@ -460,7 +461,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_unlock`
 - `gst_object_replace`
 - `gst_pad_sticky_events_foreach`
-- `gst_poll_get_read_gpollfd`
 - `gst_query_take`
 - `gst_structure_id_str_take_value`
 - `gst_structure_id_take_value`

@@ -2817,6 +2817,83 @@ public sealed class AbiProbeTests
         Assert.Equal(expected, query.InstanceSize);
     }
 
+
+    /// <summary>
+    /// The two mirrors of a <c>GPollFD</c> match what the C header declares:
+    /// <c>gint64 fd; gushort events; gushort revents;</c> under
+    /// <c>G_OS_WIN32</c> with a pointer size of eight, and
+    /// <c>gint fd; gushort events; gushort revents;</c> everywhere else
+    /// (glib/gpoll.h:93-104). The first is 16 bytes because the eight byte
+    /// descriptor aligns the structure to eight; the second is 8.
+    /// </summary>
+    [Fact]
+    public unsafe void PollFdMirrorsMatchTheHeaderLayout()
+    {
+        Gst.GLib.PollFDRaw64 wide = default;
+        _output.WriteLine(Format("PollFDRaw64", Unsafe.SizeOf<Gst.GLib.PollFDRaw64>()));
+        Assert.Equal(16, Unsafe.SizeOf<Gst.GLib.PollFDRaw64>());
+        Assert.Equal(0L, Offset(&wide, &wide.Fd));
+        Assert.Equal(8L, Offset(&wide, &wide.Events));
+        Assert.Equal(10L, Offset(&wide, &wide.Revents));
+
+        Gst.GLib.PollFDRaw32 narrow = default;
+        _output.WriteLine(Format("PollFDRaw32", Unsafe.SizeOf<Gst.GLib.PollFDRaw32>()));
+        Assert.Equal(8, Unsafe.SizeOf<Gst.GLib.PollFDRaw32>());
+        Assert.Equal(0L, Offset(&narrow, &narrow.Fd));
+        Assert.Equal(4L, Offset(&narrow, &narrow.Events));
+        Assert.Equal(6L, Offset(&narrow, &narrow.Revents));
+    }
+
+    /// <summary>
+    /// The library itself says which of the two mirrors this platform uses.
+    /// <c>gst_poll_get_read_gpollfd</c> writes all three fields and reads none
+    /// (gstpoll.c:808-825), so a zeroed block of the widest size shows where
+    /// the events it writes landed — at byte 8 on 64 bit Windows and at byte 4
+    /// everywhere else — and the bytes past the structure stay zero.
+    /// </summary>
+    [Fact]
+    public unsafe void TheLibraryWritesAPollDescriptorAtTheWidthTheMirrorExpects()
+    {
+        const ushort Expected = 1 | 16 | 8; // G_IO_IN | G_IO_HUP | G_IO_ERR
+
+        nint handle = PollNatives.New(1);
+        Assert.NotEqual(nint.Zero, handle);
+
+        Poll set = Assert.IsType<Poll>(Poll.FromNative(handle));
+        try
+        {
+            byte* raw = stackalloc byte[16];
+            new Span<byte>(raw, 16).Clear();
+
+            PollNatives.GetReadGpollfd(handle, raw);
+
+            _output.WriteLine(FormattableString.Invariant(
+                $"GPollFD bytes: {Convert.ToHexString(new ReadOnlySpan<byte>(raw, 16))}"));
+
+            if (OperatingSystem.IsWindows() && nint.Size == 8)
+            {
+                Assert.Equal(Expected, *(ushort*)(raw + 8));
+                Assert.Equal(0, *(ushort*)(raw + 10));
+
+                // The four bytes of tail padding are not part of the structure
+                // and the call leaves them alone.
+                Assert.Equal(0u, *(uint*)(raw + 12));
+            }
+            else
+            {
+                Assert.Equal(Expected, *(ushort*)(raw + 4));
+                Assert.Equal(0, *(ushort*)(raw + 6));
+
+                // Everything past the eight byte structure stays zero.
+                Assert.Equal(0UL, *(ulong*)(raw + 8));
+            }
+        }
+        finally
+        {
+            set.Free();
+        }
+    }
+
     private static unsafe long Offset(void* start, void* field) => (byte*)field - (byte*)start;
 
     private static string Format(string name, int size) =>

@@ -28,4 +28,16 @@ internal static partial class BusNative
     /// <param name="notify">Called when <paramref name="userData"/> is no longer used.</param>
     [LibraryImport("Gst", EntryPoint = "gst_bus_set_sync_handler")]
     internal static partial void SetSyncHandler(nint bus, nint func, nint userData, nint notify);
+
+    /// <summary>
+    /// Copies the descriptor a bus reports its pending messages on into
+    /// storage the caller provides.
+    /// </summary>
+    /// <param name="bus">The bus to read.</param>
+    /// <param name="fd">
+    /// A block of <c>Gst.GLib.PollFD.RawSize</c> bytes the call fills. It is
+    /// left untouched when the bus has no poll of its own.
+    /// </param>
+    [LibraryImport("Gst", EntryPoint = "gst_bus_get_pollfd")]
+    internal static unsafe partial void GetPollfd(nint bus, byte* fd);
 }

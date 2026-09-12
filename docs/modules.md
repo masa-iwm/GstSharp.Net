@@ -416,3 +416,11 @@ asserts the crossing the hierarchy makes possible: the same source handed to
     type, and nothing in it names the free of the block
     (`RTSPMessage.ParseAuthCredentials` and `WebRTCICE.GetLocalCandidates` are
     the two forms).
+11. A GLib structure whose field width is platform-conditional is projected
+    through one public struct and two raw mirrors picked at run time, and the
+    ABI probe asserts both. `GLib.PollFD` holds its descriptor in an `nint`
+    because the C field is a `gint64` on 64 bit Windows and a `gint`
+    everywhere else; `PollFDRaw64` and `PollFDRaw32` are what a call is
+    actually given, the probe pins their sizes and offsets, and a second probe
+    watches the library fill a zeroed block so that the running platform says
+    which of the two it uses.
