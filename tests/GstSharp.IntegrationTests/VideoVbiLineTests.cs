@@ -152,10 +152,19 @@ public sealed class VideoVbiLineTests
         Assert.Equal(VideoVBIParserResult.Ok, parserCopy.GetAncillary(out VideoAncillary ancillary));
         Assert.Equal(DID, ancillary.DID);
 
-        // The copy of the encoder took the pending packet with it, so the
-        // original still has one of its own to write.
+        // The copy carries its own pending packets, so the original still
+        // encodes a line of its own after the copy has written one.
+        Assert.True(encoder.AddAncillary(false, DID, SDID, payload));
+
         byte[] originalLine = new byte[UyvyStride];
         encoder.WriteLine(originalLine);
+
+        using VideoVBIParser originalParser = VideoVBIParser.New(VideoFormat.Uyvy, Width)
+            ?? throw new InvalidOperationException("UYVY at 1920 pixels has to be a supported VBI geometry.");
+
+        originalParser.AddLine(originalLine);
+        Assert.Equal(VideoVBIParserResult.Ok, originalParser.GetAncillary(out VideoAncillary fromOriginal));
+        Assert.Equal(DID, fromOriginal.DID);
     }
 
     /// <summary>A line shorter than the stride of the geometry is refused by both halves.</summary>
