@@ -162,6 +162,20 @@ but deferred through an idle source, so the sample pumps
 its neighbours — is not ported, and neither is the per-keyword help synopsis,
 which comes from a function the generator cannot bind.
 
+**[`samples/WebRtcLoopback`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/WebRtcLoopback/Program.cs)**
+— the port of gst-plugins-bad's `webrtc.c`, audio only and one way: two
+`webrtcbin` elements in one pipeline negotiate a call with each other and the
+receiving one decodes the stream into an `appsink`. `webrtcbin` has no `.gir`,
+so the whole negotiation — `create-offer`, `create-answer`, the two
+`set-*-description`, `add-ice-candidate`, `on-negotiation-needed`,
+`on-ice-candidate` — is emitted and connected by name, and the offer and the
+answer travel as the boxed session description rather than as SDP text, since
+both peers are in this process. It is also the sample with the most threads in
+it: each `webrtcbin` dispatches its callbacks on a private thread of its own,
+`pad-added` and `new-sample` arrive on streaming threads, and the thread that
+started the run does nothing but poll the bus — which is why it needs no main
+loop and why a handler that throws leaves its message in a field instead.
+
 ## NativeAOT
 
 **[`samples/AotSmoke`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/AotSmoke/Program.cs)**
