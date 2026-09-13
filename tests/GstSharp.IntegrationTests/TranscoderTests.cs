@@ -295,6 +295,8 @@ public sealed class TranscoderTests
         Assert.Same(transcoder, first.GetTranscoder());
 
         bool done = false;
+        string? failure = null;
+        List<string> warnings = [];
         using MainLoop loop = new();
 
         void OnDone(object? sender, EventArgs args)
@@ -303,7 +305,28 @@ public sealed class TranscoderTests
             loop.Quit();
         }
 
+        // A transcode that ends in an error never raises done, so without these
+        // two the failure would look exactly like a hang: the loop would run to
+        // its watchdog and the assertion would name a timeout instead of the
+        // reason. Both arguments carry an exception and a structure of details
+        // the signal may leave null.
+        void OnError(object? sender, TranscoderSignalAdapter.ErrorSignalArgs args)
+        {
+            failure = args.P0 is { } details
+                ? $"{args.Object.Message} ({details})"
+                : args.Object.Message;
+
+            loop.Quit();
+        }
+
+        void OnWarning(object? sender, TranscoderSignalAdapter.WarningSignalArgs args) =>
+            warnings.Add(args.Object.Message ?? "a warning without a message");
+
+        Stopwatch elapsed = Stopwatch.StartNew();
+
         first.Done += OnDone;
+        first.Error += OnError;
+        first.Warning += OnWarning;
         try
         {
             transcoder.RunAsync();
@@ -337,9 +360,14 @@ public sealed class TranscoderTests
         finally
         {
             first.Done -= OnDone;
+            first.Error -= OnError;
+            first.Warning -= OnWarning;
         }
 
-        Assert.True(done, "the signal adapter never raised its done signal");
+        Assert.True(
+            done,
+            $"the signal adapter never raised its done signal; error: {failure ?? "none"}; " +
+            $"warnings: {warnings.Count}; waited {elapsed.Elapsed}");
     }
 
     /// <summary>
