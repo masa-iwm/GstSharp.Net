@@ -26,6 +26,15 @@
 //     call in either tool -- that function is bound and deliberately unused
 //     here, because using it would be a different program.
 //
+//   * DEVICE_MONITOR_STARTED, and the asynchronous start that posts it, are
+//     1.28 additions, and the binding supports older GStreamer than that. On
+//     1.24 and 1.26 the start is synchronous and the initial listing is already
+//     on the bus when it returns, which is why the C tool of those versions
+//     ends a run without --follow with an idle source rather than on a message.
+//     Here, a run without --follow on such a runtime ends on the first poll
+//     that finds the bus empty. A run with --follow is unaffected, and so is
+//     everything on 1.28.
+//
 //   * The launch line is complete, and the one place where the C tool has to
 //     guard against a null it created: gst_element_factory_create() for the
 //     bare element is not checked there, and here a failure to build it prints

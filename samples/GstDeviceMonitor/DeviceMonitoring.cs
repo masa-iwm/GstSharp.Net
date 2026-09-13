@@ -177,10 +177,11 @@ internal sealed partial class DeviceMonitoring
     /// <param name="bus">The bus of the monitor.</param>
     /// <remarks>
     /// This is the C tool's <c>g_main_loop_run</c> and its bus watch in one
-    /// place. The initial listing arrives as one <c>DEVICE_ADDED</c> message per
-    /// device that is already there, followed by
+    /// place. On 1.28 the initial listing arrives as one <c>DEVICE_ADDED</c>
+    /// message per device that is already there, followed by
     /// <c>DEVICE_MONITOR_STARTED</c>, which is where a run without
-    /// <c>--follow</c> ends.
+    /// <c>--follow</c> ends. Before 1.28 that message does not exist and such a
+    /// run ends on the first poll that finds the bus empty instead.
     /// </remarks>
     private void RunLoop(Bus bus)
     {
@@ -189,6 +190,17 @@ internal sealed partial class DeviceMonitoring
         // counted from here, and a listing that has not finished by then is cut
         // short, which is the same thing an impatient Ctrl+C would do.
         Stopwatch elapsed = Stopwatch.StartNew();
+
+        // DEVICE_MONITOR_STARTED, and the asynchronous start that posts it,
+        // arrived in 1.28. Before it, gst_device_monitor_start() starts every
+        // matched provider synchronously on the caller's thread, and each
+        // provider's initial DEVICE_ADDED messages reach the monitor's bus from
+        // the provider's own bus through a sync handler the monitor installed,
+        // so the whole initial listing is already queued by the time Start()
+        // returned. The 1.24 C tool ends a run without --follow with its
+        // quit_loop idle source for exactly that reason; an empty poll is the
+        // same statement in a program that polls.
+        bool endsOnEmptyPoll = !_options.Follow && !PostsMonitorStarted();
 
         while (!_quit)
         {
@@ -199,7 +211,14 @@ internal sealed partial class DeviceMonitoring
                 // place. See docs/ownership.md.
                 GstSharp.DrainPendingReleases();
 
-                if (message is not null)
+                if (message is null)
+                {
+                    if (endsOnEmptyPoll)
+                    {
+                        return;
+                    }
+                }
+                else
                 {
                     Handle(message);
                 }
@@ -210,6 +229,31 @@ internal sealed partial class DeviceMonitoring
                 return;
             }
         }
+    }
+
+    /// <summary>
+    /// Tells whether the loaded GStreamer posts
+    /// <c>GST_MESSAGE_DEVICE_MONITOR_STARTED</c> when a monitor has started.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> on 1.28 and newer, and on the development builds
+    /// that lead to it, where the message exists.
+    /// </returns>
+    /// <remarks>
+    /// The message and the asynchronous start that posts it first shipped in
+    /// 1.27.50, which is why that development version is on this side of the
+    /// comparison. <see cref="Gst.Version"/> carries the parts and equality
+    /// alone, so the comparison is written out, as it is elsewhere in the
+    /// binding. The read needs an initialised binding, which is given here: the
+    /// monitor whose bus is being polled could not have been created otherwise.
+    /// </remarks>
+    private static bool PostsMonitorStarted()
+    {
+        Gst.Version version = GstSharp.NativeVersion;
+
+        return version.Major > 1
+            || (version.Major == 1
+                && (version.Minor >= 28 || (version.Minor == 27 && version.Micro >= 50)));
     }
 
     /// <summary>
