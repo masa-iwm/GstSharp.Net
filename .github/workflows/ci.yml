@@ -215,7 +215,12 @@ jobs:
       # package, and without it all four of those tests skipped here too.
       # libgstrtspserver-1.0-0 is the library of the RTSP server, which apt
       # ships apart from the core packages: the module registration test loads
-      # it on this leg and has no skip path.
+      # it on this leg and has no skip path. gstreamer1.0-x is here for one
+      # element as well: textoverlay, which lives in libgstpango and which apt
+      # puts in that package rather than in the base plugins, so without it
+      # subtitleoverlay posts a missing-plugin warning and goes passthrough,
+      # and playback tutorial 2 would select a subtitle stream that nothing
+      # renders.
       # What this leg now promises is asserted rather than
       # assumed; see the integration test step below.
       - name: Install GStreamer
@@ -232,6 +237,7 @@ jobs:
             gstreamer1.0-plugins-bad \
             gstreamer1.0-nice \
             gstreamer1.0-alsa \
+            gstreamer1.0-x \
             gstreamer1.0-tools
           gst-inspect-1.0 --version
 
@@ -433,7 +439,9 @@ jobs:
       # does.
       #
       # Not run: basic tutorial 1, whose default media is an https URI, and
-      # playback tutorials 3, 5, 7 and 9, which are not ported at all.
+      # basic tutorial 6, whose interesting output is the caps a real audio
+      # sink negotiates. Those two are the only ones of the fifteen that are
+      # built and not run; playback 3, 5, 7 and 9 are not ported at all.
       #
       # Fifteen tutorials are built on every leg; thirteen are run here, on
       # both Linux legs. Three extra fixtures are made alongside the one above:

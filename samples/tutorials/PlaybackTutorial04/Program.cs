@@ -40,16 +40,24 @@
 //     rather than with the generated DeepNotify event, because the generated
 //     one is wired to the bare signal with no detail and would fire for every
 //     property of every element in the pipeline. The handler is handed the
-//     emitting child as a Gst.Object wrapper and the GParamSpec as a ParamSpec
-//     wrapper, both borrowed for the length of the call, so the temp file name
-//     is read off the child — not off the pipeline, which does not have that
-//     property at all.
+//     emitting child as its interned Gst.Object wrapper and the GParamSpec as a
+//     ParamSpec wrapper borrowed for the length of the call, so the temp file
+//     name is read off the child — not off the pipeline, which does not have
+//     that property at all.
 //
 //   * --headless is not part of the tutorial. It gives playbin fakesinks so
 //     that the program runs where there is no display and no sound card.
 //
 //   * --timeout bounds the run and is a failure when it elapses: this pipeline
 //     was supposed to reach the end of its stream.
+//
+//   * The bar is redrawn only when the pipeline is not live. The C redraws
+//     regardless, but a live source answers the buffering query with nothing to
+//     draw, so the line would be an empty box once a second.
+//
+//   * The error path prints the debug string on a second line. The C throws it
+//     away after freeing it, which loses the one part of the message that says
+//     which element and which file the failure came from.
 //
 //   * A file:// URI is not a download, so pointing this at a local path shows
 //     no buffering and no temporary file. Serve the same file over http to see
@@ -230,20 +238,24 @@ internal static class ProgressiveStreaming
                             case MessageType.Buffering:
                                 if (isLive)
                                 {
-                                    // If the stream is live, we do not care
-                                    // about buffering.
+                                    // A live source has no buffer to fill: the
+                                    // data arrives when it arrives, and pausing
+                                    // would only drop it.
                                     break;
                                 }
 
                                 message.ParseBuffering(out _bufferingLevel);
 
-                                // Wait until buffering is complete before
-                                // start/resume playing.
+                                // Pausing while the buffer fills is the whole
+                                // of the answer: playing on with nothing to
+                                // play is what a stall looks like.
                                 pipeline.SetState(_bufferingLevel < 100 ? State.Paused : State.Playing);
                                 break;
 
                             case MessageType.ClockLost:
-                                // Get a new clock.
+                                // The clock a sink was providing has gone. A
+                                // round trip through PAUSED is what makes the
+                                // pipeline choose another one.
                                 pipeline.SetState(State.Paused);
                                 pipeline.SetState(State.Playing);
                                 break;

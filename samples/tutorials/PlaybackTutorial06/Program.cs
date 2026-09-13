@@ -27,6 +27,10 @@
 //     spine of the GList is freed inside the call, and the references go back
 //     with the wrappers.
 //
+//   * The visualization element is never disposed, and the C never unrefs it
+//     either. Only the pipeline is the application's to release; playbin takes
+//     a reference of its own when vis-plugin is written.
+//
 //   * The default URI is the upstream one, http://radio.hbr1.com:19800/ambient.ogg.
 //     That radio station has not answered for years, so a run with no argument
 //     is expected to fail to connect; the tutorial is kept honest by leaving
@@ -95,43 +99,44 @@ internal static class AudioVisualization
 
             Console.WriteLine($"Selected '{selected.GetMetadata("long-name")}'");
 
+            // The element is not disposed. A wrapper that is not the pipeline
+            // is never the application's to release — playbin takes its own
+            // reference when vis-plugin is written, and the C original does not
+            // unref it either. See docs/ownership.md.
             if (selected.Create(null) is not Element visualization)
             {
                 Console.Error.WriteLine("PlaybackTutorial06: the visualization element could not be created.");
                 return 1;
             }
 
-            using (visualization)
+            if (Global.ParseLaunch($"playbin uri={options.Uri}") is not Pipeline pipeline)
             {
-                if (Global.ParseLaunch($"playbin uri={options.Uri}") is not Pipeline pipeline)
+                Console.Error.WriteLine("PlaybackTutorial06: the description did not produce a pipeline.");
+                return 1;
+            }
+
+            using (pipeline)
+            {
+                // Set the visualization flag. The read-modify-write is the
+                // C original's: playbin's default already has other bits.
+                uint flags = pipeline.GetProperty<uint>("flags");
+                flags |= PlayFlagVis;
+                pipeline.SetProperty("flags", flags);
+
+                // vis-plugin is object-valued, so it goes in through a
+                // GValue: a plain string setter cannot carry an element.
+                using (Gst.GObject.Value value = Gst.GObject.Value.New(visualization.NativeType))
                 {
-                    Console.Error.WriteLine("PlaybackTutorial06: the description did not produce a pipeline.");
+                    value.SetObject(visualization);
+                    pipeline.SetProperty("vis-plugin", value);
+                }
+
+                if (options.Headless && !Silence(pipeline))
+                {
                     return 1;
                 }
 
-                using (pipeline)
-                {
-                    // Set the visualization flag. The read-modify-write is the
-                    // C original's: playbin's default already has other bits.
-                    uint flags = pipeline.GetProperty<uint>("flags");
-                    flags |= PlayFlagVis;
-                    pipeline.SetProperty("flags", flags);
-
-                    // vis-plugin is object-valued, so it goes in through a
-                    // GValue: a plain string setter cannot carry an element.
-                    using (Gst.GObject.Value value = Gst.GObject.Value.New(visualization.NativeType))
-                    {
-                        value.SetObject(visualization);
-                        pipeline.SetProperty("vis-plugin", value);
-                    }
-
-                    if (options.Headless && !Silence(pipeline))
-                    {
-                        return 1;
-                    }
-
-                    return Play(pipeline, options);
-                }
+                return Play(pipeline, options);
             }
         }
         catch (Exception exception)

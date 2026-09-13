@@ -25,8 +25,8 @@ said here.
 | `BasicTutorial12` | [Streaming](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | buffering, a live source, a lost clock |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 
-The playback tutorials are a second series, and the five of them that can run
-without a window are here as well:
+The playback tutorials are a second series, and five of them are here as
+well:
 
 | Project | Upstream page | What it teaches |
 | --- | --- | --- |
@@ -67,8 +67,8 @@ file as a positional argument and default to whatever the upstream page uses, so
 a manual run with no arguments reproduces the tutorial exactly. **Those defaults
 need a network.** Basic 9 only asks what is inside its file; the rest play it.
 `PlaybackTutorial02` takes a second positional argument, the subtitle file, and
-`PlaybackTutorial08` takes its media last and optionally: with no media it only
-prints the decoder ranking.
+`PlaybackTutorial08` takes its media as an optional positional: with no media
+it only prints the decoder ranking.
 
 `PlaybackTutorial06` keeps the upstream default of
 `http://radio.hbr1.com:19800/ambient.ogg`, a radio station that stopped
@@ -192,8 +192,10 @@ which makes souphttpsrc — seekable by its own account, and asked to seek to th
 end by oggdemux — fail the run at exactly 100% buffering. The server is killed when the step
 ends, whether or not a gate failed.
 
-Basic 1 is the one that is only built: its default media is an https URI and
-nothing local would be the tutorial. Playback 3, 5, 7 and 9 are not ported.
+Two are only built. Basic 1's default media is an https URI and nothing local
+would be the tutorial; basic 6's interesting output is the caps a real audio
+sink negotiates, which a fakesink cannot show. Playback 3, 5, 7 and 9 are not
+ported.
 
 `wavescope`, which both tee tutorials draw with, is in `gst-plugins-bad`. The
 Linux leg installs `gstreamer1.0-plugins-bad` — it needs it for `webrtcbin` —

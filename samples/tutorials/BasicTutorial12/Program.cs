@@ -34,6 +34,10 @@
 //     not is a failure here, which is what lets CI use the exit code as a gate;
 //     the C program simply waits forever.
 //
+//   * The error path prints the debug string on a second line. The C throws it
+//     away after freeing it, which loses the one part of the message that says
+//     which element and which file the failure came from.
+//
 //   * A file:// URI never buffers, so pointing this at a local path shows the
 //     live/no-preroll and clock-lost paths but not the buffering one. Serve the
 //     same file over http to see BUFFERING messages, which is what CI does.
@@ -187,21 +191,25 @@ internal static class Streaming
                     case MessageType.Buffering:
                         if (isLive)
                         {
-                            // If the stream is live, we do not care about
-                            // buffering.
+                            // A live source has no buffer to fill: the data
+                            // arrives when it arrives, and pausing would only
+                            // drop it.
                             break;
                         }
 
                         message.ParseBuffering(out int percent);
                         Console.Write(string.Create(CultureInfo.InvariantCulture, $"Buffering ({percent,3}%)\r"));
 
-                        // Wait until buffering is complete before start/resume
-                        // playing.
+                        // Pausing while the buffer fills is the whole of the
+                        // answer: playing on with nothing to play is what a
+                        // stall looks like.
                         pipeline.SetState(percent < 100 ? State.Paused : State.Playing);
                         break;
 
                     case MessageType.ClockLost:
-                        // Get a new clock.
+                        // The clock a sink was providing has gone. A round trip
+                        // through PAUSED is what makes the pipeline choose
+                        // another one.
                         pipeline.SetState(State.Paused);
                         pipeline.SetState(State.Playing);
                         break;
