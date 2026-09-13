@@ -84,6 +84,16 @@ GObject itself keeps. The caps arrive as a `Gst.Caps` wrapper built through the
 type registry — `Value.GetMiniObject<T>()` is the same route for a value held
 directly — and are lent to the handler, so keeping them means `Caps.Copy()`.
 
+**[`samples/GstStats`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/GstStats/Program.cs)**
+— `gst-stats-1.0`: the report of a debug log that carries `GST_TRACER` records,
+which CI diffs against the real tool on the same log, so the port keeps the
+quirks of the C tool rather than fixing them. The log is made by the traced
+process, not by this one: `GST_TRACERS="stats;rusage;latency(flags=pipeline+element+reported);factories"`,
+`GST_DEBUG=GST_TRACER:7` and `GST_DEBUG_FILE=<file>` have to be set **before**
+that process starts, because `gst_init` reads all three exactly once. Threads
+and the latency tables are printed in key order, where the C tool prints them in
+hash table order.
+
 **[`samples/GstDiscoverer`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/GstDiscoverer/Program.cs)**
 — `gst-discoverer-1.0`, the synchronous half: `TryDiscoverUri` per URI, the
 result and the duration, the topology walk with its container recursion, the

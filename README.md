@@ -235,6 +235,7 @@ each one exercises and what it deliberately leaves out.
 | `samples/CustomMeta` | A metadata implementation of the application's own: an API type registered with no tags, `Meta.Register<T>` over an unmanaged payload, one item attached to every frame that goes into an `appsrc`, and the same payload read back off the frames a `videoconvert` allocated on the other side. Its header comment says which of the two mechanisms — the empty tag list and the transformation delegate — does what. | `dotnet run --project samples/CustomMeta` |
 | `samples/GstLaunch` | A port of `gst-launch-1.0`: the whole bus loop, the preroll/buffering/progress state machine, `-t -c -v -q -m -e -X -f`, `--gst-*` passthrough and the exit codes of the C tool. One binary with per-OS behavior — Ctrl+C through a `GstLaunchInterrupt` application message everywhere, SIGHUP and SIGQUIT on POSIX, the multimedia timer on Windows. Its header comment lists what it cannot match. | `dotnet run --project samples/GstLaunch -- videotestsrc num-buffers=100 ! fakesink` |
 | `samples/GstTypefind` | A port of `gst-typefind-1.0`: `filesrc ! typefind ! fakesink` per file, PAUSED and a blocking `GetState`, directory recursion, and the `<file> - <caps>` line of the C tool. It is the sample that connects a signal **by name** — `have-type` on a plugin element no `.gir` describes — and its header comment records what that emission can and cannot hand over. | `dotnet run --project samples/GstTypefind -- <file-or-directory>` |
+| `samples/GstStats` | A port of `gst-stats-1.0`: the report of a debug log that carries `GST_TRACER` records — the overall counts, the per thread pad statistics, the element, bin and latency sections and the plugins and factories that were used. The log is written by the traced process, so the three environment variables that turn tracing on have to be set before that process starts; `samples/GstStats/README.md` has the recipe. The Linux CI leg diffs the report against the real tool on the same log, so the port reproduces its quirks rather than fixing them, down to the 5000 byte line buffer that cuts a long caps query in two. | `dotnet run --project samples/GstStats -- trace.log` |
 | `samples/GstDeviceMonitor` | A port of `gst-device-monitor-1.0`: `DeviceMonitor` with the `DEVICE_CLASSES[:FILTER_CAPS]` filters, the device listing with caps and properties, and `--follow` for hotplug — all of it as messages on the monitor's bus, polled rather than watched from a main loop. Property enumeration is implemented; the one case its header comment records as out of reach is the shell quoting of a property value that is not UTF-8, which a managed `string` has already decoded by the time the sample sees it. | `dotnet run --project samples/GstDeviceMonitor` |
 | `samples/GstDiscoverer` | A port of `gst-discoverer-1.0`, synchronous path: `TryDiscoverUri` per URI, the result and duration, the topology walk with its container recursion, the per-stream blocks for audio, video and subtitles, `--verbose` tags and `--toc`. Its output is byte for byte the C tool's on generated media; its header comment says why `-a` is absent. | `dotnet run --project samples/GstDiscoverer -- <file-or-uri>` |
 | `samples/GstInspect` | A full port of `gst-inspect-1.0`: the registry census, and every section of an element page — factory and plugin details, the type hierarchy, implemented interfaces, element flags, pad templates with their caps, clocking interaction, URI handling with its protocols, pads, the whole property listing with ranges, defaults and enumeration and flags tables, signals and action signals with their C signatures, children and presets, and the `Type:` line and `Pad Properties` block of a pad template whose pads are a class of their own. The CI legs whose `gst-inspect-1.0` is 1.28.3 or newer — macOS and the Windows MinGW leg today; an older tool prints an older page format, so those legs skip the diff with a warning — diff it against the real tool on the same install and fail on any difference, so it reproduces that tool's quirks rather than fixing them; its header names the quirks, and what else is out of reach. | `dotnet run --project samples/GstInspect -- fakesink` |
@@ -250,15 +251,17 @@ each one exercises and what it deliberately leaves out.
 `PlaybinPlayer`, `AppSinkSpans`, `AppSrcPush` and `CustomMeta` also take
 `--native-path <directory>`,
 `--flavor msvc\|mingw` and `--timeout <seconds>`; `GstLaunch`, `GstTypefind`,
-`GstDeviceMonitor`, `GstDiscoverer` and `GstInspect` take the first two. Four
-of those five ports add one option of their own that the C tool does not have,
+`GstStats`, `GstDeviceMonitor`, `GstDiscoverer` and `GstInspect` take the first
+two. Five of those six ports add one option of their own that the C tool does
+not have,
 so that a path which normally needs a console signal or a person can be run
 unattended:
 `GstLaunch --interrupt-after <seconds>` drives its Ctrl+C path,
 `GstDeviceMonitor --follow-for <seconds>` bounds a hotplug run,
 `GstTypefind --fail-on-unknown` turns a file whose type was not found into a
-non-zero exit code, and `GstDiscoverer --fail-on-error` does the same for a URI
-that could not be discovered. `GstInspect` adds none: its page is diffed
+non-zero exit code, `GstDiscoverer --fail-on-error` does the same for a URI
+that could not be discovered, and `GstStats --fail-if-empty` does the same for a
+log that held no tracer record at all. `GstInspect` adds none: its page is diffed
 against the C tool's byte for byte, so it prints nothing the C tool does not.
 
 `GstTranscode` takes no option of its own: it is `<src-uri> <dst-uri>
