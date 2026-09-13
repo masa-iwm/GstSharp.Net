@@ -313,6 +313,56 @@ jobs:
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
 
+      # The gst-stats port. The log it reads is made here rather than committed:
+      # the first step runs a short pipeline with the tracers on and points the
+      # debug log at a file, the second reads that file back. They are two steps
+      # rather than two lines of one because GST_TRACERS and GST_DEBUG_FILE are
+      # read once, inside gst_init, and the file is truncated when it is opened
+      # -- g_fopen(name, "w") in _priv_gst_debug_init, CREATE_ALWAYS on Windows
+      # -- so an analyzer that inherited the two would trace itself over its own
+      # input. The latency tracer traces the pipeline alone unless the flags
+      # parameter says otherwise, which is what puts element-latency and
+      # element-reported-latency records in the log as well. --fail-if-empty is
+      # what turns the second step into a gate: the C tool exits 0 for a log it
+      # found nothing in, so without it the step would only prove that nothing
+      # crashed.
+      - name: GstStats trace
+        env:
+          GST_TRACERS: stats;rusage;latency(flags=pipeline+element+reported);factories
+          GST_DEBUG: GST_TRACER:7
+          GST_DEBUG_FILE: gst-stats-trace.log
+          GST_DEBUG_NO_COLOR: "1"
+        run: dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
+
+      - name: GstStats
+        run: dotnet run --project samples/GstStats --no-restore -- --fail-if-empty gst-stats-trace.log
+
+      # The gate the sample exists for: the report it prints has to be the
+      # report the real tool prints. Both read the same log, so nothing is
+      # normalised away except the line ending. What is compared is the sorted
+      # lines rather than the file: the C tool walks a GHashTable to print its
+      # thread sections and its latency tables, so with the rusage tracer on and
+      # more than one thread in the log the order of whole sections is
+      # undefined, where the port prints them ordered by thread id and by key.
+      # Every line still has to be there exactly once. This leg alone runs it,
+      # because gst-stats-1.0 comes from gstreamer1.0-tools, which is also where
+      # the gst-inspect-1.0 of the step above comes from.
+      - name: GstStats against gst-stats-1.0
+        run: |
+          set -euo pipefail
+          unset GST_DEBUG
+          export LC_ALL=C
+          gst-stats-1.0 gst-stats-trace.log | tr -d '\r' > gst-stats-expected.txt
+          dotnet run --project samples/GstStats --no-restore --no-build -- gst-stats-trace.log | tr -d '\r' > gst-stats-actual.txt
+          echo "--- gst-stats-1.0"
+          cat gst-stats-expected.txt
+          echo "--- samples/GstStats"
+          cat gst-stats-actual.txt
+          if ! diff -u <(sort gst-stats-expected.txt) <(sort gst-stats-actual.txt); then
+            echo "::error::gst-stats-1.0 and samples/GstStats disagree"
+            exit 1
+          fi
+
       # The appsrc port of the same idea, from the other end: the application is
       # the source and pushes only while appsrc asks it to. --output turns the
       # run into a byte count gate as well — what the file weighs has to be what
@@ -741,6 +791,18 @@ jobs:
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
 
+      # Same two steps as the Linux leg; see the comments there.
+      - name: GstStats trace
+        env:
+          GST_TRACERS: stats;rusage;latency(flags=pipeline+element+reported);factories
+          GST_DEBUG: GST_TRACER:7
+          GST_DEBUG_FILE: gst-stats-trace.log
+          GST_DEBUG_NO_COLOR: "1"
+        run: dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
+
+      - name: GstStats
+        run: dotnet run --project samples/GstStats --no-restore -- --fail-if-empty gst-stats-trace.log
+
       # Same port as the Linux leg; see the comments there. The media here is
       # the wav the step above made rather than the ogg, which only the Linux
       # leg builds.
@@ -931,6 +993,21 @@ jobs:
         run: |
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
           dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+
+      # Same two steps as the Linux leg; see the comments there.
+      # There is no rusage tracer in the MinGW build -- gstrusage.c needs the
+      # getrusage of POSIX -- so the log carries no thread-rusage or
+      # proc-rusage record here and the report has no CPU load line.
+      - name: GstStats trace
+        env:
+          GST_TRACERS: stats;latency(flags=pipeline+element+reported);factories
+          GST_DEBUG: GST_TRACER:7
+          GST_DEBUG_FILE: gst-stats-trace.log
+          GST_DEBUG_NO_COLOR: "1"
+        run: dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
+
+      - name: GstStats
+        run: dotnet run --project samples/GstStats --no-restore -- --fail-if-empty gst-stats-trace.log
 
       # Same port as the Linux leg; see the comments there. This is also where
       # libgstplay-1.0-0.dll, the "lib" prefixed MinGW file name of the module,
