@@ -313,10 +313,9 @@ internal sealed class Session : IDisposable
             sink.NewSample -= newSample;
         }
 
-        // Freeing a promise that was never answered expires it, which calls its
-        // change function one last time. That is why both of them are taken
-        // away only here, and why every change function starts by asking for
-        // the result.
+        // Freeing a promise that is still pending does not expire it: it only
+        // produces a GLib warning, and no change function runs. See Take for
+        // why a result other than a reply is not an error here either.
         _offerPromise?.Dispose();
         _answerPromise?.Dispose();
         _pipeline?.Dispose();
@@ -529,10 +528,11 @@ internal sealed class Session : IDisposable
     /// when the promise was not answered with one.
     /// </returns>
     /// <remarks>
-    /// A promise that was expired or interrupted is not a failure: freeing a
-    /// pending promise expires it and calls its change function, which is the
-    /// shutdown path of this sample. Only a promise that was replied to carries
-    /// anything, and only then is a missing field an error.
+    /// A promise that was not replied to is not a failure: a caller may
+    /// <see cref="Promise.Interrupt"/> one, and a promise still pending when it
+    /// is freed only produces a GLib warning, with no change function. Only a
+    /// replied promise carries anything; when webrtcbin refuses the operation
+    /// or is shutting down, its reply has an "error" field and no description.
     /// </remarks>
     private WebRTCSessionDescription? Take(Promise? promise, string field)
     {
