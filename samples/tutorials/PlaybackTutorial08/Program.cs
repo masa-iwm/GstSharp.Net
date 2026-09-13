@@ -344,8 +344,12 @@ internal static class HardwareDecoding
                 continue;
             }
 
+            // "Decoder/" and not "Decoder": a real decoder is
+            // Codec/Decoder/Video or Codec/Decoder/Audio, while uridecodebin
+            // and decodebin are Generic/Bin/Decoder — they are what does the
+            // picking, not what got picked.
             if (factory.GetMetadata("klass") is { } klass &&
-                klass.Contains("Decoder", StringComparison.Ordinal))
+                klass.Contains("Decoder/", StringComparison.Ordinal))
             {
                 Console.WriteLine($"  {factory.GetName()}  ({element.GetName()})");
             }
