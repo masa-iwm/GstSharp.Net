@@ -255,10 +255,6 @@ public sealed class SkipRulesTests
         // gst_rtsp_thread_new stays out beside them: it exists for a get_thread
         // override this binding offers no vfunc for, and what it mints is
         // released by an unref rather than by a stop.
-        // gst_rtsp_mount_points_add_factory consumes the factory it is handed,
-        // and the generated shape would dispose the wrapper whose
-        // signal handlers the caller has just attached; it is hand written in
-        // src/GstSharp.Net.RtspServer/Custom.
         // The GBytes group is four entries, and none of them is a marshalling
         // gap: the planner marshals a GLib.Bytes in every position.
         // gst_buffer_new_wrapped_bytes and gst_webrtc_data_channel_send_data_full
@@ -345,7 +341,6 @@ public sealed class SkipRulesTests
                 "gst_element_factory_make_with_properties",
                 "gst_element_post_message",
                 "gst_element_send_event",
-                "gst_encoding_container_profile_add_profile",
                 "gst_event_new_custom",
                 "gst_event_new_select_streams",
                 "gst_flagset_register",
@@ -401,7 +396,6 @@ public sealed class SkipRulesTests
                 "gst_rtsp_media_prepare",
                 "gst_rtsp_message_parse_auth_credentials",
                 "gst_rtsp_message_take_body",
-                "gst_rtsp_mount_points_add_factory",
                 "gst_rtsp_range_free",
                 "gst_rtsp_range_parse",
                 "gst_rtsp_session_media_get_transports",
@@ -469,11 +463,6 @@ public sealed class SkipRulesTests
         // planner refuses on their shape, the two four byte APP name calls and
         // the two nullable guint32* ssrc calls, all six written by hand in
         // src/GstSharp.Net.Rtp/Custom.
-        // The newest entry is the RTSP server's gst_rtsp_mount_points_add_factory,
-        // which consumes the media factory it is handed and would take the
-        // wrapper the caller keeps its signal handlers on down with it, so
-        // src/GstSharp.Net.RtspServer/Custom takes a reference of its own and
-        // hands that one over.
         // ges_asset_extract joins them as the one call a managed GES subclass
         // cannot do without: the planner refuses it for its GError, and
         // GES.Asset.Extract<T> in src/GstSharp.Net.GES/Custom is what a clip
@@ -562,7 +551,6 @@ public sealed class SkipRulesTests
                 "gst_element_factory_make_with_properties",
                 "gst_element_post_message",
                 "gst_element_send_event",
-                "gst_encoding_container_profile_add_profile",
                 "gst_event_copy",
                 "gst_event_new_custom",
                 "gst_event_new_select_streams",
@@ -631,7 +619,6 @@ public sealed class SkipRulesTests
                 "gst_rtsp_media_prepare",
                 "gst_rtsp_message_append_headers",
                 "gst_rtsp_message_parse_auth_credentials",
-                "gst_rtsp_mount_points_add_factory",
                 "gst_rtsp_session_media_get_transports",
                 "gst_rtsp_thread_pool_get_thread",
                 "gst_rtsp_thread_stop",

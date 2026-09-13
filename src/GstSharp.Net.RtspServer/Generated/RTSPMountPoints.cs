@@ -49,6 +49,68 @@ public unsafe partial class RTSPMountPoints : Gst.GObject.Object
             ?? throw new InvalidOperationException("gst_rtsp_mount_points_new returned no value.");
     }
 
+    /// <summary>Attach @factory to the mount point @path in @mounts.</summary>
+    /// <remarks>
+    /// <para>
+    /// @path is either of the form (/node)+ or the root path '/'. (An empty path is
+    /// not allowed.) Any previous mount point will be freed.
+    /// </para>
+    /// <para>
+    /// Ownership is taken of the reference on @factory so that @factory should not be
+    /// used after calling this function.
+    /// </para>
+    /// <para>
+    /// Where the documentation above tells the caller to give the argument up —
+    /// not to use it after the call, or to take a reference of its own first —
+    /// that is the rule for a C caller, whose own reference the call took: this
+    /// binding is not that caller.
+    /// The call takes <paramref name="factory"/> over: the library is handed a
+    /// reference of its own, minted for this call, and keeps it for as long as it
+    /// needs the object. This wrapper keeps the reference it holds, so it stays
+    /// usable after the call and the handlers connected to it keep firing.
+    /// </para>
+    /// <para>
+    /// A path that does not begin with '/' is refused with an ArgumentException before the
+    /// call: rtsp-mount-points.c:354 answers such a path with a g_return_if_fail before it
+    /// takes the factory, and the reference minted for the call would then have no owner. The
+    /// mount keeps the reference the call is handed until the path is unmounted with
+    /// RemoveFactory, replaced by another factory at the same path, or the mount points are
+    /// finalised: the C stores the pointer in a bare field of the mount item
+    /// (rtsp-mount-points.c:358) and releases it once in data_item_free (:71). The wrapper is
+    /// the caller's and stays usable, which matters here more than anywhere else in the module:
+    /// a media factory is the hook point of a server, and disposing the wrapper runs
+    /// DisconnectAll, which takes the MediaConfigure and MediaConstructed handlers off again
+    /// while the mount keeps serving. Keep the wrapper for as long as the mount is expected to
+    /// call back into managed code.
+    /// </para>
+    /// </remarks>
+    /// <param name="path">a mount point</param>
+    /// <param name="factory">
+    /// a #GstRTSPMediaFactory
+    /// The call is handed a reference of its own: <paramref name="factory"/> stays
+    /// usable after this method returns.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="factory"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="factory"/> was disposed.
+    /// </exception>
+    public void AddFactory(string path, Gst.RtspServer.RTSPMediaFactory factory)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(factory);
+        if (path.Length == 0 || path[0] != '/') { throw new ArgumentException("A mount point has to begin with '/'.", nameof(path)); }
+        nint instanceHandle = Handle;
+        nint factoryNative = factory.Handle;
+        System.Span<byte> pathBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
+        using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
+        nint factoryOwned = Gst.Interop.GObjectNative.ObjectRef(factoryNative);
+        GstRtspMountPointsAddFactory(instanceHandle, pathScope.Pointer, factoryOwned);
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(factory);
+    }
+
     /// <summary>Make a path string from @url.</summary>
     /// <param name="url">a #GstRTSPUrl</param>
     /// <returns>a path string for @url, g_free() after usage.</returns>
@@ -102,6 +164,10 @@ public unsafe partial class RTSPMountPoints : Gst.GObject.Object
     /// <summary>The <c>gst_rtsp_mount_points_new</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_mount_points_new")]
     private static partial nint GstRtspMountPointsNew();
+
+    /// <summary>The <c>gst_rtsp_mount_points_add_factory</c> entry point.</summary>
+    [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_mount_points_add_factory")]
+    private static partial void GstRtspMountPointsAddFactory(nint mounts, byte* path, nint factory);
 
     /// <summary>The <c>gst_rtsp_mount_points_make_path</c> entry point.</summary>
     [LibraryImport("GstRtspServer", EntryPoint = "gst_rtsp_mount_points_make_path")]

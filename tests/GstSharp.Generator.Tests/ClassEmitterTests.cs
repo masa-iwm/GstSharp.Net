@@ -176,13 +176,13 @@ public sealed class ClassEmitterTests
     [InlineData("GstApp", 2, 2, 0, 8, 0, 62, 36, 8, 0)]
     [InlineData("GstAudio", 14, 17, 1, 1, 2, 212, 33, 0, 48)]
     [InlineData("GstVideo", 12, 42, 5, 0, 10, 379, 14, 2, 122)]
-    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 179, 5, 5, 0)]
+    [InlineData("GstPbutils", 14, 1, 0, 0, 1, 180, 5, 5, 0)]
     [InlineData("GstSdp", 1, 21, 0, 0, 0, 168, 0, 0, 51)]
     [InlineData("GstWebRTC", 9, 4, 0, 1, 2, 36, 38, 8, 21)]
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 4)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 28)]
     [InlineData("GstRtp", 5, 5, 0, 0, 0, 188, 21, 2, 9)]
-    [InlineData("GstRtspServer", 19, 6, 0, 8, 0, 383, 58, 41, 21)]
+    [InlineData("GstRtspServer", 19, 6, 0, 8, 0, 384, 58, 41, 21)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 2, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
@@ -1016,11 +1016,25 @@ public sealed class ClassEmitterTests
         Assert.DoesNotContain("public void SetSendFunc(", client, StringComparison.Ordinal);
         Assert.DoesNotContain("public void SetSendMessagesFunc(", client, StringComparison.Ordinal);
 
-        // The rest of the skip group leaves no member behind either.
-        Assert.DoesNotContain(
-            "public void AddFactory(",
-            SourceOf("GstSharp.Net.RtspServer/Generated/RTSPMountPoints.cs"),
+        // The mount of a factory is generated again, now that a transfer full
+        // GObject argument is handed over rather than consumed, and it carries
+        // the path check the C answers with a g_return_if_fail as a
+        // precondition of the overlays.
+        string mountPoints = SourceOf("GstSharp.Net.RtspServer/Generated/RTSPMountPoints.cs");
+
+        Assert.Contains(
+            "public void AddFactory(string path, Gst.RtspServer.RTSPMediaFactory factory)",
+            mountPoints,
             StringComparison.Ordinal);
+        Assert.Contains(
+            """
+                    if (path.Length == 0 || path[0] != '/') { throw new ArgumentException("A mount point has to begin with '/'.", nameof(path)); }
+            """,
+            mountPoints,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("factory.Dispose();", mountPoints, StringComparison.Ordinal);
+
+        // The rest of the skip group leaves no member behind either.
         Assert.DoesNotContain(
             "WritableStructure",
             SourceOf("GstSharp.Net.RtspServer/Generated/RTSPToken.cs"),
@@ -1107,13 +1121,13 @@ public sealed class ClassEmitterTests
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 7)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 9)]
     [InlineData("GstVideo", 9, 0, 10, 0, 0, 0, 14)]
-    [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 4)]
+    [InlineData("GstPbutils", 1, 0, 1, 0, 0, 1, 3)]
     [InlineData("GstSdp", 4, 0, 1, 0, 0, 0, 2)]
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0, 5)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 8, 0, 3, 0, 0, 0, 4)]
     [InlineData("GstRtp", 2, 0, 0, 0, 4, 0, 10)]
-    [InlineData("GstRtspServer", 4, 0, 1, 0, 0, 0, 5)]
+    [InlineData("GstRtspServer", 4, 0, 1, 0, 0, 0, 4)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]

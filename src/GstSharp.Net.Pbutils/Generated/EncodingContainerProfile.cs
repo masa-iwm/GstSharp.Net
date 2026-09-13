@@ -65,6 +65,48 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
         return result;
     }
 
+    /// <summary>Add a #GstEncodingProfile to the list of profiles handled by @container.</summary>
+    /// <remarks>
+    /// <para>
+    /// No copy of @profile will be made, if you wish to use it elsewhere after this
+    /// method you should increment its reference count.
+    /// </para>
+    /// <para>
+    /// Where the documentation above tells the caller to give the argument up —
+    /// not to use it after the call, or to take a reference of its own first —
+    /// that is the rule for a C caller, whose own reference the call took: this
+    /// binding is not that caller.
+    /// The call takes <paramref name="profile"/> over: the library is handed a
+    /// reference of its own, minted for this call, and keeps it for as long as it
+    /// needs the object. This wrapper keeps the reference it holds, so it stays
+    /// usable after the call and the handlers connected to it keep firing.
+    /// </para>
+    /// </remarks>
+    /// <param name="profile">
+    /// the #GstEncodingProfile to add.
+    /// The call is handed a reference of its own: <paramref name="profile"/> stays
+    /// usable after this method returns.
+    /// </param>
+    /// <returns>%TRUE if the @stream was properly added, else %FALSE.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="profile"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ObjectDisposedException">
+    /// This wrapper or <paramref name="profile"/> was disposed.
+    /// </exception>
+    public bool AddProfile(Gst.Pbutils.EncodingProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        nint instanceHandle = Handle;
+        nint profileNative = profile.Handle;
+        nint profileOwned = Gst.Interop.GObjectNative.ObjectRef(profileNative);
+        int nativeResult = GstEncodingContainerProfileAddProfile(instanceHandle, profileOwned);
+        bool result = nativeResult != 0;
+        System.GC.KeepAlive(this);
+        System.GC.KeepAlive(profile);
+        return result;
+    }
+
     /// <summary>
     /// Checks if @container contains a #GstEncodingProfile identical to
     /// @profile.
@@ -106,6 +148,10 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     /// <summary>The <c>gst_encoding_container_profile_new</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_container_profile_new")]
     private static partial nint GstEncodingContainerProfileNew(byte* name, byte* description, nint format, byte* preset);
+
+    /// <summary>The <c>gst_encoding_container_profile_add_profile</c> entry point.</summary>
+    [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_container_profile_add_profile")]
+    private static partial int GstEncodingContainerProfileAddProfile(nint container, nint profile);
 
     /// <summary>The <c>gst_encoding_container_profile_contains_profile</c> entry point.</summary>
     [LibraryImport("GstPbutils", EntryPoint = "gst_encoding_container_profile_contains_profile")]

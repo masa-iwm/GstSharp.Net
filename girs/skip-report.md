@@ -724,11 +724,10 @@ disappears shows up here as an added line.
 
 ## GstPbutils
 
-### HandBound (4)
+### HandBound (3)
 
 - `gst_discoverer_info_from_variant`
 - `gst_discoverer_info_to_variant`
-- `gst_encoding_container_profile_add_profile`
 - `gst_install_plugins_async`
 
 ### LifetimePrimitive (1)
@@ -922,10 +921,9 @@ disappears shows up here as an added line.
 
 ## GstRtspServer
 
-### HandBound (5)
+### HandBound (4)
 
 - `gst_rtsp_media_prepare`
-- `gst_rtsp_mount_points_add_factory`
 - `gst_rtsp_session_media_get_transports`
 - `gst_rtsp_thread_pool_get_thread`
 - `gst_rtsp_thread_stop`
