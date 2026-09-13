@@ -142,7 +142,10 @@ internal static class StatsRunner
         {
             collector.Collect(filename);
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or NotSupportedException)
+        catch (Exception error) when (error is IOException
+            or UnauthorizedAccessException
+            or NotSupportedException
+            or ArgumentException)
         {
             // The C tool ignores a failed fopen and prints the empty report.
             Console.Error.WriteLine($"{Options.ProgramName}: could not read {filename}: {error.Message}");

@@ -74,6 +74,20 @@ latency rows that share a first timestamp by their key. That is why the CI leg
 that diffs the two reports against each other compares sorted lines.
 
 The thread id itself is printed with `%p` by the C tool, and that format is not
-the same everywhere — the C library of Windows prints sixteen padded hexadecimal
-digits, glibc prints `0x` and no padding — so the port prints what the platform
-it runs on prints.
+the same everywhere: glibc prints `0x` and no padding, while the C runtime of
+Windows prints sixteen padded hexadecimal digits with no prefix — in lower case
+through the MinGW `printf` and in upper case through msvcrt or UCRT. The port
+prints the glibc form off Windows and the MinGW form on it, because MinGW is the
+only Windows build that ships `gst-stats-1.0` and therefore the only one the
+report is ever diffed against there.
+
+## Long lines
+
+The C tool reads a log line with `fgets` into 5000 bytes, so it takes at most
+4999 at a time and a longer line reaches the parser as several: the first is a
+structure cut in the middle that does not parse, the rest match no parser at
+all, and the record is missing from the report. A caps query of a video pipeline
+is regularly that long, which is why the counts differ from what a reader of
+whole lines would produce. This sample reads the same 4999 bytes at a time, so
+that its report stays byte for byte the C tool's; the lines it drops are the
+lines the C tool drops.

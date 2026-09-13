@@ -55,10 +55,20 @@
 //     by their first timestamp: entries that share a timestamp are ordered by
 //     their key here.
 //
-//   * printf's %p, which prints the thread id, is not one format: the C library
-//     of Windows prints sixteen padded hexadecimal digits and glibc prints 0x
-//     and no padding. The port prints what the platform it runs on prints, so
-//     that the diff against the local gst-stats-1.0 holds on either.
+//   * printf's %p, which prints the thread id, is not one format: glibc prints
+//     0x and no padding, and the C runtime of Windows prints sixteen padded
+//     hexadecimal digits with no prefix -- in lower case when the tool was built
+//     with MinGW and in upper case with the MSVC runtime (msvcrt and UCRT both).
+//     The port prints the glibc form off Windows and the MinGW form on it,
+//     because MinGW is the only Windows build that ships gst-stats-1.0 and so
+//     the only one the diff on the Windows CI leg ever runs against.
+//
+//   * The record templates a tracer logs once, whose structure name ends in
+//     .class, are recognised and skipped without being counted. Neither tool
+//     reads them -- the C tool has a TODO about it -- but it tests the suffix
+//     on the whole payload, which ends in a semicolon and therefore never
+//     matches, so it counts every template as an unknown structure instead.
+//     Only the counter on standard error differs; the report is the same.
 //
 // What is faithfully kept, because the report counts on it:
 //

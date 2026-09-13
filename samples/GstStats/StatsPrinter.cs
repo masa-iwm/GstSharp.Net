@@ -200,8 +200,11 @@ internal sealed partial class StatsPrinter
 
     /// <summary>
     /// Formats a thread id the way <c>%p</c> does on the platform this runs on:
-    /// the C library of Windows pads it to sixteen hexadecimal digits and glibc
-    /// prefixes it with <c>0x</c> and pads nothing.
+    /// glibc prefixes it with <c>0x</c> and pads nothing, and the C runtime of
+    /// Windows pads it to sixteen hexadecimal digits without a prefix -- in
+    /// lower case through the MinGW printf and in upper case through msvcrt or
+    /// UCRT. The lower case form is the one used here, because the MinGW build
+    /// is the only Windows build of gst-stats-1.0 the report is diffed against.
     /// </summary>
     /// <param name="id">The id of the thread.</param>
     /// <returns>The formatted id.</returns>
@@ -212,7 +215,10 @@ internal sealed partial class StatsPrinter
             return id.ToString("x16", CultureInfo.InvariantCulture);
         }
 
-        return id == 0 ? "(nil)" : "0x" + id.ToString("x", CultureInfo.InvariantCulture);
+        // Only glibc spells a null pointer "(nil)"; the libc of macOS prints 0x0.
+        return id == 0 && OperatingSystem.IsLinux()
+            ? "(nil)"
+            : "0x" + id.ToString("x", CultureInfo.InvariantCulture);
     }
 
     /// <summary>
