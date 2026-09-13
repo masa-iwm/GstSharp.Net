@@ -320,7 +320,7 @@ public sealed class TranscoderTests
         }
 
         void OnWarning(object? sender, TranscoderSignalAdapter.WarningSignalArgs args) =>
-            warnings.Add(args.Object.Message ?? "a warning without a message");
+            warnings.Add(args.Object.Message);
 
         Stopwatch elapsed = Stopwatch.StartNew();
 

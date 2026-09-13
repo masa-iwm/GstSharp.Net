@@ -157,11 +157,14 @@ public sealed class RtspConnectionTests
 
                 using (options)
                 {
-                    // The server writes one Public header with every method in
-                    // it, and the client side splits a header that may appear
-                    // more than once at each of its commas
-                    // (gstrtspconnection.c:2475-2488, the value loop of
-                    // parse_line), so the methods arrive as one entry each.
+                    // The server writes one Public header with every method
+                    // in it, and the client side splits a header that may
+                    // appear more than once at each of its commas. Public is
+                    // such a header (gstrtspdefs.c:110, the {"Public", TRUE}
+                    // row that gst_rtsp_header_allow_multiple reads at
+                    // :535-540), so parse_line runs its comma scan over the
+                    // value (gstrtspconnection.c:2490 onward) and the methods
+                    // arrive as one entry each.
                     for (int i = 0; ; i++)
                     {
                         if (options.GetHeader(RTSPHeaderField.Public, out string? method, i) != RTSPResult.Ok)

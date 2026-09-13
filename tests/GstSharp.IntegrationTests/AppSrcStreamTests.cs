@@ -35,6 +35,8 @@ public sealed class AppSrcStreamTests
 
     private static readonly TimeSpan Patience = TimeSpan.FromSeconds(5);
 
+    private static readonly ClockTime Bound = ClockTime.FromSeconds(30);
+
     private readonly ITestOutputHelper _output;
 
     /// <summary>Initialises one test.</summary>
@@ -115,8 +117,13 @@ public sealed class AppSrcStreamTests
         {
             Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
 
-            using (Sample? preroll = sink.PullPreroll())
+            // Every pull is bounded: a leg that never gets its need-data, or a
+            // source that errors without sending the end of the stream, has to
+            // fail here with a message rather than block until the hang
+            // watchdog of the runner.
+            using (Sample? preroll = sink.TryPullPreroll(Bound))
             {
+                Assert.True(preroll is not null, "nothing prerolled within 30 s.");
                 Assert.NotNull(preroll);
 
                 using Buffer? prerolled = preroll.GetBuffer();
@@ -126,7 +133,8 @@ public sealed class AppSrcStreamTests
 
             for (int i = 0; i < Buffers; i++)
             {
-                using Sample? sample = sink.PullSample();
+                using Sample? sample = sink.TryPullSample(Bound);
+                Assert.True(sample is not null, $"sample {i} never arrived within 30 s.");
                 Assert.NotNull(sample);
 
                 using Buffer? buffer = sample.GetBuffer();
@@ -134,7 +142,7 @@ public sealed class AppSrcStreamTests
                 Assert.Equal((ulong)BufferSize, buffer.GetSize());
             }
 
-            Assert.Null(sink.PullSample());
+            Assert.Null(sink.TryPullSample(Bound));
             Assert.True(sink.IsEos());
         }
         finally
@@ -158,9 +166,10 @@ public sealed class AppSrcStreamTests
     /// <c>gst_app_src_push_internal</c> asks whether the queue is full before
     /// it enqueues (gstappsrc.c:2577), and raises <c>enough-data</c> from
     /// there on the pushing thread (gstappsrc.c:2609) only on the first pass
-    /// of its loop (gstappsrc.c:2665). With <c>block</c> false and no leaky
-    /// type - both defaults - the second pass breaks out of the loop
-    /// (gstappsrc.c:2677) and the buffer is queued regardless, so two pushes
+    /// of its loop (gstappsrc.c:2666-2669, the <c>first</c> guard). With
+    /// <c>block</c> false and no leaky type - both defaults - the second pass
+    /// breaks out of the loop (gstappsrc.c:2678-2682, the <c>break</c> at
+    /// :2681) and the buffer is queued regardless, so two pushes
     /// of 1764 bytes against a limit of 1764 leave 3528 bytes queued and
     /// exactly one signal behind.
     /// </remarks>
@@ -205,9 +214,15 @@ public sealed class AppSrcStreamTests
     }
 
     /// <summary>
-    /// <c>try_pull_preroll</c> gives the timeout back to its caller rather
-    /// than blocking on a sink that will never preroll.
+    /// <c>try_pull_preroll</c> answers a sink that will never preroll rather
+    /// than blocking on it.
     /// </summary>
+    /// <remarks>
+    /// A sink in the null state was never started, so the call returns at once
+    /// through <c>if (!priv-&gt;started) goto not_started</c>
+    /// (gstappsink.c:2325-2326) and never consults the timeout it was given.
+    /// The assertion is that it answers well inside the timeout either way.
+    /// </remarks>
     [RequiresElementFact("appsink")]
     public void TryPullPrerollGivesUpWhenNothingPrerolls()
     {
