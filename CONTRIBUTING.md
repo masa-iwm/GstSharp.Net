@@ -317,8 +317,11 @@ second run differ is a bug in the change.
 New API has to fit the rules in
 [`docs/ownership.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/ownership.md):
 mini objects and boxed values are owned and disposed, GObject wrappers are
-interned and are not. A call that consumes its argument is written by hand in
-`Custom/`, never generated, and documents the consumption on the parameter.
+interned and are not. A call whose C half takes a `transfer-ownership="full"`
+argument over is generated: it is handed a value minted for it, and it documents
+on the parameter either the consumption — a mini object or a boxed value is
+disposed when the member returns — or the handover, a GObject wrapper being
+interned and staying the caller's.
 
 ## Commits and pull requests
 

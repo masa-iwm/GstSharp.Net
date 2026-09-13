@@ -72,9 +72,9 @@ dispatches whatever is left on that context.
 
 `MediaConfigure` is connected to the factory **before** the factory is mounted,
 the way `test-launch.c` connects its own `media-constructed` handler. That only
-holds because `RTSPMountPoints.AddFactory` is written by hand to leave the
-factory wrapper alive; the generated consuming shape would dispose it and
-disconnect the handler. The handler runs with the lock of the media held, so it
+holds because `RTSPMountPoints.AddFactory` leaves the factory wrapper alive,
+the way every call that takes a GObject over does; a consuming shape would
+dispose it and disconnect the handler. The handler runs with the lock of the media held, so it
 must not call `Lock()`, `Construct()` or `Prepare()`; configuring and querying
 the media — what the signal exists for — is allowed, because the ordinary
 accessors take a different mutex. See `docs/ownership.md`.

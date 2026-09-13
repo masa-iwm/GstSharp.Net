@@ -179,9 +179,14 @@ before writing anything that runs for longer than a second. The short version:
   shared: **normally do not dispose them**. Disposal acts for every holder at
   once. The sanctioned exception is a pipeline this code created, after
   `SetState(State.Null)`.
-* A few calls consume their argument (`AppSrc.PushBuffer`, `Element.SendEvent`,
-  `BufferPool.SetConfig`, `WebRTCSessionDescription.New`, ...). `Dispose` is
-  idempotent, so a `using` around the argument stays correct.
+* A few calls consume their **mini object or boxed** argument
+  (`AppSrc.PushBuffer`, `Element.SendEvent`, `BufferPool.SetConfig`,
+  `WebRTCSessionDescription.New`, ...). `Dispose` is idempotent, so a `using`
+  around the argument stays correct.
+* A call that takes a **GObject** argument over is handed a reference of its
+  own and the wrapper stays yours: it is usable after the call and its handlers
+  keep firing (`StreamCollection.AddStream`, `RTSPMountPoints.AddFactory`,
+  ...).
 * An application with no main loop should call
   `GstSharp.DrainPendingReleases()` periodically — once per poll of the bus is
   the natural place.

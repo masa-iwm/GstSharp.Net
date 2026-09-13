@@ -9,7 +9,7 @@ applies follows from the base type of the wrapper and from nothing else:
 | Base type | Examples | What the wrapper owns | Disposed by consumers |
 | --- | --- | --- | --- |
 | `Gst.MiniObject`, `Gst.GObject.Boxed` | `Buffer`, `Caps`, `Sample`, `Message`, `Event`, `Structure`, `SDPMessage`, `GLib.Bytes` | a reference of its own | **always** |
-| `Gst.GObject.Object` | `Element`, `Pipeline`, `Bus`, `Pad`, `Clock`, `Device` | one reference shared by the whole process | **normally never** |
+| `Gst.GObject.Object` | `Element`, `Pipeline`, `Bus`, `Pad`, `Clock`, `Device` | one reference shared by the whole process | **never** — not even by a call that takes the object over |
 
 ## Mini objects and boxed values
 
@@ -606,23 +606,58 @@ own.
 ## Calls that consume their argument
 
 A call whose C function takes ownership of a parameter
-(`transfer-ownership="full"`) consumes the wrapper it is given instead of
-borrowing it. **The generator emits these members**, for a mini object, a boxed
-value or a GObject, and every one of them follows one contract: the call is
-handed a value minted for it — a mini object and a GObject are handed a
-reference of their own, a boxed value is handed a copy through `g_boxed_copy`
-— and the argument is disposed when the member returns, **whatever the call
-answered**, because the C function offers no way back. After the call the
-wrapper owns nothing, which is precisely what its disposed state means. What a
+(`transfer-ownership="full"`) is handed a value minted for it rather than the
+wrapper's own: a mini object and a GObject are handed a reference of their own,
+a boxed value a copy through `g_boxed_copy`. **The generator emits these
+members.** What becomes of the wrapper afterwards follows from its model, and
+there are two answers.
+
+**A mini object or a boxed value is consumed**: the argument is disposed when
+the member returns, **whatever the call answered**, because the C function
+offers no way back. After the call the wrapper owns nothing, which is precisely
+what its disposed state means. What a
 copy of a boxed value costs is decided by the copy function its type
 registered: most boxed types duplicate the value, so the copy is what a
 reference is there, while some — `GDateTime`, `GBytes`, `GstVideoCodecFrame`,
 `GstVideoCodecState`, `GstAtomicQueue`, `GstFlowCombiner` — registered their
 own `_ref`, so copying one of them takes a reference. The contract is the same
 either way, and the generated remark says which of the two it is. The member
-states the consumption on its parameter:
-`Caps.Append(caps2)` consumes the caps it appends,
-`StreamCollection.AddStream(stream)` the stream, `Pad.Push(buffer)` the buffer.
+states the consumption on its parameter: `Caps.Append(caps2)` consumes the caps
+it appends, `Pad.Push(buffer)` the buffer.
+
+**A GObject is handed over and never consumed.** The call keeps the reference
+minted for it for as long as it needs the object, while the wrapper keeps the
+one it holds and stays the caller's: it is usable after the call, the handlers
+connected to it keep firing, and the native reference count lands exactly where
+the C call leaves it — one reference for the caller, and whatever the library
+keeps, which for two of these calls is nothing at all: `GES.Project.Save`
+(ges-project.c:1257-1258) and `RTSPServer.TransferConnection`
+(rtsp-server.c:1197) release what they were handed before they return, so what
+they keep it for is the length of the call. That is what an interned wrapper
+requires: it stands for the object across the whole process, so disposing it
+would take the object away from every other holder and run `DisconnectAll` on
+handlers that are none of the call's business.
+`StreamCollection.AddStream(stream)`, `Allocator.Register(name, allocator)`,
+`EncodingTarget.AddProfile(profile)`,
+`EncodingContainerProfile.AddProfile(profile)`,
+`RTSPMountPoints.AddFactory(path, factory)`,
+`RTSPServer.TransferConnection(socket, ...)`,
+`RTSPSession.ManageMedia(path, media)`, `RTSPSessionMedia.New(path, media)` and
+the formatter asset of `GES.Project.Save` all work this way, and the lookup
+that reads the object back — `GetStream`, `GetProfiles`, `Allocator.Find` —
+hands out the very wrapper that was handed over for as long as that wrapper
+lives, interning being what makes those the same object; once the caller has
+disposed it, the lookup finds no wrapper for the object and builds a fresh one.
+Disposing it afterwards stays a caller's choice and is rarely the right one
+while the library still calls back into managed code through it.
+
+A few of these calls refuse what they are handed before they take it — a
+duplicate profile name, a media that is not prepared — and the reference minted
+for the call is then left with no owner. That is one leaked reference on a
+refusal path, neither worse nor better than before this rule; where the C
+answers such an argument with a `g_return_if_fail`, the binding refuses it
+first instead, which is what `AddFactory` does with a path that does not begin
+with `/`.
 
 A handful of consuming calls shipped as hand written members before the
 generator learned the shape. They carry the same contract and stay the binding
@@ -638,7 +673,6 @@ for their entry points:
 | `BufferPool.SetConfig` | the configuration structure, on refusal as well |
 | `AppSink.SetSimpleCallbacks`, `AppSrc.SetSimpleCallbacks` | the callbacks builder |
 | `WebRTCSessionDescription.New` | the SDP message |
-| `EncodingContainerProfile.AddProfile` | the stream profile |
 
 `SetSimpleCallbacks` has a second overload whose parameters are the individual
 callbacks and are all optional, so a bare `null` is a compile-time ambiguity
@@ -646,13 +680,10 @@ between the two. That is by design on both `AppSink` and `AppSrc`: taking the
 callbacks off again is a different intention from installing them, and
 `ClearSimpleCallbacks()` is the call that spells it.
 
-The ones that take a **GObject** over — `AddProfile` above, and generated
-members such as `StreamCollection.AddStream` — work the same way, with the
-reach `Dispose` has on a GObject wrapper: the object is given up for the whole
-process rather than for one holder, so there is no wrapper for that object
-anywhere afterwards and a fresh lookup (`GetProfiles`, `GetStream`) is the way
-back to it. Where a consuming argument is nullable, `null` is the absence of a
-payload and there is nothing to consume.
+Every one of them takes a mini object or a boxed value over; none takes a
+GObject, which is the family that is handed over rather than consumed. Where a
+consuming argument is nullable, `null` is the absence of a payload and there is
+nothing to consume.
 
 `Dispose` is idempotent, so a `using` around the argument stays correct and
 stays the recommended shape — the analyzer sees the disposal, and an early
@@ -954,10 +985,11 @@ bindings. All three are hand written in `src/GstSharp.Net.Play/Custom`.
   `gst_play_new` consumes the reference of its C caller. The binding raises one
   reference before the call, so the renderer wrapper stays the caller's and
   `Expose()`, `SetWindowHandle()` and the render rectangle of a
-  `PlayVideoOverlayVideoRenderer` are still reachable while the play runs. The
-  consume-in contract of the section above is deliberately not used here: it
-  disposes the wrapper process-wide, and the play offers no readable
-  `video-renderer` property to get it back from.
+  `PlayVideoOverlayVideoRenderer` are still reachable while the play runs. That
+  is the general rule of the section above for a GObject argument rather than
+  an exception of this constructor; what keeps the constructor hand written is
+  its interface-typed renderer, which the generator has no wrapper factory
+  for.
 * **`Play.SetConfig(config)`** borrows its argument. The C function documents
   that it takes the structure over and only does so on success, so the binding
   hands over a copy and frees that copy itself when the play answers `false` —
@@ -1362,21 +1394,32 @@ after the SSRC and the sequence pair, before you call it.
 
 ## RTSP server
 
-`RTSPMountPoints.AddFactory` is the one call of this module whose C half takes
-a `transfer-ownership="full"` GObject over and whose wrapper survives it
-anyway — the second such call in the binding, after `new Play(renderer)`
-above. It is written by hand for that reason: the generated consuming shape
-disposes the argument, and `Dispose` runs `DisconnectAll`, so mounting a
-factory would strip the `MediaConfigure` and `MediaConstructed` handlers a
-caller had just connected to it — the exact arrangement `test-launch.c` uses,
-where the hook is connected before the mount. The member mints exactly one
-reference and hands that one over; the mount item keeps it in a bare pointer
-and releases it when the path is unmounted, replaced, or the mount points are
-finalised, so the reference count lands where the C call leaves it. The
-consuming rule above still holds everywhere else in the module, including
-`RTSPServer.TransferConnection`, `RTSPSession.ManageMedia`,
-`RTSPSessionMedia.New` and `RTSPMedia.Prepare`, whose arguments — a socket, an
-internal media, a thread — are handed over and not expected back.
+`RTSPMountPoints.AddFactory` mounts a media factory, and the wrapper it is
+handed stays the caller's, which is what every `transfer-ownership="full"`
+GObject argument of the binding does. It matters here more than anywhere else:
+`Dispose` runs `DisconnectAll`, so a consuming shape would strip the
+`MediaConfigure` and `MediaConstructed` handlers a caller had just connected to
+the factory — the exact arrangement `test-launch.c` uses, where the hook is
+connected before the mount. The member mints exactly one reference and hands
+that one over; the mount item keeps it in a bare pointer
+(`rtsp-mount-points.c:358`) and releases it in `data_item_free` (`:71`) when
+the path is unmounted, replaced, or the mount points are finalised, so the
+reference count lands where the C call leaves it. It is generated, with one
+addition the overlays carry: a path that does not begin with `/` is refused
+with an `ArgumentException` before the call, because `rtsp-mount-points.c:354`
+answers such a path with a `g_return_if_fail` before it takes the factory and
+the minted reference would then have no owner.
+
+`RTSPServer.TransferConnection`, `RTSPSession.ManageMedia` and
+`RTSPSessionMedia.New` keep their wrapper the same way, and each leaves the
+object in a state worth knowing about. The socket a connection was transferred
+on is driven by the server's own thread from then on
+(`rtsp-server.c:1200-1203`), so using that wrapper afterwards races the server.
+A media a session manages is co-owned by the session media, which sets it to
+`NULL` and unprepares it when it is finalised
+(`rtsp-session-media.c:106-108`). `RTSPMedia.Prepare` is a different shape
+altogether: its argument is a thread, and a thread is released by a stop rather
+than by an unreference, which is the paragraph below.
 
 **A thread the pool hands out is released by a stop and not by an unreference.**
 `RTSPThreadPool.GetThread` answers a wrapper that owes exactly one

@@ -113,10 +113,11 @@ internal static class RtspServerSample
             }
 
             // Connected before the mount, the way test-launch.c connects its
-            // own media-constructed handler. The
-            // hand written AddFactory is what makes that hold: it mints the
-            // reference the C call consumes and leaves this wrapper - and this
-            // handler with it - alive. See docs/ownership.md.
+            // own media-constructed handler. AddFactory is what makes that
+            // hold: it mints the reference the C call takes over and leaves
+            // this wrapper - and this handler with it - alive, which is what
+            // every GObject argument of the binding does. See
+            // docs/ownership.md.
             factory.MediaConfigure += OnMediaConfigure;
 
             mounts.AddFactory(options.Mount, factory);
