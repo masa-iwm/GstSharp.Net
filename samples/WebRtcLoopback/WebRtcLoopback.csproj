@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.WebRtcLoopback</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- webrtcbin itself needs no module of its own — it is a plugin element
+         driven through the generic Element surface — but the boxed session
+         description the offer and the answer travel as is a type of this
+         module, and only its initialiser puts it into the type registry. -->
+    <ProjectReference Include="../../src/GstSharp.Net.WebRTC/GstSharp.Net.WebRTC.csproj" />
+
+    <!-- The appsink the received stream is counted at. -->
+    <ProjectReference Include="../../src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
+  </ItemGroup>
+
+</Project>
