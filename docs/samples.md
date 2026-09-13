@@ -98,7 +98,12 @@ hotplug report, all of it read off the monitor's bus with a timed pop. The
 launch line under each device is `get_launch_line()` statement by statement,
 `Object.ListProperties()` and `Global.ValueCompare` included. The one case out
 of reach is the shell quoting of a property value that is not valid UTF-8: a
-managed `string` has already decoded it.
+managed `string` has already decoded it. The Linux CI leg runs it with a
+`Video/Source` filter, which keeps the PulseAudio provider — it waits in
+`start` for a daemon a headless runner does not have — from being constructed
+at all;
+[`samples/GstDeviceMonitor/README.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/GstDeviceMonitor/README.md)
+explains the recipe.
 
 ## Application integration
 
