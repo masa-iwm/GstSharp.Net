@@ -108,20 +108,20 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     /// count.
     /// </para>
     /// <para>
-    /// The <c>profile</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a reference of its own and the wrapper is disposed afterwards, which
-    /// leaves the native reference count exactly where the C call leaves it. A
-    /// GObject wrapper is interned, so disposing it gives the object up for the
-    /// whole process rather than for one holder: after this call there is no
-    /// wrapper for that object anywhere.
-    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
-    /// declaration around the argument stays correct.
+    /// Where the documentation above tells the caller to give the argument up —
+    /// not to use it after the call, or to take a reference of its own first —
+    /// that is the rule for a C caller, whose own reference the call took: this
+    /// binding is not that caller.
+    /// The call takes <paramref name="profile"/> over: the library is handed a
+    /// reference of its own, minted for this call, and keeps it for as long as it
+    /// needs the object. This wrapper keeps the reference it holds, so it stays
+    /// usable after the call and the handlers connected to it keep firing.
     /// </para>
     /// </remarks>
     /// <param name="profile">
     /// the #GstEncodingProfile to add
-    /// The call consumes it: <paramref name="profile"/> is disposed when this
-    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// The call is handed a reference of its own: <paramref name="profile"/> stays
+    /// usable after this method returns.
     /// </param>
     /// <returns>%TRUE if the profile was added, else %FALSE.</returns>
     /// <exception cref="ArgumentNullException">
@@ -137,9 +137,9 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         nint profileNative = profile.Handle;
         nint profileOwned = Gst.Interop.GObjectNative.ObjectRef(profileNative);
         int nativeResult = GstEncodingTargetAddProfile(instanceHandle, profileOwned);
-        profile.Dispose();
         bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(profile);
         return result;
     }
 

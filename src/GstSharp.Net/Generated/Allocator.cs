@@ -109,21 +109,31 @@ public abstract unsafe partial class Allocator : Gst.Object
     /// <summary>Registers the memory @allocator with @name.</summary>
     /// <remarks>
     /// <para>
-    /// The <c>allocator</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a reference of its own and the wrapper is disposed afterwards, which
-    /// leaves the native reference count exactly where the C call leaves it. A
-    /// GObject wrapper is interned, so disposing it gives the object up for the
-    /// whole process rather than for one holder: after this call there is no
-    /// wrapper for that object anywhere.
-    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
-    /// declaration around the argument stays correct.
+    /// Where the documentation above tells the caller to give the argument up —
+    /// not to use it after the call, or to take a reference of its own first —
+    /// that is the rule for a C caller, whose own reference the call took: this
+    /// binding is not that caller.
+    /// The call takes <paramref name="allocator"/> over: the library is handed a
+    /// reference of its own, minted for this call, and keeps it for as long as it
+    /// needs the object. This wrapper keeps the reference it holds, so it stays
+    /// usable after the call and the handlers connected to it keep firing.
+    /// </para>
+    /// <para>
+    /// The registry keeps the reference the call is handed for good: gstallocator.c:237 flags
+    /// the allocator MAY_BE_LEAKED before the insert, which is the C stating that the reference
+    /// is never released, and no member takes an allocator out of the registry again.
+    /// Registering the same name a second time is the one thing that releases one: the table
+    /// was built with gst_object_unref as the destructor of its values
+    /// (gstallocator.c:611-612), so the insert at :238-239 drops the reference the previous
+    /// registration was handed, never the one this call is handed. The wrapper is the caller's
+    /// either way, and Find answers with it for as long as it lives.
     /// </para>
     /// </remarks>
     /// <param name="name">the name of the allocator</param>
     /// <param name="allocator">
     /// #GstAllocator
-    /// The call consumes it: <paramref name="allocator"/> is disposed when this
-    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// The call is handed a reference of its own: <paramref name="allocator"/> stays
+    /// usable after this method returns.
     /// </param>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="allocator"/> is <see langword="null"/>.
@@ -140,7 +150,7 @@ public abstract unsafe partial class Allocator : Gst.Object
         using Gst.Interop.Utf8Scope nameScope = Gst.Interop.GMarshal.StackUtf8(name, nameBuffer);
         nint allocatorOwned = Gst.Interop.GObjectNative.ObjectRef(allocatorNative);
         GstAllocatorRegister(nameScope.Pointer, allocatorOwned);
-        allocator.Dispose();
+        System.GC.KeepAlive(allocator);
     }
 
     /// <summary>The <c>gst_allocator_alloc</c> entry point.</summary>

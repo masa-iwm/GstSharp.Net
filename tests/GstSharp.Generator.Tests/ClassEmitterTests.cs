@@ -374,33 +374,74 @@ public sealed class ClassEmitterTests
             source,
             StringComparison.Ordinal);
 
-        // A consumed GObject says what its dispose reaches: the wrapper is
-        // interned, so it is given up process-wide, the way the hand written
-        // EncodingContainerProfile.AddProfile words it.
+        // A GObject argument is handed over rather than consumed: the remark
+        // opens by reconciling the upstream sentence that tells a C caller to
+        // drop the argument, and then says what the call takes and what the
+        // wrapper keeps.
+        string streamCollection = Source("StreamCollection.cs");
+
         Assert.Contains(
             """
-                /// GObject wrapper is interned, so disposing it gives the object up for the
-                /// whole process rather than for one holder: after this call there is no
-                /// wrapper for that object anywhere.
+                /// Where the documentation above tells the caller to give the argument up —
+                /// not to use it after the call, or to take a reference of its own first —
+                /// that is the rule for a C caller, whose own reference the call took: this
+                /// binding is not that caller.
+                /// The call takes <paramref name="stream"/> over: the library is handed a
+                /// reference of its own, minted for this call, and keeps it for as long as it
+                /// needs the object. This wrapper keeps the reference it holds, so it stays
+                /// usable after the call and the handlers connected to it keep firing.
             """,
-            Source("StreamCollection.cs"),
+            streamCollection,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            """
+                /// <param name="stream">
+                /// the #GstStream to add
+                /// The call is handed a reference of its own: <paramref name="stream"/> stays
+                /// usable after this method returns.
+                /// </param>
+            """,
+            streamCollection,
+            StringComparison.Ordinal);
+
+        // The body mints the reference the call is handed and leaves the
+        // wrapper alone, which is the whole of the handover: no dispose, and
+        // the barrier that replaces it last.
+        Assert.Contains(
+            """
+                public bool AddStream(Gst.Stream stream)
+                {
+                    ArgumentNullException.ThrowIfNull(stream);
+                    nint instanceHandle = Handle;
+                    nint streamNative = stream.Handle;
+                    nint streamOwned = Gst.Interop.GObjectNative.ObjectRef(streamNative);
+                    int nativeResult = GstStreamCollectionAddStream(instanceHandle, streamOwned);
+                    bool result = nativeResult != 0;
+                    System.GC.KeepAlive(this);
+                    System.GC.KeepAlive(stream);
+                    return result;
+                }
+            """,
+            streamCollection,
             StringComparison.Ordinal);
     }
 
     [Fact]
-    public void AConsumedArgumentIsDisposedBeforeAThrowingMemberRaises()
+    public void AHandedOverArgumentIsKeptAliveAcrossAThrowingMember()
     {
-        // ges_project_save consumes its formatter asset and reports errors
-        // through a GError. The C call has consumed what it was handed whether
-        // it also set the error or not, so the dispose sits before the throw —
+        // ges_project_save is handed a reference of its own for the formatter
+        // asset and reports errors through a GError. The asset is a GObject, so
+        // nothing disposes the wrapper on either path, and the barrier that
+        // replaces the dispose sits with the other barriers, after the throw —
         // pinned adjacent, because nothing else in the suite pins this path.
         Assert.Contains(
             """
-                    formatterAsset?.Dispose();
+                    int nativeResult = GesProjectSave(instanceHandle, timelineNative, uriScope.Pointer, formatterAssetOwned, overwrite ? 1 : 0, &errorNative);
                     Gst.GLib.GException.ThrowIfSet(ref errorNative);
                     bool result = nativeResult != 0;
                     System.GC.KeepAlive(this);
                     System.GC.KeepAlive(timeline);
+                    System.GC.KeepAlive(formatterAsset);
             """,
             SourceOf("GstSharp.Net.GES/Generated/Project.cs"),
             StringComparison.Ordinal);

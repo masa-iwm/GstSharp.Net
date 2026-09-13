@@ -364,20 +364,20 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The <c>socket</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a reference of its own and the wrapper is disposed afterwards, which
-    /// leaves the native reference count exactly where the C call leaves it. A
-    /// GObject wrapper is interned, so disposing it gives the object up for the
-    /// whole process rather than for one holder: after this call there is no
-    /// wrapper for that object anywhere.
-    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
-    /// declaration around the argument stays correct.
+    /// Where the documentation above tells the caller to give the argument up —
+    /// not to use it after the call, or to take a reference of its own first —
+    /// that is the rule for a C caller, whose own reference the call took: this
+    /// binding is not that caller.
+    /// The call takes <paramref name="socket"/> over: the library is handed a
+    /// reference of its own, minted for this call, and keeps it for as long as it
+    /// needs the object. This wrapper keeps the reference it holds, so it stays
+    /// usable after the call and the handlers connected to it keep firing.
     /// </para>
     /// </remarks>
     /// <param name="socket">
     /// a network socket
-    /// The call consumes it: <paramref name="socket"/> is disposed when this
-    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// The call is handed a reference of its own: <paramref name="socket"/> stays
+    /// usable after this method returns.
     /// </param>
     /// <param name="ip">the IP address of the remote client</param>
     /// <param name="port">the port used by the other end</param>
@@ -401,9 +401,9 @@ public unsafe partial class RTSPServer : Gst.GObject.Object
         System.Span<byte> initialBufferBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope initialBufferScope = Gst.Interop.GMarshal.StackUtf8(initialBuffer, initialBufferBuffer);
         int nativeResult = GstRtspServerTransferConnection(instanceHandle, socketOwned, ipScope.Pointer, port, initialBufferScope.Pointer);
-        socket.Dispose();
         bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
+        System.GC.KeepAlive(socket);
         return result;
     }
 

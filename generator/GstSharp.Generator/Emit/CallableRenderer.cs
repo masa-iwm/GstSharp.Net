@@ -1765,12 +1765,13 @@ internal static class CallableRenderer
     /// <param name="plan">The member being documented.</param>
     /// <returns>The paragraphs, one per consumed argument.</returns>
     /// <remarks>
-    /// The wording is the contract of the hand written consuming members: the
-    /// call is handed a value of its own — a reference for a mini object or a
-    /// GObject, a copy for a boxed value — and the wrapper is disposed
-    /// afterwards. A consumed GObject carries the extra sentence about the
-    /// reach of its dispose, because a GObject wrapper is interned and giving
-    /// it up is a statement about the whole process.
+    /// The wording of a mini object and of a boxed value is the contract of the
+    /// hand written consuming members: the call is handed a value of its own —
+    /// a reference or a copy — and the wrapper is disposed afterwards. A
+    /// GObject has a paragraph of its own, because it is handed over rather
+    /// than consumed: the call is handed a reference minted for it and the
+    /// wrapper keeps the one it holds, a wrapper being interned and shared by
+    /// everything in the process that holds the same object.
     /// </remarks>
     private static IReadOnlyList<string>? ConsumptionRemarks(MarshalPlan plan)
     {
@@ -1779,6 +1780,32 @@ internal static class CallableRenderer
         {
             if (argument.Kind != ArgumentKind.ConsumedHandle)
             {
+                continue;
+            }
+
+            // A GObject is handed over rather than consumed, so its paragraph
+            // is not a variation on the consuming lead-in below: it states what
+            // the call takes and what the caller keeps, and it names the
+            // parameter the way the member spells it.
+            if (argument.ConsumedFamily == ConsumedFamily.HandedOver)
+            {
+                string name = DocName(argument.Name);
+                lines.Add("<para>");
+                lines.Add("Where the documentation above tells the caller to give the argument up —");
+                lines.Add("not to use it after the call, or to take a reference of its own first —");
+                lines.Add("that is the rule for a C caller, whose own reference the call took: this");
+                lines.Add("binding is not that caller.");
+                lines.Add("The call takes <paramref name=\"" + name + "\"/> over: the library is handed a");
+                lines.Add("reference of its own, minted for this call, and keeps it for as long as it");
+                lines.Add("needs the object. This wrapper keeps the reference it holds, so it stays");
+                lines.Add("usable after the call and the handlers connected to it keep firing.");
+                if (argument.IsNullable)
+                {
+                    lines.Add("When <paramref name=\"" + name + "\"/> is <see langword=\"null\"/>, nothing is");
+                    lines.Add("handed over.");
+                }
+
+                lines.Add("</para>");
                 continue;
             }
 
@@ -1811,16 +1838,6 @@ internal static class CallableRenderer
                     break;
                 }
 
-                case ConsumedFamily.GObject:
-                    lines.Add("handed a reference of its own and the wrapper is disposed afterwards, which");
-                    lines.Add("leaves the native reference count exactly where the C call leaves it. A");
-                    lines.Add("GObject wrapper is interned, so disposing it gives the object up for the");
-                    lines.Add("whole process rather than for one holder: after this call there is no");
-                    lines.Add("wrapper for that object anywhere.");
-                    lines.Add("<see cref=\"Gst.GObject.Object.Dispose()\"/> is idempotent, so a <c>using</c>");
-                    lines.Add("declaration around the argument stays correct.");
-                    break;
-
                 default:
                     lines.Add("handed a reference of its own and the wrapper is disposed afterwards, which");
                     lines.Add("leaves the native reference count exactly where the C call leaves it.");
@@ -1837,12 +1854,31 @@ internal static class CallableRenderer
 
     /// <summary>
     /// Returns the note of a consumed parameter, which states the consumption
-    /// in the words of the hand written members.
+    /// in the words of the hand written members, or the handover of a GObject,
+    /// which is the family the call does not consume.
     /// </summary>
     /// <param name="argument">The consumed argument.</param>
     /// <returns>The note lines.</returns>
     private static IReadOnlyList<string> ConsumptionParamNote(ArgumentPlan argument)
     {
+        if (argument.ConsumedFamily == ConsumedFamily.HandedOver)
+        {
+            List<string> handedOver =
+            [
+                "The call is handed a reference of its own: <paramref name=\""
+                + DocName(argument.Name) + "\"/> stays",
+                "usable after this method returns.",
+            ];
+
+            if (argument.IsNullable)
+            {
+                handedOver.Add("It may be <see langword=\"null\"/>, which is the absence of a payload and leaves");
+                handedOver.Add("nothing to hand over.");
+            }
+
+            return handedOver;
+        }
+
         List<string> note =
         [
             "The call consumes it: <paramref name=\"" + DocName(argument.Name) + "\"/> is disposed when this",
@@ -2232,7 +2268,8 @@ internal static class CallableRenderer
     /// instance first. <c>GC.KeepAlive</c> accepts a null reference, so a
     /// nullable argument needs no guard of its own. A consumed argument gets no
     /// barrier: its <c>Dispose</c> is its last use and keeps it alive across
-    /// the call on its own.
+    /// the call on its own. A handed over GObject has no such last use, so it
+    /// takes a barrier like a borrowed handle.
     /// </para>
     /// <para>
     /// The barriers are the last statements before the <c>return</c>, after
@@ -2296,8 +2333,15 @@ internal static class CallableRenderer
     /// </summary>
     /// <param name="argument">The argument being written.</param>
     /// <returns><see langword="true"/> for a borrowed handle the member spells.</returns>
+    /// <remarks>
+    /// A handed over GObject takes one as well: the call is handed a reference
+    /// minted for it and the wrapper is not disposed afterwards, so nothing
+    /// else mentions the wrapper below the call and the barrier is what keeps
+    /// it alive across it.
+    /// </remarks>
     private static bool IsBarrierArgument(ArgumentPlan argument) =>
-        argument.Kind == ArgumentKind.Handle
+        (argument.Kind == ArgumentKind.Handle
+            || argument is { Kind: ArgumentKind.ConsumedHandle, ConsumedFamily: ConsumedFamily.HandedOver })
         && argument.Direction == ArgumentDirection.In
         && !argument.IsHidden;
 
@@ -2343,11 +2387,13 @@ internal static class CallableRenderer
     }
 
     /// <summary>
-    /// Disposes every consumed argument, right after the call.
+    /// Disposes every consumed argument, right after the call. A GObject
+    /// argument is handed over rather than consumed and is left alone.
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The member being written.</param>
     /// <remarks>
+    /// <para>
     /// The wrapper's own reference goes away with the wrapper, which is what
     /// makes the call consuming rather than borrowing: the callee owns the
     /// minted value, the wrapper owns nothing, and the native side is left
@@ -2358,12 +2404,23 @@ internal static class CallableRenderer
     /// and before the wrap of an owned return, whose failure throw must find
     /// the argument already consumed. A nullable argument that was null minted
     /// nothing, and the conditional dispose leaves it alone.
+    /// </para>
+    /// <para>
+    /// A <see cref="ConsumedFamily.HandedOver"/> GObject is the one family that
+    /// is not disposed here: the call is handed a reference minted for it and
+    /// the wrapper keeps its own, because a GObject wrapper is interned and
+    /// disposing it would give the object up for the whole process and strip
+    /// the handlers every other holder connected. The barrier of
+    /// <see cref="WriteKeepAlive"/> takes over what the dispose did for the
+    /// lifetime of the wrapper across the call.
+    /// </para>
     /// </remarks>
     private static void WriteConsumedDisposes(CodeWriter writer, MarshalPlan plan)
     {
         foreach (ArgumentPlan argument in plan.Arguments)
         {
-            if (argument.Kind == ArgumentKind.ConsumedHandle)
+            if (argument.Kind == ArgumentKind.ConsumedHandle
+                && argument.ConsumedFamily != ConsumedFamily.HandedOver)
             {
                 writer.WriteLine(argument.Name + (argument.IsNullable ? "?.Dispose();" : ".Dispose();"));
             }

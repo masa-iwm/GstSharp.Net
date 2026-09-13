@@ -348,14 +348,16 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The <c>formatterAsset</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a reference of its own and the wrapper is disposed afterwards, which
-    /// leaves the native reference count exactly where the C call leaves it. A
-    /// GObject wrapper is interned, so disposing it gives the object up for the
-    /// whole process rather than for one holder: after this call there is no
-    /// wrapper for that object anywhere.
-    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
-    /// declaration around the argument stays correct.
+    /// Where the documentation above tells the caller to give the argument up —
+    /// not to use it after the call, or to take a reference of its own first —
+    /// that is the rule for a C caller, whose own reference the call took: this
+    /// binding is not that caller.
+    /// The call takes <paramref name="formatterAsset"/> over: the library is handed a
+    /// reference of its own, minted for this call, and keeps it for as long as it
+    /// needs the object. This wrapper keeps the reference it holds, so it stays
+    /// usable after the call and the handlers connected to it keep firing.
+    /// When <paramref name="formatterAsset"/> is <see langword="null"/>, nothing is
+    /// handed over.
     /// </para>
     /// </remarks>
     /// <param name="timeline">The #GESTimeline to save, it must have been extracted from @project</param>
@@ -365,10 +367,10 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
     /// use or %NULL. If %NULL, will try to save in the same format as the one
     /// from which the timeline as been loaded or default to the best formatter
     /// as defined in #ges_find_formatter_for_uri
-    /// The call consumes it: <paramref name="formatterAsset"/> is disposed when this
-    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// The call is handed a reference of its own: <paramref name="formatterAsset"/> stays
+    /// usable after this method returns.
     /// It may be <see langword="null"/>, which is the absence of a payload and leaves
-    /// nothing to consume.
+    /// nothing to hand over.
     /// </param>
     /// <param name="overwrite">%TRUE to overwrite file if it exists</param>
     /// <returns>%TRUE if the project could be save, %FALSE otherwise</returns>
@@ -388,11 +390,11 @@ public unsafe partial class Project : GES.Asset, GES.IMetaContainer
         nint formatterAssetOwned = formatterAsset is null ? 0 : Gst.Interop.GObjectNative.ObjectRef(formatterAssetNative);
         nint errorNative = 0;
         int nativeResult = GesProjectSave(instanceHandle, timelineNative, uriScope.Pointer, formatterAssetOwned, overwrite ? 1 : 0, &errorNative);
-        formatterAsset?.Dispose();
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
         bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
         System.GC.KeepAlive(timeline);
+        System.GC.KeepAlive(formatterAsset);
         return result;
     }
 

@@ -47,21 +47,21 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     /// <remarks>
     /// <para>Ownership is taken of @media.</para>
     /// <para>
-    /// The <c>media</c> parameter is <c>transfer-ownership="full"</c>: the call is
-    /// handed a reference of its own and the wrapper is disposed afterwards, which
-    /// leaves the native reference count exactly where the C call leaves it. A
-    /// GObject wrapper is interned, so disposing it gives the object up for the
-    /// whole process rather than for one holder: after this call there is no
-    /// wrapper for that object anywhere.
-    /// <see cref="Gst.GObject.Object.Dispose()"/> is idempotent, so a <c>using</c>
-    /// declaration around the argument stays correct.
+    /// Where the documentation above tells the caller to give the argument up —
+    /// not to use it after the call, or to take a reference of its own first —
+    /// that is the rule for a C caller, whose own reference the call took: this
+    /// binding is not that caller.
+    /// The call takes <paramref name="media"/> over: the library is handed a
+    /// reference of its own, minted for this call, and keeps it for as long as it
+    /// needs the object. This wrapper keeps the reference it holds, so it stays
+    /// usable after the call and the handlers connected to it keep firing.
     /// </para>
     /// </remarks>
     /// <param name="path">the path</param>
     /// <param name="media">
     /// the #GstRTSPMedia
-    /// The call consumes it: <paramref name="media"/> is disposed when this
-    /// method returns, and using it afterwards throws <see cref="ObjectDisposedException"/>.
+    /// The call is handed a reference of its own: <paramref name="media"/> stays
+    /// usable after this method returns.
     /// </param>
     /// <returns>a new #GstRTSPSessionMedia.</returns>
     /// <exception cref="ArgumentNullException">
@@ -79,9 +79,10 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         nint mediaOwned = Gst.Interop.GObjectNative.ObjectRef(mediaNative);
         nint nativeResult = GstRtspSessionMediaNew(pathScope.Pointer, mediaOwned);
-        media.Dispose();
-        return Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.Full)
+        Gst.RtspServer.RTSPSessionMedia result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtsp_session_media_new returned no value.");
+        System.GC.KeepAlive(media);
+        return result;
     }
 
     /// <summary>

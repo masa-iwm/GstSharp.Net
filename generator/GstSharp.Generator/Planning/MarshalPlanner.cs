@@ -105,10 +105,13 @@ internal sealed class CallbackPlan
 /// <item><description>An <c>in</c> parameter that takes ownership of a handle
 /// (<c>transfer-ownership="full"</c>) is a consuming argument. The wrapper owns
 /// the only reference it has, so the call is handed a value minted for it — a
-/// reference for a mini object or a GObject, a copy for a boxed value — and the
-/// wrapper is disposed when the member returns, which is the contract of the
-/// hand written consuming members in docs/ownership.md. An opaque record owns
-/// nothing to mint from and stays rejected, and so does
+/// reference for a mini object or a GObject, a copy for a boxed value. A mini
+/// object and a boxed value are then consumed: the wrapper is disposed when the
+/// member returns, which is the contract of the hand written consuming members
+/// in docs/ownership.md. A GObject is handed over instead and its wrapper is
+/// never disposed, a wrapper being interned and shared by everything in the
+/// process that holds the same object. An opaque record owns nothing to mint
+/// from and stays rejected, and so does
 /// <c>transfer="container"</c>. The arguments of a callback and of a signal are
 /// received rather than passed, so the consuming kind is rejected on
 /// both.</description></item>
@@ -3226,9 +3229,11 @@ internal sealed class MarshalPlanner
         // A callee that takes ownership of an in parameter is not handed the
         // wrapper's own reference — both of them would release it — but a value
         // minted for the call: a reference for a mini object or a GObject, a
-        // copy for a boxed value. The wrapper is disposed when the member
-        // returns, which is the consuming contract of the hand written members
-        // in docs/ownership.md. An opaque record owns nothing to hand over, so
+        // copy for a boxed value. A mini object or a boxed wrapper is disposed
+        // when the member returns, which is the consuming contract of the hand
+        // written members in docs/ownership.md; a GObject wrapper is handed
+        // over rather than consumed and stays the caller's, because it is
+        // interned and process-wide. An opaque record owns nothing to hand over, so
         // it stays rejected, and so does transfer="container", whose split
         // ownership no minting rule covers. A floating reference is passed as
         // it is, because every wrapper sinks it when it is created; a returned
@@ -3243,7 +3248,7 @@ internal sealed class MarshalPlanner
 
             ConsumedFamily family = flavor switch
             {
-                HandleFlavor.GObject => ConsumedFamily.GObject,
+                HandleFlavor.GObject => ConsumedFamily.HandedOver,
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.MiniObject => ConsumedFamily.MiniObject,
                 HandleFlavor.Wrapper when mapped.Kind == MarshalKind.Boxed && refCounted =>
                     ConsumedFamily.RefCountedBoxed,

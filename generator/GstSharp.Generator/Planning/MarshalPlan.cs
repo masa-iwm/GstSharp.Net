@@ -67,8 +67,10 @@ internal enum ArgumentKind
     /// (<c>transfer-ownership="full"</c> on an <c>in</c> parameter). The call
     /// is handed a value minted for it — a reference for a mini object or a
     /// GObject, a copy for a boxed value; which one is stated by
-    /// <see cref="ArgumentPlan.ConsumedFamily"/> — and the wrapper is disposed
-    /// when the member returns, whatever the call answered.
+    /// <see cref="ArgumentPlan.ConsumedFamily"/>. A mini object or a boxed
+    /// wrapper is disposed when the member returns, whatever the call
+    /// answered; a <see cref="ConsumedFamily.HandedOver"/> GObject wrapper is
+    /// not, because it is interned and stays the caller's.
     /// </summary>
     ConsumedHandle,
 
@@ -331,8 +333,14 @@ internal enum ConsumedFamily
     /// </summary>
     RefCountedBoxed,
 
-    /// <summary>A <c>GObject</c>; the call is handed a reference of its own.</summary>
-    GObject,
+    /// <summary>
+    /// A <c>GObject</c>; the call is handed a reference of its own, minted for
+    /// it, and the wrapper keeps the reference it holds. This family is the one
+    /// that is handed over rather than consumed: a GObject wrapper is interned
+    /// and process-wide, so disposing it would take the object away from every
+    /// other holder and strip the handlers they connected.
+    /// </summary>
+    HandedOver,
 }
 
 /// <summary>

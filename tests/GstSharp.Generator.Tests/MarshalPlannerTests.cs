@@ -378,6 +378,22 @@ public sealed class MarshalPlannerTests
                   </parameter>
                 </parameters>
               </method>
+              <method name="swallow" c:identifier="gst_widget_swallow" throws="1">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="caps" transfer-ownership="full">
+                    <type name="Caps" c:type="GstCaps*"/>
+                  </parameter>
+                  <parameter name="payload" transfer-ownership="full">
+                    <type name="Payload" c:type="GstPayload*"/>
+                  </parameter>
+                </parameters>
+              </method>
               <method name="take_peer" c:identifier="gst_widget_take_peer">
                 <return-value transfer-ownership="none">
                   <type name="none" c:type="void"/>
@@ -1373,8 +1389,12 @@ public sealed class MarshalPlannerTests
     }
 
     [Fact]
-    public void AConsumedGObjectIsMintedAReferenceAndDisposed()
+    public void AHandedOverGObjectIsMintedAReferenceAndKept()
     {
+        // A GObject argument is handed over rather than consumed: the call gets
+        // a reference minted for it and the wrapper keeps its own, so the
+        // barrier of a borrowed handle is what holds the wrapper across the
+        // call in place of the dispose.
         Assert.Equal(
             """
             public void TakePeer(Gst.Widget peer)
@@ -1384,11 +1404,44 @@ public sealed class MarshalPlannerTests
                 nint peerNative = peer.Handle;
                 nint peerOwned = Gst.Interop.GObjectNative.ObjectRef(peerNative);
                 GstWidgetTakePeer(instanceHandle, peerOwned);
-                peer.Dispose();
                 System.GC.KeepAlive(this);
+                System.GC.KeepAlive(peer);
             }
             """,
             Run.Member("Widget.cs", "public void TakePeer("),
+            StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void AConsumedArgumentIsDisposedBeforeAThrowingMemberRaises()
+    {
+        // A mini object and a boxed value are consumed whether the call also
+        // reported an error or not, so both disposes sit before the throw, in
+        // argument order. No member of the corpus has this shape since a
+        // GObject stopped being consumed, so the shape is pinned here.
+        Assert.Equal(
+            """
+            public bool Swallow(Gst.Caps caps, Gst.Payload payload)
+            {
+                ArgumentNullException.ThrowIfNull(caps);
+                ArgumentNullException.ThrowIfNull(payload);
+                nint instanceHandle = Handle;
+                nint capsNative = caps.Handle;
+                nint payloadNative = payload.Handle;
+                nuint payloadType = payload.BoxedType.Value;
+                nint capsOwned = Gst.GstNative.MiniObjectRef(capsNative);
+                nint payloadOwned = Gst.Interop.GObjectNative.BoxedCopy(payloadType, payloadNative);
+                nint errorNative = 0;
+                int nativeResult = GstWidgetSwallow(instanceHandle, capsOwned, payloadOwned, &errorNative);
+                caps.Dispose();
+                payload.Dispose();
+                Gst.GLib.GException.ThrowIfSet(ref errorNative);
+                bool result = nativeResult != 0;
+                System.GC.KeepAlive(this);
+                return result;
+            }
+            """,
+            Run.Member("Widget.cs", "public bool Swallow("),
             StringComparer.Ordinal);
     }
 
