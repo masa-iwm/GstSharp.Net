@@ -448,19 +448,28 @@ jobs:
       # BUFFERING path of basic 12 and the temp-location path of playback 4
       # would both go untested. souphttpsrc comes with
       # gstreamer1.0-plugins-good, whose hard dependency on libsoup-3.0-0 the
-      # --no-install-recommends install above therefore already pulls in. The
-      # server is trapped so that it is killed even when a gate fails.
+      # --no-install-recommends install above therefore already pulls in.
+      #
+      # The server is eng/ci/range-http-server.py and not python3 -m
+      # http.server, because the stock one ignores Range and always answers 200
+      # with the whole body. souphttpsrc advertises itself as seekable, oggdemux
+      # seeks to the end to read the duration, and against a server with no
+      # ranges that seek fails: the run errors out with "Server does not support
+      # seeking" at exactly 100% buffering. The readiness wait is therefore a
+      # Range probe that insists on a 206 — it proves both that the server is up
+      # and that it does what the two tutorials need. The server is trapped so
+      # that it is killed even when a gate fails.
       - name: Tutorials
         run: |
           dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
           dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-multitrack.ogg audiotestsrc num-buffers=430 freq=440 wave=sine ! audioconvert ! vorbisenc ! mux. audiotestsrc num-buffers=430 freq=880 wave=square ! audioconvert ! vorbisenc ! mux.
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! oggmux ! filesink location=tutorial-audio.ogg
           printf '1\n00:00:00,500 --> 00:00:03,000\nFirst subtitle cue\n\n2\n00:00:03,500 --> 00:00:07,000\nSecond subtitle cue\n' > tutorial-subs.srt
-          python3 -m http.server 8765 --bind 127.0.0.1 &
+          python3 eng/ci/range-http-server.py 8765 --bind 127.0.0.1 &
           server=$!
           trap 'kill $server' EXIT
-          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg && break; sleep 1; done
-          curl -sf -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg
+          for i in $(seq 1 30); do [ "$(curl -sf -r 0-0 -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg -w '%{http_code}')" = "206" ] && break; sleep 1; done
+          test "$(curl -sf -r 0-0 -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg -w '%{http_code}')" = "206"
           dotnet run --project samples/tutorials/BasicTutorial02 --no-restore -- --headless
           dotnet run --project samples/tutorials/BasicTutorial03 --no-restore -- --headless tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial04 --no-restore -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg

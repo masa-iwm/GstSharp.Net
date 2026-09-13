@@ -184,9 +184,12 @@ fetched:
 
 Basic 12 and playback 4 are not given a file at all. A `file://` URI never
 buffers and never downloads, so both would run straight past the paths they
-exist to show; the step starts `python3 -m http.server` on the loopback and
-points those two at it, which makes the BUFFERING messages and the
-`temp-location` deep notification real. The server is killed when the step
+exist to show; the step starts `eng/ci/range-http-server.py` on the loopback
+and points those two at it, which makes the BUFFERING messages and the
+`temp-location` deep notification real. That script exists because Python's
+stock `http.server` ignores `Range` and always answers with the whole body,
+which makes souphttpsrc — seekable by its own account, and asked to seek to the
+end by oggdemux — fail the run at exactly 100% buffering. The server is killed when the step
 ends, whether or not a gate failed.
 
 Basic 1 is the one that is only built: its default media is an https URI and
