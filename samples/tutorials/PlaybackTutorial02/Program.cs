@@ -45,6 +45,12 @@
 //     is what makes a headless run still prove that the text stream was
 //     selected and decoded. What is lost is only the picture.
 //
+//   * A subtitle file of under 128 bytes is not recognised by GStreamer 1.24:
+//     its subparse typefinder peeks exactly that many and gives up on a shorter
+//     file, playbin turns the suburi failure into a warning, and the run plays
+//     with no text and reports 0 text streams. 1.28 falls back to the length of
+//     the file. Worth knowing before blaming a tiny hand-written test .srt.
+//
 //   * The tag lists the get-*-tags action signals return are transfer full.
 //     EmitSignal<TagList> hands back a wrapper that owns that reference, so
 //     each one is disposed here where the C program calls gst_tag_list_free.

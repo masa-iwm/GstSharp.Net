@@ -449,7 +449,13 @@ jobs:
       # and 2 have something to choose between, tutorial-audio.ogg carries no
       # video at all so that playback 6's visualization chain is really built
       # (playsink only draws one when there is no video stream), and
-      # tutorial-subs.srt is a two-cue subtitle file for playback 2.
+      # tutorial-subs.srt is a four-cue subtitle file for playback 2. Four and
+      # not two because gst_sub_parse_type_find (gst-plugins-base
+      # gst/subparse/gstsubparseelement.c:303 at tag 1.24.2) peeks exactly 128
+      # bytes and gives up when the file is shorter, and 1.24 is what apt
+      # installs here: a smaller .srt is not recognised at all, playbin turns
+      # the suburi failure into a warning, and the tutorial plays with no text.
+      # Do not shrink it.
       #
       # The two buffering tutorials are pointed at a local http server rather
       # than at a file: a file:// URI never buffers and never downloads, so the
@@ -472,7 +478,7 @@ jobs:
           dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
           dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-multitrack.ogg audiotestsrc num-buffers=430 freq=440 wave=sine ! audioconvert ! vorbisenc ! mux. audiotestsrc num-buffers=430 freq=880 wave=square ! audioconvert ! vorbisenc ! mux.
           dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! oggmux ! filesink location=tutorial-audio.ogg
-          printf '1\n00:00:00,500 --> 00:00:03,000\nFirst subtitle cue\n\n2\n00:00:03,500 --> 00:00:07,000\nSecond subtitle cue\n' > tutorial-subs.srt
+          printf '1\n00:00:00,500 --> 00:00:02,000\nFirst subtitle cue, long enough to typefind\n\n2\n00:00:02,500 --> 00:00:04,000\nSecond subtitle cue, long enough to typefind\n\n3\n00:00:04,500 --> 00:00:06,000\nThird subtitle cue, long enough to typefind\n\n4\n00:00:06,500 --> 00:00:09,000\nFourth subtitle cue, long enough to typefind\n\n' > tutorial-subs.srt
           python3 eng/ci/range-http-server.py 8765 --bind 127.0.0.1 &
           server=$!
           trap 'kill $server' EXIT

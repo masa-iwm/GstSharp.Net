@@ -180,7 +180,11 @@ fetched:
 * `tutorial-audio.ogg`, Vorbis and nothing else, because playsink only builds a
   visualization chain when the media has no video stream — that file is what
   makes playback 6 exercise the chain rather than only look one up.
-* `tutorial-subs.srt`, two cues written with `printf`, for playback 2.
+* `tutorial-subs.srt`, four cues written with `printf`, for playback 2. Four
+  and not two because the subparse typefinder of GStreamer 1.24 — which is what
+  the runner installs — peeks exactly 128 bytes and gives up when the file is
+  shorter, so a smaller `.srt` is not recognised at all and the tutorial plays
+  with no text.
 
 Basic 12 and playback 4 are not given a file at all. A `file://` URI never
 buffers and never downloads, so both would run straight past the paths they
