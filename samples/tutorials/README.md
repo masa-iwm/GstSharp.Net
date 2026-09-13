@@ -22,31 +22,34 @@ said here.
 | `BasicTutorial07` | [Multithreading and pad availability](https://gstreamer.freedesktop.org/documentation/tutorials/basic/multithreading-and-pad-availability.html) | a `tee`, its request pads, a `queue` per branch |
 | `BasicTutorial08` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/basic/short-cutting-the-pipeline.html) | `appsrc`, `appsink`, a `tee` and its request pads |
 | `BasicTutorial09` | [Media information gathering](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-information-gathering.html) | `GstDiscoverer`, an answer that arrives as a signal, the topology |
+| `BasicTutorial12` | [Streaming](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | buffering, a live source, a lost clock |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
+
+The playback tutorials are a second series, and the five of them that can run
+without a window are here as well:
+
+| Project | Upstream page | What it teaches |
+| --- | --- | --- |
+| `PlaybackTutorial01` | [Playbin usage](https://gstreamer.freedesktop.org/documentation/tutorials/playback/playbin-usage.html) | `playbin`, its flags, its stream counts, its tag signals |
+| `PlaybackTutorial02` | [Subtitle management](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | `suburi`, the text flag, choosing a subtitle stream |
+| `PlaybackTutorial04` | [Progressive streaming](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | the download flag, buffering ranges, `deep-notify` |
+| `PlaybackTutorial06` | [Audio visualization](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | a registry feature filter, factory metadata, `vis-plugin` |
+| `PlaybackTutorial08` | [Hardware-accelerated video decoding](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | plugin feature ranks, the decoder list, walking a bin |
 
 ## What is not ported, and why
 
 Of the basic tutorials, 5 needs a window and a widget toolkit, 10, 11 and 14
-have no code upstream, and 15 is Clutter, which is gone. One more is only
-missing:
+have no code upstream, and 15 is Clutter, which is gone. Every basic tutorial
+that has code and does not need a window is here.
+
+Four of the nine playback tutorials are still missing, each for a reason of its
+own:
 
 | Tutorial | What it is about | Why it is not here |
 | --- | --- | --- |
-| [Basic 12](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | Streaming | not ported yet |
-
-None of the nine playback tutorials is ported. Six of them are only missing;
-the other three have a reason of their own:
-
-| Tutorial | What it is about | Why it is not here |
-| --- | --- | --- |
-| [Playback 1](https://gstreamer.freedesktop.org/documentation/tutorials/playback/playbin-usage.html) | Playbin usage | not ported yet |
-| [Playback 2](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | Subtitle management | not ported yet |
 | [Playback 3](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | Short-cutting the pipeline | not ported yet; it is an `appsrc` inside a playbin |
-| [Playback 4](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | Progressive streaming | not ported yet |
 | [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | needs a real video sink, so it cannot run headless in this tree |
-| [Playback 6](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | Audio visualization | not ported yet |
 | [Playback 7](https://gstreamer.freedesktop.org/documentation/tutorials/playback/custom-playbin-sinks.html) | Custom playbin sinks | needs a real video sink, so it cannot run headless in this tree |
-| [Playback 8](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | Hardware-accelerated video decoding | not ported yet |
 | [Playback 9](https://gstreamer.freedesktop.org/documentation/tutorials/playback/digital-audio-pass-through.html) | Digital audio pass-through | no example code upstream, and it needs pass-through hardware |
 
 ## Running one
@@ -58,11 +61,23 @@ dotnet run --project samples/tutorials/BasicTutorial03 -- <file-or-uri>
 
 Every project takes `--native-path <directory>` and `--flavor msvc|mingw`, which
 point the loader at a particular GStreamer installation, and `--timeout
-<seconds>`, which bounds the run. The five that are given media — 1, 3, 4, 9
-and 13 — take a URI or the path of a local file as their one positional argument
-and default to the same Sintel trailer the upstream pages use, so a manual run
-with no arguments reproduces the tutorial exactly. **That default needs a
-network.** Four of them play it; 9 only asks what is inside it.
+<seconds>`, which bounds the run. The ones that are given media — basic 1, 3, 4,
+9, 12 and 13, and playback 1, 2, 4 and 6 — take a URI or the path of a local
+file as a positional argument and default to whatever the upstream page uses, so
+a manual run with no arguments reproduces the tutorial exactly. **Those defaults
+need a network.** Basic 9 only asks what is inside its file; the rest play it.
+`PlaybackTutorial02` takes a second positional argument, the subtitle file, and
+`PlaybackTutorial08` takes its media last and optionally: with no media it only
+prints the decoder ranking.
+
+`PlaybackTutorial06` keeps the upstream default of
+`http://radio.hbr1.com:19800/ambient.ogg`, a radio station that stopped
+answering years ago, so that one is worth pointing at a local audio-only file.
+
+`PlaybackTutorial01 --keys` and `PlaybackTutorial02 --keys` script the keyboard
+the same way `BasicTutorial13 --keys` does, and `PlaybackTutorial08 --enable
+<factory>` / `--disable <factory>` change the rank of a factory before the list
+is printed.
 
 `BasicTutorial13` is worth pointing at a local file even when there is one. A
 flushing rate seek travels back to the source, and against `souphttpsrc` the
@@ -84,10 +99,18 @@ the tutorial teaches, and each file says so where it uses them.
   its own, `--headless` also bounds it so that the run finishes.
   `BasicTutorial09` is the one project without it, because it builds no sink at
   all — a discoverer is the whole program.
-* `BasicTutorial13 --keys <string>` feeds those characters to the handler the
-  keyboard would feed, one every half second from the moment the pipeline
-  reports PLAYING, so the rate and step events can be exercised without a
-  terminal. `BasicTutorial04 --seek-at` / `--seek-to` move
+* `--keys <string>` feeds those characters to the handler the keyboard would
+  feed, one every half second from the moment the pipeline reports PLAYING, so
+  the tutorial can be driven without a terminal. `BasicTutorial13` uses it for
+  the rate and step events; `PlaybackTutorial01` and `PlaybackTutorial02` use it
+  to choose an audio and a subtitle stream, where a digit is the index the C
+  original reads with `strtoull` and `q` quits. Those two read one character
+  rather than a line, so an index of more than one digit cannot be typed.
+* `PlaybackTutorial08 --enable <factory>` and `--disable <factory>` apply the
+  page's `enable_factory` snippet before anything else runs, as many times as
+  they are given and in the order they are written. A name the registry does not
+  have exits 1 rather than returning silently as the snippet does.
+* `BasicTutorial04 --seek-at` / `--seek-to` move
   the two thresholds of the C original, so that a short local file can be used
   instead of the 52 second trailer. `BasicTutorial07 --buffers` and
   `BasicTutorial08 --chunks` say how many buffers to produce, or to push,
@@ -108,10 +131,11 @@ neither survives the port:
   is the one case where the C original still does something these ports do not:
   expect `autovideosink` not to come up there unless you wrap the run in
   `Gst.Global.MacosMain` yourself.
-* `basic-tutorial-13.c` reads the keyboard through `g_io_channel_win32_new_fd`
-  on Windows and `g_io_channel_unix_new` everywhere else. `BasicTutorial13` uses
-  `System.Console` and is one program on every operating system, which is how
-  the last `#ifdef` of the series disappears.
+* `basic-tutorial-13.c`, `playback-tutorial-1.c` and `playback-tutorial-2.c`
+  read the keyboard through `g_io_channel_win32_new_fd` on Windows and
+  `g_io_channel_unix_new` everywhere else. All three ports use `System.Console`
+  and are one program on every operating system, which is how the last
+  `#ifdef` of the series disappears.
 
 ## Exit codes
 
@@ -123,21 +147,50 @@ Every project follows one rule, which is what lets CI run them as gates:
   elapsed on a pipeline that was supposed to end. `BasicTutorial09`, which has
   no bus at all, reads it as a discovery that came back with anything other than
   OK: the C original prints "This URI cannot be played" and returns 0, which
-  would leave the CI line nothing to gate on.
+  would leave the CI line nothing to gate on. `PlaybackTutorial08` reads it the
+  same way for a factory that `--enable` or `--disable` named and the registry
+  does not have: the C snippet returns silently, which a typo would be
+  indistinguishable from.
+
+`PlaybackTutorial06` is the one place where the bound is a success. Its upstream
+default is a radio stream, and a stream with no end is meant to be stopped from
+outside: the bound counts as 0 when the pipeline came up live or the URI is
+http, and as 1 when a local file was supposed to reach its own end and did
+not.
 
 ## Which of them CI runs
 
-All nine are built on every CI leg, which is the point of putting them in the
-solution: a rename anywhere in the generated surface breaks a tutorial visibly.
+All fifteen are built on every CI leg, which is the point of putting them in
+the solution: a rename anywhere in the generated surface breaks a tutorial
+visibly.
 
-Seven are also *run*, on the Linux leg only, because it has the richest plugin
-set and no GUI. Tutorials 3, 4, 9 and 13 run against ten seconds of Theora and
-Vorbis in an Ogg container that the `GstLaunch` sample encodes in the step
-before them — real media with two streams, made on the spot rather than
-fetched, which is also what gives tutorial 9 a topology worth walking.
-Tutorial 2 needs no media, and tutorials 7 and 8 generate their own. The other
-two are build-only: 1 would need the network, and 6 is only interesting when a
-real audio sink is on the other end of the pipeline.
+Thirteen are also *run*, on both Linux legs — x64 and arm64 — because those
+have the richest plugin set and no GUI. The `GstLaunch` sample encodes the
+fixtures in the same step, so the media is made on the spot rather than
+fetched:
+
+* `tutorial-media.ogg`, ten seconds of Theora and Vorbis in an Ogg container,
+  which is what basic 3 needs to have a pad to ignore, basic 4 and 13 need to
+  have something to seek in, and basic 9 needs to have a topology worth walking.
+  Playback 8 plays it too, and names the decoder that got plugged.
+* `tutorial-multitrack.ogg`, the same but with **two** Vorbis streams, so that
+  playback 1 and 2 have something to choose between. Each audio branch carries
+  its own `num-buffers`, because a branch that never ends would keep the muxer
+  from finalising the file.
+* `tutorial-audio.ogg`, Vorbis and nothing else, because playsink only builds a
+  visualization chain when the media has no video stream — that file is what
+  makes playback 6 exercise the chain rather than only look one up.
+* `tutorial-subs.srt`, two cues written with `printf`, for playback 2.
+
+Basic 12 and playback 4 are not given a file at all. A `file://` URI never
+buffers and never downloads, so both would run straight past the paths they
+exist to show; the step starts `python3 -m http.server` on the loopback and
+points those two at it, which makes the BUFFERING messages and the
+`temp-location` deep notification real. The server is killed when the step
+ends, whether or not a gate failed.
+
+Basic 1 is the one that is only built: its default media is an https URI and
+nothing local would be the tutorial. Playback 3, 5, 7 and 9 are not ported.
 
 `wavescope`, which both tee tutorials draw with, is in `gst-plugins-bad`. The
 Linux leg installs `gstreamer1.0-plugins-bad` — it needs it for `webrtcbin` —

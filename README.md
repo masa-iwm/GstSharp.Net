@@ -289,7 +289,7 @@ calls them under a `#pragma warning disable CS0618`.
 
 ### The official tutorials
 
-`samples/tutorials/` holds the [GStreamer basic
+`samples/tutorials/` holds the [GStreamer basic and playback
 tutorials](https://gstreamer.freedesktop.org/documentation/tutorials/) ported
 onto this binding, one runnable project per tutorial, with the upstream
 numbering kept:
@@ -304,14 +304,22 @@ numbering kept:
 | `BasicTutorial07` | [Multithreading and pad availability](https://gstreamer.freedesktop.org/documentation/tutorials/basic/multithreading-and-pad-availability.html) | a `tee`, its request pads, a `queue` per branch |
 | `BasicTutorial08` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/basic/short-cutting-the-pipeline.html) | `appsrc`, `appsink`, a `tee` and its request pads |
 | `BasicTutorial09` | [Media information gathering](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-information-gathering.html) | `GstDiscoverer`, an answer that arrives as a signal, the topology |
+| `BasicTutorial12` | [Streaming](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | buffering, a live source, a lost clock |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
+| `PlaybackTutorial01` | [Playbin usage](https://gstreamer.freedesktop.org/documentation/tutorials/playback/playbin-usage.html) | `playbin`, its flags, its stream counts, its tag signals |
+| `PlaybackTutorial02` | [Subtitle management](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | `suburi`, the text flag, choosing a subtitle stream |
+| `PlaybackTutorial04` | [Progressive streaming](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | the download flag, buffering ranges, `deep-notify` |
+| `PlaybackTutorial06` | [Audio visualization](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | a registry feature filter, factory metadata, `vis-plugin` |
+| `PlaybackTutorial08` | [Hardware-accelerated video decoding](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | plugin feature ranks, the decoder list, walking a bin |
 
 The walkthrough text stays upstream; each file carries a header comment saying
 where the port differs from the C original and why — a polled bus instead of a
 `GMainLoop`, `using` instead of `gst_*_unref`, a typed event instead of
 `g_signal_connect`. `samples/tutorials/README.md` is the index and explains the
-options the tutorials do not have (`--headless`, `BasicTutorial13 --keys` and
-the per-tutorial bounds), which exist so that a tutorial can be run unattended.
+options the tutorials do not have (`--headless`, the `--keys` of
+`BasicTutorial13` and of the two playback tutorials that read a keyboard, the
+`--enable`/`--disable` of `PlaybackTutorial08` and the per-tutorial bounds),
+which exist so that a tutorial can be run unattended.
 
 ```sh
 dotnet run --project samples/tutorials/BasicTutorial02
