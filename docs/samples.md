@@ -1,6 +1,6 @@
 # The samples
 
-`samples/` holds sixteen runnable programs, plus the ported GStreamer
+`samples/` holds seventeen runnable programs, plus the ported GStreamer
 tutorials under `samples/tutorials/`. They are written to be run unattended:
 headless by default, or made so by a sink option, on media they make
 themselves wherever the program needs none from outside, and bounded — by a
@@ -143,6 +143,18 @@ from a `gst-launch` description, served until it is asked to stop and then shut
 down in the order the library documents. `--disable-rtcp` is `SetEnableRtcp`
 negated, set before the factory is mounted, because the setting is read when a
 media is built. Without a launch line it serves a test tone.
+
+**[`samples/RtspClient`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/RtspClient/Program.cs)**
+— the client half of the one above: `rtspsrc` plays one mount point and the L16
+audio it receives is counted at an `appsink`. It is the sample for a signal with
+a return value — `select-stream` is connected by name and what it answers is
+what decides whether a stream is set up at all — and for the dynamic pads that
+follow, built into a receiving branch in `pad-added`. Without a URL it hosts the
+mount `RtspServer` serves by default and plays that, so the whole conversation
+runs in one process; the pipeline reaches `NULL` before that server is taken
+down, because the `PAUSE` and the `TEARDOWN` a `NULL` transition sends are
+answered on a thread of the server's pool. A fallback from UDP to TCP is a
+warning and a second `select-stream`, not a failure.
 
 **[`samples/GesCustomSource`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/GesCustomSource/Program.cs)**
 — a timeline whose clip and whose source are managed types, both through
