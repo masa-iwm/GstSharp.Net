@@ -242,6 +242,15 @@ public partial class Object : IDisposable
             // The toggle reference takes the reference we own, and reports back
             // whenever native code is the only owner left.
             GObjectNative.ObjectAddToggleRef(handle, &ToggleNotify, toggleRef.UserData);
+
+            // A toggle reference is a strong native reference, so the object
+            // cannot die while it is installed. The weak notification is what
+            // catches somebody dropping a reference they did not own: it runs
+            // inside the killing unref, while the instance can still be read,
+            // rather than leaving the failure to crash the next drain. It
+            // carries the identifier of the toggle reference for the reason the
+            // remarks on ToggleRefs give — never a GCHandle.
+            GObjectNative.ObjectWeakRef(handle, &WeakNotify, toggleRef.UserData);
             GObjectNative.ObjectUnref(handle);
         }
     }
@@ -1158,6 +1167,15 @@ public partial class Object : IDisposable
 
         if (disposing)
         {
+            if (toggleRef.IsReleased)
+            {
+                // The weak notification has taken the bookkeeping over already,
+                // which means the object died underneath this wrapper. Reading
+                // its type, marking it, or disconnecting a handler would all
+                // dereference a corpse, and Release stops at MarkReleased.
+                return;
+            }
+
             if (SubclassRegistry.Find(_handle) is not null)
             {
                 // The object outlives this wrapper, and nothing is to be
@@ -1255,6 +1273,10 @@ public partial class Object : IDisposable
             ToggleRefs.TryRemove(new KeyValuePair<nint, ToggleRef>(toggleRef.UserData, toggleRef));
         }
 
+        // The object is alive here by construction: a death before this point
+        // would have run WeakNotify, which marks the toggle reference released,
+        // so this call would have returned above.
+        GObjectNative.ObjectWeakUnref(handle, &WeakNotify, toggleRef.UserData);
         GObjectNative.ObjectRemoveToggleRef(handle, &ToggleNotify, toggleRef.UserData);
     }
 
@@ -1337,6 +1359,67 @@ public partial class Object : IDisposable
             {
                 toggleRef.SetStrong(isLastRef == 0);
             }
+        }
+        catch (Exception exception)
+        {
+            ExceptionTrap.Report(exception);
+        }
+    }
+
+    /// <summary>
+    /// Observes the death of an object whose toggle reference is still
+    /// installed, which is an over-unref somewhere else.
+    /// </summary>
+    /// <param name="userData">The identifier of the toggle reference.</param>
+    /// <param name="instance">The object that is going away.</param>
+    /// <remarks>
+    /// <para>
+    /// Finding nothing in <see cref="ToggleRefs"/> is the ordinary case: the
+    /// release did its bookkeeping first, so the notification that follows it —
+    /// from inside <c>g_object_remove_toggle_ref</c> or later — has nothing
+    /// left to report.
+    /// </para>
+    /// <para>
+    /// Finding an entry means the object died underneath a reference the
+    /// binding owned. The bookkeeping of <see cref="Release"/> is done here, so
+    /// that the release which follows from <see cref="Dispose(bool)"/> or from
+    /// a drain of the queue finds the toggle reference already released and
+    /// never calls into the corpse. Nothing beyond the type of the instance is
+    /// read: it is being disposed, and a reference taken on it here would be
+    /// one more thing to go wrong.
+    /// </para>
+    /// </remarks>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void WeakNotify(nint userData, nint instance)
+    {
+        try
+        {
+            ToggleRef? toggleRef;
+
+            lock (Sync)
+            {
+                if (!ToggleRefs.TryGetValue(userData, out toggleRef) || !toggleRef.MarkReleased())
+                {
+                    return;
+                }
+
+                // Both removals are by key and value, as in Release: a fresh
+                // wrapper of the same object may hold the entry by now.
+                Wrappers.TryRemove(new KeyValuePair<nint, ToggleRef>(instance, toggleRef));
+                ToggleRefs.TryRemove(new KeyValuePair<nint, ToggleRef>(userData, toggleRef));
+            }
+
+            string details =
+                $"Native type: {TypeRegistry.GetInstanceType(instance).Name}. " +
+                $"Wrapper type: {toggleRef.WrapperType.FullName}. " +
+                $"Handle: 0x{instance:x}. " +
+                $"Toggle reference: {userData}. " +
+                $"Wrapper already collected: {!toggleRef.TryGetTarget(out _)}. " +
+                $"Managed stack: {Environment.StackTrace}";
+
+            ExceptionTrap.Report(new InvalidOperationException(
+                "GstSharp.Net: a GObject was destroyed while the binding still held its toggle reference. " +
+                "Something dropped a reference it did not own (over-unref). " + details));
         }
         catch (Exception exception)
         {
@@ -1431,6 +1514,7 @@ public partial class Object : IDisposable
         {
             _weak = new WeakReference<Object>(owner);
             _id = id;
+            WrapperType = owner.GetType();
 
             // Starts strong: the toggle notification demotes it as soon as the
             // toggle reference is the only one left.
@@ -1438,6 +1522,29 @@ public partial class Object : IDisposable
         }
 
         internal nint UserData => _id;
+
+        /// <summary>
+        /// Gets the managed type of the wrapper this toggle reference belongs
+        /// to. It is kept here so that a report can name the wrapper even once
+        /// the wrapper itself has been collected.
+        /// </summary>
+        internal Type WrapperType { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether this toggle reference has been
+        /// given up, either by a release or by the weak notification of an
+        /// object that died underneath it.
+        /// </summary>
+        internal bool IsReleased
+        {
+            get
+            {
+                lock (_sync)
+                {
+                    return _released;
+                }
+            }
+        }
 
         internal bool TryGetTarget(out Object target)
         {

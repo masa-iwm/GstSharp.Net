@@ -42,6 +42,28 @@ internal static unsafe partial class GObjectNative
         nint data);
 
     /// <summary>
+    /// Installs a weak notification, which runs while the object is being
+    /// disposed and is therefore the last moment at which the instance may
+    /// still be read.
+    /// </summary>
+    /// <remarks>
+    /// <c>GWeakNotify</c> takes the <c>data</c> pointer first and the object
+    /// that is going away second, the other way round from the toggle
+    /// notification above.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_object_weak_ref")]
+    internal static partial void ObjectWeakRef(
+        nint instance,
+        delegate* unmanaged[Cdecl]<nint, nint, void> notify,
+        nint data);
+
+    [LibraryImport("GObject", EntryPoint = "g_object_weak_unref")]
+    internal static partial void ObjectWeakUnref(
+        nint instance,
+        delegate* unmanaged[Cdecl]<nint, nint, void> notify,
+        nint data);
+
+    /// <summary>
     /// Attaches a word to an object under a quark. The runtime uses it for one
     /// marker only — that the wrapper of a managed subclass was disposed — and
     /// passes no destroy notification, so nothing managed is kept alive by it.
