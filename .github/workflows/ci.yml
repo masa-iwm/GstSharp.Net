@@ -8,7 +8,9 @@
 #                     validates the surface against the published baseline.
 #   linux             the Linux SONAME path of the native loader, the only
 #                     plugin set complete enough to run the WebRTC tests, and
-#                     the linux-x64 NativeAOT gate.
+#                     the NativeAOT gate, on two legs of one matrix: linux-x64
+#                     on ubuntu-24.04 and linux-arm64 on ubuntu-24.04-arm. The
+#                     arm64 leg is the only Linux arm64 coverage there is.
 #   macos             the macOS dylib path of the native loader and the
 #                     osx-arm64 NativeAOT gate.
 #   windows-mingw     the MinGW flavor, found the way a developer with MSYS2
@@ -134,10 +136,36 @@ jobs:
   # dynamic linker, which no other job exercises. The runner is pinned to
   # 24.04 because its GStreamer 1.24 is the floor the ABI probes assert
   # against; ubuntu-latest would silently lift that floor.
+  #
+  # It runs twice, as a two-entry matrix rather than as two jobs, so that the
+  # two architectures are held to byte-identical steps: the matrix substitutes
+  # the runner label, the NativeAOT RID and the artifact name, and nothing
+  # else. The arm64 leg is the only Linux arm64 coverage the workflow has —
+  # macos is arm64 as well, but what it exercises there is the dylib naming and
+  # the Homebrew directory of the planner, not the SONAME path — so it is what
+  # puts the ABI probes, which assert struct sizes and raw field offsets
+  # against the installed library, on arm64 under the Linux ABI and against
+  # the distribution's build of the library, which the macOS run of the same
+  # probes does not stand in for. ubuntu-24.04-arm is pinned for the same
+  # reason ubuntu-24.04 is: Ubuntu Ports ships the same GStreamer 1.24.2 on
+  # arm64, so the floor is the same floor, and a moving label would lift it
+  # just as silently here.
+  #
+  # fail-fast is off on purpose: when one architecture breaks, the log of the
+  # other is what says whether the break is architectural, and a leg cancelled
+  # by its sibling says nothing at all.
   # --------------------------------------------------------------------------
   linux:
-    name: linux (GStreamer from apt)
-    runs-on: ubuntu-24.04
+    name: linux ${{ matrix.arch }} (GStreamer from apt)
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
     # 30 rather than 20 since the NativeAOT publish at the end of the job
     # joined it: ILC compiles and links a native binary, which the rest of the
     # leg does not.
@@ -150,12 +178,18 @@ jobs:
         with:
           global-json-file: global.json
 
+      # This job's cache key carries the architecture, which no other job's
+      # does: runner.os is Linux on both legs, the ILCompiler and runtime packs
+      # the NativeAOT gate below restores are RID specific, and a cache entry is
+      # immutable once it has been written under a key. With a key shared by
+      # the two legs, whichever leg saved first would hand its packs to the
+      # other, whose own would never be saved.
       - name: Cache NuGet packages
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
-          restore-keys: nuget-${{ runner.os }}-
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
 
       # Runtime packages only: the binding loads versioned SONAMEs
       # (libgstreamer-1.0.so.0, libgstapp-1.0.so.0), which the runtime packages
@@ -255,8 +289,9 @@ jobs:
       # satisfy - an always() step would still run, a failure() one does not -
       # so the run ends with a red job and no culprit. The per-test budget is
       # five minutes on every leg. The integration step finishes in well under
-      # a minute on all three of them - around twenty seconds on the last green
-      # run - so five minutes per test is a hang rather than a slow test, and
+      # a minute on all four of them - around twenty seconds on the last green
+      # run, 22 s on linux x64 and 20 s on linux arm64 - so five minutes per
+      # test is a hang rather than a slow test, and
       # it still leaves the thirty minute job cap room for the dump to be
       # written and uploaded. The dump is a mini one: the sequence file already
       # names the test, a mini dump keeps every thread stack, which is what a
@@ -344,9 +379,10 @@ jobs:
       # thread sections and its latency tables, so with the rusage tracer on and
       # more than one thread in the log the order of whole sections is
       # undefined, where the port prints them ordered by thread id and by key.
-      # Every line still has to be there exactly once. This leg alone runs it,
-      # because gst-stats-1.0 comes from gstreamer1.0-tools, which is also where
-      # the gst-inspect-1.0 of the step above comes from.
+      # Every line still has to be there exactly once. This job alone runs it,
+      # on both of its legs, because gst-stats-1.0 comes from
+      # gstreamer1.0-tools, which is also where the gst-inspect-1.0 of the step
+      # above comes from.
       - name: GstStats against gst-stats-1.0
         run: |
           set -euo pipefail
@@ -611,7 +647,7 @@ jobs:
       # the whole registry and needs no plugin in particular; the element page
       # is asked for fakesink, which is in the core elements every leg has, and
       # exits 1 for a name the registry does not know — which is what makes the
-      # second line a gate rather than a print. This step runs on all three
+      # second line a gate rather than a print. This step runs on all four
       # native legs, because what it exercises is the registry surface and that
       # is where the three installations differ most.
       - name: GstInspect
@@ -623,7 +659,7 @@ jobs:
       # the real tool prints, byte for byte. What is compared, why these six
       # elements, and why the diff is skipped rather than failed on a leg whose
       # gst-inspect-1.0 predates the 1.28.3 page format the port reproduces is
-      # written down in the script, which the three native legs share. In
+      # written down in the script, which the four native legs share. In
       # practice the diff runs on the legs whose gst-inspect-1.0 is 1.28.3 or
       # newer -- macOS and the Windows MinGW leg today -- and is skipped with a
       # warning elsewhere, this leg among them: it installs the tool of the
@@ -701,15 +737,15 @@ jobs:
       #
       # Last of the steps on purpose: an ILC publish takes minutes, and a plain
       # test or sample failure belongs on the log before it, not behind it.
-      - name: NativeAOT smoke (linux-x64)
+      - name: NativeAOT smoke (linux-${{ matrix.arch }})
         shell: pwsh
-        run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
+        run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-${{ matrix.arch }}
 
       - name: Upload test results
         if: ${{ failure() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: test-results-linux
+          name: test-results-linux-${{ matrix.arch }}
           # artifacts/logs is where aot-gate.ps1 tees the publish output, so a
           # failed AOT gate leaves the same artifact behind here as on the MSVC
           # job.
