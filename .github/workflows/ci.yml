@@ -407,10 +407,10 @@ jobs:
       - name: AppSrcPush
         run: dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
 
-      # The ported GStreamer tutorials. All nine are built by the solution on
-      # every leg; these seven are the ones that can also run, and they run here
-      # rather than anywhere else because this leg has the richest plugin set
-      # and no GUI to tempt them.
+      # The ported GStreamer tutorials. All fifteen are built by the solution on
+      # every leg; these thirteen are the ones that can also run, and they run
+      # on both Linux legs rather than anywhere else because those have the
+      # richest plugin set and no GUI to tempt them.
       #
       # --headless is the sample-only option that swaps every automatic sink
       # for a fakesink and bounds a source that has no end of its own: an audio
@@ -420,27 +420,60 @@ jobs:
       #
       # The media is made here rather than fetched. Ten seconds of Theora and
       # Vorbis in an Ogg container is a real file with two streams, which is
-      # what tutorial 3 needs to have a pad to ignore, tutorial 4 and 13 need to
-      # have something to seek in, and tutorial 9 needs to have a topology to
+      # what basic tutorial 3 needs to have a pad to ignore, basic 4 and 13 need
+      # to have something to seek in, and basic 9 needs to have a topology to
       # walk. theoraenc, vorbisenc and oggmux are all in gst-plugins-base, which
       # this job installs.
       #
-      # Tutorial 9 takes no --headless: it builds no sink at all, only a
+      # Basic tutorial 9 takes no --headless: it builds no sink at all, only a
       # discoverer, and its gate is its own exit code — a URI that was not
-      # understood is a failure there rather than a printed line.
+      # understood is a failure there rather than a printed line. Playback 8
+      # reads a missing factory the same way: --enable of a name the registry
+      # does not have exits 1 instead of returning silently as the C snippet
+      # does.
       #
-      # Not run: tutorial 1, whose default media is an https URI, and tutorial
-      # 6, whose interesting output is the caps a real audio sink negotiates.
-      - name: Basic tutorials
+      # Not run: basic tutorial 1, whose default media is an https URI, and
+      # playback tutorials 3, 5, 7 and 9, which are not ported at all.
+      #
+      # Fifteen tutorials are built on every leg; thirteen are run here, on
+      # both Linux legs. Three extra fixtures are made alongside the one above:
+      # tutorial-multitrack.ogg carries two Vorbis streams so that playback 1
+      # and 2 have something to choose between, tutorial-audio.ogg carries no
+      # video at all so that playback 6's visualization chain is really built
+      # (playsink only draws one when there is no video stream), and
+      # tutorial-subs.srt is a two-cue subtitle file for playback 2.
+      #
+      # The two buffering tutorials are pointed at a local http server rather
+      # than at a file: a file:// URI never buffers and never downloads, so the
+      # BUFFERING path of basic 12 and the temp-location path of playback 4
+      # would both go untested. souphttpsrc comes with
+      # gstreamer1.0-plugins-good, whose hard dependency on libsoup-3.0-0 the
+      # --no-install-recommends install above therefore already pulls in. The
+      # server is trapped so that it is killed even when a gate fails.
+      - name: Tutorials
         run: |
           dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
+          dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-multitrack.ogg audiotestsrc num-buffers=430 freq=440 wave=sine ! audioconvert ! vorbisenc ! mux. audiotestsrc num-buffers=430 freq=880 wave=square ! audioconvert ! vorbisenc ! mux.
+          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! oggmux ! filesink location=tutorial-audio.ogg
+          printf '1\n00:00:00,500 --> 00:00:03,000\nFirst subtitle cue\n\n2\n00:00:03,500 --> 00:00:07,000\nSecond subtitle cue\n' > tutorial-subs.srt
+          python3 -m http.server 8765 --bind 127.0.0.1 &
+          server=$!
+          trap 'kill $server' EXIT
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg && break; sleep 1; done
+          curl -sf -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial02 --no-restore -- --headless
           dotnet run --project samples/tutorials/BasicTutorial03 --no-restore -- --headless tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial04 --no-restore -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial07 --no-restore -- --headless --buffers 200
           dotnet run --project samples/tutorials/BasicTutorial08 --no-restore -- --headless --chunks 200
           dotnet run --project samples/tutorials/BasicTutorial09 --no-restore -- tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial12 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial01 --no-restore -- --headless --keys 1 tutorial-multitrack.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial02 --no-restore -- --headless --keys 0 tutorial-multitrack.ogg tutorial-subs.srt
+          dotnet run --project samples/tutorials/PlaybackTutorial04 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial06 --no-restore -- --headless tutorial-audio.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial08 --no-restore -- --headless --enable theoradec tutorial-media.ogg
 
       # The gst-discoverer port, run against both files the steps above made:
       # the wav for a single elementary stream and the ogg for a container with
