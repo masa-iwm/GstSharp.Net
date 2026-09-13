@@ -597,6 +597,36 @@ jobs:
       - name: WebRtcLoopback
         run: dotnet run --project samples/WebRtcLoopback --no-restore -- --buffers 100 --timeout 90 --print-sdp
 
+      # The gst-device-monitor port. A hosted runner has no capture or playback
+      # hardware, so finding zero devices is the expected outcome and is exit 0,
+      # exactly as it is for the C tool. What is being gated is that the monitor
+      # starts at all: gst_device_monitor_start returns FALSE, and the tool -1,
+      # when no device provider matches the filters, so this would catch a leg
+      # that lost its providers.
+      #
+      # Video/Source is not cosmetic. The pulse provider of gst-plugins-good —
+      # which ships inside the plugins-good package this job installs, so it is
+      # here whether or not anything asks for it — waits in start on a
+      # PulseAudio context that a headless session never gives it, and two
+      # earlier attempts at this step sat there until the job timed out.
+      # gst_device_monitor_add_filter matches the filter's classes against each
+      # factory's klass with a per-segment AND and instantiates only the
+      # factories that match, so Video/Source selects v4l2 (Source/Sink/Video)
+      # and pulse (Sink/Source/Audio) is never constructed, let alone started.
+      # Any Audio/... filter would bring it back. timeout-minutes bounds that
+      # failure mode should some future provider wait on a daemon of its own.
+      #
+      # Both runs go through Start, so both take the v4l2 provider's udev thread
+      # start path; the second one additionally exercises the bounded follow
+      # loop. The first ends the listing on the first empty poll rather than on
+      # DEVICE_MONITOR_STARTED, because this leg's 1.24 does not have that
+      # message — see the sample.
+      - name: GstDeviceMonitor
+        timeout-minutes: 5
+        run: |
+          dotnet run --project samples/GstDeviceMonitor --no-restore -- Video/Source
+          dotnet run --project samples/GstDeviceMonitor --no-restore -- --follow --follow-for 3 Video/Source
+
       # The Linux half of the NativeAOT promise. Both AOT gates used to run on
       # win-x64 alone, which left the ILC toolchain, the native link and the
       # SONAME resolution of a published binary — an executable with no host and
@@ -624,18 +654,6 @@ jobs:
       - name: NativeAOT smoke (linux-x64)
         shell: pwsh
         run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
-
-      # The gst-device-monitor port. A hosted runner has no capture or playback
-      # hardware, so finding zero devices is the expected outcome and is exit 0,
-      # exactly as it is for the C tool. What is being gated is that the monitor
-      # starts at all: gst_device_monitor_start returns FALSE, and the tool -1,
-      # when no device provider matches the filters, so this would catch a leg
-      # that lost its providers.
-      #
-      # Not run here after all: the pulse provider of gst-plugins-good hangs
-      # a headless session without a PulseAudio daemon - both attempts sat in
-      # start until the job timeout. The macOS leg keeps this gate; its
-      # osxaudio provider comes up without a daemon to wait for.
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -763,6 +781,9 @@ jobs:
           dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
           dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
+      # No filter here: the osxaudio provider comes up without a daemon to wait
+      # for, so the full listing is safe. See the Linux step for why that leg
+      # filters.
       - name: GstDeviceMonitor
         run: dotnet run --project samples/GstDeviceMonitor --no-restore
 
