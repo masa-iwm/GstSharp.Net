@@ -300,6 +300,22 @@ released; `tests/GstSharp.IntegrationTests/WebRTCICECandidateTests.cs` is the
 worked example, with the compensation documented beside the read and removable
 the day upstream sinks the agent.
 
+A `(transfer full)` annotation is a promise about the C, and one call of that
+agent did not keep it. `WebRTCICE.AddStream` is annotated transfer full in the
+gir and in the base class, but the libnice implementation below it returned the
+reference its own stream map holds without taking one: it is missing in every
+1.24.x release and in 1.26.0 through 1.26.9. Upstream took the missing
+reference in `ea6200de`, which shipped in 1.27.50 and was backported to the
+1.26 branch as `dbc83c3ec1`, first tagged 1.26.10; the reference is therefore
+present from 1.26.10 and from 1.27.50 / 1.28.0 on. The gir this binding is
+generated from describes the C of 1.28, while the runtime floor is 1.24, so the
+generated member adopted the agent's only reference on an older runtime and
+disposing the wrapper freed a stream the agent still listed. The binding is hand written for that reason and takes the
+reference itself on anything that predates the fix, which it decides from the
+version of the loaded library. The gate errs toward taking it: a reference too
+many leaks one small object, a reference too few frees a live one, and the
+count a caller sees is two either way — one for the agent, one for the wrapper.
+
 `Object.As<T>()` owns nothing of its own. When the wrapper class does not
 declare the interface, the cast hands back a small view that holds a strong
 reference to the wrapper it came from and reads the handle through it, so the

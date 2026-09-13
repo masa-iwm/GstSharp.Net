@@ -56,17 +56,6 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
         System.GC.KeepAlive(promise);
     }
 
-    /// <summary>The <c>gst_webrtc_ice_add_stream</c> function.</summary>
-    /// <param name="sessionId">The session id</param>
-    /// <returns>The #GstWebRTCICEStream, or %NULL</returns>
-    public Gst.WebRTC.WebRTCICEStream? AddStream(uint sessionId)
-    {
-        nint nativeResult = GstWebrtcIceAddStream(Handle, sessionId);
-        Gst.WebRTC.WebRTCICEStream? result = Gst.GObject.Object.FromNative<Gst.WebRTC.WebRTCICEStream>(nativeResult, Gst.Interop.Transfer.Full);
-        System.GC.KeepAlive(this);
-        return result;
-    }
-
     /// <summary>The <c>gst_webrtc_ice_add_turn_server</c> function.</summary>
     /// <param name="uri">URI of the TURN server</param>
     /// <returns>FALSE on error, TRUE otherwise</returns>
@@ -369,10 +358,6 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     /// <summary>The <c>gst_webrtc_ice_add_candidate</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_add_candidate")]
     private static partial void GstWebrtcIceAddCandidate(nint ice, nint stream, byte* candidate, nint promise);
-
-    /// <summary>The <c>gst_webrtc_ice_add_stream</c> entry point.</summary>
-    [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_add_stream")]
-    private static partial nint GstWebrtcIceAddStream(nint ice, uint sessionId);
 
     /// <summary>The <c>gst_webrtc_ice_add_turn_server</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_add_turn_server")]
