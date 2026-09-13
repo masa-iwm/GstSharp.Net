@@ -451,7 +451,7 @@ jobs:
       # (playsink only draws one when there is no video stream), and
       # tutorial-subs.srt is a four-cue subtitle file for playback 2. Four and
       # not two because gst_sub_parse_type_find (gst-plugins-base
-      # gst/subparse/gstsubparseelement.c:303 at tag 1.24.2) peeks exactly 128
+      # gst/subparse/gstsubparseelement.c:290 at tag 1.24.2) peeks exactly 128
       # bytes and gives up when the file is shorter, and 1.24 is what apt
       # installs here: a smaller .srt is not recognised at all, playbin turns
       # the suburi failure into a warning, and the tutorial plays with no text.
