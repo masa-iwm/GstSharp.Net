@@ -26,6 +26,7 @@
     <Project Path="samples/GstTypefind/GstTypefind.csproj" />
     <Project Path="samples/PlaybinPlayer/PlaybinPlayer.csproj" />
     <Project Path="samples/RtpPacketDump/RtpPacketDump.csproj" />
+    <Project Path="samples/RtspClient/RtspClient.csproj" />
     <Project Path="samples/RtspServer/RtspServer.csproj" />
     <Project Path="samples/WebRtcLoopback/WebRtcLoopback.csproj" />
   </Folder>

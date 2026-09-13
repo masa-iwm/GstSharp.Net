@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.RtspClient</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GstSharp.Net/GstSharp.Net.csproj" />
+
+    <!-- The appsink the received audio is counted at. -->
+    <ProjectReference Include="../../src/GstSharp.Net.App/GstSharp.Net.App.csproj" />
+
+    <!-- rtspsrc itself is a plugin element and needs no module, but without a
+         URL the sample hosts the mount it plays, and that server is this
+         module. -->
+    <ProjectReference Include="../../src/GstSharp.Net.RtspServer/GstSharp.Net.RtspServer.csproj" />
+  </ItemGroup>
+
+</Project>
