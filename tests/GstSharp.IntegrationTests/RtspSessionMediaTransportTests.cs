@@ -70,9 +70,7 @@ public sealed class RtspSessionMediaTransportTests
             RTSPMedia? media = factory.Construct(url);
             Assert.NotNull(media);
 
-            // Construct hands the media out locked, and the stream count has
-            // to be read before the media is handed over: the constructor of a
-            // session media consumes the wrapper.
+            // Construct hands the media out locked.
             media.Unlock();
             uint streams = media.NStreams();
             Assert.Equal(1u, streams);
@@ -84,7 +82,12 @@ public sealed class RtspSessionMediaTransportTests
             Assert.True(preparing.Result, "the media refused to prepare.");
 
             RTSPSessionMedia sessionMedia = RTSPSessionMedia.New("/test", media);
-            Assert.True(media.IsDisposed);
+
+            // The session media was handed a reference minted for it and the
+            // wrapper keeps the one it holds, so it is still the caller's and
+            // still answers.
+            Assert.False(media.IsDisposed);
+            Assert.Equal(RTSPMediaStatus.Prepared, media.GetStatus());
 
             using RTSPMedia? attached = sessionMedia.GetMedia();
             Assert.NotNull(attached);
@@ -111,6 +114,73 @@ public sealed class RtspSessionMediaTransportTests
             Assert.True(
                 PumpUntil(() => unpreparing.IsCompleted),
                 "the media never finished unpreparing.");
+        }
+    }
+
+    /// <summary>
+    /// <c>gst_rtsp_session_manage_media</c> is handed the media the session
+    /// serves. The session keeps a reference minted for it, and the wrapper
+    /// stays the caller's with the handlers it carries still connected.
+    /// </summary>
+    [RequiresElementFact("rtpL16pay")]
+    public void ManagingAMediaKeepsTheMediaWrapperAndItsHandlers()
+    {
+        using RTSPMediaFactory factory = RTSPMediaFactory.New();
+        factory.SetLaunch(Launch);
+
+        Assert.Equal(RTSPResult.Ok, RTSPUrl.Parse("rtsp://127.0.0.1:8554/managed", out RTSPUrl? url));
+        Assert.NotNull(url);
+
+        using (url)
+        {
+            RTSPMedia? media = factory.Construct(url);
+            Assert.NotNull(media);
+
+            media.Unlock();
+
+            // A handler the caller connects before handing the media over. The
+            // consuming shape would have run DisconnectAll and taken it off
+            // again; the handover leaves it connected, which the unpreparation
+            // at the end of the test is what proves.
+            int unprepared = 0;
+            media.Unprepared += (_, _) => Interlocked.Increment(ref unprepared);
+
+            Task<bool> preparing = Task.Run(() => media.Prepare(null));
+            Assert.True(
+                PumpUntil(() => preparing.IsCompleted),
+                "the media never finished preparing.");
+            Assert.True(preparing.Result, "the media refused to prepare.");
+
+            using RTSPSession session = RTSPSession.New("handover-session");
+            RTSPSessionMedia sessionMedia = session.ManageMedia("/managed", media);
+
+            // The session media holds the minted reference; the wrapper is the
+            // caller's and still answers.
+            Assert.False(media.IsDisposed);
+            Assert.Equal(RTSPMediaStatus.Prepared, media.GetStatus());
+
+            using RTSPMedia? attached = sessionMedia.GetMedia();
+            Assert.NotNull(attached);
+            Assert.Same(media, attached);
+
+            Task<bool> unpreparing = Task.Run(media.Unprepare);
+            Assert.True(
+                PumpUntil(() => unpreparing.IsCompleted),
+                "the media never finished unpreparing.");
+
+            Assert.True(
+                PumpUntil(() => Volatile.Read(ref unprepared) > 0),
+                "the handler connected before the handover never fired.");
+
+            // The answer is whether the session still holds media, not
+            // whether the release happened: this one was the only one.
+            Assert.False(session.ReleaseMedia(sessionMedia));
+
+            // The session media wrapper is the test's, the way the sibling
+            // above treats its own: released explicitly rather than left to
+            // the finalizer, which would run the unpreparation of the media
+            // off the finalizer thread.
+            sessionMedia.Dispose();
         }
     }
 

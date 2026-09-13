@@ -1,4 +1,5 @@
 using Gst;
+using Gst.Allocators;
 using Xunit;
 using Xunit.Abstractions;
 using Stream = Gst.Stream;
@@ -8,11 +9,13 @@ namespace GstSharp.IntegrationTests;
 /// <summary>
 /// The generated members whose argument the call takes over
 /// (<c>transfer-ownership="full"</c> on an <c>in</c> parameter): the call is
-/// handed a value minted for it and the wrapper is disposed when the member
-/// returns. The hand written consuming members have tests of their own
+/// handed a value minted for it, and the wrapper is disposed when the member
+/// returns for a mini object and for a boxed value. A GObject is handed over
+/// rather than consumed: its wrapper is interned and stays the caller's. The
+/// hand written consuming members have tests of their own
 /// (<see cref="EventSenderTests"/> among them); these cover one generated
-/// member per interesting shape — a consumed mini object, a consumed GObject,
-/// and a nullable consumed boxed value.
+/// member per interesting shape — a consumed mini object, a handed over
+/// GObject, and a nullable consumed boxed value.
 /// </summary>
 /// <remarks>
 /// Every member called here is available on the GStreamer 1.24 floor of the
@@ -21,7 +24,7 @@ namespace GstSharp.IntegrationTests;
 /// <c>gst_caps_set_features_simple</c> is 1.20.
 /// </remarks>
 [Collection(GstCollection.Name)]
-public sealed class ConsumedArgumentTests
+public sealed unsafe class ConsumedArgumentTests
 {
     private readonly ITestOutputHelper _output;
 
@@ -58,27 +61,125 @@ public sealed class ConsumedArgumentTests
     }
 
     /// <summary>
-    /// <c>gst_stream_collection_add_stream</c> takes a GObject over. The
-    /// interned wrapper is given up process-wide, and the way back to the
-    /// stream is a fresh lookup on the collection.
+    /// <c>gst_stream_collection_add_stream</c> is handed a GObject. The call
+    /// takes a reference minted for it, the wrapper keeps the one it holds and
+    /// stays usable, and the collection hands that very wrapper back.
     /// </summary>
     [Fact]
-    public void AddStreamConsumesTheGObjectWrapperProcessWide()
+    public void AddStreamKeepsTheStreamWrapper()
     {
         using StreamCollection collection = StreamCollection.New(null);
-        Stream stream = Stream.New("consumed-stream", null, StreamType.Video, StreamFlags.None);
+        using Stream stream = Stream.New("handed-over-stream", null, StreamType.Video, StreamFlags.None);
 
         Assert.True(collection.AddStream(stream));
 
-        // The collection holds the reference now and the wrapper is gone for
-        // the whole process; GetStream builds a fresh one for the same object.
-        Assert.True(stream.IsDisposed);
+        // An exact count rather than a delta: gst_stream_new sinks the floating
+        // reference itself, so the wrapper holds exactly one before the call
+        // and the collection stores the minted one without referencing it
+        // again, which is two and nothing else.
+        Assert.Equal(2u, RefCountOf(stream.Handle));
+
+        // The wrapper is the caller's and is still readable.
+        Assert.False(stream.IsDisposed);
+        Assert.Equal("handed-over-stream", stream.GetStreamId());
         Assert.Equal(1u, collection.GetSize());
 
-        using Stream? fetched = collection.GetStream(0);
+        // A GObject wrapper is interned, so the way back to the stream is the
+        // wrapper that was handed over, not a fresh one.
+        Stream? fetched = collection.GetStream(0);
+
         Assert.NotNull(fetched);
         _output.WriteLine($"stream out of the collection: {fetched.GetStreamId()}");
-        Assert.Equal("consumed-stream", fetched.GetStreamId());
+        Assert.Same(stream, fetched);
+    }
+
+    /// <summary>
+    /// <c>gst_allocator_register</c> is handed an allocator and keeps it in the
+    /// registry for good. The wrapper stays the caller's and the registry hands
+    /// it back.
+    /// </summary>
+    [Fact]
+    public void RegisterKeepsTheAllocatorWrapper()
+    {
+        string name = "gstsharp-test-" + Guid.NewGuid().ToString("N");
+
+        // An allocator this test built rather than the system one: the count of
+        // a shared allocator moves with every live GstMemory that holds it, so
+        // a collection between the two reads would turn the delta into a flake.
+        // The fd allocator is built on every platform, which AllocatorsTests
+        // pins, and nothing else holds this instance.
+        using Allocator allocator = FdAllocator.New();
+
+        // A delta rather than an exact count, which is all a shared object
+        // allows. The registry keeps the minted reference for good -
+        // gstallocator.c:236-237 says so and flags the allocator
+        // MAY_BE_LEAKED - so this one is never given back.
+        uint before = RefCountOf(allocator.Handle);
+
+        Allocator.Register(name, allocator);
+
+        Assert.Equal(before + 1, RefCountOf(allocator.Handle));
+        Assert.False(allocator.IsDisposed);
+
+        Allocator? found = Allocator.Find(name);
+
+        Assert.NotNull(found);
+        _output.WriteLine($"allocator out of the registry: {found.GetName()}");
+        Assert.Same(allocator, found);
+    }
+
+    /// <summary>
+    /// <c>ges_project_save</c> is handed a formatter asset and releases it
+    /// before it returns: what the library keeps is the length of the call.
+    /// The wrapper is untouched either way, which is the handover contract for
+    /// the one nullable GObject argument of the corpus.
+    /// </summary>
+    /// <remarks>
+    /// <c>ges_formatter_get_default</c> answers an asset whose extractable type
+    /// is a <c>GESFormatter</c>, which is what the <c>g_return_val_if_fail</c>
+    /// of ges-project.c:1203-1205 demands of the argument, and the timeline has
+    /// to be one this project extracted (:1223-1229). Both members and both
+    /// checks are the same on the 1.24 floor of the Linux leg
+    /// (ges-project.c:1181-1183, ges-formatter.c:482), so the test carries no
+    /// availability gate.
+    /// </remarks>
+    [Fact]
+    public void SavingWithAFormatterAssetKeepsTheAssetWrapper()
+    {
+        GES.GstGES.Initialize();
+
+        string path = Path.Combine(
+            Path.GetTempPath(),
+            "gstsharp-test-" + Guid.NewGuid().ToString("N") + ".xges");
+
+        using GES.Project project = GES.Project.New(null);
+        using GES.Timeline timeline = project.Extract<GES.Timeline>();
+
+        // The default formatter asset is interned and process wide: it is the
+        // library's, not the test's, so nothing disposes it here.
+        GES.Asset formatter = GES.Formatter.GetDefault();
+        uint before = RefCountOf(formatter.Handle);
+
+        try
+        {
+            Assert.True(
+                project.Save(timeline, new System.Uri(path).AbsoluteUri, formatter, true),
+                "the project refused to save.");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+
+        uint after = RefCountOf(formatter.Handle);
+        _output.WriteLine($"formatter asset reference count: {before} -> {after}");
+
+        // Measured, not assumed: the call unrefs the reference minted for it
+        // before it returns (ges-project.c:1257-1258), so the count lands back
+        // where it started.
+        Assert.Equal(before, after);
+        Assert.False(formatter.IsDisposed);
+        Assert.Same(formatter, GES.Formatter.GetDefault());
     }
 
     /// <summary>
@@ -105,4 +206,13 @@ public sealed class ConsumedArgumentTests
         _output.WriteLine($"features after set: any={read.IsAny()}");
         Assert.True(read.IsAny());
     }
+
+    /// <summary>Reads the <c>ref_count</c> field of a <c>GObject</c>.</summary>
+    /// <param name="handle">The instance to read.</param>
+    /// <returns>The reference count at that moment.</returns>
+    /// <remarks>
+    /// A <c>GObject</c> begins with its <c>GTypeInstance</c>, which is one
+    /// pointer, and the reference count is the field behind it.
+    /// </remarks>
+    private static uint RefCountOf(nint handle) => *(uint*)(handle + sizeof(nint));
 }

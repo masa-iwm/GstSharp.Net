@@ -37,34 +37,34 @@ public sealed class EncodingProfileTests
 
     /// <summary>
     /// A stream profile that is added is held by the container, and the wrapper
-    /// that was handed over owns nothing afterwards.
+    /// that was handed over is still the caller's.
     /// </summary>
     [Fact]
     public void AContainerTakesTheStreamProfileOver()
     {
         using EncodingContainerProfile container = NewContainer("takes-over");
 
-        EncodingAudioProfile audio = NewAudio();
+        using EncodingAudioProfile audio = NewAudio();
 
         Assert.True(container.AddProfile(audio));
 
-        // What the caller had is gone: the call consumed the reference of the
-        // wrapper, so the wrapper is disposed and its handle is unreachable.
-        Assert.True(audio.IsDisposed);
-        Assert.Throws<ObjectDisposedException>(() => audio.Handle);
+        // The call was handed a reference minted for it and the wrapper keeps
+        // the one it holds, so it is usable after the call.
+        Assert.False(audio.IsDisposed);
+        Assert.NotEqual(0, audio.Handle);
+        using Caps audioFormat = audio.GetFormat();
 
-        // Disposing twice does nothing, so a `using` around a profile that ends
-        // up being added stays correct.
-        audio.Dispose();
+        Assert.Equal("audio/x-vorbis", audioFormat.GetStructure(0)?.GetName());
 
         IReadOnlyList<EncodingProfile> profiles = container.GetProfiles();
 
         Assert.Single(profiles);
 
-        // The way back to the profile is the container, which hands out a fresh
-        // wrapper for the object the disposed one stood for.
+        // A GObject wrapper is interned, so the container hands back the very
+        // wrapper that was handed over.
         EncodingProfile held = profiles[0];
 
+        Assert.Same(audio, held);
         Assert.False(held.IsDisposed);
         Assert.True(container.ContainsProfile(held));
 
@@ -75,28 +75,34 @@ public sealed class EncodingProfileTests
 
     /// <summary>
     /// The container does not deduplicate: the very profile it already holds,
-    /// handed to it again, is taken again — and that wrapper is spent too.
+    /// handed to it again, is taken again — and the wrapper survives both.
     /// </summary>
     /// <remarks>
     /// This is the second half of the ownership claim, and the half that a
     /// missing <c>g_object_ref</c> would show up in: the container ends up
     /// holding the same object twice and owning two references to it, so a
-    /// binding that had handed over the wrapper's own reference would leave the
-    /// list pointing at an object that the disposal of the wrapper released.
+    /// binding that had passed the reference the wrapper holds instead of
+    /// minting one per call would leave the list pointing at an object that the
+    /// disposal of the wrapper released.
     /// </remarks>
     [Fact]
-    public void AProfileAddedTwiceIsHeldTwiceAndSpentTwice()
+    public void AProfileAddedTwiceIsHeldTwiceAndTheWrapperSurvives()
     {
         using EncodingContainerProfile container = NewContainer("twice");
 
-        Assert.True(container.AddProfile(NewAudio()));
+        using EncodingAudioProfile first = NewAudio();
 
-        // The very object the container already holds, handed to it again.
+        Assert.True(container.AddProfile(first));
+
+        // The very object the container already holds, handed to it again. The
+        // container does not deduplicate (encoding-profile.c:1269 appends
+        // whatever it is given), so it takes a second reference of it.
         EncodingProfile held = container.GetProfiles()[0];
 
+        Assert.Same(first, held);
         Assert.True(container.AddProfile(held));
-        Assert.True(held.IsDisposed);
-        Assert.Throws<ObjectDisposedException>(() => held.Handle);
+        Assert.False(held.IsDisposed);
+        Assert.NotEqual(0, held.Handle);
 
         IReadOnlyList<EncodingProfile> profiles = container.GetProfiles();
 
@@ -109,8 +115,8 @@ public sealed class EncodingProfileTests
     }
 
     /// <summary>
-    /// The guards of the hand written call: a null profile is refused, and so
-    /// is one whose wrapper is already spent.
+    /// The guards of the generated call: a null profile is refused, and so is
+    /// one whose wrapper is already disposed.
     /// </summary>
     [Fact]
     public void AContainerRefusesWhatItCannotTake()
