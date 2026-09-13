@@ -13,7 +13,7 @@ workflow. Jobs are split by what they need from the machine:
 | Job | Runner | Needs GStreamer | What only this job covers |
 | --- | --- | --- | --- |
 | `verify` | `ubuntu-latest` | no | generator drift (the whole generated tree plus `girs/skip-report.md`), warning-free build, generator/analyzer tests, the proof that `GstSharp.Core.Tests` needs no installation, and the pack that validates the public surface against the published baseline |
-| `linux` | `ubuntu-24.04` | apt | the Linux SONAME path of `NativeLoader`, the only plugin set that can run the WebRTC tests, and the `linux-x64` NativeAOT gate |
+| `linux` | `ubuntu-24.04` and `ubuntu-24.04-arm` (a matrix) | apt | the Linux SONAME path of `NativeLoader`, the only plugin set that can run the WebRTC tests, the only arm64 Linux coverage there is, and the `linux-x64` and `linux-arm64` NativeAOT gates |
 | `macos` | `macos-latest` | Homebrew | the macOS dylib path, the Homebrew directory of the planner, and the `osx-arm64` NativeAOT gate |
 | `windows-mingw` | `windows-latest` | MSYS2 | the MinGW file names and the MSYS2 / search-path branch of `NativeInstallPlanner` |
 | `windows-msvc-aot` | `windows-latest` | official installer | the MSVC file names, the environment-variable branch of the planner, and both NativeAOT gates |
@@ -132,11 +132,12 @@ that gate on it back into skips and nothing would be red. The variable is unset
 everywhere else, where the test asserts nothing: it is the promise of a leg that
 installs a plugin set on purpose, not a switch.
 
-The runner is pinned to `ubuntu-24.04` rather than `ubuntu-latest`. Its
-GStreamer is 1.24, which is the floor `AbiProbeTests.NativeVersionIsSupported`
-asserts and the oldest release the struct layouts are validated against. If the
-`ubuntu-latest` label moves to a newer image, this coverage would disappear
-without anything turning red.
+Both runners of the matrix are pinned, `ubuntu-24.04` and `ubuntu-24.04-arm`,
+rather than a moving label such as `ubuntu-latest`. Their GStreamer is 1.24 on
+both architectures, which is the floor `AbiProbeTests.NativeVersionIsSupported`
+asserts and the oldest release the struct layouts are validated against. If a
+moving label advanced to a newer image, this coverage would disappear without
+anything turning red.
 
 That floor is also why the ported tutorials run **here** and only here — this
 leg has the richest plugin set and no GUI — and why `BasicTutorial08` wires its
@@ -221,10 +222,12 @@ compilation is the gate, execution is a local matter.
 
 The script is RID agnostic — the only thing it decides from `-Rid` is whether
 the file it runs ends in `.exe` — so the `linux` and `macos` jobs run the first
-gate as well, each for its own RID:
+gate as well, each for its own RID. The `linux` job runs it twice, once per
+matrix leg — the first two lines are the two legs of the `linux` matrix:
 
 ```
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
+./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-arm64
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid osx-arm64
 ```
 
@@ -398,6 +401,10 @@ deploy to.
 * **`macos-latest` is arm64.** Nothing in the binding is x64-specific, but the
   ABI probes run against an arm64 GStreamer there, which is the point, and the
   NativeAOT gate of that job publishes for `osx-arm64` for the same reason.
+  Linux on arm64 is covered as well, by the `ubuntu-24.04-arm` leg of the
+  `linux` matrix rather than by a job of its own — and since `release.yml`
+  calls this whole workflow, that leg gates a release exactly as every other
+  job does.
 * **Windows AOT needs the MSVC toolchain.** The `windows-latest` image ships
   it; a self-hosted runner would need the C++ workload.
 
@@ -444,8 +451,10 @@ dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid win-x64
 ./eng/aot-gate.ps1 -Project samples/AppSinkSpans -Rid win-x64 -Property InvariantGlobalization=true -RunArguments '--mode','pull'
 
-# the AOT gate the linux and macos jobs run (from pwsh on such a machine)
+# the AOT gate the linux and macos jobs run (from pwsh on such a machine);
+# the first two lines are the two legs of the linux matrix
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-x64
+./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-arm64
 ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid osx-arm64
 
 # what the release job packs (no push)
@@ -475,7 +484,7 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 | Package validation baseline | `1.28.10` (`PackageValidationBaselineVersion` in `src/Directory.Build.props`) | the newest published 1.28.x, moved forward once nuget.org serves each release. Following the newest release is what puts each release's additions under the guard; against an older one they could vanish unnoticed. Never 1.28.0, which predates the promise. The anchor starts over at the next GStreamer series |
 | GStreamer, Windows MSVC | `1.28.6` (`GSTREAMER_VERSION` in the job) | the version the binding is generated from |
 | GStreamer, Windows MinGW | whatever MSYS2 ships | the MSYS2 packages are not versioned per release; the ABI probes only require >= 1.24 |
-| GStreamer, Linux | `ubuntu-24.04` archive (1.24) | the supported floor |
+| GStreamer, Linux | `ubuntu-24.04` and `ubuntu-24.04-arm` archives (1.24, both architectures) | the supported floor |
 | GStreamer, macOS | Homebrew `gstreamer` | rolling, currently 1.28 |
 
 ## What has been verified, and what has not

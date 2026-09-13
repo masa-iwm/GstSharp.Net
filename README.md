@@ -108,8 +108,8 @@ mirror have been stable since then. An entry point that GStreamer added after
 1.24 is present in the managed surface and throws `EntryPointNotFoundException`
 against an older library — the missing export is the documented behavior, not a
 bug. CI runs the whole suite against four installations: Ubuntu 24.04 (1.24, the
-floor), the official Windows MSVC build (1.28.6), MSYS2's MinGW build, and
-Homebrew on macOS.
+floor, on x64 and arm64), the official Windows MSVC build (1.28.6), MSYS2's
+MinGW build, and Homebrew on macOS.
 
 ## Getting started
 
