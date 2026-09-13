@@ -40,7 +40,13 @@
     <Project Path="samples/tutorials/BasicTutorial07/BasicTutorial07.csproj" />
     <Project Path="samples/tutorials/BasicTutorial08/BasicTutorial08.csproj" />
     <Project Path="samples/tutorials/BasicTutorial09/BasicTutorial09.csproj" />
+    <Project Path="samples/tutorials/BasicTutorial12/BasicTutorial12.csproj" />
     <Project Path="samples/tutorials/BasicTutorial13/BasicTutorial13.csproj" />
+    <Project Path="samples/tutorials/PlaybackTutorial01/PlaybackTutorial01.csproj" />
+    <Project Path="samples/tutorials/PlaybackTutorial02/PlaybackTutorial02.csproj" />
+    <Project Path="samples/tutorials/PlaybackTutorial04/PlaybackTutorial04.csproj" />
+    <Project Path="samples/tutorials/PlaybackTutorial06/PlaybackTutorial06.csproj" />
+    <Project Path="samples/tutorials/PlaybackTutorial08/PlaybackTutorial08.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/GstSharp.Net.Allocators/GstSharp.Net.Allocators.csproj" />
