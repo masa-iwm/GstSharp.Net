@@ -363,6 +363,55 @@ public sealed class GirReaderTests
         Assert.Equal("Widget.find", lookup.MovedTo);
     }
 
+    /// <summary>
+    /// The two nullability attributes are read apart, on an instance parameter
+    /// as well as on a regular one. <c>allow-none</c> is the older spelling
+    /// <c>nullable</c> supersedes, so an explicit <c>nullable</c> wins and
+    /// <c>allow-none</c> is only the fallback; keeping the raw flag beside the
+    /// answer is what lets a reader of a gir tell "may be omitted" from "may be
+    /// null" without going back to the xml.
+    /// </summary>
+    [Fact]
+    public void ReadsNullableAndAllowNoneApart()
+    {
+        GirNamespace ns = ReadNamespace(
+            """
+            <class name="Widget" c:type="TestWidget" glib:type-name="TestWidget" glib:get-type="test_widget_get_type">
+              <method name="paint" c:identifier="test_widget_paint">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none" allow-none="1" nullable="0">
+                    <type name="Widget" c:type="TestWidget*"/>
+                  </instance-parameter>
+                  <parameter name="brush" transfer-ownership="none" allow-none="1" nullable="0">
+                    <type name="utf8" c:type="const gchar*"/>
+                  </parameter>
+                  <parameter name="mask" transfer-ownership="none" allow-none="1">
+                    <type name="utf8" c:type="const gchar*"/>
+                  </parameter>
+                </parameters>
+              </method>
+            </class>
+            """);
+
+        GirFunction paint = Assert.Single(Assert.Single(ns.Classes).Methods);
+
+        GirInstanceParameter instance = paint.InstanceParameter!;
+        Assert.NotNull(instance);
+        Assert.False(instance.IsNullable);
+        Assert.True(instance.IsAllowNone);
+
+        Assert.False(paint.Parameters[0].IsNullable);
+        Assert.True(paint.Parameters[0].IsAllowNone);
+
+        // And the fallback, which is what makes the two flags agree in every
+        // gir of the corpus: no `nullable` at all leaves `allow-none` deciding.
+        Assert.True(paint.Parameters[1].IsNullable);
+        Assert.True(paint.Parameters[1].IsAllowNone);
+    }
+
     private static GirRepository Read(string body) =>
         GirReader.ReadXml(Header + "\n" + body + "\n" + Footer, "fixture.gir");
 

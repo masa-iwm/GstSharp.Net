@@ -41,7 +41,16 @@ internal sealed class GirParameter : GirNode
     /// </summary>
     internal bool IsNullable { get; init; }
 
-    /// <summary>Gets a value indicating whether the raw <c>allow-none</c> attribute was set.</summary>
+    /// <summary>
+    /// Gets a value indicating whether the raw <c>allow-none</c> attribute was
+    /// set. It is informational: nothing plans off it, because the rule it
+    /// would otherwise drive - the nullability of a produced out parameter -
+    /// keys off <see cref="IsNullable"/> on purpose. <c>allow-none</c> on an
+    /// out parameter says the callee may leave it unwritten, which the
+    /// null-on-true rule already covers, and reading it instead would widen a
+    /// statement about what the caller may omit into one about what the caller
+    /// is handed back.
+    /// </summary>
     internal bool IsAllowNone { get; init; }
 
     /// <summary>Gets a value indicating whether an out parameter may be omitted.</summary>
@@ -77,8 +86,23 @@ internal sealed class GirInstanceParameter : GirNode
     /// <summary>Gets the ownership transfer mode.</summary>
     internal GirTransfer Transfer { get; init; }
 
-    /// <summary>Gets a value indicating whether the instance may be <c>NULL</c>.</summary>
+    /// <summary>
+    /// Gets a value indicating whether the instance may be <c>NULL</c>. Falls
+    /// back to the legacy <c>allow-none</c> attribute.
+    /// </summary>
     internal bool IsNullable { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the raw <c>allow-none</c> attribute was
+    /// set. It is informational: nothing plans off it, because the rule it
+    /// would otherwise drive - the nullability of a produced out parameter -
+    /// keys off <see cref="IsNullable"/> on purpose. <c>allow-none</c> on an
+    /// out parameter says the callee may leave it unwritten, which the
+    /// null-on-true rule already covers, and reading it instead would widen a
+    /// statement about what the caller may omit into one about what the caller
+    /// is handed back.
+    /// </summary>
+    internal bool IsAllowNone { get; init; }
 
     /// <summary>Gets the instance type.</summary>
     internal GirTypeRef Type { get; init; } = new GirTypeRef();

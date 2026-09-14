@@ -385,11 +385,20 @@ internal static class GirReader
             return null;
         }
 
+        // The two attributes are read apart, the way ReadParameter reads them:
+        // `nullable` is the statement and `allow-none` the older spelling it
+        // supersedes, so an explicit `nullable` wins and `allow-none` is only
+        // the fallback. Or-ing them would make a gir that says
+        // allow-none="1" nullable="0" mean the opposite of what it says.
+        bool allowNone = Flag(element, "allow-none");
+        bool nullable = element.Attribute("nullable") is { } attribute ? IsSet(attribute.Value) : allowNone;
+
         return new GirInstanceParameter
         {
             Name = Attr(element, "name") ?? string.Empty,
             Transfer = ParseTransfer(Attr(element, "transfer-ownership")),
-            IsNullable = Flag(element, "nullable") || Flag(element, "allow-none"),
+            IsNullable = nullable,
+            IsAllowNone = allowNone,
             Type = ReadTypeOf(element),
             Doc = Doc(element),
         };
