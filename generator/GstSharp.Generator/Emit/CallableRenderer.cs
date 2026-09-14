@@ -2303,14 +2303,23 @@ internal static class CallableRenderer
     /// owns.
     /// </para>
     /// <para>
-    /// The guard for a null head is not a formality: every throwing call of
-    /// the corpus answers <c>NULL</c> along with its <c>GError</c>, and the
-    /// walk would read <c>data</c> off address zero without it.
+    /// No shipped member of the corpus pairs <c>throws="1"</c> with a list
+    /// return, so the block below is emitted by the fixtures of
+    /// <c>ListReturnTests</c> and by nothing else yet. It is written for the
+    /// day one ships rather than for what is there now.
     /// </para>
     /// <para>
-    /// An element the release below has no arm for — an opaque record, which
-    /// no wrapper can free — is left alone, the way the planner leaves the
-    /// same shape unbound on the successful path.
+    /// The guard for a null head is belt and braces: the collect helper
+    /// answers an empty sequence for a zero head and <c>g_list_free</c> takes
+    /// <c>NULL</c>, so the guard states the intent — a call that transferred
+    /// nothing has nothing to release — rather than averting a crash.
+    /// </para>
+    /// <para>
+    /// The fallthrough frees the spine and leaves the elements with their
+    /// owner. That is the whole of the <c>container</c> release; it would also
+    /// catch an owned element the switch below has no arm for, which is an
+    /// opaque record, and the planner already refuses that shape under
+    /// <c>full</c> and <c>floating</c>.
     /// </para>
     /// </remarks>
     private static void WriteFailedListRelease(CodeWriter writer, ReturnPlan value)

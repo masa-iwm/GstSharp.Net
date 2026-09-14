@@ -43,11 +43,12 @@ internal sealed class GirParameter : GirNode
 
     /// <summary>
     /// Gets a value indicating whether the raw <c>allow-none</c> attribute was
-    /// set. It is informational: nothing plans off it, because the rule it
-    /// would otherwise drive - the nullability of a produced out parameter -
-    /// keys off <see cref="IsNullable"/> on purpose. <c>allow-none</c> on an
-    /// out parameter says the callee may leave it unwritten, which the
-    /// null-on-true rule already covers, and reading it instead would widen a
+    /// set. It is informational: nothing plans off it. Where the planner
+    /// consults either flag at all - the nullability of a produced scalar out
+    /// parameter - it reads <see cref="IsNullable"/> on purpose; a produced
+    /// handle out reads neither flag, being nullable unconditionally or by the
+    /// boolean-callee rule. <c>allow-none</c> on an out parameter says the
+    /// callee may leave it unwritten, and reading it instead would widen a
     /// statement about what the caller may omit into one about what the caller
     /// is handed back.
     /// </summary>
@@ -94,11 +95,12 @@ internal sealed class GirInstanceParameter : GirNode
 
     /// <summary>
     /// Gets a value indicating whether the raw <c>allow-none</c> attribute was
-    /// set. It is informational: nothing plans off it, because the rule it
-    /// would otherwise drive - the nullability of a produced out parameter -
-    /// keys off <see cref="IsNullable"/> on purpose. <c>allow-none</c> on an
-    /// out parameter says the callee may leave it unwritten, which the
-    /// null-on-true rule already covers, and reading it instead would widen a
+    /// set. It is informational: nothing plans off it. Where the planner
+    /// consults either flag at all - the nullability of a produced scalar out
+    /// parameter - it reads <see cref="IsNullable"/> on purpose; a produced
+    /// handle out reads neither flag, being nullable unconditionally or by the
+    /// boolean-callee rule. <c>allow-none</c> on an out parameter says the
+    /// callee may leave it unwritten, and reading it instead would widen a
     /// statement about what the caller may omit into one about what the caller
     /// is handed back.
     /// </summary>

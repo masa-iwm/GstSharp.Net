@@ -832,14 +832,16 @@ public sealed class HashTableArgumentTests
         Assert.DoesNotContain("GetSlots", Run.File("Widget.cs"), StringComparison.Ordinal);
 
     /// <summary>
-    /// A correction of that annotation does not move it either. The overlays
-    /// reach the return value of every other shape, and the precedence here is
-    /// the other way round on purpose: what the runtime helper answers is a
-    /// fact about this binding, which no statement about the C function can
-    /// change.
+    /// What the overlays cannot move is the nullability of a table of strings:
+    /// a correction that calls the return non-nullable leaves the member
+    /// nullable all the same, because what the runtime helper answers for an
+    /// absent table is a fact about this binding, which no statement about the
+    /// C function can change. The correction is not ignored everywhere,
+    /// though — on a table of GObjects it decides whether the member exists at
+    /// all, which is the test below.
     /// </summary>
     [Fact]
-    public void AnOverlayDoesNotMoveTheNullabilityOfATable()
+    public void AnOverlayDoesNotMoveTheNullabilityOfATableOfStrings()
     {
         FixtureRun run = RunWithOverlay(
             """
@@ -854,6 +856,32 @@ public sealed class HashTableArgumentTests
             "public System.Collections.Generic.Dictionary<string, string?>? GetTags()",
             run.File("Widget.cs"),
             StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The mirror of it, and the one correction of a table annotation that
+    /// does move a member: a gir that says nothing about the nullability of a
+    /// borrowed table of GObjects is bound, and an overlay that calls the same
+    /// return nullable refuses it, exactly as a gir that spelled it would.
+    /// The refusal is the same one <c>get_slots</c> gets, so it lands in the
+    /// same bucket, which is what keeps the correction from being a quieter
+    /// kind of skip than the annotation it corrects.
+    /// </summary>
+    [Fact]
+    public void AnOverlayCallingABorrowedTableOfObjectsNullableRefusesIt()
+    {
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": {
+                "gst_widget_get_bindings#return": { "nullable": true, "$comment": "gstwidget.c:2" }
+              }
+            }
+            """);
+
+        Assert.DoesNotContain("GetBindings", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.Contains("gst_widget_get_bindings", UnsupportedSymbols(run));
+        Assert.Equal(21, run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
     }
 
     /// <summary>
