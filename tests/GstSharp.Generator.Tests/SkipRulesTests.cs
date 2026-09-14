@@ -235,7 +235,7 @@ public sealed class SkipRulesTests
         // gpointer beside its size, which no array override may turn into an
         // array. All six are hand written in src/GstSharp.Net.Rtp/Custom
         // beside the two guint8* returns the planner already refuses.
-        // The RTSP server group is eight entries. gst_rtsp_client_set_send_func
+        // The RTSP server group is seven entries. gst_rtsp_client_set_send_func
         // and gst_rtsp_client_set_send_messages_func are unreachable on every
         // path that exists: the attach of a client installs the send functions
         // of the server over whatever was there, and the client-connected
