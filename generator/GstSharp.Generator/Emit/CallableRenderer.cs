@@ -2216,9 +2216,10 @@ internal static class CallableRenderer
     /// copy and hands it straight back.
     /// </para>
     /// <para>
-    /// The three kinds below are the ones the bound surface has. No throwing
-    /// callable returns an owned opaque record, string vector, list or array,
-    /// so nothing is emitted for those and a new one would leak the way this
+    /// The three kinds below are the ones the bound surface has, and a list is
+    /// written beside them by <see cref="WriteFailedListRelease"/>. No throwing
+    /// callable returns an owned opaque record, string vector or array, so
+    /// nothing is emitted for those and a new one would leak the way this
     /// fixes — the shape is pinned by a test for that reason.
     /// </para>
     /// </remarks>
@@ -2241,7 +2242,21 @@ internal static class CallableRenderer
         }
 
         ReturnPlan value = plan.Return;
-        if (value.IsVoid || value.Transfer is not (GirTransfer.Full or GirTransfer.Floating))
+        if (value.IsVoid)
+        {
+            return;
+        }
+
+        // A list is the one return whose release is not a single call and
+        // whose container transfer has something to release all the same, so
+        // it is written out on its own before the transfer is read.
+        if (value.Kind == ArgumentKind.GListReturn)
+        {
+            WriteFailedListRelease(writer, value);
+            return;
+        }
+
+        if (value.Transfer is not (GirTransfer.Full or GirTransfer.Floating))
         {
             return;
         }
@@ -2267,6 +2282,77 @@ internal static class CallableRenderer
         writer.WriteLine("// The call failed and transferred a value all the same. The throw");
         writer.WriteLine("// below puts it out of reach, so it is released rather than leaked.");
         writer.WriteLine(release);
+        writer.CloseBlock();
+    }
+
+    /// <summary>
+    /// Releases the list a throwing call handed back before the throw puts it
+    /// out of reach.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="value">The return being released.</param>
+    /// <remarks>
+    /// <para>
+    /// A list has two halves and the transfer names them separately, so the
+    /// release is the one the successful path would have performed and no
+    /// more: <c>full</c> frees the spine and releases every element,
+    /// <c>container</c> frees the spine and leaves the elements with their
+    /// owner, and <c>none</c> releases nothing at all. The walk is the one
+    /// <see cref="WriteListConversion"/> makes, down to the list type the
+    /// spine goes back to, because the two have to agree on what the caller
+    /// owns.
+    /// </para>
+    /// <para>
+    /// The guard for a null head is not a formality: every throwing call of
+    /// the corpus answers <c>NULL</c> along with its <c>GError</c>, and the
+    /// walk would read <c>data</c> off address zero without it.
+    /// </para>
+    /// <para>
+    /// An element the release below has no arm for — an opaque record, which
+    /// no wrapper can free — is left alone, the way the planner leaves the
+    /// same shape unbound on the successful path.
+    /// </para>
+    /// </remarks>
+    private static void WriteFailedListRelease(CodeWriter writer, ReturnPlan value)
+    {
+        if (value.Transfer == GirTransfer.None)
+        {
+            return;
+        }
+
+        string singly = value.IsSinglyLinked ? "true" : "false";
+        string? element = value.ElementKind == ArgumentKind.Utf8
+            ? "Gst.Interop.GMarshal.Free(" + ItemLocal + ");"
+            : value.Flavor switch
+            {
+                HandleFlavor.GObject => "Gst.Interop.GObjectNative.ObjectUnref(" + ItemLocal + ");",
+                HandleFlavor.Wrapper => TrimNullable(value.ElementType!) + ".FromNative(" + ItemLocal
+                    + ", Gst.Interop.Transfer.Full)?.Dispose();",
+                _ => null,
+            };
+
+        writer.WriteLine("if (errorNative != 0 && " + ResultLocal + " != 0)");
+        writer.OpenBlock();
+        writer.WriteLine("// The call failed and transferred a value all the same. The throw");
+        writer.WriteLine("// below puts it out of reach, so it is released rather than leaked.");
+        if (value.Transfer is GirTransfer.Full or GirTransfer.Floating && element is not null)
+        {
+            writer.WriteLine(
+                "foreach (nint " + ItemLocal + " in Gst.Interop.GListMarshal.CollectAndFreeSpine("
+                + ResultLocal + ", singly: " + singly + "))");
+            writer.OpenBlock();
+            writer.WriteLine("if (" + ItemLocal + " != 0)");
+            writer.OpenBlock();
+            writer.WriteLine(element);
+            writer.CloseBlock();
+            writer.CloseBlock();
+        }
+        else
+        {
+            writer.WriteLine(
+                "Gst.Interop.GListMarshal.FreeSpine(" + ResultLocal + ", singly: " + singly + ");");
+        }
+
         writer.CloseBlock();
     }
 

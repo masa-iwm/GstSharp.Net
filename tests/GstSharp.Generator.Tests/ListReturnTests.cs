@@ -26,7 +26,10 @@ public sealed class ListReturnTests
     /// <c>transfer-ownership="container"</c> list of records the library keeps.
     /// <c>steal_polls</c> hands the records over, which no opaque wrapper can
     /// release, and <c>peek_names</c> is the borrowed twin whose spine stays the
-    /// library's. <c>list_marks</c> is the slot.
+    /// library's. <c>list_marks</c> is the slot. <c>take_names</c> and
+    /// <c>lend_polls</c> are the same two transfers with a <c>GError</c> beside
+    /// them, which is the shape no bound module spells and the one the error
+    /// path of a list release is written for.
     /// </summary>
     private const string Body =
         """
@@ -50,6 +53,20 @@ public sealed class ListReturnTests
               <return-value transfer-ownership="none">
                 <type name="GLib.SList" c:type="GSList*">
                   <type name="utf8"/>
+                </type>
+              </return-value>
+            </function>
+            <function name="take_names" c:identifier="gst_take_names" throws="1">
+              <return-value transfer-ownership="full">
+                <type name="GLib.List" c:type="GList*">
+                  <type name="utf8"/>
+                </type>
+              </return-value>
+            </function>
+            <function name="lend_polls" c:identifier="gst_lend_polls" throws="1">
+              <return-value transfer-ownership="container">
+                <type name="GLib.SList" c:type="GSList*">
+                  <type name="Poll"/>
                 </type>
               </return-value>
             </function>
@@ -178,6 +195,76 @@ public sealed class ListReturnTests
     [Fact]
     public void OnlyTheOwnedOpaqueListIsSkipped() =>
         Assert.Equal(1, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+
+    /// <summary>
+    /// A throwing call that hands a list over releases it before the throw, and
+    /// releases exactly what the successful path would have: the spine goes
+    /// back to the allocator of its own list type and every element with it,
+    /// because a GError and a transferred list arrive together and the throw
+    /// puts the list out of reach.
+    /// </summary>
+    [Fact]
+    public void AThrowingCallThatOwnsItsListReleasesTheSpineAndTheElements() =>
+        Assert.Equal(
+            """
+            public static System.Collections.Generic.IReadOnlyList<string> TakeNames()
+            {
+                nint errorNative = 0;
+                nint nativeResult = GstTakeNames(&errorNative);
+                if (errorNative != 0 && nativeResult != 0)
+                {
+                    // The call failed and transferred a value all the same. The throw
+                    // below puts it out of reach, so it is released rather than leaked.
+                    foreach (nint nativeItem in Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult, singly: false))
+                    {
+                        if (nativeItem != 0)
+                        {
+                            Gst.Interop.GMarshal.Free(nativeItem);
+                        }
+                    }
+                }
+                Gst.GLib.GException.ThrowIfSet(ref errorNative);
+                nint[] nativeItems = Gst.Interop.GListMarshal.CollectAndFreeSpine(nativeResult);
+                System.Collections.Generic.List<string> result = new(nativeItems.Length);
+                foreach (nint nativeItem in nativeItems)
+                {
+                    if (nativeItem != 0 && Gst.Interop.GMarshal.PtrToStringUtf8AndFree(nativeItem) is { } adopted)
+                    {
+                        result.Add(adopted);
+                    }
+                }
+
+                return result;
+            }
+            """,
+            Run.Member("Global.cs", "public static System.Collections.Generic.IReadOnlyList<string> TakeNames("),
+            StringComparer.Ordinal);
+
+    /// <summary>
+    /// And the half transfer beside it: the caller owns the spine alone, so the
+    /// error path frees the spine and leaves the elements where the successful
+    /// path leaves them, with the library that owns them.
+    /// </summary>
+    [Fact]
+    public void AThrowingCallThatOwnsOnlyTheSpineReleasesTheSpine()
+    {
+        string member = Run.Member(
+            "Global.cs",
+            "public static System.Collections.Generic.IReadOnlyList<Gst.Poll> LendPolls(");
+
+        Assert.Contains(
+            """
+                if (errorNative != 0 && nativeResult != 0)
+                {
+                    // The call failed and transferred a value all the same. The throw
+                    // below puts it out of reach, so it is released rather than leaked.
+                    Gst.Interop.GListMarshal.FreeSpine(nativeResult, singly: true);
+                }
+            """,
+            member,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("Gst.Poll.FromNative(nativeItem, ", member, StringComparison.Ordinal);
+    }
 
     private static FixtureRun RunWithOverlay(string fixups)
     {

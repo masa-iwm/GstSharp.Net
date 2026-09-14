@@ -608,10 +608,12 @@ public sealed class ClassEmitterTests
     public void EveryThrowingCallableThatOwnsItsResultReleasesIt()
     {
         // The guard is emitted for a transferred handle and a transferred
-        // string, which is every owned return the bound surface throws with. A
-        // new one of a kind the emitter does not cover — an opaque record, a
-        // string vector, a list, an array — would leak silently, so the count
-        // is frozen here and a change to it has to be looked at.
+        // string, which is every owned return the bound surface throws with,
+        // and for a list, which no bound symbol pairs with a GError yet but
+        // which the emitter covers all the same (ListReturnTests holds that
+        // arm honest). A new one of a kind the emitter does not cover — an
+        // opaque record, a string vector, an array — would leak silently, so
+        // the count is frozen here and a change to it has to be looked at.
         int guards = 0;
         foreach (GeneratedFile file in Generated.Files)
         {
