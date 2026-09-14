@@ -608,6 +608,61 @@ public sealed class HashTableArgumentTests
             StringComparison.Ordinal);
 
     /// <summary>
+    /// The difference between an absent table and an empty one is stated only
+    /// where a caller can produce the first. A nullable table carries the
+    /// sentence, because leaving the dictionary out is a call the member
+    /// makes; a table the member guards against null carries it not, because
+    /// the state it describes is one the signature already refuses.
+    /// </summary>
+    [Fact]
+    public void OnlyANullableTableIsToldApartFromAnEmptyOne()
+    {
+        const string sentence = "a null dictionary is not an empty one";
+        string file = Run.File("Widget.cs");
+
+        Assert.Contains(sentence, Documentation(file, "public bool SetTags("), StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            sentence,
+            Documentation(file, "public void SetLabels("),
+            StringComparison.Ordinal);
+
+        // The rest of the note is the same one, so the shorter form is the
+        // same paragraph with its last sentence closed a clause earlier.
+        Assert.Contains(
+            "/// all, which is a state C spells.",
+            Documentation(file, "public void SetLabels("),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Reads the documentation comment that stands above one member.
+    /// </summary>
+    /// <param name="file">The generated source text.</param>
+    /// <param name="signature">The start of the member declaration.</param>
+    /// <returns>The <c>///</c> lines directly above the declaration.</returns>
+    private static string Documentation(string file, string signature)
+    {
+        string[] lines = file.Split('\n');
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (!lines[i].TrimStart().StartsWith(signature, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            int first = i;
+            while (first > 0 && lines[first - 1].TrimStart().StartsWith("///", StringComparison.Ordinal))
+            {
+                first--;
+            }
+
+            return string.Join("\n", lines[first..i]);
+        }
+
+        throw new InvalidOperationException($"No member starting with '{signature}' was generated.");
+    }
+
+    /// <summary>
     /// A table of strings the library keeps owning has no shape here: the copy
     /// would be right and the member would read as a snapshot of a table the
     /// caller cannot see change, which is a contract no bound symbol states.

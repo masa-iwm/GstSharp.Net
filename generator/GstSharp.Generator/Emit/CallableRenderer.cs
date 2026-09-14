@@ -262,10 +262,11 @@ internal static class CallableRenderer
     ];
 
     /// <summary>
-    /// The note of a table a call is given. It says the three things the
-    /// signature does not: the entries are copied, a null value is a key that
-    /// carries none, and an absent table is not an empty one — the opposite of
-    /// the rule a list follows, where the two are the same argument.
+    /// The note of a nullable table a call is given. It says the three things
+    /// the signature does not: the entries are copied, a null value is a key
+    /// that carries none, and an absent table is not an empty one — the
+    /// opposite of the rule a list follows, where the two are the same
+    /// argument.
     /// </summary>
     private static readonly string[] BorrowedTableNote =
     [
@@ -275,6 +276,23 @@ internal static class CallableRenderer
         "affecting what the call kept. A null value is a key that carries no value at",
         "all, which is a state C spells, and a null dictionary is not an empty one:",
         "the first is the absence of a table and the second a table with no entries.",
+    ];
+
+    /// <summary>
+    /// The same note for a table the member does not let a caller leave out.
+    /// The last sentence of the one above tells an absent table from an empty
+    /// one, which is a distinction a non-nullable argument cannot express: the
+    /// member guards the dictionary against null before the first entry is
+    /// read, so the only table the call ever sees is one that exists. Saying it
+    /// anyway would document a state the signature refuses.
+    /// </summary>
+    private static readonly string[] BorrowedRequiredTableNote =
+    [
+        "The entries are copied into a native table that is built for the call and",
+        "released when it returns. A callee that keeps the table takes a reference of",
+        "its own first, so the dictionary may be changed or dropped afterwards without",
+        "affecting what the call kept. A null value is a key that carries no value at",
+        "all, which is a state C spells.",
     ];
 
     /// <summary>
@@ -763,7 +781,9 @@ internal static class CallableRenderer
             ArgumentKind.ListIn => argument.Transfer == GirTransfer.Full
                 ? ConsumedListNote
                 : BorrowedListNote,
-            ArgumentKind.HashTableIn => BorrowedTableNote,
+            ArgumentKind.HashTableIn => argument.IsNullable
+                ? BorrowedTableNote
+                : BorrowedRequiredTableNote,
             _ => null,
         };
     }
