@@ -3713,7 +3713,7 @@ internal sealed class MarshalPlanner
         // two inner types.
         if (mapped.Kind == MarshalKind.GHashTable)
         {
-            return PlanHashTableReturn(value, mapped, transfer);
+            return PlanHashTableReturn(value, mapped, transfer, nullable);
         }
 
         if (effective is GirArrayRef array)
@@ -4167,6 +4167,10 @@ internal sealed class MarshalPlanner
     /// <param name="value">The gir return value.</param>
     /// <param name="mapped">Its mapping, whose key and value types carry the payload.</param>
     /// <param name="transfer">What the call transfers along with the table.</param>
+    /// <param name="annotated">
+    /// What the gir says about the nullability of the return, after an
+    /// <c>annotationOverrides</c> correction of it.
+    /// </param>
     /// <returns>The plan, or <see langword="null"/> when the shape is not supported.</returns>
     /// <remarks>
     /// <para>
@@ -4201,21 +4205,35 @@ internal sealed class MarshalPlanner
     /// entry that carries none is refused at run time rather than hidden.
     /// </para>
     /// <para>
-    /// The nullability of the table itself is decided the same way, by the
-    /// shape rather than by the gir, and it takes precedence over both the
-    /// annotation and an <c>annotationOverrides</c> correction of it. The two
-    /// runtime helpers each answer one thing: the one that reads a table of
-    /// strings answers <see langword="null"/> for an absent table, so the
-    /// member is nullable however the gir spells it, and the one that reads a
-    /// table of GObjects never answers <see langword="null"/>, so the member is
-    /// not. Following the gir instead would emit a member whose declared type
-    /// the helper cannot fill — a non-nullable local assigned a nullable
-    /// answer, which this repository compiles as an error — or one whose
-    /// callers test for a null a caller can never be handed. This is what
-    /// <see cref="PlanListReturn"/> does with the same reasoning.
+    /// The nullability of the table itself is decided by the shape, because
+    /// the two runtime helpers each answer one thing. The one that reads a
+    /// table of strings answers <see langword="null"/> for an absent table, so
+    /// that member is nullable however the gir spells it and the annotation,
+    /// or a correction of it, is beside the point: following the gir instead
+    /// would emit a member whose declared type the helper cannot fill — a
+    /// non-nullable local assigned a nullable answer, which this repository
+    /// compiles as an error. This is what <see cref="PlanListReturn"/> does
+    /// with the same reasoning.
+    /// </para>
+    /// <para>
+    /// The one that reads a table of GObjects never answers
+    /// <see langword="null"/>, which makes the shape non-nullable and a gir
+    /// that says otherwise a disagreement rather than noise. Such a return is
+    /// refused rather than forced: the values are borrowed, so an absent table
+    /// cannot be told from an empty one by snapshotting it — the copy that
+    /// takes a reference per value has nothing to take a reference to, and
+    /// answering an empty dictionary would erase a state the C function
+    /// spells. There is no managed shape for it, so the member is left out and
+    /// the ledger reports it as <see cref="SkipReason.UnsupportedSignature"/>.
+    /// No symbol of the seventeen modules has the shape; a synthetic fixture
+    /// is what keeps the refusal honest.
     /// </para>
     /// </remarks>
-    private ReturnPlan? PlanHashTableReturn(GirReturnValue value, MappedType mapped, GirTransfer transfer)
+    private ReturnPlan? PlanHashTableReturn(
+        GirReturnValue value,
+        MappedType mapped,
+        GirTransfer transfer,
+        bool annotated)
     {
         if (mapped.KeyType is not { Kind: MarshalKind.Utf8String }
             || mapped.ElementType is not { } element)
@@ -4240,6 +4258,17 @@ internal sealed class MarshalPlanner
                 if (element.Symbol is not { } symbol
                     || !IsEmitted(symbol)
                     || UnusableTypes.Contains(element.PublicType))
+                {
+                    return null;
+                }
+
+                // A nullable transfer-none table of GObjects has no managed
+                // shape: NULL is not an empty table, and the values are
+                // borrowed, so the absence cannot be snapshotted into a null
+                // the way the copy snapshots the entries. Refusing it is the
+                // honest answer; forcing the member non-nullable would hide a
+                // state the C function spells.
+                if (annotated)
                 {
                     return null;
                 }

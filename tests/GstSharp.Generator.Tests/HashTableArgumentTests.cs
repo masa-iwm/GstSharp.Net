@@ -31,7 +31,8 @@ public sealed class HashTableArgumentTests
     /// trampoline would have to hand back. <c>get_marks</c> and
     /// <c>get_slots</c> are the two accepted shapes with the nullability the
     /// gir states reversed, which is the one thing the projection does not read
-    /// off the gir.
+    /// off the gir: the table of strings keeps its own answer and the table of
+    /// GObjects, which cannot have one, is refused instead.
     /// </summary>
     private const string Body =
         """
@@ -818,17 +819,17 @@ public sealed class HashTableArgumentTests
             StringComparison.Ordinal);
 
     /// <summary>
-    /// And the mirror of it: a table of GObjects is never nullable, because the
-    /// helper that reads one never answers nothing. A gir that marks the return
-    /// nullable would otherwise buy its callers a null test they can never see
-    /// pass.
+    /// And the mirror of it: a table of GObjects the library keeps owning is
+    /// not nullable, because the helper that reads one never answers nothing.
+    /// A gir that marks such a return nullable is a disagreement and not
+    /// noise, so the member is left out rather than emitted with the
+    /// annotation overruled — the values are borrowed, so the copy cannot tell
+    /// an absent table from an empty one, and answering an empty dictionary
+    /// would erase a state the C function spells.
     /// </summary>
     [Fact]
-    public void ATableOfObjectsIsNotNullableWhateverTheGirSays() =>
-        Assert.Contains(
-            "public System.Collections.Generic.Dictionary<string, Gst.Widget> GetSlots()",
-            Run.File("Widget.cs"),
-            StringComparison.Ordinal);
+    public void ANullableTableOfObjectsTheLibraryKeepsStaysUnbound() =>
+        Assert.DoesNotContain("GetSlots", Run.File("Widget.cs"), StringComparison.Ordinal);
 
     /// <summary>
     /// A correction of that annotation does not move it either. The overlays
@@ -866,7 +867,7 @@ public sealed class HashTableArgumentTests
     [Fact]
     public void OnlyTheRejectedShapesAreSkipped()
     {
-        Assert.Equal(19, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
+        Assert.Equal(20, Run.Result.Census.SkippedCount("Gst", SkipReason.UnsupportedSignature));
 
         Assert.Equal(
             [
@@ -878,6 +879,7 @@ public sealed class HashTableArgumentTests
                 "gst_widget_get_codes",
                 "gst_widget_get_polls",
                 "gst_widget_get_segments",
+                "gst_widget_get_slots",
                 "gst_widget_get_values",
                 "gst_widget_lend_tags",
                 "gst_widget_peek_tags",
