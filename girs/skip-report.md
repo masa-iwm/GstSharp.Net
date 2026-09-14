@@ -1206,20 +1206,27 @@ disappears shows up here as an added line.
 
 - `gst_webrtc_data_channel_send_data`
 
-## Virtuals (17)
+## Virtuals (24)
 
-The class struct slots of a subclassable class that carry no `OnX` member, with
-the reason. `UnsupportedSignature` is the planner refusing a shape and
-`OpaqueSlot` is a function pointer field the mirror lays out with no virtual
-method to pair it with; every other reason is the statement of an overlay
-entry. The mirror still lays every slot out, so what is listed here is the
-managed surface and not the ABI.
+The class struct slots that carry no `OnX` member, with the reason.
+`UnsupportedSignature` is the planner refusing a shape, `OpaqueSlot` is a
+function pointer field the mirror lays out with no virtual method to pair it
+with, and `NotSubclassable` is a class that is only on the chain of a
+subclassable one and has no managed surface of its own; every other reason is
+the statement of an overlay entry. The mirror still lays every slot out, so
+what is listed here is the managed surface and not the ABI.
 
-### GES (10)
+### GES (16)
 
 - `GES.AudioSource::create_source` — OpaqueSlot
 - `GES.Clip::create_track_elements` — the slot answers a GList whose container the caller takes, which the reverse planner has no bucket for; the C default implementation wraps create_track_element (ges-clip.c:2796-2808), so a managed clip that implements create_track_element already behaves the way this slot would make it behave
+- `GES.Container::add_child` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
+- `GES.Container::child_added` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
+- `GES.Container::child_removed` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
+- `GES.Container::edit` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
 - `GES.Container::group` — OpaqueSlot
+- `GES.Container::remove_child` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
+- `GES.Container::ungroup` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
 - `GES.TimelineElement::set_child_property_full` — the slot is throws="1" and PlanVirtualMethod refuses every throwing slot outright (MarshalPlanner.cs:4941-4945): carrying a GError back out of a managed override is a contract of its own that no slot of the corpus has yet, and the base class falls back to set_child_property when the slot is NULL (ges-timeline-element.c:828-836), so OnSetChildProperty is reached from every public setter in the meantime
 - `GES.TrackElement::list_children_properties` — the deprecated slot (Deprecated: 1.14) is dead: nothing in the 1.28 tree assigns it and nothing calls through it (the only list_children_properties slot ges reads is the timeline-element one, ges-timeline-element.c:650), so an override of it would never run
 - `GES.TrackElement::lookup_child` — the deprecated slot (Deprecated: 1.14) is assigned once, to a forwarder onto the timeline-element slot (ges-track-element.c:137-143, :497), and no code in ges calls through it; an OnLookupChild on the track element mirror would also hide the live inherited one, which is the steering hazard the deprecated method twin is skipped for
@@ -1228,7 +1235,7 @@ managed surface and not the ABI.
 - `GES.VideoSource::get_natural_size` — OpaqueSlot
 - `GES.VideoSource::needs_converters` — OpaqueSlot
 
-### Gst (7)
+### Gst (8)
 
 - `Gst.Bin::deep_element_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Bin::deep_element_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
@@ -1237,6 +1244,7 @@ managed surface and not the ABI.
 - `Gst.Element::no_more_pads` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
+- `Gst.Object::deep_notify` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
 
 ## Fields (142)
 

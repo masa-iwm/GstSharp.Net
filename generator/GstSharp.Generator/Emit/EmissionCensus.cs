@@ -367,12 +367,13 @@ internal sealed class EmissionCensus
             CultureInfo.InvariantCulture,
             $"## Virtuals ({SkippedVirtualCount()})"));
         writer.WriteLine();
-        writer.WriteLine("The class struct slots of a subclassable class that carry no `OnX` member, with");
-        writer.WriteLine("the reason. `UnsupportedSignature` is the planner refusing a shape and");
-        writer.WriteLine("`OpaqueSlot` is a function pointer field the mirror lays out with no virtual");
-        writer.WriteLine("method to pair it with; every other reason is the statement of an overlay");
-        writer.WriteLine("entry. The mirror still lays every slot out, so what is listed here is the");
-        writer.WriteLine("managed surface and not the ABI.");
+        writer.WriteLine("The class struct slots that carry no `OnX` member, with the reason.");
+        writer.WriteLine("`UnsupportedSignature` is the planner refusing a shape, `OpaqueSlot` is a");
+        writer.WriteLine("function pointer field the mirror lays out with no virtual method to pair it");
+        writer.WriteLine("with, and `NotSubclassable` is a class that is only on the chain of a");
+        writer.WriteLine("subclassable one and has no managed surface of its own; every other reason is");
+        writer.WriteLine("the statement of an overlay entry. The mirror still lays every slot out, so");
+        writer.WriteLine("what is listed here is the managed surface and not the ABI.");
 
         foreach ((string module, SortedDictionary<string, string> slots) in _skippedVirtuals)
         {

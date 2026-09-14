@@ -86,6 +86,9 @@ public sealed class SubclassCensusTests
     {
         EmissionCensus census = Generated.Census;
 
+        const string ChainOnly =
+            "NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable "
+            + "only through chain-up";
         const string ClassClosure =
             "signal class closure: read by g_signal at emission time, never called through the class "
             + "pointer by the base class; managed code subscribes to the signal instead";
@@ -99,6 +102,7 @@ public sealed class SubclassCensusTests
                 ["Gst.Element::no_more_pads"] = ClassClosure,
                 ["Gst.Element::pad_added"] = ClassClosure,
                 ["Gst.Element::pad_removed"] = ClassClosure,
+                ["Gst.Object::deep_notify"] = ChainOnly,
             },
             census.SkippedVirtuals("Gst"));
 
@@ -134,7 +138,13 @@ public sealed class SubclassCensusTests
             {
                 ["GES.AudioSource::create_source"] = Opaque,
                 ["GES.Clip::create_track_elements"] = GListReturn,
+                ["GES.Container::add_child"] = ChainOnly,
+                ["GES.Container::child_added"] = ChainOnly,
+                ["GES.Container::child_removed"] = ChainOnly,
+                ["GES.Container::edit"] = ChainOnly,
                 ["GES.Container::group"] = Opaque,
+                ["GES.Container::remove_child"] = ChainOnly,
+                ["GES.Container::ungroup"] = ChainOnly,
                 ["GES.TimelineElement::set_child_property_full"] = ThrowingSlot,
                 ["GES.TrackElement::list_children_properties"] = DeadListSlot,
                 ["GES.TrackElement::lookup_child"] = DeadLookupSlot,
@@ -145,6 +155,6 @@ public sealed class SubclassCensusTests
             },
             census.SkippedVirtuals("GES"));
 
-        Assert.Equal(17, census.SkippedVirtualCount());
+        Assert.Equal(24, census.SkippedVirtualCount());
     }
 }

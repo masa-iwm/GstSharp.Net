@@ -31,6 +31,18 @@ internal sealed class ClassStructEmitter
     private const string MirrorSuffix = "ClassRaw";
 
     /// <summary>
+    /// What the skip ledger prints for the real slots of a class that is only
+    /// on the chain of a subclassable one. The mirror exists because a derived
+    /// mirror embeds it by value, and the slots are laid out for the same
+    /// reason; what is missing is a managed surface, which the class was never
+    /// meant to have. It is a statement of the allowlist rather than a shape
+    /// the planner refused.
+    /// </summary>
+    private const string NotSubclassableReason =
+        "NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable "
+        + "only through chain-up";
+
+    /// <summary>
     /// The width of a pointer, which is what the filler of a class struct union
     /// is measured in. Every target of this binding is 64 bit.
     /// </summary>
@@ -263,6 +275,19 @@ internal sealed class ClassStructEmitter
 
             if (member.IsSlot)
             {
+                // A mirror that stands on the chain of a subclassable class
+                // without being one itself still lays its slots out, and
+                // VfuncEmitter never reaches it, so nothing else would report
+                // them. Recording them here is what keeps the ## Virtuals
+                // section the whole list of C slots without an OnX member.
+                if (!model.IsSubclassable)
+                {
+                    _census.SkippedVirtual(
+                        module.GirNamespace,
+                        model.KeyOf(field.Name),
+                        NotSubclassableReason);
+                }
+
                 slots.Add(name);
                 writer.WriteLine("/// <summary>The <c>" + field.Name + "</c> slot.</summary>");
                 writer.WriteLine("internal nint " + name + ";");
