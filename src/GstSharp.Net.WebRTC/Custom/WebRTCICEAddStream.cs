@@ -96,9 +96,8 @@ public abstract unsafe partial class WebRTCICE
     /// bare <c>IsAtLeast(1, 26, 10)</c> would also answer
     /// <see langword="true"/> for 1.27.1, where the fix is not. The read needs
     /// an initialised binding, which is given: the only caller is
-    /// <see cref="AddStream"/>, and a live
-    /// <c>WebRTCICE</c> wrapper cannot exist before <c>GstSharp.Initialize</c>
-    /// has run.
+    /// <see cref="AddStream"/>, and a live <c>WebRTCICE</c> wrapper cannot
+    /// exist before <c>GstSharp.Initialize</c> has run.
     /// </remarks>
     private static bool ComputeAddStreamReturnsItsOwnReference()
     {

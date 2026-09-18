@@ -20,7 +20,7 @@ namespace GstSharp.IntegrationTests;
 /// assertion.
 /// </para>
 /// <para>
-/// Below 1.28 the implementation is there and answers the question. A stream
+/// Below 1.27.50 the implementation is there and answers the question. A stream
 /// fresh from <c>AddStream</c> has selected nothing, which
 /// <c>gst_webrtc_nice_get_selected_pair</c> (nice.c 1.24.13:1249-1274,
 /// identical at 1.26.11) answers with <c>FALSE</c>, leaving both out pointers
@@ -68,35 +68,41 @@ public sealed class WebRTCICESelectedPairTests
         using WebRTCICEStream? stream = ice.AddStream(1);
         Assert.NotNull(stream);
 
-        // The member under test is deprecated upstream as of 1.28, which is
-        // what the binding marks it with; the test of a deprecated member is
-        // where the obsolete call is the point.
-#pragma warning disable CS0618
-        // The member gates on 1.27.50 while this branches on the symbol
-        // NativeAvailability probes, whose first tag is 1.27.90, so the
-        // unstable 1.27 band is knowingly unmeasured here: no release series
-        // lives there.
-        if (NativeAvailability.Has128)
-        {
-            Assert.Throws<NotSupportedException>(
-                () => ice.GetSelectedPair(stream, out _, out _));
-        }
-        else
-        {
-            bool selected = ice.GetSelectedPair(
-                stream,
-                out WebRTCICECandidateStats? localStats,
-                out WebRTCICECandidateStats? remoteStats);
-
-            Assert.False(selected);
-            Assert.Null(localStats);
-            Assert.Null(remoteStats);
-        }
-#pragma warning restore CS0618
-
         // gst_element_dispose refuses an element that is not in NULL
         // (1.28.6 gstelement.c:3423-3431: a g_critical and no dispose), so the
-        // pipeline goes back before the using disposes it.
-        pipeline.SetState(State.Null);
+        // pipeline goes back before the using disposes it, on the failing path
+        // too.
+        try
+        {
+            // The member under test is deprecated upstream as of 1.28, which
+            // is what the binding marks it with; the test of a deprecated
+            // member is where the obsolete call is the point.
+#pragma warning disable CS0618
+            // The member gates on 1.27.50 while this branches on the symbol
+            // NativeAvailability probes, whose first tag is 1.27.90, so the
+            // unstable 1.27 band is knowingly unmeasured here: no release
+            // series lives there.
+            if (NativeAvailability.Has128)
+            {
+                Assert.Throws<NotSupportedException>(
+                    () => ice.GetSelectedPair(stream, out _, out _));
+            }
+            else
+            {
+                bool selected = ice.GetSelectedPair(
+                    stream,
+                    out WebRTCICECandidateStats? localStats,
+                    out WebRTCICECandidateStats? remoteStats);
+
+                Assert.False(selected);
+                Assert.Null(localStats);
+                Assert.Null(remoteStats);
+            }
+#pragma warning restore CS0618
+        }
+        finally
+        {
+            pipeline.SetState(State.Null);
+        }
     }
 }
