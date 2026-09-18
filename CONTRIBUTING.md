@@ -288,6 +288,19 @@ The remaining keys address a callback type and a member rather than a slot:
 * `signalDocNotes` — the same thing for a signal, keyed by the GObject
   spelling of it, `GES.Timeline::select-tracks-for-object`. An entry that names
   no rendered signal is reported as `GEN0048`.
+* `annotationOverrides` on a signal argument — keyed by the GObject spelling of
+  the signal and the gir name of the argument,
+  `GstApp.AppSink::propose-allocation#query`, and read for two flags only.
+  `nullable` corrects what the emission may pass; `borrow` hands the handler a
+  wrapper that borrows the mini object or the boxed value of the emitter
+  instead of one holding a reference or a copy of its own, which is the only
+  way the argument is writable in place. A `borrow` is legal on nothing else
+  than an argument projected onto one of those two wrappers — anything else is
+  `GEN0054`, an error — and it states two facts about the C that no gir
+  carries: the signal registered the argument `G_SIGNAL_TYPE_STATIC_SCOPE`, so
+  GObject copies it on no emission path, and the emitter reads back what the
+  handler wrote. An entry that names no argument of a rendered signal is
+  reported as `GEN0024` like any other stale annotation override.
 * `preconditions` — C# statements the generated body of a callable runs before
   it marshals anything, keyed by `c:identifier`. They keep a member off a call
   the C answers with a crash or with a critical. The helper each one calls is

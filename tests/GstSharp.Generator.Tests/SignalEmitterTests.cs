@@ -80,6 +80,59 @@ public sealed class SignalEmitterTests
             </class>
         """;
 
+    /// <summary>
+    /// The same mini object beside a callback that a method hands over, which
+    /// is the other inbound path a <c>borrow</c> entry can land on and the one
+    /// that does not honour it.
+    /// </summary>
+    private const string CallbackFixture =
+        """
+            <record name="MiniObject" c:type="GstMiniObject" glib:type-name="GstMiniObject" glib:get-type="gst_mini_object_get_type">
+              <field name="type" writable="1">
+                <type name="GType" c:type="GType"/>
+              </field>
+              <field name="refcount" writable="1">
+                <type name="gint" c:type="gint"/>
+              </field>
+            </record>
+            <record name="Message" c:type="GstMessage" glib:type-name="GstMessage" glib:get-type="gst_message_get_type">
+              <field name="mini_object" writable="1">
+                <type name="MiniObject" c:type="GstMiniObject"/>
+              </field>
+            </record>
+            <callback name="PostedFunc" c:type="GstPostedFunc">
+              <return-value transfer-ownership="none">
+                <type name="none" c:type="void"/>
+              </return-value>
+              <parameters>
+                <parameter name="message" transfer-ownership="none">
+                  <type name="Message" c:type="GstMessage*"/>
+                </parameter>
+                <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                  <type name="gpointer" c:type="gpointer"/>
+                </parameter>
+              </parameters>
+            </callback>
+            <class name="Element" c:type="GstElement" parent="GObject.Object" glib:type-name="GstElement" glib:get-type="gst_element_get_type">
+              <method name="watch" c:identifier="gst_element_watch">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="element" transfer-ownership="none">
+                    <type name="Element" c:type="GstElement*"/>
+                  </instance-parameter>
+                  <parameter name="func" transfer-ownership="none" scope="call" closure="1">
+                    <type name="PostedFunc" c:type="GstPostedFunc"/>
+                  </parameter>
+                  <parameter name="user_data" transfer-ownership="none" nullable="1" closure="1">
+                    <type name="gpointer" c:type="gpointer"/>
+                  </parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
     private static readonly Lazy<GenerationResult> LazyGenerated = new(
         static () => GenerationPipeline.Run(GirFixture.GirDirectory),
         isThreadSafe: true);
@@ -476,6 +529,139 @@ public sealed class SignalEmitterTests
     }
 
     [Fact]
+    public void AnOverlaySelectedArgumentIsBorrowedRatherThanReferenced()
+    {
+        // The projection an argument the C registered G_SIGNAL_TYPE_STATIC_SCOPE
+        // and reads back takes: the object of the emitter itself, no reference,
+        // no copy, which is the only shape that is writable in place. It is
+        // written the way a virtual method trampoline writes it.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "Gst.Element::posted#message": { "borrow": true } }
+            }
+            """);
+
+        string source = run.File("Element.cs");
+
+        Assert.Contains(
+            "using Gst.Message messageValue = (message == nint.Zero ? null : Gst.Message.Borrow(message))\n"
+            + "                ?? throw new InvalidOperationException(\"The posted signal of GstElement passed no message.\");",
+            source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "Gst.Message.FromNative(message, Gst.Interop.Transfer.None)",
+            source,
+            StringComparison.Ordinal);
+
+        // The remark of the property says what the handler may do with it, and
+        // it replaces the remark of an owning wrapper rather than joining it.
+        Assert.Contains(
+            "/// The emission lends this object for the length of the handler: the wrapper\n"
+            + "        /// borrows it, holds no reference and no copy of its own, and is disposed\n"
+            + "        /// once the handler returns, so it must not be stored. It is writable in\n"
+            + "        /// place - what the handler writes is what the emitter reads back - and\n"
+            + "        /// <c>MakeWritable()</c> therefore throws",
+            source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "/// The value is only valid while the handler runs",
+            source,
+            StringComparison.Ordinal);
+
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => diagnostic.Code is "GEN0017" or "GEN0024" or "GEN0054");
+    }
+
+    [Fact]
+    public void ABorrowOnAnArgumentThatIsNoWrapperIsRefused()
+    {
+        // A GObject argument is interned and reference counted, and no
+        // generated GObject wrapper carries the Borrow factory a mini object
+        // and a boxed value do: the entry describes output that cannot be
+        // written, so it is an error rather than a correction.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "Gst.Element::pad-added#new_pad": { "borrow": true } }
+            }
+            """,
+            allowErrors: true);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0054", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("Gst.Element::pad-added#new_pad", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("mini object or a boxed wrapper", StringComparison.Ordinal));
+
+        Assert.Contains(
+            "Gst.Pad newPadValue = Gst.GObject.Object.FromNative<Gst.Pad>(newPad, Gst.Interop.Transfer.None)",
+            run.File("Element.cs"),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ABorrowOnAStringArgumentIsRefused()
+    {
+        // The other half of the same rule: an argument that is no handle at all
+        // has nothing to borrow either.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "Gst.Element::renamed#new_name": { "borrow": true } }
+            }
+            """,
+            allowErrors: true);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0054", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("Gst.Element::renamed#new_name", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ABorrowThatNamesNoArgumentIsReportedAsStale()
+    {
+        // The key is read where the argument is planned, so one that names no
+        // argument of a rendered signal is never read and falls to the stale
+        // report of the annotation overrides.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "Gst.Element::posted#msg": { "borrow": true } }
+            }
+            """);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0024", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("Gst.Element::posted#msg", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ABorrowOnACallbackParameterIsReportedAsIgnored()
+    {
+        // Only the signal path borrows. A callback argument is planned by the
+        // same reader and has no borrowing projection, so the flag is reported
+        // rather than silently dropped.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "GstPostedFunc#message": { "borrow": true } }
+            }
+            """,
+            CallbackFixture);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0017", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("GstPostedFunc#message", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("borrow", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("a callback parameter", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void ANotifyStyleSignalHandsOverTheParameterSpecification()
     {
         string source = Source("Object.cs");
@@ -768,6 +954,29 @@ public sealed class SignalEmitterTests
             + "        /// handler and must not be kept past it.",
             source,
             StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Runs the signal fixture, or another body, over a fixups file written for
+    /// the run.
+    /// </summary>
+    /// <param name="fixups">The contents of the overlay file.</param>
+    /// <param name="body">The gir body, or <see langword="null"/> for the signal fixture.</param>
+    /// <param name="allowErrors">Whether the run is expected to report an error.</param>
+    /// <returns>The run.</returns>
+    private static FixtureRun RunWithOverlay(string fixups, string? body = null, bool allowErrors = false)
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+        try
+        {
+            File.WriteAllText(Path.Combine(directory, "fixups.json"), fixups);
+            return Fixture.Run(body ?? SignalFixture, Overlays.Load(directory), allowErrors: allowErrors);
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
     }
 
     private static string Source(string fileName) => SourceOf("GstSharp.Net/Generated/" + fileName);

@@ -861,7 +861,7 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Ten of the twelve name an overlay entry that matched nothing: an
+        // Ten of the thirteen name an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
@@ -874,6 +874,12 @@ public sealed class ClassEmitterTests
         // describes a gir that has moved on, and every one of them is a
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
+        //
+        // The thirteenth is not stale but illegal: a 'borrow' on a signal
+        // argument the planner does not project onto a mini object or a boxed
+        // wrapper (GEN0054). It is an error rather than a warning, so the verbs
+        // do fail on it, and it is asserted here beside the others so that the
+        // suite names the entry rather than only the exit code.
         //
         // The other two are the entries a gir refresh silences without
         // renaming the key at all: a hand over refusal whose callable no
@@ -913,6 +919,7 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0051", diagnostic.Code);
             Assert.NotEqual("GEN0052", diagnostic.Code);
             Assert.NotEqual("GEN0053", diagnostic.Code);
+            Assert.NotEqual("GEN0054", diagnostic.Code);
         }
     }
 

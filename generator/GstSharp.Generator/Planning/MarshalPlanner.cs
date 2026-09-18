@@ -1906,8 +1906,9 @@ internal sealed class MarshalPlanner
     /// <returns>The effective nullability.</returns>
     /// <remarks>
     /// An argument a callback or a signal hands over is planned on a path of
-    /// its own, which reads nothing but the nullable flag of a correction:
-    /// there is no direction to correct on a parameter that is inbound by
+    /// its own, which reads nothing but the nullable flag of a correction - and,
+    /// for a signal argument, the <c>borrow</c> flag beside it: there is no
+    /// direction to correct on a parameter that is inbound by
     /// construction, no array, no caller allocated storage, no callback scope
     /// and no return to discard, and an <c>obsolete</c> message belongs to a
     /// callable rather than to one of its parameters. Reading the key is what
@@ -1915,8 +1916,36 @@ internal sealed class MarshalPlanner
     /// would otherwise look consumed while nothing acted on it; this says so
     /// instead.
     /// </remarks>
-    private bool InboundNullableOf(string key, bool declared, string path)
+    private bool InboundNullableOf(string key, bool declared, string path) =>
+        InboundNullableOf(key, declared, path, borrowHonoured: false, out _);
+
+    /// <summary>
+    /// Reads the nullability of an inbound argument by key and, where the path
+    /// honours it, whether the argument is handed over as a borrow; whatever
+    /// else the correction carries is reported as ignored.
+    /// </summary>
+    /// <param name="key">The annotation key of the parameter.</param>
+    /// <param name="declared">The nullability the gir states.</param>
+    /// <param name="path">What the key names, for the diagnostic.</param>
+    /// <param name="borrowHonoured">
+    /// Whether <c>borrow</c> is acted on here. Only an argument of a signal is:
+    /// a callback parameter is planned by the same reader and has no borrowing
+    /// projection of its own, so a <c>borrow</c> on one is reported as ignored
+    /// rather than silently dropped.
+    /// </param>
+    /// <param name="borrow">
+    /// Whether the correction asks for a borrowed wrapper. Always
+    /// <see langword="false"/> when <paramref name="borrowHonoured"/> is not set.
+    /// </param>
+    /// <returns>The effective nullability.</returns>
+    private bool InboundNullableOf(
+        string key,
+        bool declared,
+        string path,
+        bool borrowHonoured,
+        out bool borrow)
     {
+        borrow = false;
         AnnotationOverride? overlay = AnnotationOverrideFor(key);
         if (overlay is null)
         {
@@ -1924,6 +1953,15 @@ internal sealed class MarshalPlanner
         }
 
         List<string> ignored = [];
+        if (borrowHonoured)
+        {
+            borrow = overlay.Borrow == true;
+        }
+        else if (overlay.Borrow is not null)
+        {
+            ignored.Add("borrow");
+        }
+
         if (overlay.Transfer is not null)
         {
             ignored.Add("transfer");
@@ -1969,7 +2007,8 @@ internal sealed class MarshalPlanner
             _diagnostics.Warn(
                 "GEN0017",
                 $"Of the correction of '{key}', {string.Join(", ", ignored)} is ignored: {path} is planned "
-                + "on its own path and takes no correction but nullable.");
+                + "on its own path and takes no correction but "
+                + (borrowHonoured ? "nullable and borrow." : "nullable."));
         }
 
         return overlay.Nullable ?? declared;
@@ -5099,12 +5138,15 @@ internal sealed class MarshalPlanner
     /// </param>
     /// <returns>The plan, or <see langword="null"/> when the argument is not supported.</returns>
     /// <remarks>
-    /// Only <c>nullable</c> is honoured on a signal key. Every other field of
+    /// Only <c>nullable</c> and <c>borrow</c> are honoured on a signal key.
+    /// Every other field of
     /// an annotation override describes something a signal argument does not
     /// have - a direction, an array, a callback scope, a discardable return -
-    /// so a key that carries one of those is read for its nullable flag and
+    /// so a key that carries one of those is read for the two flags and
     /// the rest of it is reported as GEN0017. A key that matches nothing is
-    /// reported as GEN0024, as it is for a callable.
+    /// reported as GEN0024, as it is for a callable. A <c>borrow</c> on an
+    /// argument the planner does not project onto a mini object or a boxed
+    /// wrapper is reported as GEN0054, an error: there is no wrapper to borrow.
     /// </remarks>
     private ArgumentPlan? PlanSignalArgument(GirParameter parameter, PlanningContext context, string signalKey)
     {
@@ -5120,8 +5162,54 @@ internal sealed class MarshalPlanner
         bool nullable = InboundNullableOf(
             signalKey + "#" + parameter.Name,
             parameter.IsNullable,
-            "a signal parameter");
+            "a signal parameter",
+            borrowHonoured: true,
+            out bool borrow);
 
+        ArgumentPlan? planned = PlanSignalArgumentShape(parameter, context, mapped, name, nullable);
+        if (!borrow)
+        {
+            return planned;
+        }
+
+        // The projection a borrow needs is the one a virtual method argument of
+        // the same shape takes: the generated `Borrow` of a mini object or of a
+        // boxed wrapper, which takes neither a reference nor a copy. Every other
+        // argument - a GObject, an opaque record, a string, a plain structure -
+        // either has no such factory or owns nothing to begin with, so the entry
+        // describes something that cannot be emitted rather than a correction.
+        if (planned is not { Kind: ArgumentKind.Handle, Flavor: HandleFlavor.Wrapper }
+            || mapped.Kind is not (MarshalKind.MiniObject or MarshalKind.Boxed))
+        {
+            _diagnostics.Error(
+                "GEN0054",
+                $"The correction of '{signalKey}#{parameter.Name}' asks for a borrowed argument, which only a "
+                + "mini object or a boxed wrapper is handed over as. The argument is planned as "
+                + $"'{planned?.PublicType ?? "nothing"}'; drop the 'borrow' entry or bind the argument as a "
+                + "wrapper of one of those two kinds.");
+            return planned;
+        }
+
+        return planned with { IsBorrowedWrapper = true };
+    }
+
+    /// <summary>
+    /// Plans the projection of one argument of a signal, which is everything
+    /// about it but the borrow the overlays may ask for.
+    /// </summary>
+    /// <param name="parameter">The gir parameter.</param>
+    /// <param name="context">The module that is being emitted.</param>
+    /// <param name="mapped">The type the parameter maps onto.</param>
+    /// <param name="name">The C# name of the argument.</param>
+    /// <param name="nullable">Whether the emission may pass none.</param>
+    /// <returns>The plan, or <see langword="null"/> when the argument is not supported.</returns>
+    private ArgumentPlan? PlanSignalArgumentShape(
+        GirParameter parameter,
+        PlanningContext context,
+        MappedType mapped,
+        string name,
+        bool nullable)
+    {
         // The two containers a handler is handed: a pointer array of objects,
         // and a NULL terminated vector of strings, both read out into an array
         // of their own the way an inbound one of a callable is. Every other

@@ -108,6 +108,26 @@ internal sealed class AnnotationOverride
     /// with CS0618.
     /// </remarks>
     public string? Obsolete { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the handler of a signal is handed a borrowed
+    /// wrapper of a mini object or boxed argument rather than one that holds a
+    /// reference or a copy of its own.
+    /// </summary>
+    /// <remarks>
+    /// It is keyed on a signal argument alone and states a fact about the C
+    /// implementation that no gir annotation carries: the signal registered the
+    /// argument <c>G_SIGNAL_TYPE_STATIC_SCOPE</c>, so every emission path hands
+    /// the handler the object of the emitter rather than a copy GObject made of
+    /// it, and the C reads back what the handler wrote into it.
+    /// <c>GstApp.AppSink::propose-allocation</c> is the one signal of the corpus
+    /// that does both. The wrapper such an argument is handed takes no reference
+    /// and no copy - which is what leaves the object writable - and is disposed
+    /// when the handler returns, exactly as the argument of a virtual method
+    /// override is. It is only legal on an argument the planner projects onto a
+    /// mini object or a boxed wrapper; anything else is reported as GEN0054.
+    /// </remarks>
+    public bool? Borrow { get; set; }
 }
 
 /// <summary>
@@ -376,8 +396,13 @@ internal sealed class PlatformSupport
 /// GObject spelling of its signal instead,
 /// <c>GES.Project::error-loading-asset#error</c>, the key
 /// <c>rename</c> uses for the event of the same signal; only <c>nullable</c>
-/// is read there, because a signal argument has no direction, no array, no
-/// callback scope and no discardable return.</description></item>
+/// and <c>borrow</c> are read there, because a signal argument has no
+/// direction, no array, no callback scope and no discardable return.
+/// <c>borrow</c> hands the handler a borrowed wrapper of a mini object or
+/// boxed argument instead of one that holds a reference or a copy of its
+/// own, which is what leaves the argument writable where the C reads it back;
+/// on an argument of any other shape it is reported as
+/// GEN0054.</description></item>
 /// <item><description><c>arrayOverrides</c>: keyed like
 /// <c>annotationOverrides</c> and applied to a parameter or a return value the
 /// gir already spells as an <c>&lt;array&gt;</c>. It corrects the

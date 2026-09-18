@@ -750,6 +750,45 @@ the call is running, or kept through `Copy()` — which for the reference counte
 `VideoCodecFrame` and `VideoCodecState` hands back a wrapper holding its own
 reference to the same value rather than a copy of it.
 
+## What a typed signal handler is handed
+
+A generated event — `Bus.Message`, `AppSink.ProposeAllocation`, every
+`<glib:signal>` the binding emits as a C# event — hands its handler a wrapper
+that is **scoped to the call**: the trampoline builds it before the handler
+runs and disposes it when the handler returns, so a wrapper kept past the
+handler throws `ObjectDisposedException`. What differs between two such
+arguments is what the wrapper holds while it lives.
+
+By default it holds **a reference or a boxed copy of its own**, taken over the
+value the emission carries and released again by that disposal. That is the
+right reading of what GObject does: unless the signal registered its argument
+`G_SIGNAL_TYPE_STATIC_SCOPE`, the emission hands every handler a copy — a
+`g_boxed_copy` for a boxed value, a reference for a mini object — on both of
+its paths, the collecting one and the fast one. Such an argument can therefore
+never be writable in place, whatever the binding does with it: writes would go
+into GObject's copy and be dropped with it. `Copy()` it, or read out of it what
+is needed, to keep anything past the handler.
+
+The exception is an argument the overlays mark `borrow`, and it is one today:
+the query of `AppSink.ProposeAllocation`. Such a wrapper **borrows** — no
+reference, no copy, the object of the emitter itself — which is what leaves it
+**writable in place**, so that a handler can call `Query.AddAllocationMeta` and
+have the element that sent the query read it back. The wrapper is still scoped
+to the handler and must not be stored, and `MakeWritable()` on it throws
+`InvalidOperationException`: it owns no reference to give away, and the object
+is writable already. An argument is marked only where the C grants both halves
+of it — the signal registers the argument `G_SIGNAL_TYPE_STATIC_SCOPE`, so no
+emission path copies it, *and* the emitter reads back what the handler wrote —
+which is why an argument that is merely `STATIC_SCOPE`, such as the segment of
+`Aggregator.SamplesSelected`, is left alone: it is the live segment of the
+source pad, and nothing reads it back.
+
+The dynamic path draws the line elsewhere on purpose: `ConnectSignal` borrows
+**every** mini object and boxed argument, because it marshals by `GType` at
+emission time and has no per-signal knowledge to select with. The consequence
+for a handler is described under
+[An argument a dynamic signal lends](#an-argument-a-dynamic-signal-lends).
+
 ## Calls that consume the instance they are called on
 
 A handful of C functions take the reference of the object they are called on
@@ -946,6 +985,12 @@ way `Gst.GObject.Value.GetContent` reads it, with one addition: a boxed argument
 whose type an initialised module registered arrives as the wrapper of that type
 rather than as a raw `nint`. A mini object is a boxed type as far as GObject is
 concerned, so `GstCaps` and `GstStructure` take the same route.
+
+This is a deliberate divergence from the generated events of
+[What a typed signal handler is handed](#what-a-typed-signal-handler-is-handed),
+which borrow only where an overlay entry says the C grants it: the dynamic path
+resolves the argument by `GType` while the emission runs and has no per-signal
+knowledge to select with, so it borrows uniformly.
 
 That wrapper **borrows**. It holds the value the emission carries rather than a
 copy or a reference of its own, and the emission disposes it as soon as the

@@ -343,7 +343,25 @@ internal static class SignalEmitter
                 argument.Argument.Doc,
                 "The <c>" + (argument.Argument.Source?.Name ?? argument.Argument.Name) + "</c> argument.");
 
-            if (IsOwnedWrapper(argument.Argument))
+            if (argument.Argument.IsBorrowedWrapper)
+            {
+                // The wrapper stands for the object of the emitter and holds
+                // nothing of its own, which is what leaves that object writable
+                // in place; the emission reads back what the handler wrote.
+                // Making it writable is the one call it refuses: there is no
+                // reference to give away, and there is nothing to make writable.
+                writer.WriteLine("/// <remarks>");
+                writer.WriteLine("/// The emission lends this object for the length of the handler: the wrapper");
+                writer.WriteLine("/// borrows it, holds no reference and no copy of its own, and is disposed");
+                writer.WriteLine("/// once the handler returns, so it must not be stored. It is writable in");
+                writer.WriteLine("/// place - what the handler writes is what the emitter reads back - and");
+                writer.WriteLine("/// <c>MakeWritable()</c> therefore throws");
+                writer.WriteLine("/// <see cref=\"InvalidOperationException\"/> on it: a borrowed wrapper has no");
+                writer.WriteLine("/// reference to give away. Copy it where something has to outlive the");
+                writer.WriteLine("/// handler.");
+                writer.WriteLine("/// </remarks>");
+            }
+            else if (IsOwnedWrapper(argument.Argument))
             {
                 // The wrapper holds a reference that the trampoline releases
                 // again once the handler has returned. Taking a reference of
@@ -857,8 +875,11 @@ internal static class SignalEmitter
 
     /// <summary>
     /// Converts the raw value of an argument into the value the handler sees.
-    /// Every argument of a signal is borrowed for the duration of the emission,
-    /// so the transfer is always <c>none</c>.
+    /// Every argument of a signal is lent for the duration of the emission, so
+    /// the transfer is always <c>none</c>: the wrapper takes a reference or a
+    /// copy of its own and releases it when the handler returns. The one
+    /// exception is the argument the overlays mark <c>borrow</c>, whose wrapper
+    /// takes neither and stands for the object of the emitter itself.
     /// </summary>
     /// <param name="argument">The argument to convert.</param>
     /// <returns>The conversion expression.</returns>
@@ -899,6 +920,14 @@ internal static class SignalEmitter
             // so the three fields are copied here and the pointer is never
             // retained.
             ArgumentKind.GError => "Gst.GLib.GException.FromBorrowed(" + argument.Name + ")",
+            // The one argument shape that is handed over as a true borrow: no
+            // reference, no boxed copy, the object of the emitter itself, which
+            // is what leaves it writable where the C reads it back. It is
+            // written the way a virtual method trampoline writes it, and the
+            // parentheses keep the null of an emission that passed none from
+            // binding to the throw of the caller instead of to the declaration.
+            ArgumentKind.Handle when argument.IsBorrowedWrapper =>
+                "(" + argument.Name + " == nint.Zero ? null : " + type + ".Borrow(" + argument.Name + "))",
             ArgumentKind.Handle => argument.Flavor switch
             {
                 HandleFlavor.GObject => "Gst.GObject.Object.FromNative<" + type + ">("

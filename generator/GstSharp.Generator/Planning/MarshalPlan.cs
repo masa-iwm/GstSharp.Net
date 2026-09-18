@@ -467,6 +467,23 @@ internal sealed record ArgumentPlan
     internal HandleFlavor Flavor { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether the wrapper a signal handler is handed
+    /// borrows the mini object or the boxed value of the emitter instead of
+    /// holding a reference or a copy of its own.
+    /// </summary>
+    /// <remarks>
+    /// Only an argument of a signal the overlays mark <c>borrow</c> sets it,
+    /// and only where the C registered the argument
+    /// <c>G_SIGNAL_TYPE_STATIC_SCOPE</c> and reads back what the handler wrote.
+    /// It is the projection a virtual method argument of the same shape takes -
+    /// <c>Borrow</c>, no reference, no copy, disposed when the handler returns -
+    /// and it is what leaves the argument writable. Not to be confused with
+    /// <see cref="ArgumentKind.SignalBorrowedGValue"/>, which is the view of a
+    /// <c>GValue</c> the emission lends.
+    /// </remarks>
+    internal bool IsBorrowedWrapper { get; init; }
+
+    /// <summary>
     /// Gets the static class whose <c>ToNative</c> and <c>FromNative</c> convert
     /// an <see cref="ArgumentKind.Enumeration"/> whose native numbers are not
     /// the ones of the gir. <see langword="null"/> when the value crosses as a
