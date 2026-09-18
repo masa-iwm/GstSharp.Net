@@ -2,6 +2,7 @@ using Gst;
 using Xunit;
 using Xunit.Abstractions;
 using Buffer = Gst.Buffer;
+using Uri = Gst.Uri;
 
 namespace GstSharp.IntegrationTests;
 
@@ -170,6 +171,47 @@ public sealed class MakeWritableTests
         // them, and the borrow is still attached to the same object.
         Assert.Equal(owner.Handle, borrowed.Handle);
         Assert.True(owner.IsWritable);
+    }
+
+    /// <summary>
+    /// The boxed half of the same rule. <c>Gst.Uri</c> is the one boxed wrapper
+    /// with a <c>MakeWritable</c>, and a borrowed one used to be let through:
+    /// the C would have copied the uri and released a reference the wrapper
+    /// never owned, over-unreffing whoever lent it and leaking the copy the
+    /// still borrowing wrapper adopted.
+    /// </summary>
+    [Fact]
+    public void MakeWritableOnABorrowedBoxedWrapperThrows()
+    {
+        using Uri owner = Assert.IsType<Uri>(Uri.New("http", null, "example.com", 80, "/path", null, null));
+        Uri borrowed = Uri.Borrow(owner.Handle);
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => borrowed.MakeWritable());
+
+        Assert.Contains("borrows a boxed value", error.Message, StringComparison.Ordinal);
+
+        // Nothing was consumed, and the value is still the one the owner holds.
+        Assert.Equal(owner.Handle, borrowed.Handle);
+        Assert.True(owner.IsWritable());
+    }
+
+    /// <summary>
+    /// The other half: a uri the wrapper owns is writable already, so the call
+    /// keeps its value and the wrapper stays usable.
+    /// </summary>
+    [Fact]
+    public void MakeWritableOnAnOwnedBoxedWrapperKeepsWorking()
+    {
+        using Uri uri = Assert.IsType<Uri>(Uri.New("http", null, "example.com", 80, "/path", null, null));
+
+        nint before = uri.Handle;
+        Uri returned = uri.MakeWritable();
+
+        Assert.Same(uri, returned);
+        Assert.Equal(before, uri.Handle);
+        Assert.True(uri.IsWritable());
+        Assert.True(uri.SetScheme("https"));
+        Assert.Equal("https", uri.GetScheme());
     }
 
     /// <summary>

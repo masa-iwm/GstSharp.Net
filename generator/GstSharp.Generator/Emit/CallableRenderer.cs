@@ -166,9 +166,9 @@ internal static class CallableRenderer
 
     /// <summary>
     /// The sentence that closes the remarks of an adopt in place member on a
-    /// mini object, which is the only wrapper that can be a borrow: a boxed
-    /// wrapper always owns the value it holds, so it can never refuse for this
-    /// reason.
+    /// wrapper that can be a borrow, which a mini object and a boxed value
+    /// both are: each is lent by an in place vfunc, by a borrowed signal
+    /// argument or by the dynamic signal path, and refuses for that reason.
     /// </summary>
     private static readonly string[] BorrowedInstanceNote =
     [
@@ -1012,9 +1012,10 @@ internal static class CallableRenderer
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The member being documented.</param>
     /// <remarks>
-    /// The refusal of a borrowed wrapper is only reachable on a mini object:
-    /// that is the wrapper an in place vfunc override receives, and a boxed
-    /// wrapper always owns the value it holds.
+    /// The refusal of a borrowed wrapper is reachable on a mini object and on a
+    /// boxed value alike: both are lent by an in place vfunc override, by a
+    /// signal argument the overlays mark borrowed and by the dynamic signal
+    /// path, and neither owns a reference to give while it is lent.
     /// </remarks>
     private static void WriteInPlaceExceptions(CodeWriter writer, MarshalPlan plan)
     {

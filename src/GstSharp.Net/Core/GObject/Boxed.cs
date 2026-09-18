@@ -192,7 +192,27 @@ public abstract class Boxed : IDisposable
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
-    protected nint BeginMakeWritable() => Handle;
+    /// <exception cref="InvalidOperationException">The wrapper borrows the value.</exception>
+    protected nint BeginMakeWritable()
+    {
+        nint current = Handle;
+
+        if (_borrowed)
+        {
+            // The call consumes what it is given, and a borrowed wrapper owns
+            // nothing: on a shared value it would copy and then release the
+            // reference of whoever lent the value, and the copy it answered
+            // would be adopted by a wrapper that still frees nothing. A
+            // borrowed value is handed out writable where the emission or the
+            // call that lends it promises that, and needs no call at all.
+            throw new InvalidOperationException(
+                "This wrapper borrows a boxed value for the length of one call, so it cannot make it writable: " +
+                "the call would release a reference the wrapper does not own. A value a borrowing vfunc or " +
+                "signal receives is writable already; copy the value to keep one.");
+        }
+
+        return current;
+    }
 
     /// <summary>
     /// Adopts the value a call that consumed the value of the wrapper answered.

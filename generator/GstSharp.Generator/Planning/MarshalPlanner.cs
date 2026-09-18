@@ -920,7 +920,7 @@ internal sealed class MarshalPlanner
                 ReleasesHandOverOnRefusal(callable.CIdentifier, arguments, returnPlan),
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
             InstanceConsumption = consumption,
-            InstanceIsBorrowable = context.OwnerKind == TypeKind.MiniObject,
+            InstanceIsBorrowable = context.OwnerKind is TypeKind.MiniObject or TypeKind.Boxed,
         };
     }
 

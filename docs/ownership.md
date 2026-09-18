@@ -808,8 +808,13 @@ owner surgery: it is correct only while no other wrapper and no other thread
 uses this one, which is the rule the C API imposes as well.
 
 Two things refuse it. A **borrowed** wrapper — the one a vfunc override
-receives — owns no reference to give, so it raises `InvalidOperationException`;
-what such a vfunc receives is writable already. And when the object is shared
+receives, the one a borrowed signal argument is handed as, and the one the
+dynamic signal path builds — owns no reference to give, so it raises
+`InvalidOperationException`; what is lent that way is writable already. This
+holds for a boxed wrapper as much as for a mini object one: `Gst.Uri` is the
+one boxed type with a `MakeWritable`, and a borrowed uri refuses it rather than
+letting the C release a reference the wrapper never owned. And when the object
+is shared
 and the copy fails, the C function has spent the reference all the same: the
 wrapper is left **disposed** and `InvalidOperationException` is raised rather
 than a wrapper handed back that stands for nothing. `Gst.Memory.MakeWritable`

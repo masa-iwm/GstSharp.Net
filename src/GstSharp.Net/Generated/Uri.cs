@@ -501,6 +501,11 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// This is single owner surgery: it is only correct while no other wrapper and
     /// no other thread uses this one, which is the rule the C API imposes as well.
     /// </para>
+    /// <para>
+    /// A wrapper that borrows the object for the length of one call has no
+    /// reference to give and refuses instead; an object an in place vfunc receives
+    /// is writable already.
+    /// </para>
     /// </remarks>
     /// <returns>
     /// This wrapper. The call may have replaced the object behind it and the
@@ -509,8 +514,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// </returns>
     /// <exception cref="ObjectDisposedException">This wrapper was disposed.</exception>
     /// <exception cref="InvalidOperationException">
-    /// The writable copy could not be made. The C function released the value of
-    /// this wrapper all the same, so this wrapper is left disposed.
+    /// This wrapper borrows the object for the length of one call and has no
+    /// reference to give, or the writable copy could not be made. In the second
+    /// case the C function released the object all the same, so this wrapper is
+    /// left disposed.
     /// </exception>
     public Gst.Uri MakeWritable()
     {

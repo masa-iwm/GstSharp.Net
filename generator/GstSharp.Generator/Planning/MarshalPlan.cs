@@ -774,11 +774,11 @@ internal sealed class MarshalPlan
     /// one that borrows what it stands for rather than owning it.
     /// </summary>
     /// <remarks>
-    /// Only a mini object wrapper can: it has the borrow constructor an in
-    /// place vfunc override needs, while a boxed wrapper owns its value from
-    /// the moment it exists. What reads this is the documentation of a call
-    /// that takes the reference of its instance over, which refuses a borrow
-    /// and says so.
+    /// A mini object and a boxed wrapper both can: each has the borrow
+    /// constructor that an in place vfunc override, a borrowed signal argument
+    /// and the dynamic signal path build one through. What reads this is the
+    /// documentation of a call that takes the reference of its instance over,
+    /// which refuses a borrow and says so.
     /// </remarks>
     internal bool InstanceIsBorrowable { get; init; }
 
