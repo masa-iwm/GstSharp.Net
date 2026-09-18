@@ -753,11 +753,13 @@ reference to the same value rather than a copy of it.
 ## What a typed signal handler is handed
 
 A generated event — `Bus.Message`, `AppSink.ProposeAllocation`, every
-`<glib:signal>` the binding emits as a C# event — hands its handler a wrapper
-that is **scoped to the call**: the trampoline builds it before the handler
-runs and disposes it when the handler returns, so a wrapper kept past the
-handler throws `ObjectDisposedException`. What differs between two such
-arguments is what the wrapper holds while it lives.
+`<glib:signal>` the binding emits as a C# event — hands its handler a mini
+object or boxed argument as a wrapper that is **scoped to the call**: the
+trampoline builds it before the handler runs and disposes it when the handler
+returns, so a wrapper kept past the handler throws `ObjectDisposedException`.
+(A `GObject` argument, the pad of `pad-added` among them, is the interned
+wrapper of that object instead and is not disposed.) What differs between two
+scoped arguments is what the wrapper holds while it lives.
 
 By default it holds **a reference or a boxed copy of its own**, taken over the
 value the emission carries and released again by that disposal. That is the
@@ -765,18 +767,22 @@ right reading of what GObject does: unless the signal registered its argument
 `G_SIGNAL_TYPE_STATIC_SCOPE`, the emission hands every handler a copy — a
 `g_boxed_copy` for a boxed value, a reference for a mini object — on both of
 its paths, the collecting one and the fast one. Such an argument can therefore
-never be writable in place, whatever the binding does with it: writes would go
-into GObject's copy and be dropped with it. `Copy()` it, or read out of it what
-is needed, to keep anything past the handler.
+never be writable in place, whatever the binding does with it: a mini object is
+held by GObject's reference as well as by the emitter's, so every write into it
+is refused, and a boxed value the emission duplicated takes writes that are
+dropped with the duplicate. `Copy()` it, or read out of it what is needed, to
+keep anything past the handler.
 
 The exception is an argument the overlays mark `borrow`, and it is one today:
 the query of `AppSink.ProposeAllocation`. Such a wrapper **borrows** — no
 reference, no copy, the object of the emitter itself — which is what leaves it
 **writable in place**, so that a handler can call `Query.AddAllocationMeta` and
-have the element that sent the query read it back. The wrapper is still scoped
-to the handler and must not be stored, and `MakeWritable()` on it throws
-`InvalidOperationException`: it owns no reference to give away, and the object
-is writable already. An argument is marked only where the C grants both halves
+have the element that sent the query read it back. It is as writable as that
+sender left it: an element that holds a second reference of its own makes the
+query unwritable for a C handler too, which is what `IsWritable` answers. The
+wrapper is still scoped to the handler and must not be stored, and
+`MakeWritable()` on it throws `InvalidOperationException`: it owns no reference
+to give away. An argument is marked only where the C grants both halves
 of it — the signal registers the argument `G_SIGNAL_TYPE_STATIC_SCOPE`, so no
 emission path copies it, *and* the emitter reads back what the handler wrote —
 which is why an argument that is merely `STATIC_SCOPE`, such as the segment of
@@ -810,7 +816,12 @@ uses this one, which is the rule the C API imposes as well.
 Two things refuse it. A **borrowed** wrapper — the one a vfunc override
 receives, the one a borrowed signal argument is handed as, and the one the
 dynamic signal path builds — owns no reference to give, so it raises
-`InvalidOperationException`; what is lent that way is writable already. This
+`InvalidOperationException`. What is lent that way is writable only where
+whoever lends it holds the only reference: an in place vfunc lends the value of
+its caller and promises exactly that, and so does the `ProposeAllocation` query
+as long as the element that sent it does not share it, while the dynamic signal
+path lends the reference or the boxed copy GObject took for the emission, which
+is a second one by construction — `Copy()` such a value and edit the copy. This
 holds for a boxed wrapper as much as for a mini object one: `Gst.Uri` is the
 one boxed type with a `MakeWritable`, and a borrowed uri refuses it rather than
 letting the C release a reference the wrapper never owned. And when the object

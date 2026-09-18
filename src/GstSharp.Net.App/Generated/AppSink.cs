@@ -940,11 +940,12 @@ public unsafe partial class AppSink : Gst.Base.BaseSink, Gst.IURIHandler
         /// The emission lends this object for the length of the handler: the wrapper
         /// borrows it, holds no reference and no copy of its own, and is disposed
         /// once the handler returns, so it must not be stored. It is writable in
-        /// place - what the handler writes is what the emitter reads back - and
-        /// <c>MakeWritable()</c> therefore throws
-        /// <see cref="InvalidOperationException"/> on it: a borrowed wrapper has no
-        /// reference to give away. Copy it where something has to outlive the
-        /// handler.
+        /// place - what the handler writes is what the sender of the value reads
+        /// back - unless that sender shares the object with somebody else, which
+        /// leaves it writable for nobody. <c>MakeWritable()</c> throws
+        /// <see cref="InvalidOperationException"/> on it either way: a borrowed
+        /// wrapper has no reference to give away. Copy it where something has to
+        /// outlive the handler.
         /// </remarks>
         public Gst.Query Query { get; }
     }

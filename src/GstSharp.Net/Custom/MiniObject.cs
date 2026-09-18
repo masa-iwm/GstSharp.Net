@@ -372,13 +372,17 @@ public abstract class MiniObject : IDisposable
         {
             // gst_mini_object_make_writable consumes the reference it is given,
             // and a borrowed wrapper has none: on a shared object it would copy
-            // and then release the reference of whoever lent the object. A
-            // borrowed object is handed out writable when the vfunc it belongs
-            // to promises that, and needs no call at all.
+            // and then release the reference of whoever lent the object. A lent
+            // object is writable where whoever lends it holds the only
+            // reference, which is what an in place vfunc and an overlay
+            // borrowed signal argument promise; what the dynamic signal path
+            // lends is the reference GObject took for the emission and is
+            // shared with it.
             throw new InvalidOperationException(
                 "This wrapper borrows a mini object for the length of one call, so it cannot make it writable: " +
-                "the call would release a reference the wrapper does not own. A buffer that an in place vfunc " +
-                "receives is writable already; copy the object to keep one.");
+                "the call would release a reference the wrapper does not own. What is lent is writable only " +
+                "where whoever lends it holds the only reference; copy the object to get one that is yours to " +
+                "write.");
         }
 
         return current;

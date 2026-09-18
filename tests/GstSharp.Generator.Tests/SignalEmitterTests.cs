@@ -81,6 +81,99 @@ public sealed class SignalEmitterTests
         """;
 
     /// <summary>
+    /// A boxed argument of a signal: a record GObject registers a type for and
+    /// that carries no mini object header is projected onto a boxed wrapper,
+    /// which is the other half of what a <c>borrow</c> is legal on.
+    /// </summary>
+    private const string BoxedSignalFixture =
+        """
+            <record name="Structure" c:type="GstStructure" glib:type-name="GstStructure" glib:get-type="gst_structure_get_type">
+              <field name="type" writable="1">
+                <type name="GType" c:type="GType"/>
+              </field>
+            </record>
+            <class name="Element" c:type="GstElement" parent="GObject.Object" glib:type-name="GstElement" glib:get-type="gst_element_get_type">
+              <glib:signal name="structured" when="last">
+                <return-value transfer-ownership="none">
+                  <type name="none" c:type="void"/>
+                </return-value>
+                <parameters>
+                  <parameter name="structure" transfer-ownership="none">
+                    <type name="Structure" c:type="GstStructure*"/>
+                  </parameter>
+                </parameters>
+              </glib:signal>
+            </class>
+        """;
+
+    /// <summary>
+    /// A mini object on every key that is not a signal argument: the parameter
+    /// and the return of a method, and the argument of a virtual method whose
+    /// key differs from the signal key of the same concept by an underscore.
+    /// </summary>
+    private const string SlotFixture =
+        """
+            <record name="MiniObject" c:type="GstMiniObject" glib:type-name="GstMiniObject" glib:get-type="gst_mini_object_get_type">
+              <field name="type" writable="1">
+                <type name="GType" c:type="GType"/>
+              </field>
+            </record>
+            <record name="Buffer" c:type="GstBuffer" glib:type-name="GstBuffer" glib:get-type="gst_buffer_get_type">
+              <field name="mini_object" writable="1">
+                <type name="MiniObject" c:type="GstMiniObject"/>
+              </field>
+            </record>
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type" glib:type-struct="WidgetClass">
+              <method name="wrap" c:identifier="gst_widget_wrap">
+                <return-value transfer-ownership="none">
+                  <type name="Buffer" c:type="GstBuffer*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="buf" transfer-ownership="none">
+                    <type name="Buffer" c:type="GstBuffer*"/>
+                  </parameter>
+                </parameters>
+              </method>
+              <virtual-method name="prepare">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                  <parameter name="buf" transfer-ownership="none">
+                    <type name="Buffer" c:type="GstBuffer*"/>
+                  </parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="WidgetClass" c:type="GstWidgetClass" glib:is-gtype-struct-for="Widget">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="prepare">
+                <callback name="prepare">
+                  <return-value transfer-ownership="none">
+                    <type name="gboolean" c:type="gboolean"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="widget" transfer-ownership="none">
+                      <type name="Widget" c:type="GstWidget*"/>
+                    </parameter>
+                    <parameter name="buf" transfer-ownership="none">
+                      <type name="Buffer" c:type="GstBuffer*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
     /// The same mini object beside a callback that a method hands over, which
     /// is the other inbound path a <c>borrow</c> entry can land on and the one
     /// that does not honour it.
@@ -560,8 +653,9 @@ public sealed class SignalEmitterTests
             "/// The emission lends this object for the length of the handler: the wrapper\n"
             + "        /// borrows it, holds no reference and no copy of its own, and is disposed\n"
             + "        /// once the handler returns, so it must not be stored. It is writable in\n"
-            + "        /// place - what the handler writes is what the emitter reads back - and\n"
-            + "        /// <c>MakeWritable()</c> therefore throws",
+            + "        /// place - what the handler writes is what the sender of the value reads\n"
+            + "        /// back - unless that sender shares the object with somebody else, which\n"
+            + "        /// leaves it writable for nobody. <c>MakeWritable()</c> throws",
             source,
             StringComparison.Ordinal);
         Assert.DoesNotContain(
@@ -640,25 +734,165 @@ public sealed class SignalEmitterTests
     }
 
     [Fact]
-    public void ABorrowOnACallbackParameterIsReportedAsIgnored()
+    public void ABorrowOnACallbackParameterIsRefused()
     {
         // Only the signal path borrows. A callback argument is planned by the
-        // same reader and has no borrowing projection, so the flag is reported
-        // rather than silently dropped.
+        // same reader and has no borrowing projection, so the flag is refused
+        // rather than silently consumed.
         FixtureRun run = RunWithOverlay(
             """
             {
               "annotationOverrides": { "GstPostedFunc#message": { "borrow": true } }
             }
             """,
-            CallbackFixture);
+            CallbackFixture,
+            allowErrors: true);
 
         Assert.Contains(
             run.Result.Diagnostics,
-            static diagnostic => string.Equals(diagnostic.Code, "GEN0017", StringComparison.Ordinal)
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0054", StringComparison.Ordinal)
                 && diagnostic.Message.Contains("GstPostedFunc#message", StringComparison.Ordinal)
-                && diagnostic.Message.Contains("borrow", StringComparison.Ordinal)
-                && diagnostic.Message.Contains("a callback parameter", StringComparison.Ordinal));
+                && diagnostic.Message.Contains("only an argument of a signal", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ABorrowOnAVirtualMethodArgumentIsRefused()
+    {
+        // The likeliest way to write the entry wrong: the key of a slot and the
+        // key of the signal of the same concept differ by an underscore and by
+        // the type that owns them. Reading it plans the argument and consumes
+        // the key, so nothing downstream would report it.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "subclassable": ["Gst.Widget"],
+              "annotationOverrides": { "Gst.Widget::prepare#buf": { "borrow": true } }
+            }
+            """,
+            SlotFixture,
+            allowErrors: true);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0054", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("Gst.Widget::prepare#buf", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("only an argument of a signal", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ABorrowOnAMethodParameterIsRefused()
+    {
+        // A parameter of a callable travels the other way: the member hands the
+        // value to the C, and there is no wrapper of the binding's making to
+        // borrow with.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_wrap#buf": { "borrow": true } }
+            }
+            """,
+            SlotFixture,
+            allowErrors: true);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0054", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("gst_widget_wrap#buf", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ABorrowOnAReturnIsRefusedOnce()
+    {
+        // The return of a callable is read several times over - for its
+        // transfer, for its nullability, for the discard flag - and the refusal
+        // is reported once all the same.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "gst_widget_wrap#return": { "borrow": true } }
+            }
+            """,
+            SlotFixture,
+            allowErrors: true);
+
+        Assert.Single(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0054", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("gst_widget_wrap#return", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ABorrowOfFalseStatesTheDefaultAndChangesNothing()
+    {
+        // Read the way a nullable of false is: it states what the planner does
+        // anyway, so it is accepted, silent, and the argument keeps the
+        // reference holding wrapper of every other signal.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "Gst.Element::posted#message": { "borrow": false } }
+            }
+            """);
+
+        Assert.Contains(
+            "using Gst.Message messageValue = Gst.Message.FromNative(message, Gst.Interop.Transfer.None)",
+            run.File("Element.cs"),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => diagnostic.Code is "GEN0017" or "GEN0024" or "GEN0054");
+    }
+
+    [Fact]
+    public void ABorrowedArgumentTheEmissionMayLeaveOutStaysNullable()
+    {
+        // The two flags of a signal argument key are read side by side: the
+        // borrow decides what the wrapper holds, the nullable whether the
+        // handler is handed none, and the borrow keeps the null of the
+        // emission rather than throwing on it.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": {
+                "Gst.Element::posted#message": { "borrow": true, "nullable": true }
+              }
+            }
+            """);
+
+        Assert.Contains(
+            "using Gst.Message? messageValue = (message == nint.Zero ? null : Gst.Message.Borrow(message));",
+            run.File("Element.cs"),
+            StringComparison.Ordinal);
+        Assert.Contains("public Gst.Message? Message { get; }", run.File("Element.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => diagnostic.Code is "GEN0017" or "GEN0024" or "GEN0054");
+    }
+
+    [Fact]
+    public void ABoxedArgumentIsBorrowedThroughTheFactoryOfItsWrapper()
+    {
+        // The other arm of the rule the legality predicate states: a boxed
+        // wrapper carries the same borrowing factory a mini object one does,
+        // so the projection is written the same way.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "annotationOverrides": { "Gst.Element::structured#structure": { "borrow": true } }
+            }
+            """,
+            BoxedSignalFixture);
+
+        string source = run.File("Element.cs");
+
+        Assert.Contains("public sealed unsafe partial class Structure : Gst.GObject.Boxed", run.File("Structure.cs"), StringComparison.Ordinal);
+        Assert.Contains(
+            "using Gst.Structure structureValue = (structure == nint.Zero ? null : Gst.Structure.Borrow(structure))",
+            source,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => diagnostic.Code is "GEN0017" or "GEN0024" or "GEN0054");
     }
 
     [Fact]

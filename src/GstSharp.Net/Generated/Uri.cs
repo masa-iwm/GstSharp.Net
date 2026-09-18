@@ -502,9 +502,10 @@ public sealed unsafe partial class Uri : Gst.GObject.Boxed
     /// no other thread uses this one, which is the rule the C API imposes as well.
     /// </para>
     /// <para>
-    /// A wrapper that borrows the object for the length of one call has no
-    /// reference to give and refuses instead; an object an in place vfunc receives
-    /// is writable already.
+    /// A wrapper that borrows the value for the length of one call has no reference
+    /// to give and refuses instead. What is lent is writable only where whoever lends
+    /// it holds the only reference; <c>Copy()</c> the value to get one that is yours
+    /// to write.
     /// </para>
     /// </remarks>
     /// <returns>

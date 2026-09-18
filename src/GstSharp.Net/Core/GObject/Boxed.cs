@@ -202,13 +202,16 @@ public abstract class Boxed : IDisposable
             // The call consumes what it is given, and a borrowed wrapper owns
             // nothing: on a shared value it would copy and then release the
             // reference of whoever lent the value, and the copy it answered
-            // would be adopted by a wrapper that still frees nothing. A
-            // borrowed value is handed out writable where the emission or the
-            // call that lends it promises that, and needs no call at all.
+            // would be adopted by a wrapper that still frees nothing. A lent
+            // value is writable where whoever lends it holds the only
+            // reference, which is what an in place vfunc and an overlay
+            // borrowed signal argument promise; what the dynamic signal path
+            // lends is the copy GObject made for the emission and is shared.
             throw new InvalidOperationException(
                 "This wrapper borrows a boxed value for the length of one call, so it cannot make it writable: " +
-                "the call would release a reference the wrapper does not own. A value a borrowing vfunc or " +
-                "signal receives is writable already; copy the value to keep one.");
+                "the call would release a reference the wrapper does not own. What is lent is writable only " +
+                "where whoever lends it holds the only reference; copy the value to get one that is yours to " +
+                "write.");
         }
 
         return current;

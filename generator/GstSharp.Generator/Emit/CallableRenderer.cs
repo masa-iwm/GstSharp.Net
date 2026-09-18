@@ -166,9 +166,8 @@ internal static class CallableRenderer
 
     /// <summary>
     /// The sentence that closes the remarks of an adopt in place member on a
-    /// wrapper that can be a borrow, which a mini object and a boxed value
-    /// both are: each is lent by an in place vfunc, by a borrowed signal
-    /// argument or by the dynamic signal path, and refuses for that reason.
+    /// mini object, which an in place vfunc override, a borrowed signal
+    /// argument and the dynamic signal path all lend.
     /// </summary>
     private static readonly string[] BorrowedInstanceNote =
     [
@@ -176,6 +175,23 @@ internal static class CallableRenderer
         "A wrapper that borrows the object for the length of one call has no",
         "reference to give and refuses instead; an object an in place vfunc receives",
         "is writable already.",
+        "</para>",
+    ];
+
+    /// <summary>
+    /// The same sentence on a boxed value, which no vfunc lends: the dynamic
+    /// signal path is the one thing that lends one today, and what it lends is
+    /// the copy GObject made for the emission, so it is shared and a write into
+    /// it would be dropped. The advice is therefore a copy rather than a claim
+    /// that the value is writable already.
+    /// </summary>
+    private static readonly string[] BorrowedBoxedInstanceNote =
+    [
+        "<para>",
+        "A wrapper that borrows the value for the length of one call has no reference",
+        "to give and refuses instead. What is lent is writable only where whoever lends",
+        "it holds the only reference; <c>Copy()</c> the value to get one that is yours",
+        "to write.",
         "</para>",
     ];
 
@@ -1013,9 +1029,10 @@ internal static class CallableRenderer
     /// <param name="plan">The member being documented.</param>
     /// <remarks>
     /// The refusal of a borrowed wrapper is reachable on a mini object and on a
-    /// boxed value alike: both are lent by an in place vfunc override, by a
-    /// signal argument the overlays mark borrowed and by the dynamic signal
-    /// path, and neither owns a reference to give while it is lent.
+    /// boxed value alike: a mini object is lent by an in place vfunc override,
+    /// by a signal argument the overlays mark borrowed and by the dynamic
+    /// signal path, a boxed value by the last of those, and neither owns a
+    /// reference to give while it is lent.
     /// </remarks>
     private static void WriteInPlaceExceptions(CodeWriter writer, MarshalPlan plan)
     {
@@ -1619,7 +1636,7 @@ internal static class CallableRenderer
             lines.AddRange(AdoptedInPlaceRemarks);
             if (plan.InstanceIsBorrowable)
             {
-                lines.AddRange(BorrowedInstanceNote);
+                lines.AddRange(plan.InstanceIsBoxedValue ? BorrowedBoxedInstanceNote : BorrowedInstanceNote);
             }
         }
         else if (plan.InstanceConsumption == InstanceConsumption.Minted)

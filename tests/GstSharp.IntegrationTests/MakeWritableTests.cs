@@ -155,7 +155,8 @@ public sealed class MakeWritableTests
     /// <summary>
     /// A borrowed wrapper owns no reference, so it has none to give the call.
     /// Refusing is the whole of the answer: what an in place vfunc receives is
-    /// writable already.
+    /// writable where its caller holds the only reference, and what is lent
+    /// with a reference of somebody else beside it is copied instead.
     /// </summary>
     [Fact]
     public void MakeWritableOnABorrowedWrapperThrows()
@@ -184,7 +185,7 @@ public sealed class MakeWritableTests
     public void MakeWritableOnABorrowedBoxedWrapperThrows()
     {
         using Uri owner = Assert.IsType<Uri>(Uri.New("http", null, "example.com", 80, "/path", null, null));
-        Uri borrowed = Uri.Borrow(owner.Handle);
+        using Uri borrowed = Uri.Borrow(owner.Handle);
 
         InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => borrowed.MakeWritable());
 

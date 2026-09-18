@@ -119,13 +119,17 @@ internal sealed class AnnotationOverride
     /// implementation that no gir annotation carries: the signal registered the
     /// argument <c>G_SIGNAL_TYPE_STATIC_SCOPE</c>, so every emission path hands
     /// the handler the object of the emitter rather than a copy GObject made of
-    /// it, and the C reads back what the handler wrote into it.
+    /// it, and whoever sent the value reads back what the handler wrote into it.
     /// <c>GstApp.AppSink::propose-allocation</c> is the one signal of the corpus
     /// that does both. The wrapper such an argument is handed takes no reference
     /// and no copy - which is what leaves the object writable - and is disposed
     /// when the handler returns, exactly as the argument of a virtual method
     /// override is. It is only legal on an argument the planner projects onto a
-    /// mini object or a boxed wrapper; anything else is reported as GEN0054.
+    /// mini object or a boxed wrapper, and on no key but a signal argument: on
+    /// a parameter of a method or of a callback, on an argument of a virtual
+    /// method or on a return it is reported as GEN0054 rather than consumed in
+    /// silence. <see langword="false"/> states the default and changes nothing,
+    /// the way a <c>nullable</c> of <see langword="false"/> does.
     /// </remarks>
     public bool? Borrow { get; set; }
 }
@@ -400,8 +404,9 @@ internal sealed class PlatformSupport
 /// direction, no array, no callback scope and no discardable return.
 /// <c>borrow</c> hands the handler a borrowed wrapper of a mini object or
 /// boxed argument instead of one that holds a reference or a copy of its
-/// own, which is what leaves the argument writable where the C reads it back;
-/// on an argument of any other shape it is reported as
+/// own, which is what leaves the argument writable where the sender of the
+/// value reads it back; on an argument of any other shape, and on any key but
+/// a signal argument, it is reported as
 /// GEN0054.</description></item>
 /// <item><description><c>arrayOverrides</c>: keyed like
 /// <c>annotationOverrides</c> and applied to a parameter or a return value the

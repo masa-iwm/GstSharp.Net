@@ -501,6 +501,13 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _consumedAnnotationOverrides;
 
     /// <summary>
+    /// The keys whose <c>borrow</c> this run has already refused, so that a key
+    /// several readers look up - a return is read once for its transfer, once
+    /// for its nullability and once for the discard flag - is reported once.
+    /// </summary>
+    private readonly HashSet<string> _refusedBorrowKeys = new(StringComparer.Ordinal);
+
+    /// <summary>
     /// The keys of the instance keyed callback entries this run has read, and
     /// the keys of the documentation notes it has attached, both shared across
     /// the modules of a run the way the corrections above are.
@@ -921,6 +928,7 @@ internal sealed class MarshalPlanner
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
             InstanceConsumption = consumption,
             InstanceIsBorrowable = context.OwnerKind is TypeKind.MiniObject or TypeKind.Boxed,
+            InstanceIsBoxedValue = context.OwnerKind == TypeKind.Boxed,
         };
     }
 
@@ -1494,19 +1502,43 @@ internal sealed class MarshalPlanner
 
     /// <summary>Reads one annotation correction and records that it was read.</summary>
     /// <param name="key">The key to look up.</param>
+    /// <param name="borrowLegal">
+    /// Whether the path that reads the key is the one <c>borrow</c> is written
+    /// for: an argument of a signal, and nothing else.
+    /// </param>
     /// <returns>The correction, or <see langword="null"/>.</returns>
     /// <remarks>
     /// Every lookup of an annotation correction goes through here, so that a
     /// key which never answers one can be reported as stale. Only a lookup
     /// that found an entry counts as a use: a key that matches nothing is
     /// exactly the case this records.
+    /// <para>
+    /// Reading a key consumes it, which keeps it out of the stale report, so a
+    /// <c>borrow</c> on a key that some other path reads - a parameter of a
+    /// method or of a callback, an argument of a virtual method, a return -
+    /// would be swallowed without a word. The spelling of a virtual method key
+    /// differs from the signal key of the same concept by an underscore alone,
+    /// which makes that the likeliest way to write the entry wrong, so it is
+    /// refused here, once per key, wherever the reader does not act on it.
+    /// </para>
     /// </remarks>
-    private AnnotationOverride? AnnotationOverrideFor(string key)
+    private AnnotationOverride? AnnotationOverrideFor(string key, bool borrowLegal = false)
     {
         AnnotationOverride? correction = _overlays.GetAnnotationOverride(key);
-        if (correction is not null)
+        if (correction is null)
         {
-            _consumedAnnotationOverrides.Add(key);
+            return null;
+        }
+
+        _consumedAnnotationOverrides.Add(key);
+
+        if (!borrowLegal && correction.Borrow is not null && _refusedBorrowKeys.Add(key))
+        {
+            _diagnostics.Error(
+                "GEN0054",
+                $"The correction of '{key}' asks for a borrowed value, which only an argument of a signal is "
+                + "handed over as: no other path builds a wrapper that borrows what it stands for. Drop the "
+                + "'borrow' entry, or write it on the signal argument that is meant to be lent.");
         }
 
         return correction;
@@ -1930,8 +1962,9 @@ internal sealed class MarshalPlanner
     /// <param name="borrowHonoured">
     /// Whether <c>borrow</c> is acted on here. Only an argument of a signal is:
     /// a callback parameter is planned by the same reader and has no borrowing
-    /// projection of its own, so a <c>borrow</c> on one is reported as ignored
-    /// rather than silently dropped.
+    /// projection of its own, so a <c>borrow</c> on one is refused by
+    /// <see cref="AnnotationOverrideFor"/> as GEN0054 rather than silently
+    /// dropped.
     /// </param>
     /// <param name="borrow">
     /// Whether the correction asks for a borrowed wrapper. Always
@@ -1946,7 +1979,7 @@ internal sealed class MarshalPlanner
         out bool borrow)
     {
         borrow = false;
-        AnnotationOverride? overlay = AnnotationOverrideFor(key);
+        AnnotationOverride? overlay = AnnotationOverrideFor(key, borrowLegal: borrowHonoured);
         if (overlay is null)
         {
             return declared;
@@ -1955,11 +1988,10 @@ internal sealed class MarshalPlanner
         List<string> ignored = [];
         if (borrowHonoured)
         {
+            // Stated the way a nullable correction is: 'false' is the default
+            // and says nothing, so it is accepted and changes nothing, while
+            // a borrow the path does not honour was refused by the reader.
             borrow = overlay.Borrow == true;
-        }
-        else if (overlay.Borrow is not null)
-        {
-            ignored.Add("borrow");
         }
 
         if (overlay.Transfer is not null)

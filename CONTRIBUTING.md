@@ -295,12 +295,19 @@ The remaining keys address a callback type and a member rather than a slot:
   wrapper that borrows the mini object or the boxed value of the emitter
   instead of one holding a reference or a copy of its own, which is the only
   way the argument is writable in place. A `borrow` is legal on nothing else
-  than an argument projected onto one of those two wrappers — anything else is
-  `GEN0054`, an error — and it states two facts about the C that no gir
-  carries: the signal registered the argument `G_SIGNAL_TYPE_STATIC_SCOPE`, so
-  GObject copies it on no emission path, and the emitter reads back what the
-  handler wrote. An entry that names no argument of a rendered signal is
-  reported as `GEN0024` like any other stale annotation override.
+  than an argument projected onto one of those two wrappers, and on no key but
+  a signal argument: on a parameter of a method or of a callback, on an
+  argument of a virtual method — whose key differs from the signal key of the
+  same concept by an underscore alone — or on a return, it is `GEN0054`, an
+  error, rather than a key consumed in silence. `borrow: false` states the
+  default and changes nothing, the way `nullable: false` does. The flag states
+  two facts about the C that no gir carries: the signal registered the argument
+  `G_SIGNAL_TYPE_STATIC_SCOPE`, so GObject copies it on no emission path, and
+  whoever sent the value reads back what the handler wrote. An entry that names
+  no argument the planner reached is reported as `GEN0024` like any other stale
+  annotation override — a key is consumed where its argument is planned, so an
+  entry on an argument of a signal that is skipped afterwards is read and stays
+  silent, which is how `nullable` behaves there as well.
 * `preconditions` — C# statements the generated body of a callable runs before
   it marshals anything, keyed by `c:identifier`. They keep a member off a call
   the C answers with a crash or with a critical. The helper each one calls is

@@ -776,11 +776,26 @@ internal sealed class MarshalPlan
     /// <remarks>
     /// A mini object and a boxed wrapper both can: each has the borrow
     /// constructor that an in place vfunc override, a borrowed signal argument
-    /// and the dynamic signal path build one through. What reads this is the
+    /// and the dynamic signal path build one through - a boxed value is lent by
+    /// the dynamic path alone today. What reads this is the
     /// documentation of a call that takes the reference of its instance over,
     /// which refuses a borrow and says so.
     /// </remarks>
     internal bool InstanceIsBorrowable { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether the declaring type is a boxed one rather
+    /// than a mini object.
+    /// </summary>
+    /// <remarks>
+    /// The two are lent by different things - a mini object by an in place
+    /// vfunc override, by a borrowed signal argument and by the dynamic signal
+    /// path, a boxed value by the last of those alone today - so the note that
+    /// tells a caller what to do instead of making a borrow writable is worded
+    /// per kind. It is read beside <see cref="InstanceIsBorrowable"/> and says
+    /// nothing on its own.
+    /// </remarks>
+    internal bool InstanceIsBoxedValue { get; init; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the member overrides a member of

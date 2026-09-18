@@ -345,20 +345,22 @@ internal static class SignalEmitter
 
             if (argument.Argument.IsBorrowedWrapper)
             {
-                // The wrapper stands for the object of the emitter and holds
-                // nothing of its own, which is what leaves that object writable
-                // in place; the emission reads back what the handler wrote.
-                // Making it writable is the one call it refuses: there is no
-                // reference to give away, and there is nothing to make writable.
+                // The wrapper stands for the object the sender of the value
+                // holds and takes nothing of its own, which is what leaves that
+                // object writable in place - as writable as the sender left it,
+                // since a sender that shares it makes it writable for nobody.
+                // Making it writable is the one call the wrapper refuses:
+                // there is no reference to give away.
                 writer.WriteLine("/// <remarks>");
                 writer.WriteLine("/// The emission lends this object for the length of the handler: the wrapper");
                 writer.WriteLine("/// borrows it, holds no reference and no copy of its own, and is disposed");
                 writer.WriteLine("/// once the handler returns, so it must not be stored. It is writable in");
-                writer.WriteLine("/// place - what the handler writes is what the emitter reads back - and");
-                writer.WriteLine("/// <c>MakeWritable()</c> therefore throws");
-                writer.WriteLine("/// <see cref=\"InvalidOperationException\"/> on it: a borrowed wrapper has no");
-                writer.WriteLine("/// reference to give away. Copy it where something has to outlive the");
-                writer.WriteLine("/// handler.");
+                writer.WriteLine("/// place - what the handler writes is what the sender of the value reads");
+                writer.WriteLine("/// back - unless that sender shares the object with somebody else, which");
+                writer.WriteLine("/// leaves it writable for nobody. <c>MakeWritable()</c> throws");
+                writer.WriteLine("/// <see cref=\"InvalidOperationException\"/> on it either way: a borrowed");
+                writer.WriteLine("/// wrapper has no reference to give away. Copy it where something has to");
+                writer.WriteLine("/// outlive the handler.");
                 writer.WriteLine("/// </remarks>");
             }
             else if (IsOwnedWrapper(argument.Argument))
@@ -920,6 +922,7 @@ internal static class SignalEmitter
             // so the three fields are copied here and the pointer is never
             // retained.
             ArgumentKind.GError => "Gst.GLib.GException.FromBorrowed(" + argument.Name + ")",
+
             // The one argument shape that is handed over as a true borrow: no
             // reference, no boxed copy, the object of the emitter itself, which
             // is what leaves it writable where the C reads it back. It is
