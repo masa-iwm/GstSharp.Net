@@ -1103,5 +1103,13 @@
     "gst_encoding_target_add_profile": "encoding-target.c:387-395 refuses a profile whose name is already in the target with a GST_WARNING and FALSE, before the list append at :397 that takes the reference; FALSE therefore means the reference was not taken, on 1.24, 1.26 and 1.28 alike.",
     "gst_rtsp_session_manage_media": "rtsp-session.c:268-272 refuses a media whose status is neither PREPARED nor SUSPENDED with NULL, before gst_rtsp_session_media_new is reached; NULL therefore means the reference was not taken. The check is wrapped in #ifndef G_DISABLE_CHECKS on 1.28 and unconditional on 1.24 and 1.26, which changes when the refusal happens, not what it means.",
     "gst_rtsp_session_media_new": "rtsp-session-media.c:149-153 refuses a media whose status is neither PREPARED nor SUSPENDED with NULL, before the g_object_new at :155 that takes the reference; NULL therefore means the reference was not taken. Same G_DISABLE_CHECKS wrapping as gst_rtsp_session_manage_media on 1.28."
+  },
+  "$comment-doc-strip": "Substrings taken out of the gir documentation of a callable before it is split into paragraphs, keyed by c:identifier. It is the one overlay that removes upstream text instead of adding to it, and it exists for the sentence that states a rule of the C which is not the rule of the binding: a transfer-full GObject argument is handed a reference minted for the call, so the wrapper stays usable and 'should not be used after calling this function' is true of a C caller only. Each substring has to stand in the raw documentation exactly once - it is quoted from girs/reference/*.gir, gtk-doc markup and line breaks included - and GEN0052 reports one that stands nowhere or twice, so an upstream rewording is reported rather than silently stripping nothing. GEN0053 reports a key no rendered callable read. Whitespace the removal leaves behind is tidied: a run of spaces that follows text is collapsed and a paragraph that is left empty disappears.",
+  "docStrip": {
+    "gst_encoding_container_profile_add_profile": ["\n\nNo copy of @profile will be made, if you wish to use it elsewhere after this\nmethod you should increment its reference count."],
+    "gst_encoding_target_add_profile": ["\n\nThe @target will steal a reference to the @profile. If you wish to use\nthe profile after calling this method, you should increase its reference\ncount."],
+    "gst_rtsp_mount_points_add_factory": ["\n\nOwnership is taken of the reference on @factory so that @factory should not be\nused after calling this function."],
+    "gst_rtsp_session_manage_media": ["\n\nOwnership is taken from @media."],
+    "gst_rtsp_session_media_new": ["\n\nOwnership is taken of @media."]
   }
 }

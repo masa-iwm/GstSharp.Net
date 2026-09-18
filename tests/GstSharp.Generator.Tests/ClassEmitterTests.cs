@@ -375,17 +375,14 @@ public sealed class ClassEmitterTests
             StringComparison.Ordinal);
 
         // A GObject argument is handed over rather than consumed: the remark
-        // opens by reconciling the upstream sentence that tells a C caller to
-        // drop the argument, and then says what the call takes and what the
-        // wrapper keeps.
+        // says what the call takes and what the wrapper keeps. The upstream
+        // sentence that tells a C caller to drop the argument is taken out of
+        // the documentation by the docStrip overlay where a member carries one,
+        // so nothing is left for the remark to argue against.
         string streamCollection = Source("StreamCollection.cs");
 
         Assert.Contains(
             """
-                /// Where the documentation above tells the caller to give the argument up —
-                /// not to use it after the call, or to take a reference of its own first —
-                /// that is the rule for a C caller, whose own reference the call took: this
-                /// binding is not that caller.
                 /// The call takes <paramref name="stream"/> over: the library is handed a
                 /// reference of its own, minted for this call, and keeps it for as long as it
                 /// needs the object. This wrapper keeps the reference it holds, so it stays
@@ -863,7 +860,7 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Each of the nine names an overlay entry that matched nothing: an
+        // Each of the ten names an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
@@ -871,7 +868,8 @@ public sealed class ClassEmitterTests
         // corrected no field (GEN0026), a documentation note on no rendered
         // callable (GEN0042) or on no rendered signal (GEN0048), and a
         // precondition on no rendered callable (GEN0049), and a hand over
-        // refusal on no rendered callable (GEN0051). Every one of them
+        // refusal on no rendered callable (GEN0051), and a documentation
+        // strip on no rendered callable (GEN0053). Every one of them
         // describes a gir that has moved on, and every one of them is a
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
@@ -902,6 +900,7 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0048", diagnostic.Code);
             Assert.NotEqual("GEN0049", diagnostic.Code);
             Assert.NotEqual("GEN0051", diagnostic.Code);
+            Assert.NotEqual("GEN0053", diagnostic.Code);
         }
     }
 

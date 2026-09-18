@@ -68,14 +68,6 @@ public unsafe partial class EncodingContainerProfile : Gst.Pbutils.EncodingProfi
     /// <summary>Add a #GstEncodingProfile to the list of profiles handled by @container.</summary>
     /// <remarks>
     /// <para>
-    /// No copy of @profile will be made, if you wish to use it elsewhere after this
-    /// method you should increment its reference count.
-    /// </para>
-    /// <para>
-    /// Where the documentation above tells the caller to give the argument up —
-    /// not to use it after the call, or to take a reference of its own first —
-    /// that is the rule for a C caller, whose own reference the call took: this
-    /// binding is not that caller.
     /// The call takes <paramref name="profile"/> over: the library is handed a
     /// reference of its own, minted for this call, and keeps it for as long as it
     /// needs the object. This wrapper keeps the reference it holds, so it stays

@@ -730,6 +730,20 @@ internal sealed class MarshalPlan
     /// </remarks>
     internal bool ReleasesHandOverOnRefusal { get; init; }
 
+    /// <summary>
+    /// Gets the gir documentation of the callable with the substrings the
+    /// overlays take out of it removed, or <see langword="null"/> when nothing
+    /// is taken out and the documentation is rendered as the gir carries it.
+    /// </summary>
+    /// <remarks>
+    /// It is the one place upstream text is edited rather than appended to, for
+    /// a sentence that states a rule of the C which is not the rule of the
+    /// binding. Removing it happens before the text is split into paragraphs,
+    /// so a sentence that was a paragraph of its own leaves no paragraph
+    /// behind.
+    /// </remarks>
+    internal string? StrippedDoc { get; init; }
+
     /// <summary>Gets the C# type of the instance, for an extension method.</summary>
     internal string? InstanceType { get; init; }
 

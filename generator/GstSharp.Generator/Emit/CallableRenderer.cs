@@ -673,7 +673,7 @@ internal static class CallableRenderer
         string cType = plan.EntryPoint;
         XmlDocWriter.Write(
             writer,
-            plan.Callable.Doc,
+            plan.StrippedDoc ?? plan.Callable.Doc,
             "The <c>" + cType + "</c> function.",
             plan.Callable,
             GeneratedRemarks(plan));
@@ -1811,10 +1811,6 @@ internal static class CallableRenderer
             {
                 string name = DocName(argument.Name);
                 lines.Add("<para>");
-                lines.Add("Where the documentation above tells the caller to give the argument up —");
-                lines.Add("not to use it after the call, or to take a reference of its own first —");
-                lines.Add("that is the rule for a C caller, whose own reference the call took: this");
-                lines.Add("binding is not that caller.");
                 lines.Add("The call takes <paramref name=\"" + name + "\"/> over: the library is handed a");
                 lines.Add("reference of its own, minted for this call, and keeps it for as long as it");
                 lines.Add("needs the object. This wrapper keeps the reference it holds, so it stays");

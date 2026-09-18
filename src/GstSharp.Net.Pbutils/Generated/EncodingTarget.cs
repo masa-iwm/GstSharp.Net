@@ -103,15 +103,6 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The @target will steal a reference to the @profile. If you wish to use
-    /// the profile after calling this method, you should increase its reference
-    /// count.
-    /// </para>
-    /// <para>
-    /// Where the documentation above tells the caller to give the argument up —
-    /// not to use it after the call, or to take a reference of its own first —
-    /// that is the rule for a C caller, whose own reference the call took: this
-    /// binding is not that caller.
     /// The call takes <paramref name="profile"/> over: the library is handed a
     /// reference of its own, minted for this call, and keeps it for as long as it
     /// needs the object. This wrapper keeps the reference it holds, so it stays

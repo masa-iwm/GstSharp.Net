@@ -102,6 +102,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedSignalDocNotes = new(StringComparer.Ordinal);
         HashSet<string> consumedPreconditions = new(StringComparer.Ordinal);
         HashSet<string> consumedHandOverRefusals = new(StringComparer.Ordinal);
+        HashSet<string> consumedDocStrips = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
         HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
 
@@ -141,6 +142,7 @@ internal static class GenerationPipeline
                     consumedSignalDocNotes,
                     consumedPreconditions,
                     consumedHandOverRefusals,
+                    consumedDocStrips,
                     consumedSiblingArguments,
                     lentOpaqueRecords,
                     subclasses,
@@ -295,6 +297,27 @@ internal static class GenerationPipeline
             diagnostics.Warn(
                 "GEN0051",
                 $"The hand over refusal entry '{key}' names a callable that was not rendered by "
+                + "this run; the entry is stale.");
+        }
+
+        // And a documentation strip that was read nowhere is a sentence the
+        // generated member goes on carrying: the upstream rule that is not the
+        // rule of the binding, standing above the remark that contradicts it.
+        List<string> staleDocStrips = [];
+        foreach (string key in overlays.DocStripKeys)
+        {
+            if (!consumedDocStrips.Contains(key))
+            {
+                staleDocStrips.Add(key);
+            }
+        }
+
+        staleDocStrips.Sort(StringComparer.Ordinal);
+        foreach (string key in staleDocStrips)
+        {
+            diagnostics.Warn(
+                "GEN0053",
+                $"The documentation strip entry '{key}' names a callable that was not rendered by "
                 + "this run; the entry is stale.");
         }
 
@@ -473,6 +496,7 @@ internal static class GenerationPipeline
             shared.ConsumedSignalDocNotes,
             shared.ConsumedPreconditions,
             shared.ConsumedHandOverRefusals,
+            shared.ConsumedDocStrips,
             shared.ConsumedSiblingArguments,
             shared.LentOpaqueRecords);
 
@@ -611,6 +635,10 @@ internal static class GenerationPipeline
     /// The keys of the hand over refusal entries the run has read, shared for
     /// the same reason.
     /// </param>
+    /// <param name="ConsumedDocStrips">
+    /// The keys of the documentation strip entries the run has read, shared for
+    /// the same reason.
+    /// </param>
     /// <param name="ConsumedSiblingArguments">
     /// The keys of the sibling argument entries the run has matched, shared
     /// for the same reason.
@@ -637,6 +665,7 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedSignalDocNotes,
         HashSet<string> ConsumedPreconditions,
         HashSet<string> ConsumedHandOverRefusals,
+        HashSet<string> ConsumedDocStrips,
         HashSet<string> ConsumedSiblingArguments,
         HashSet<string> LentOpaqueRecords,
         SubclassModel Subclasses,

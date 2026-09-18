@@ -514,6 +514,7 @@ internal sealed class MarshalPlanner
     /// <summary>The keys of the precondition entries this run has emitted.</summary>
     private readonly HashSet<string> _consumedPreconditions;
     private readonly HashSet<string> _consumedHandOverRefusals;
+    private readonly HashSet<string> _consumedDocStrips;
 
     /// <summary>The sibling argument keys this run has matched, shared for the same reason.</summary>
     private readonly HashSet<string> _consumedSiblingArguments;
@@ -582,6 +583,10 @@ internal sealed class MarshalPlanner
     /// The set the hand over refusal entries that were read are recorded in,
     /// shared for the same reason.
     /// </param>
+    /// <param name="consumedDocStrips">
+    /// The set the documentation strip entries that were read are recorded in,
+    /// shared for the same reason.
+    /// </param>
     /// <param name="consumedSiblingArguments">
     /// The set the sibling argument entries that matched a parameter of the
     /// shape they describe are recorded in, shared for the same reason.
@@ -605,6 +610,7 @@ internal sealed class MarshalPlanner
         HashSet<string>? consumedSignalDocNotes = null,
         HashSet<string>? consumedPreconditions = null,
         HashSet<string>? consumedHandOverRefusals = null,
+        HashSet<string>? consumedDocStrips = null,
         HashSet<string>? consumedSiblingArguments = null,
         HashSet<string>? lentOpaqueRecords = null)
     {
@@ -627,6 +633,7 @@ internal sealed class MarshalPlanner
             consumedPreconditions ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedHandOverRefusals =
             consumedHandOverRefusals ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedDocStrips = consumedDocStrips ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedSiblingArguments =
             consumedSiblingArguments ?? new HashSet<string>(StringComparer.Ordinal);
         _lentOpaqueRecords = lentOpaqueRecords ?? new HashSet<string>(StringComparer.Ordinal);
@@ -903,6 +910,7 @@ internal sealed class MarshalPlanner
                 ? AnnotationOverrideFor(annotationKey)?.Obsolete
                 : null,
             DocNote = DocNoteFor(callable.CIdentifier),
+            StrippedDoc = StrippedDocOf(callable.CIdentifier, callable.Doc),
             Preconditions = PreconditionsFor(callable.CIdentifier),
             ReleasesHandOverOnRefusal =
                 ReleasesHandOverOnRefusal(callable.CIdentifier, arguments, returnPlan),
@@ -1547,6 +1555,124 @@ internal sealed class MarshalPlanner
 
         _consumedPreconditions.Add(cIdentifier);
         return statements;
+    }
+
+    /// <summary>
+    /// Takes the substrings the overlays name out of the gir documentation of
+    /// a callable, and records that the entry was read.
+    /// </summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable, when it has one.</param>
+    /// <param name="doc">The documentation the gir carries.</param>
+    /// <returns>
+    /// The shortened documentation, or <see langword="null"/> when nothing was
+    /// taken out and the gir text stands as it is.
+    /// </returns>
+    /// <remarks>
+    /// A substring that is not in the documentation exactly once is reported
+    /// rather than applied: an upstream rewording that split the sentence in
+    /// two, or one that repeated it, would otherwise leave the member reading
+    /// the way the entry exists to stop it reading, and nothing would say so.
+    /// </remarks>
+    private string? StrippedDocOf(string? cIdentifier, string? doc)
+    {
+        if (cIdentifier is null
+            || !_overlays.TryGetDocStrips(cIdentifier, out IReadOnlyList<string>? substrings))
+        {
+            return null;
+        }
+
+        _consumedDocStrips.Add(cIdentifier);
+        if (doc is null)
+        {
+            _diagnostics.Warn(
+                "GEN0052",
+                $"The documentation strip entry '{cIdentifier}' names a callable that carries no "
+                + "documentation at all.");
+            return null;
+        }
+
+        string stripped = doc;
+        bool changed = false;
+        foreach (string substring in substrings)
+        {
+            int first = stripped.IndexOf(substring, StringComparison.Ordinal);
+            int last = first < 0 ? -1 : stripped.LastIndexOf(substring, StringComparison.Ordinal);
+            if (first < 0 || first != last)
+            {
+                _diagnostics.Warn(
+                    "GEN0052",
+                    $"The documentation strip entry '{cIdentifier}' names a substring that stands "
+                    + (first < 0 ? "nowhere" : "more than once")
+                    + " in the documentation of the callable; it has to stand there exactly once.");
+                continue;
+            }
+
+            stripped = stripped.Remove(first, substring.Length);
+            changed = true;
+        }
+
+        return changed ? NormalizeStrippedDoc(stripped) : null;
+    }
+
+    /// <summary>
+    /// Tidies the whitespace a removed substring left behind.
+    /// </summary>
+    /// <param name="doc">The shortened documentation.</param>
+    /// <returns>The documentation as it is rendered.</returns>
+    /// <remarks>
+    /// A sentence taken out of the middle of a paragraph leaves two spaces
+    /// where it stood, and one taken out of a paragraph of its own leaves a
+    /// line with nothing on it. Only a run of spaces that follows something is
+    /// collapsed: the indentation a line opens with is the shape of a fenced
+    /// sample, which the splitter keeps verbatim.
+    /// </remarks>
+    private static string NormalizeStrippedDoc(string doc)
+    {
+        string[] lines = doc.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Split('\n');
+
+        List<string> kept = [];
+        foreach (string line in lines)
+        {
+            System.Text.StringBuilder builder = new(line.Length);
+            bool afterText = false;
+            bool pendingSpace = false;
+            foreach (char character in line)
+            {
+                if (character == ' ' && afterText)
+                {
+                    pendingSpace = true;
+                    continue;
+                }
+
+                if (pendingSpace)
+                {
+                    builder.Append(' ');
+                    pendingSpace = false;
+                }
+
+                builder.Append(character);
+                afterText |= character != ' ';
+            }
+
+            kept.Add(builder.ToString().TrimEnd());
+        }
+
+        // A blank line is a paragraph break, and two of them in a row are the
+        // one break the removed paragraph left behind rather than two.
+        List<string> collapsed = [];
+        foreach (string line in kept)
+        {
+            if (line.Length == 0 && collapsed.Count > 0 && collapsed[^1].Length == 0)
+            {
+                continue;
+            }
+
+            collapsed.Add(line);
+        }
+
+        return string.Join("\n", collapsed).Trim('\n');
     }
 
     /// <summary>

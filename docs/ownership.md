@@ -629,6 +629,16 @@ either way, and the generated remark says which of the two it is. The member
 states the consumption on its parameter: `Caps.Append(caps2)` consumes the caps
 it appends, `Pad.Push(buffer)` the buffer.
 
+Five of the C functions below tell their caller to give the argument up —
+"`@target` will steal a reference to the `@profile`", "`@factory` should not be
+used after calling this function". That is the rule for a C caller, whose own
+reference the call took, and it is not the rule of this binding. The generated
+documentation does not carry those sentences: the `docStrip` overlay takes each
+of them out of the gir text before it is rendered, quoting it exactly and
+reporting itself when an upstream rewording moves it, so what the member says
+about its argument is the paragraph below rather than two paragraphs that
+disagree.
+
 **A GObject is handed over and never consumed.** The call keeps the reference
 minted for it for as long as it needs the object, while the wrapper keeps the
 one it holds and stays the caller's: it is usable after the call, the handlers

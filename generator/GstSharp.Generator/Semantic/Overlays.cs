@@ -451,6 +451,15 @@ internal sealed class PlatformSupport
 /// would otherwise be left with no owner. The entry states that the refusal
 /// return means the reference was not taken, which is a reading of the C that
 /// only the C can settle.</description></item>
+/// <item><description><c>docStrip</c>: <c>c:identifier</c> of a callable mapped
+/// onto the substrings taken out of its gir documentation before it is split
+/// into paragraphs. It is the one overlay that removes upstream text rather
+/// than adding to it, for the sentence that states a rule of the C which is not
+/// the rule of the binding - "@target will steal a reference to the @profile" -
+/// and which the generated remark would otherwise have to argue against. Each
+/// substring has to occur exactly once in the raw documentation, so that a gir
+/// refresh which reworded the sentence is reported rather than silently
+/// stripping nothing.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -487,6 +496,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _signalDocNotes;
     private readonly Dictionary<string, IReadOnlyList<string>> _preconditions;
     private readonly Dictionary<string, string> _handOverRefusals;
+    private readonly Dictionary<string, IReadOnlyList<string>> _docStrips;
 
     private Overlays(
         HashSet<string> skip,
@@ -513,7 +523,8 @@ internal sealed class Overlays
         Dictionary<string, string> docNotes,
         Dictionary<string, string> signalDocNotes,
         Dictionary<string, IReadOnlyList<string>> preconditions,
-        Dictionary<string, string> handOverRefusals)
+        Dictionary<string, string> handOverRefusals,
+        Dictionary<string, IReadOnlyList<string>> docStrips)
     {
         _skip = skip;
         _handBound = handBound;
@@ -540,6 +551,7 @@ internal sealed class Overlays
         _signalDocNotes = signalDocNotes;
         _preconditions = preconditions;
         _handOverRefusals = handOverRefusals;
+        _docStrips = docStrips;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -568,7 +580,8 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
-        new Dictionary<string, string>(StringComparer.Ordinal));
+        new Dictionary<string, string>(StringComparer.Ordinal),
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -671,6 +684,9 @@ internal sealed class Overlays
     /// argument again when they refuse the call.
     /// </summary>
     internal IReadOnlyCollection<string> HandOverRefusalKeys => _handOverRefusals.Keys;
+
+    /// <summary>Gets the callables whose gir documentation is shortened before it is rendered.</summary>
+    internal IReadOnlyCollection<string> DocStripKeys => _docStrips.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -863,6 +879,31 @@ internal sealed class Overlays
             handOverRefusals[entry.Key] = entry.Value;
         }
 
+        Dictionary<string, IReadOnlyList<string>> docStrips = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, List<string>> entry in fixups.DocStrip ?? [])
+        {
+            // An entry that names no substring takes nothing out, and a
+            // blank one would be found in every documentation there is: both
+            // are a key that reads as an edit and edits nothing, which the
+            // stale key report cannot catch because the key is consumed by
+            // the very member it leaves unchanged.
+            if (entry.Value is not { Count: > 0 } substrings)
+            {
+                throw new InvalidDataException(
+                    $"The documentation strip entry '{entry.Key}' names no substring; "
+                    + "an entry that takes nothing out changes nothing.");
+            }
+
+            if (substrings.Any(static substring => string.IsNullOrWhiteSpace(substring)))
+            {
+                throw new InvalidDataException(
+                    $"The documentation strip entry '{entry.Key}' names a blank substring; "
+                    + "an entry that takes nothing out changes nothing.");
+            }
+
+            docStrips[entry.Key] = [.. substrings];
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -894,7 +935,8 @@ internal sealed class Overlays
             docNotes,
             signalDocNotes,
             preconditions,
-            handOverRefusals);
+            handOverRefusals,
+            docStrips);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -1157,6 +1199,18 @@ internal sealed class Overlays
     internal bool TryGetHandOverRefusal(string cIdentifier, [NotNullWhen(true)] out string? citation) =>
         _handOverRefusals.TryGetValue(cIdentifier, out citation);
 
+    /// <summary>
+    /// Looks up the substrings taken out of the gir documentation of a
+    /// callable before it is split into paragraphs.
+    /// </summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable.</param>
+    /// <param name="substrings">Receives the substrings, in the order they are written.</param>
+    /// <returns>Whether the documentation of the callable is shortened.</returns>
+    internal bool TryGetDocStrips(
+        string cIdentifier,
+        [NotNullWhen(true)] out IReadOnlyList<string>? substrings) =>
+        _docStrips.TryGetValue(cIdentifier, out substrings);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -1224,6 +1278,8 @@ internal sealed class Overlays
         public Dictionary<string, Precondition>? Preconditions { get; set; }
 
         public Dictionary<string, string>? HandOverRefusals { get; set; }
+
+        public Dictionary<string, List<string>>? DocStrip { get; set; }
     }
 
     private sealed class PlatformSymbolsFile
