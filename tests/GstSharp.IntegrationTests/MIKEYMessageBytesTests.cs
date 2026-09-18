@@ -33,9 +33,13 @@ namespace GstSharp.IntegrationTests;
 /// critical, followed by the <see cref="InvalidOperationException"/> of its
 /// non-nullable return. And the block below is short enough to be refused on
 /// the size check, which is what keeps this test off the parse loop: the fix
-/// for the loop over an unhandled payload type landed in 1.27.1 and is in no
-/// 1.24 or 1.26 release, so on the floor a message that reaches such a type
-/// never returns from the parse.
+/// for the loop over an unhandled payload type (999c43ada13c) reached the
+/// older series as the backports 2c294036df and 897285354d, so it is absent
+/// before 1.24.13 and before 1.26.2 and present at 1.24.13, at 1.26.2 and
+/// newer and at 1.28.0 and newer. On one of those older hosts a message that
+/// reaches such a type never returns from the parse. <c>git tag --contains</c>
+/// answers 1.27.1 for the fix and misses both cherry-picks, which is why the
+/// question is settled by grepping the tagged file instead.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]

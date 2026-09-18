@@ -50,6 +50,9 @@ internal static partial class NativeAvailability
 
     private static readonly Lazy<bool> Gst126 = new(Probe126, LazyThreadSafetyMode.ExecutionAndPublication);
 
+    private static readonly Lazy<bool> TrackDiscard =
+        new(ProbeTrackDiscard, LazyThreadSafetyMode.ExecutionAndPublication);
+
     /// <summary>
     /// Gets a value indicating whether the installed GStreamer exports the
     /// entry points that arrived in 1.28.
@@ -121,6 +124,50 @@ internal static partial class NativeAvailability
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the installed GES discards a track
+    /// element that no <c>select-element-track</c> handler claimed, instead of
+    /// falling back to <c>select-tracks-for-object</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The two probes above answer "is the API there", which a symbol can be
+    /// asked. This answers "does the library carry a behaviour change", which
+    /// no symbol can: upstream commit d3d8989798 ("ges: timeline: Respect
+    /// SELECT_ELEMENT_TRACK signal discard decision") added no export, it
+    /// gated an existing emission on <c>g_signal_has_handler_pending</c>
+    /// (1.28.6 ges-timeline.c:1496-1500). So this is a version comparison, and
+    /// it is the version comparison of a backport: the change first shipped in
+    /// 1.27.50 and 1.28.0, and reached the 1.26 branch as 40fa67b4d8, whose
+    /// first tag is 1.26.7. That is why there are two branches rather than one
+    /// <c>IsAtLeast(1, 26, 7)</c> — the unstable 1.27.1 and 1.27.2 are at least
+    /// 1.26.7 and do not carry it — and why no 1.24.x answers
+    /// <see langword="true"/>, since the change was never backported that far.
+    /// </para>
+    /// <para>
+    /// It lives here for the reason the probes do: this type is the one place
+    /// the suite asks a version question of the library, see the remarks on the
+    /// type itself.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="DllNotFoundException">
+    /// No GStreamer installation was found. A broken installation is a red
+    /// suite, never a skip, so this is deliberately not caught.
+    /// </exception>
+    internal static bool DiscardsUnselectedTrackElements => TrackDiscard.Value;
+
+    private static bool ProbeTrackDiscard()
+    {
+        // Initialize is what makes the version readable at all, the same way
+        // the two probes above need it to make the library loadable.
+        gstsharp::GstSharp.Initialize();
+
+        Gst.Version version = gstsharp::GstSharp.NativeVersion;
+
+        return version.IsAtLeast(1, 27, 50)
+            || (version.Major == 1 && version.Minor == 26 && version.IsAtLeast(1, 26, 7));
     }
 
     /// <summary>The <c>GType</c> of a <c>GstValueUniqueList</c>, new in 1.28.</summary>

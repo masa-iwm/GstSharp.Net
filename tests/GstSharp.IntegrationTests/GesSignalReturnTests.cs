@@ -35,9 +35,10 @@ namespace GstSharp.IntegrationTests;
 /// <c>load-serialized-info</c> signals arrived in 1.24 and
 /// <c>select-element-track</c> in 1.18 — so the file runs on the 1.24 floor of
 /// the Linux leg without an availability gate. One test still reads
-/// <see cref="NativeAvailability.Has128"/>, not because a member is missing
-/// there but because what the timeline does with a null answer changed in
-/// 1.28; see its own remarks.
+/// <see cref="NativeAvailability.DiscardsUnselectedTrackElements"/>, not
+/// because a member is missing there but because what the timeline does with a
+/// null answer changed in 1.28 and in the 1.26.7 backport of that change; see
+/// its own remarks.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -113,22 +114,27 @@ public sealed class GesSignalReturnTests
     /// them, so it is read against the installed one.
     /// </para>
     /// <para>
-    /// From 1.28 on, <c>_get_selected_tracks</c> reads the fallback off
-    /// <c>g_signal_has_handler_pending</c> (ges-timeline.c:1493-1498): the
-    /// older <c>select-tracks-for-object</c> signal is only emitted when
-    /// nothing is connected to this one, so <see langword="null"/> here means
-    /// "no track" and the element is discarded. Before that the <c>else</c> was
-    /// unconditional (1.24.13 ges-timeline.c:1492-1496), so the fallback fired
-    /// anyway and its default class handler put each core element into the
+    /// Where the library carries the gate, <c>_get_selected_tracks</c> reads
+    /// the fallback off <c>g_signal_has_handler_pending</c> (1.28.6
+    /// ges-timeline.c:1496-1500, 1.26.11 ges-timeline.c:1495-1499): the older
+    /// <c>select-tracks-for-object</c> signal is only emitted when nothing is
+    /// connected to this one, so <see langword="null"/> here means "no track"
+    /// and the element is discarded. Without it the <c>else</c> is
+    /// unconditional (1.24.13 ges-timeline.c:1492-1496), so the fallback fires
+    /// anyway and its default class handler puts each core element into the
     /// track matching its type — the same placement a timeline with no handler
     /// at all makes.
     /// </para>
     /// <para>
-    /// The boundary is exact: the gate is upstream commit d3d8989798 ("ges:
-    /// timeline: Respect SELECT_ELEMENT_TRACK signal discard decision", October
-    /// 2025), and the first tags that contain it are 1.27.50 and 1.28.0. No
-    /// 1.24.x or 1.26.x release carries it, which is why <c>Has128</c> is the
-    /// right question to ask here.
+    /// The boundary is exact, and it is not the 1.28 boundary: the gate is
+    /// upstream commit d3d8989798 ("ges: timeline: Respect
+    /// SELECT_ELEMENT_TRACK signal discard decision", October 2025), whose
+    /// first tags are 1.27.50 and 1.28.0, and it was backported to the 1.26
+    /// branch as 40fa67b4d8, whose first tag is 1.26.7. No 1.24.x release
+    /// carries it. <c>Has128</c> would therefore read a 1.26.7 through 1.26.11
+    /// host wrong, and the question this test asks is
+    /// <see cref="NativeAvailability.DiscardsUnselectedTrackElements"/>
+    /// instead.
     /// </para>
     /// </remarks>
     [Fact]
@@ -162,7 +168,7 @@ public sealed class GesSignalReturnTests
 
                 foreach (Track track in tracks)
                 {
-                    if (NativeAvailability.Has128)
+                    if (NativeAvailability.DiscardsUnselectedTrackElements)
                     {
                         AssertHoldsNoElement(track);
                     }

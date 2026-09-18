@@ -68,4 +68,40 @@ public sealed class NativeAvailabilityTests
     {
         Assert.True(NativeAvailability.Has126);
     }
+
+    /// <summary>
+    /// The track discard gate agrees with the version the library reports,
+    /// recomputed here out of the four parts: this one is a version comparison
+    /// rather than a probe, so what measures it is the same table written
+    /// twice — 1.27.50 and newer anywhere, and 1.26.7 and newer on the 1.26
+    /// branch, which is where the backport 40fa67b4d8 landed.
+    /// </summary>
+    [Fact]
+    public void TheTrackDiscardGateAgreesWithTheReportedVersion()
+    {
+        Gst.Version version = gstsharp::GstSharp.NativeVersion;
+
+        bool expected = version.Major > 1
+            || (version.Major == 1
+                && (version.Minor >= 28
+                    || (version.Minor == 27 && version.Micro >= 50)
+                    || (version.Minor == 26 && version.Micro >= 7)));
+
+        Assert.Equal(expected, NativeAvailability.DiscardsUnselectedTrackElements);
+    }
+
+    /// <summary>
+    /// A library that carries the 1.28 entry points carries the change as well,
+    /// because 1.28.0 is one of its first two tags: the gate is wider than
+    /// <see cref="NativeAvailability.Has128"/> and never narrower, and a build
+    /// where that stopped holding is a build one of the two reads wrong.
+    /// </summary>
+    [Fact]
+    public void TheTrackDiscardGateHoldsWhereverThe128ProbeDoes()
+    {
+        if (NativeAvailability.Has128)
+        {
+            Assert.True(NativeAvailability.DiscardsUnselectedTrackElements);
+        }
+    }
 }
