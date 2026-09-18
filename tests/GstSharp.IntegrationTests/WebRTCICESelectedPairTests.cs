@@ -72,6 +72,10 @@ public sealed class WebRTCICESelectedPairTests
         // what the binding marks it with; the test of a deprecated member is
         // where the obsolete call is the point.
 #pragma warning disable CS0618
+        // The member gates on 1.27.50 while this branches on the symbol
+        // NativeAvailability probes, whose first tag is 1.27.90, so the
+        // unstable 1.27 band is knowingly unmeasured here: no release series
+        // lives there.
         if (NativeAvailability.Has128)
         {
             Assert.Throws<NotSupportedException>(
@@ -89,5 +93,10 @@ public sealed class WebRTCICESelectedPairTests
             Assert.Null(remoteStats);
         }
 #pragma warning restore CS0618
+
+        // gst_element_dispose refuses an element that is not in NULL
+        // (1.28.6 gstelement.c:3423-3431: a g_critical and no dispose), so the
+        // pipeline goes back before the using disposes it.
+        pipeline.SetState(State.Null);
     }
 }

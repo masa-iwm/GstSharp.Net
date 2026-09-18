@@ -46,11 +46,9 @@ public sealed class RequiresGStreamerFactAttribute : FactAttribute
         }
 
         Gst.Version version = gstsharp::GstSharp.NativeVersion;
-        // The major version is asked separately, which keeps the answer of a
-        // library that reports something other than 1.x exactly what it was
-        // before Gst.Version.IsAtLeast existed: such a test runs rather than
-        // skips, and no GStreamer reports a major version below 1.
-        if (version.Major == 1 && !version.IsAtLeast(1, minor))
+        // No GStreamer reports a major version below 1, so the minor question
+        // alone is the whole of the gate.
+        if (!version.IsAtLeast(1, minor))
         {
             Skip = FormattableString.Invariant(
                 $"needs GStreamer 1.{minor} or newer, and {version} is installed");

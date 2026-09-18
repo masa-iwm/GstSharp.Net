@@ -6,9 +6,9 @@ using Xunit;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// <c>ReferenceTimestampMeta.Info</c>, the one field of the tree that the gir
-/// marks with a version above the floor of the binding and that a runtime
-/// version check hands out anyway.
+/// <c>ReferenceTimestampMeta.GetInfoStructure()</c>, the one field of the tree
+/// that the gir marks with a version above the floor of the binding and that a
+/// runtime version check hands out anyway.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -55,13 +55,17 @@ public sealed class ReferenceTimestampMetaInfoTests
             ClockTime.FromNanoseconds(11));
         Assert.NotNull(meta);
 
+        // The accessor gates on 1.28.0 while this branches on the symbol
+        // NativeAvailability probes, whose first tag is 1.27.90, so the
+        // unstable 1.27 band is knowingly unmeasured here: no release series
+        // lives there.
         if (NativeAvailability.Has128)
         {
-            Assert.Null(meta.Info);
+            Assert.Null(meta.GetInfoStructure());
         }
         else
         {
-            Assert.Throws<EntryPointNotFoundException>(() => meta.Info);
+            Assert.Throws<EntryPointNotFoundException>(() => meta.GetInfoStructure());
         }
     }
 
@@ -89,7 +93,7 @@ public sealed class ReferenceTimestampMetaInfoTests
         Assert.NotNull(meta);
         Assert.Equal(7ul, meta.Timestamp.Nanoseconds);
 
-        using Structure? info = meta.Info;
+        using Structure? info = meta.GetInfoStructure();
         Assert.NotNull(info);
         Assert.Equal("meta-info", info.GetName());
         Assert.True(info.GetInt("index", out int index));
@@ -97,7 +101,7 @@ public sealed class ReferenceTimestampMetaInfoTests
 
         // The structure that came back is a copy of the one the item owns, so
         // the item keeps its own: a second read answers the same content.
-        using Structure? again = meta.Info;
+        using Structure? again = meta.GetInfoStructure();
         Assert.NotNull(again);
         Assert.Equal("meta-info", again.GetName());
     }

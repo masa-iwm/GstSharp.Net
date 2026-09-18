@@ -94,8 +94,9 @@ public abstract unsafe partial class WebRTCICE
     /// 1.27.50 half on its own, and the 1.26 half is that question asked of the
     /// 1.26 branch alone, which is why the minor version is named beside it: a
     /// bare <c>IsAtLeast(1, 26, 10)</c> would also answer
-    /// <see langword="true"/> for 1.27.1, where the fix is not. The read needs an initialised binding,
-    /// which is given: the only caller is <see cref="AddStream"/>, and a live
+    /// <see langword="true"/> for 1.27.1, where the fix is not. The read needs
+    /// an initialised binding, which is given: the only caller is
+    /// <see cref="AddStream"/>, and a live
     /// <c>WebRTCICE</c> wrapper cannot exist before <c>GstSharp.Initialize</c>
     /// has run.
     /// </remarks>

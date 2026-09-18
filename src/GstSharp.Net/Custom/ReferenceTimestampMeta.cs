@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 
 namespace Gst;
@@ -6,12 +5,12 @@ namespace Gst;
 public sealed unsafe partial class ReferenceTimestampMeta
 {
     /// <summary>
-    /// Gets the additional information about the timestamp, or
+    /// Gets a copy of the additional information about the timestamp, or
     /// <see langword="null"/> when the item carries none.
     /// </summary>
-    /// <value>
+    /// <returns>
     /// A copy of the structure the item holds, or <see langword="null"/>.
-    /// </value>
+    /// </returns>
     /// <remarks>
     /// <para>
     /// The <c>info</c> field arrived in GStreamer 1.28 and the binding supports
@@ -22,9 +21,12 @@ public sealed unsafe partial class ReferenceTimestampMeta
     /// an older library the storage this field sits in belongs to something
     /// else or does not exist, and a field access has nothing to fail on. This
     /// accessor is the runtime version check that lifts that, and the version
-    /// is the source of the size: the field is the last one of the structure
-    /// and only 1.28 allocates room for it, so nothing but the version has to
-    /// be asked.
+    /// is the source of the size: the field is the last one of the structure,
+    /// so nothing but the version has to be asked. The field itself is in
+    /// <c>gstbuffer.h</c> from 1.27.1 on, the development releases of the 1.28
+    /// it documents itself with (<c>Since: 1.28</c>); the gate at 1.28.0
+    /// therefore errs to the safe side, refusing a read one of those
+    /// development builds would have answered.
     /// </para>
     /// <para>
     /// The exception is the one every member that arrived after the floor
@@ -50,23 +52,20 @@ public sealed unsafe partial class ReferenceTimestampMeta
     /// The loaded GStreamer is older than 1.28, where the item has no such
     /// field.
     /// </exception>
-    public Gst.Structure? Info
+    public Gst.Structure? GetInfoStructure()
     {
-        get
+        Gst.Version version = global::GstSharp.NativeVersion;
+        if (!version.IsAtLeast(1, 28, 0))
         {
-            Gst.Version version = global::GstSharp.NativeVersion;
-            if (!version.IsAtLeast(1, 28, 0))
-            {
-                throw new EntryPointNotFoundException(string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"The info field of GstReferenceTimestampMeta arrived in GStreamer 1.28, and {version} is loaded: the item it is read off is allocated without it."));
-            }
-
-            Gst.Structure? info = Gst.Structure.FromNative(
-                ((ReferenceTimestampMetaRaw*)Handle)->Info,
-                Gst.Interop.Transfer.None);
-            GC.KeepAlive(this);
-            return info;
+            throw new EntryPointNotFoundException(string.Create(
+                CultureInfo.InvariantCulture,
+                $"The info field of GstReferenceTimestampMeta arrived in GStreamer 1.28, and {version} is loaded: the item it is read off is allocated without it."));
         }
+
+        Gst.Structure? info = Gst.Structure.FromNative(
+            ((ReferenceTimestampMetaRaw*)Handle)->Info,
+            Gst.Interop.Transfer.None);
+        GC.KeepAlive(this);
+        return info;
     }
 }

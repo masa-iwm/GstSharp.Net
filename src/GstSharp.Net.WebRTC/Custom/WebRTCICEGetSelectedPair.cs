@@ -17,7 +17,8 @@ namespace Gst.WebRTC;
 /// at <c>NULL</c> (1.28.6 <c>ice.c:687</c>). Its first release tags are
 /// 1.27.50 and 1.28.0. The slot is filled at 1.24.13 (<c>nice.c:1250</c>,
 /// wired at <c>:1729</c>) and at 1.26.11 (<c>nice.c:1252</c>, wired at
-/// <c>:1731</c>), so the call is answerable below 1.28 and nowhere above it.
+/// <c>:1731</c>), so the call is answerable below 1.27.50 and nowhere above
+/// it.
 /// </para>
 /// <para>
 /// On a 1.27.50 or newer library the C therefore aborts the process — a
@@ -36,9 +37,31 @@ namespace Gst.WebRTC;
 /// builds its agent out of <c>gst_webrtc_nice_new</c> — and the version is
 /// exactly what says whether that implementation still fills the slot.
 /// </para>
+/// <para>
+/// <see cref="Gst.Version.IsAtLeast(uint, uint, uint)"/> ignores the nano
+/// version, so a git build of main taken between <c>e4eb90d489</c> and the
+/// 1.27.50 tag — which reports 1.27.2.1, the version its <c>meson.build</c>
+/// carries — answers <c>IsAtLeast(1, 27, 50)</c> <see langword="false"/> and
+/// reaches the assertion anyway. The gate errs to the abort side for
+/// unreleased development builds only, which is the window
+/// <c>Custom/WebRTCICEAddStream.cs</c> documents on its own gate; every
+/// tagged release is read right.
+/// </para>
 /// </remarks>
 public abstract unsafe partial class WebRTCICE
 {
+    /// <summary>
+    /// Whether the loaded library has dropped the implementation the
+    /// dispatcher asserts on, which is every release from 1.27.50 on.
+    /// </summary>
+    /// <remarks>
+    /// The read needs an initialised binding, which is given: the only caller
+    /// is <see cref="GetSelectedPair"/>, and a live <c>WebRTCICE</c> wrapper
+    /// cannot exist before <c>GstSharp.Initialize</c> has run.
+    /// </remarks>
+    private static readonly bool SelectedPairWouldAbort =
+        global::GstSharp.NativeVersion.IsAtLeast(1, 27, 50);
+
     /// <summary>The <c>gst_webrtc_ice_get_selected_pair</c> function.</summary>
     /// <param name="stream">The #GstWebRTCICEStream</param>
     /// <param name="localStats">A pointer to #GstWebRTCICECandidateStats for local candidate</param>
@@ -50,7 +73,7 @@ public abstract unsafe partial class WebRTCICE
     /// </exception>
     /// <remarks>
     /// This is the hand written binding of a call that is only answerable
-    /// below 1.28. What it marshals below that is what the generated member
+    /// below 1.27.50. What it marshals below that is what the generated member
     /// marshalled: both out parameters are <c>(transfer full)</c>, so each is
     /// adopted as a wrapper the caller disposes, and a call that answers
     /// <see langword="false"/> leaves both of them
@@ -59,7 +82,7 @@ public abstract unsafe partial class WebRTCICE
     [Obsolete("Use gst_webrtc_ice_transport_get_selected_candidate_pair(). (deprecated since 1.28)")]
     public bool GetSelectedPair(Gst.WebRTC.WebRTCICEStream stream, out Gst.WebRTC.WebRTCICECandidateStats? localStats, out Gst.WebRTC.WebRTCICECandidateStats? remoteStats)
     {
-        if (global::GstSharp.NativeVersion.IsAtLeast(1, 27, 50))
+        if (SelectedPairWouldAbort)
         {
             // The gate sits at 1.27.50 rather than at 1.28, because a 1.27.50
             // host carries e4eb90d489 and hits the same assertion.

@@ -550,8 +550,8 @@ allocates the structure without that field, so the read would be past the end
 of it, and unlike a late entry point a field access has nothing to fail on.
 What lifts one is a version the binding asks the library for at run time, and
 there is exactly one such field in the tree today: `ReferenceTimestampMeta.info`,
-which `Custom/ReferenceTimestampMeta.cs` hands out as `Info` behind
-`GstSharp.NativeVersion.IsAtLeast(1, 28)` and which throws
+which `Custom/ReferenceTimestampMeta.cs` hands out as `GetInfoStructure()`
+behind `GstSharp.NativeVersion.IsAtLeast(1, 28)` and which throws
 `EntryPointNotFoundException` below that, the same exception the same library
 answers a member that arrived after the floor with.
 

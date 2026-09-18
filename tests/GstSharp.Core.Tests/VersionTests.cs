@@ -14,7 +14,7 @@ namespace GstSharp.Core.Tests;
 /// lexicographically rather than one part at a time, and that the nano version,
 /// which says whether a release is a release at all, takes no part in it.
 /// </remarks>
-public class VersionTests
+public sealed class VersionTests
 {
     [Fact]
     public void AVersionIsAtLeastItself()
