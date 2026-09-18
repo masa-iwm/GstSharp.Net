@@ -41,6 +41,20 @@ public abstract unsafe partial class WebRTCICEStream : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_stream_find_transport</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// A transport the stream already listed comes back with a reference of its own, taken by
+    /// the g_weak_ref_get of the walk (nicestream.c:179-184 at 1.24.13). A fresh one is built
+    /// with gst_webrtc_nice_transport_new, which is a bare g_object_new on a GstObject
+    /// (nicetransport.c:421-424 at 1.24.13), and the list the stream keeps holds nothing but a
+    /// weak reference to it, so before gst_object_ref_sink (ret) was added at nicestream.c:196
+    /// it came back floating - commit 83b8417290, backported to 1.26 as 9e7a2e6363, first tags
+    /// 1.26.11 and 1.28.1, so 1.24.x, 1.26.0 through 1.26.10 and 1.28.0 hand out the floating
+    /// one. Either shape is one owner here: the wrapper sinks a floating handle, which converts
+    /// that reference rather than adding one, and takes no further reference otherwise. Dispose
+    /// what comes back exactly once, on every release.
+    /// </para>
+    /// </remarks>
     /// <param name="component">The #GstWebRTCICEComponent</param>
     /// <returns>the #GstWebRTCICETransport, or %NULL</returns>
     public Gst.WebRTC.WebRTCICETransport? FindTransport(Gst.WebRTC.WebRTCICEComponent component)

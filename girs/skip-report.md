@@ -1182,12 +1182,13 @@ disappears shows up here as an added line.
 - `GstWebRTC.WebRTCDataChannel::send-string`
 - `GstWebRTC.WebRTCICE::add-local-ip-address`
 
-### HandBound (5)
+### HandBound (6)
 
 - `gst_webrtc_data_channel_send_data_full`
 - `gst_webrtc_ice_add_stream`
 - `gst_webrtc_ice_get_local_candidates`
 - `gst_webrtc_ice_get_remote_candidates`
+- `gst_webrtc_ice_get_selected_pair`
 - `gst_webrtc_session_description_new`
 
 ### LifetimePrimitive (4)

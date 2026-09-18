@@ -448,6 +448,7 @@ public sealed class SkipRulesTests
                 "gst_webrtc_ice_add_stream",
                 "gst_webrtc_ice_get_local_candidates",
                 "gst_webrtc_ice_get_remote_candidates",
+                "gst_webrtc_ice_get_selected_pair",
                 "gst_webrtc_session_description_new",
             ],
             GirFixture.Overlays.SkippedIdentifiers.Order(StringComparer.Ordinal).ToArray());
@@ -649,6 +650,7 @@ public sealed class SkipRulesTests
                 "gst_webrtc_ice_add_stream",
                 "gst_webrtc_ice_get_local_candidates",
                 "gst_webrtc_ice_get_remote_candidates",
+                "gst_webrtc_ice_get_selected_pair",
                 "gst_webrtc_session_description_new",
             ],
             GirFixture.Overlays.HandBoundIdentifiers.Order(StringComparer.Ordinal).ToArray());

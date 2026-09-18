@@ -89,6 +89,22 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_find_transport</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// The base function is a pure vfunc dispatch: it checks the instance, asserts the slot and
+    /// hands the answer of the implementation back unchanged (ice.c:79-97, byte-identical at
+    /// 1.24.13, 1.26.11 and 1.28.6), so what the ownership of the answer is, is decided by the
+    /// implementation below it - libnice's, which is the only one the binding meets. There a
+    /// transport that the stream already listed comes back with a reference of its own, while a
+    /// fresh one came back floating with only a weak reference behind it until
+    /// gst_object_ref_sink (ret) was added (nicestream.c:193-200 at 1.28.6, absent at
+    /// nicestream.c:193-199 of 1.24.13; commit 83b8417290 with the 1.26 backport 9e7a2e6363,
+    /// first tags 1.26.11 and 1.28.1). The wrapper sinks a floating handle and takes no further
+    /// reference, which is one owner on every release of either shape: the sink converts the
+    /// floating reference rather than adding one, and a transport that was already sunk is
+    /// adopted as it is. Dispose what comes back exactly once.
+    /// </para>
+    /// </remarks>
     /// <param name="stream">The #GstWebRTCICEStream</param>
     /// <param name="component">The #GstWebRTCICEComponent</param>
     /// <returns>The #GstWebRTCICETransport, or %NULL</returns>
@@ -136,26 +152,6 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
         int nativeResult = GstWebrtcIceGetIsController(Handle);
         bool result = nativeResult != 0;
         System.GC.KeepAlive(this);
-        return result;
-    }
-
-    /// <summary>The <c>gst_webrtc_ice_get_selected_pair</c> function.</summary>
-    /// <param name="stream">The #GstWebRTCICEStream</param>
-    /// <param name="localStats">A pointer to #GstWebRTCICECandidateStats for local candidate</param>
-    /// <param name="remoteStats">pointer to #GstWebRTCICECandidateStats for remote candidate</param>
-    /// <returns>FALSE on failure, otherwise @local_stats @remote_stats will be set</returns>
-    [Obsolete("Use gst_webrtc_ice_transport_get_selected_candidate_pair(). (deprecated since 1.28)")]
-    public bool GetSelectedPair(Gst.WebRTC.WebRTCICEStream stream, out Gst.WebRTC.WebRTCICECandidateStats? localStats, out Gst.WebRTC.WebRTCICECandidateStats? remoteStats)
-    {
-        ArgumentNullException.ThrowIfNull(stream);
-        nint localStatsNative = default;
-        nint remoteStatsNative = default;
-        int nativeResult = GstWebrtcIceGetSelectedPair(Handle, stream.Handle, &localStatsNative, &remoteStatsNative);
-        localStats = Gst.WebRTC.WebRTCICECandidateStats.FromNative(localStatsNative, Gst.Interop.Transfer.Full);
-        remoteStats = Gst.WebRTC.WebRTCICECandidateStats.FromNative(remoteStatsNative, Gst.Interop.Transfer.Full);
-        bool result = nativeResult != 0;
-        System.GC.KeepAlive(this);
-        System.GC.KeepAlive(stream);
         return result;
     }
 
@@ -382,10 +378,6 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     /// <summary>The <c>gst_webrtc_ice_get_is_controller</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_get_is_controller")]
     private static partial int GstWebrtcIceGetIsController(nint ice);
-
-    /// <summary>The <c>gst_webrtc_ice_get_selected_pair</c> entry point.</summary>
-    [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_get_selected_pair")]
-    private static partial int GstWebrtcIceGetSelectedPair(nint ice, nint stream, nint* localStats, nint* remoteStats);
 
     /// <summary>The <c>gst_webrtc_ice_get_stun_server</c> entry point.</summary>
     [LibraryImport("GstWebRTC", EntryPoint = "gst_webrtc_ice_get_stun_server")]
