@@ -779,6 +779,7 @@
     "GstMeta.info": { "handBound": true, "$comment": "Custom/Meta.cs declares Info." },
     "GstPadProbeInfo.data": { "exposedBy": "GetBuffer, GetBufferList, GetEvent and GetQuery" },
     "GstPadProbeInfo.flow_ret": { "exposedBy": "GetFlowReturn" },
+    "GstReferenceTimestampMeta.info": { "handBound": true, "$comment": "Custom/ReferenceTimestampMeta.cs declares Info behind a runtime version check. The field is the one accessor-eligible field in the whole tree that the gir marks with a version above the floor (version=1.28 on a record that is version=1.14), so it is also the one field an overlay cannot lift: 1.24 and 1.26 register the item at the size of the shorter struct (gstbuffer.c:2925 at 1.24.13 against :3004 at 1.28.6) and the read would be past the end of the allocation. What lifts it is the version the binding asks the library for at run time, which is why the accessor is hand written and throws EntryPointNotFoundException below 1.28, as every member that arrived after the floor does on a library that lacks it." },
     "GstRTSPAuthCredential.params": { "handBound": true, "$comment": "Custom/RTSPAuthCredential.cs declares GetParams(), which copies the NULL terminated parameter block the field points at into wrappers of its own; an accessor would hand out a bare pointer nothing managed could walk." },
     "GstStaticCaps.caps": { "exposedBy": "Get" },
     "GstVideoFrame.buffer": { "handBound": true, "$comment": "Custom/VideoFrame.cs hands the mapped buffer out as MapScope.Buffer." },

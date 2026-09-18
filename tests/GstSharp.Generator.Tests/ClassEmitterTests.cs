@@ -673,7 +673,7 @@ public sealed class ClassEmitterTests
     }
 
     [Theory]
-    [InlineData("Gst", 49)]
+    [InlineData("Gst", 48)]
     [InlineData("GstBase", 0)]
     [InlineData("GstAudio", 15)]
     [InlineData("GstVideo", 33)]
@@ -706,8 +706,8 @@ public sealed class ClassEmitterTests
     {
         string report = Generated.SkipReport;
 
-        Assert.Equal(142, Generated.Census.DroppedFieldCount());
-        Assert.Contains("## Fields (142)\n", report, StringComparison.Ordinal);
+        Assert.Equal(141, Generated.Census.DroppedFieldCount());
+        Assert.Contains("## Fields (141)\n", report, StringComparison.Ordinal);
         Assert.Contains("### GstVideo (33)\n", report, StringComparison.Ordinal);
 
         // One entry per shape that keeps a field out. The fixed size fields of
@@ -784,11 +784,14 @@ public sealed class ClassEmitterTests
         // A field that arrived after the support floor carries no accessor
         // whatever its shape, because the structure of an older library is not
         // long enough to hold it; the line says which version put it there.
-        Assert.Contains(
+        // The one such field a hand written accessor now answers behind a
+        // runtime version check, ReferenceTimestampMeta.info, is off this
+        // ledger and on the one below, the way every hand written field is.
+        Assert.Contains("- `ValueTable.hash` \u2014 Callback, since 1.28\n", report, StringComparison.Ordinal);
+        Assert.DoesNotContain(
             "- `ReferenceTimestampMeta.info` \u2014 Pointer, since 1.28\n",
             report,
             StringComparison.Ordinal);
-        Assert.Contains("- `ValueTable.hash` \u2014 Callback, since 1.28\n", report, StringComparison.Ordinal);
 
         // Padding is off the ledger whether or not the gir annotates it.
         Assert.DoesNotContain("_gst_reserved", report, StringComparison.Ordinal);
@@ -806,14 +809,15 @@ public sealed class ClassEmitterTests
         // C accessor already answers.
         string report = Generated.SkipReport;
 
-        Assert.Equal(19, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (19)\n", report, StringComparison.Ordinal);
+        Assert.Equal(20, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (20)\n", report, StringComparison.Ordinal);
         Assert.Contains(
-            "### Gst (6)\n\n- `CustomMeta.structure` — GetStructure\n"
+            "### Gst (7)\n\n- `CustomMeta.structure` — GetStructure\n"
             + "- `Message.src` — hand written\n"
             + "- `Meta.info` — hand written\n"
             + "- `PadProbeInfo.data` — GetBuffer, GetBufferList, GetEvent and GetQuery\n"
             + "- `PadProbeInfo.flow_ret` — GetFlowReturn\n"
+            + "- `ReferenceTimestampMeta.info` — hand written\n"
             + "- `StaticCaps.caps` — Get\n",
             report,
             StringComparison.Ordinal);

@@ -1247,7 +1247,7 @@ what is listed here is the managed surface and not the ABI.
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Object::deep_notify` — NotSubclassable: class is a chain-only mirror (not subclassable); the slot is reachable only through chain-up
 
-## Fields (142)
+## Fields (141)
 
 Public record fields that carry API in C and none in C#, with the shape that
 kept them out. A field is bound when a wrapper declares an accessor for it, or
@@ -1269,7 +1269,7 @@ it unbound, and this ledger is where that is counted.
 
 - `FrameCompositionMeta.meta` — EmbeddedStruct
 
-### Gst (49)
+### Gst (48)
 
 - `Buffer.mini_object` — EmbeddedStruct
 - `ByteArrayInterface.data` — Pointer
@@ -1307,7 +1307,6 @@ it unbound, and this ledger is where that is counted.
 - `Promise.parent` — EmbeddedStruct
 - `ProtectionMeta.meta` — EmbeddedStruct
 - `Query.mini_object` — EmbeddedStruct
-- `ReferenceTimestampMeta.info` — Pointer, since 1.28
 - `ReferenceTimestampMeta.parent` — EmbeddedStruct
 - `StaticPadTemplate.static_caps` — EmbeddedStruct
 - `TagList.mini_object` — EmbeddedStruct
@@ -1434,20 +1433,21 @@ it unbound, and this ledger is where that is counted.
 - `VideoSEIUserDataUnregisteredMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 
-## Fields exposed elsewhere (19)
+## Fields exposed elsewhere (20)
 
 Public record fields that another member of the binding answers, with the
 member that answers them. They are declared in `girs/overlays/fixups.json`
 under `fieldSkips` and are left out of the ledger above: what is measured
 there is what the bindings do not cover, and these are covered.
 
-### Gst (6)
+### Gst (7)
 
 - `CustomMeta.structure` — GetStructure
 - `Message.src` — hand written
 - `Meta.info` — hand written
 - `PadProbeInfo.data` — GetBuffer, GetBufferList, GetEvent and GetQuery
 - `PadProbeInfo.flow_ret` — GetFlowReturn
+- `ReferenceTimestampMeta.info` — hand written
 - `StaticCaps.caps` — Get
 
 ### GstAudio (3)
