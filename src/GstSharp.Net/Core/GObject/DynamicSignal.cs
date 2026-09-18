@@ -50,15 +50,27 @@ namespace Gst.GObject;
 /// <c>rtspclientsink</c>, are the ones this binding knows of. Because the value
 /// stays the emitter's, a handler must never release it: no
 /// <c>RTSPMessage.Unset()</c>, no <c>SDPMessage.Uninit()</c> and no other
-/// clearing call on such an argument, and no <c>Dispose</c> either — the
-/// emission disposes the wrapper itself.
+/// clearing call on such an argument. <c>Dispose</c> on it is pointless rather
+/// than harmful — a borrowed wrapper frees nothing — but it detaches the
+/// wrapper early, and the emission disposes it in any case.
+/// </para>
+/// <para>
+/// A mini object argument is borrowed too, which is a change from the
+/// reference of its own the wrapper used to hold: <c>MakeWritable()</c> on such
+/// an argument throws <see cref="InvalidOperationException"/>, where it used to
+/// answer a private copy the emitter never saw. A handler that wants to edit a
+/// mini object argument that the emitter does not read back has to
+/// <c>Copy()</c> it first and make the copy writable.
 /// </para>
 /// <para>
 /// Which types arrive as a wrapper depends on which modules are initialised,
-/// because that is what fills the type registry: connecting to a signal that
-/// carries a <c>GstRTSPMessage</c> before <c>GstRtsp.Initialize()</c> ran, or
-/// to one that carries a <c>GstSDPMessage</c> before <c>GstSdp.Initialize()</c>
-/// ran, hands the handler the raw <see cref="nint"/> instead.
+/// because that is what fills the type registry: the registry is read on every
+/// emission, so what counts is that the module was initialised before the
+/// emission — initialising before the handler is connected is the way to be
+/// sure of it. A signal that carries a <c>GstRTSPMessage</c> hands the handler
+/// the raw <see cref="nint"/> instead until <c>GstRtsp.Initialize()</c> has
+/// run, and one that carries a <c>GstSDPMessage</c> until
+/// <c>GstSdp.Initialize()</c> has.
 /// </para>
 /// <para>
 /// An <see cref="Object"/> argument is the shared wrapper of that object, so
@@ -355,12 +367,33 @@ internal static unsafe class DynamicSignalClosure
         // A boxed type no initialised module registered has no wrapper to
         // build, and its raw handle is what arrives; a null pointer reads as
         // null, which GetDynamicContent already does.
-        if (fundamental == GType.BoxedValue &&
-            TypeRegistry.TryCreateBorrowedWrapper(value.Type, value.GetBoxed(), out object? boxed) &&
-            boxed is IDisposable disposable)
+        if (fundamental == GType.BoxedValue)
         {
-            (borrowed ??= []).Add(disposable);
-            return boxed;
+            nint content = value.GetBoxed();
+
+            if (TypeRegistry.TryCreateBorrowedWrapper(value.Type, content, out object? lent) &&
+                lent is IDisposable detachable)
+            {
+                (borrowed ??= []).Add(detachable);
+                return lent;
+            }
+
+            // A type a module registered before this binding emitted borrowing
+            // factories — or one a module outside this repository registered —
+            // has none to call. Such a mini object keeps arriving the way it
+            // did before: a wrapper holding a reference of its own. It reads
+            // the emission's value, but it is a reference more than the
+            // emitter holds, so the value is never writable through it and
+            // what the handler writes after copying it reaches nobody. A
+            // registered boxed type that is not a mini object and has no
+            // borrowing factory arrives as its raw handle, which is what it
+            // did before as well.
+            if (TypeRegistry.TryCreateMiniObjectWrapper(value.Type, content, Transfer.None, out object? owning) &&
+                owning is IDisposable releasable)
+            {
+                (borrowed ??= []).Add(releasable);
+                return owning;
+            }
         }
 
         return value.GetDynamicContent();

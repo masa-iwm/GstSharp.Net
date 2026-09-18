@@ -959,14 +959,23 @@ afterwards throws `ObjectDisposedException`. Three rules follow:
   of `rtspsrc`, and `handle-request` and `update-sdp` of `rtspclientsink`,
   usable from managed code at all.
 * **Releasing it is the emitter's business, never the handler's.** No
-  `RTSPMessage.Unset()`, no `SDPMessage.Uninit()`, no other clearing call, and
-  no `Dispose()` on the argument.
+  `RTSPMessage.Unset()`, no `SDPMessage.Uninit()`, no other clearing call.
+  `Dispose()` on the argument is pointless rather than dangerous — a borrowed
+  wrapper frees nothing — but it detaches the wrapper early, and the emission
+  disposes it anyway.
+* **A mini object argument is borrowed as well**, which it was not before: the
+  wrapper used to hold a reference of its own. `MakeWritable()` on such an
+  argument now throws `InvalidOperationException` instead of quietly answering a
+  private copy that the emitter never saw. `Copy()` it and make the copy
+  writable when a writable value is what is wanted.
 
 A boxed type nothing registered still arrives as its raw `nint`, unchanged and
 nobody's to free. Since what is registered is what the initialised modules put
 there, a handler for an `rtspsrc` signal sees `Gst.Rtsp.RTSPMessage` only if
-`GstRtsp.Initialize()` ran before the connection was made, and an SDP argument
-needs `GstSdp.Initialize()` the same way. The **return** value of an emission is
+`GstRtsp.Initialize()` ran, and an SDP argument needs `GstSdp.Initialize()` the
+same way. The registry is consulted on every emission rather than when the
+handler is connected, so the requirement is really "before the emission";
+initialising the module before connecting is the way to be sure of it. The **return** value of an emission is
 a different question and is unchanged: `Object.EmitSignal` hands a boxed result
 back as an owned `nint`, except for a mini object, which comes back as its
 wrapper.

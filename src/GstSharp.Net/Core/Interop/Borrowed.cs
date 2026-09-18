@@ -8,17 +8,18 @@ namespace Gst.Interop;
 /// <para>
 /// This is the one exception to the rule of <c>docs/ownership.md</c> that every
 /// mini object wrapper owns a reference of its own, and it exists for the
-/// reverse direction only: a vfunc override receives the mini object that
-/// GStreamer is holding, uses it while the call runs, and never keeps it.
+/// reverse direction only: a vfunc override, and the handler a dynamic signal
+/// lends its argument to, receive the mini object that GStreamer is holding,
+/// use it while the call runs, and never keep it.
 /// A wrapper built from this takes no reference and releases none; disposing it
 /// only detaches it, so a wrapper that outlives the call throws
 /// <see cref="System.ObjectDisposedException"/> instead of touching an object
 /// it does not own.
 /// </para>
 /// <para>
-/// Taking a reference for the duration of the call — which is what the borrow
-/// of a signal argument does — is not usable here: it makes the object
-/// non-writable, and <c>gst_buffer_map</c> refuses a write mapping on a buffer
+/// Taking a reference for the duration of the call instead — which is what a
+/// wrapper built with <see cref="Transfer.None"/> does — is not usable here: it
+/// makes the object non-writable, and <c>gst_buffer_map</c> refuses a write mapping on a buffer
 /// that somebody else holds. An in-place transform receives a buffer that
 /// GStreamer has already made writable, so the wrapper must not be the second
 /// holder that takes that away. See <c>docs/subclassing.md</c> §4.3.

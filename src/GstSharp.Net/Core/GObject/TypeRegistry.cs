@@ -495,9 +495,12 @@ public static class TypeRegistry
     /// duration of the call. The emitter keeps the value and reads it back
     /// afterwards, so the wrapper must be the value the emitter holds rather
     /// than a copy of it, and it must free nothing when the handler returns:
-    /// both are what a borrow is. A type whose wrapper cannot borrow - one the
-    /// generator emitted no borrowing factory for - answers
-    /// <see langword="false"/>, and the caller falls back to what it did before.
+    /// both are what a borrow is. A type whose wrapper cannot borrow - one
+    /// registered without a borrowing factory - answers
+    /// <see langword="false"/>, and the caller falls back to what it did
+    /// before: <see cref="TryCreateMiniObjectWrapper"/> with
+    /// <see cref="Transfer.None"/> for a mini object, and the raw handle for
+    /// every other boxed type.
     /// </remarks>
     internal static unsafe bool TryCreateBorrowedWrapper(GType type, nint handle, out object? wrapper)
     {

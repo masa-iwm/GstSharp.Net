@@ -1817,12 +1817,25 @@ internal static class CallableRenderer
                 lines.Add("usable after the call and the handlers connected to it keep firing.");
                 if (plan.ReleasesHandOverOnRefusal)
                 {
-                    string refusal = plan.Return.Kind == ArgumentKind.Boolean
-                        ? "<see langword=\"false\"/>"
-                        : "<see langword=\"null\"/>";
-                    lines.Add("When the call refuses the argument — the " + refusal + " the C answers is");
-                    lines.Add("that refusal — the reference minted for it is released again, so nothing");
-                    lines.Add("is leaked.");
+                    // What a refusal looks like is what the caller sees, not
+                    // what the C answers: a member with a non-nullable handle
+                    // return never hands the NULL on, it raises instead.
+                    if (plan.Return.Kind == ArgumentKind.Boolean || plan.Return.IsNullable)
+                    {
+                        string refusal = plan.Return.Kind == ArgumentKind.Boolean
+                            ? "<see langword=\"false\"/>"
+                            : "<see langword=\"null\"/>";
+                        lines.Add("When the call refuses the argument — the " + refusal + " the C answers is");
+                        lines.Add("that refusal — the reference minted for it is released again, so nothing");
+                        lines.Add("is leaked.");
+                    }
+                    else
+                    {
+                        lines.Add("A refusal is the <c>NULL</c> the C answers, which this member raises an");
+                        lines.Add("<see cref=\"InvalidOperationException\"/> for rather than handing it on. The");
+                        lines.Add("reference minted for the argument is released before that, so a refusal");
+                        lines.Add("leaks nothing.");
+                    }
                 }
 
                 if (argument.IsNullable)

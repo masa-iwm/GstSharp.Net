@@ -272,7 +272,7 @@ another return type already carries has no managed spelling of its own, and
 the entry gives it one. `GstAudio.AudioSink::stop` is the one such slot, and
 it is emitted as `OnStopDevice`.
 
-Two more keys address a callback type and a member rather than a slot:
+The remaining keys address a callback type and a member rather than a slot:
 
 * `instanceKeyedCallbacks` — the qualified gir name of a callback whose own C
   signature carries no `user_data`, mapped onto the storage slot of the
@@ -285,6 +285,29 @@ Two more keys address a callback type and a member rather than a slot:
   generated documentation as one paragraph. It is the counterpart of
   `vfuncDocNotes` for a member; an entry that names no planned callable is
   reported as `GEN0042`.
+* `signalDocNotes` — the same thing for a signal, keyed by the GObject
+  spelling of it, `GES.Timeline::select-tracks-for-object`. An entry that names
+  no rendered signal is reported as `GEN0048`.
+* `preconditions` — C# statements the generated body of a callable runs before
+  it marshals anything, keyed by `c:identifier`. They keep a member off a call
+  the C answers with a crash or with a critical. The helper each one calls is
+  hand written in the `Custom/` partial of the type, so the compiler reports a
+  statement that names nothing; an entry that names no rendered callable is
+  reported as `GEN0049`.
+* `handOverRefusals` — the callables that refuse what they are handed instead
+  of taking it, keyed by `c:identifier`, with the C lines the reading rests on
+  as the value. The generated body releases the reference minted for every
+  handed over argument again when the raw result is a zero — `FALSE` for a
+  `gboolean` return, `NULL` for a pointer one — so a refusal leaks nothing. A
+  callable whose return carries no such refusal, or that hands nothing over, is
+  reported as `GEN0050`; an entry that names no rendered callable is `GEN0051`.
+* `docStrip` — exact substrings taken out of the raw gir documentation of a
+  callable before it is split into paragraphs, keyed by `c:identifier`. It is
+  the one overlay that removes upstream text, and it exists for the sentence
+  that states a rule of the C which is not the rule of the binding. Each
+  substring has to stand in the documentation exactly once; one that stands
+  nowhere or twice is reported as `GEN0052`, and an entry that names no
+  rendered callable is `GEN0053`.
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter

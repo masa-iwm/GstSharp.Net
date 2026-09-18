@@ -72,11 +72,12 @@ public abstract class Boxed : IDisposable
     /// <param name="boxedType">The boxed type of the value.</param>
     /// <remarks>
     /// <para>
-    /// This is the reverse direction only: the override of a virtual method is
-    /// handed the very instance the caller of the slot holds, writes to it, and
-    /// never keeps it. A <c>g_boxed_copy</c> would hand the override a copy the
-    /// caller never reads back, which is why a lent boxed value is wrapped
-    /// without one. See <see cref="Gst.Interop.Borrowed"/>.
+    /// This is the reverse direction only: the override of a virtual method,
+    /// and the argument a dynamic signal lends its handler, are handed the very
+    /// instance the caller of the slot or the emitter of the signal holds,
+    /// write to it, and never keep it. A <c>g_boxed_copy</c> would hand them a
+    /// copy the other side never reads back, which is why a lent boxed value is
+    /// wrapped without one. See <see cref="Gst.Interop.Borrowed"/>.
     /// </para>
     /// <para>
     /// The wrapper owns nothing, so disposing it only detaches it: a wrapper

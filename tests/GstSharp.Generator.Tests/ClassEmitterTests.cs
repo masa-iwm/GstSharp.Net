@@ -861,7 +861,7 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Each of the ten names an overlay entry that matched nothing: an
+        // Ten of the twelve name an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
@@ -875,13 +875,22 @@ public sealed class ClassEmitterTests
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
         //
-        // GEN0049 and GEN0051 are the ones with teeth. A key a gir refresh
-        // renamed stops being applied, and the member is regenerated without
-        // the statement that kept it off a NULL dereference or off a bus that
-        // cannot deliver, or without the release that kept its refusal path
-        // from leaking a reference. Nothing else moves: the helper in Custom/
-        // is still there, so the build stays warning free, and verify is clean
-        // the moment the new output is committed.
+        // The other two are the entries a gir refresh silences without
+        // renaming the key at all: a hand over refusal whose callable no
+        // longer has the shape the release is written for (GEN0050), and a
+        // documentation strip whose sentence upstream reworded (GEN0052). The
+        // key is still read, so no stale report follows it; what disappears is
+        // the release, or the sentence returns to the member. Neither would be
+        // caught by the ten above, which is why both are asserted here too.
+        //
+        // GEN0049, GEN0050 and GEN0051 are the ones with teeth. A key a gir
+        // refresh renamed or a member whose shape it changed stops being
+        // applied, and the member is regenerated without the statement that
+        // kept it off a NULL dereference or off a bus that cannot deliver, or
+        // without the release that kept its refusal path from leaking a
+        // reference. Nothing else moves: the helper in Custom/ is still there,
+        // so the build stays warning free, and verify is clean the moment the
+        // new output is committed.
         //
         // GEN0026 is the one that goes wrong most quietly. A stale
         // 'nullable: false' key - a field a gir refresh renamed or removed -
@@ -900,7 +909,9 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0042", diagnostic.Code);
             Assert.NotEqual("GEN0048", diagnostic.Code);
             Assert.NotEqual("GEN0049", diagnostic.Code);
+            Assert.NotEqual("GEN0050", diagnostic.Code);
             Assert.NotEqual("GEN0051", diagnostic.Code);
+            Assert.NotEqual("GEN0052", diagnostic.Code);
             Assert.NotEqual("GEN0053", diagnostic.Code);
         }
     }

@@ -513,7 +513,10 @@ internal sealed class MarshalPlanner
 
     /// <summary>The keys of the precondition entries this run has emitted.</summary>
     private readonly HashSet<string> _consumedPreconditions;
+    /// <summary>The keys of the hand over refusal entries this run has read.</summary>
     private readonly HashSet<string> _consumedHandOverRefusals;
+
+    /// <summary>The keys of the documentation strip entries this run has read.</summary>
     private readonly HashSet<string> _consumedDocStrips;
 
     /// <summary>The sibling argument keys this run has matched, shared for the same reason.</summary>

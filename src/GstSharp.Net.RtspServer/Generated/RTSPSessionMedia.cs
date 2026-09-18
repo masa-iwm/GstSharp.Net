@@ -50,9 +50,10 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     /// reference of its own, minted for this call, and keeps it for as long as it
     /// needs the object. This wrapper keeps the reference it holds, so it stays
     /// usable after the call and the handlers connected to it keep firing.
-    /// When the call refuses the argument — the <see langword="null"/> the C answers is
-    /// that refusal — the reference minted for it is released again, so nothing
-    /// is leaked.
+    /// A refusal is the <c>NULL</c> the C answers, which this member raises an
+    /// <see cref="InvalidOperationException"/> for rather than handing it on. The
+    /// reference minted for the argument is released before that, so a refusal
+    /// leaks nothing.
     /// </para>
     /// </remarks>
     /// <param name="path">the path</param>

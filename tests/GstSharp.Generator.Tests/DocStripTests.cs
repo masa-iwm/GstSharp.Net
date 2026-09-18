@@ -148,6 +148,40 @@ public sealed class DocStripTests
     }
 
     [Fact]
+    public void OneSubstringOfAnEntryStandingNowhereLeavesTheOthersRemoved()
+    {
+        // The entry is a list, and each substring is judged on its own: the
+        // one that still stands is taken out, and the one an upstream
+        // rewording moved is reported rather than silently forgiven.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "docStrip": {
+                "gst_widget_pack": [
+                  "\n\nOwnership is taken of @label.",
+                  "The widget stays unpacked."
+                ]
+              }
+            }
+            """);
+
+        string source = run.File("Widget.cs");
+
+        Assert.DoesNotContain("Ownership is taken of @label.", source, StringComparison.Ordinal);
+        Assert.Contains("Packs the @label into the @widget.", source, StringComparison.Ordinal);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0052", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("gst_widget_pack", StringComparison.Ordinal));
+
+        // The key was read, so it is not also reported as naming nothing.
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0053", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void AnEntryThatNamesNoCallableIsReportedAsStale()
     {
         FixtureRun run = RunWithOverlay(

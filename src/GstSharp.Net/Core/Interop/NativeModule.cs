@@ -50,7 +50,9 @@ public readonly unsafe struct ModuleTypeEntry : IEquatable<ModuleTypeEntry>
     /// </param>
     /// <param name="borrowedFactory">
     /// Creates a wrapper that borrows the instance: it owns nothing, and
-    /// disposing it detaches the wrapper rather than freeing anything.
+    /// disposing it detaches the wrapper rather than freeing anything. Only the
+    /// generated types of this binding can build one; see
+    /// <see cref="BorrowedFactory"/> for what an entry without it receives.
     /// </param>
     public ModuleTypeEntry(
         delegate* unmanaged[Cdecl]<nuint> getTypeFunction,
@@ -91,7 +93,9 @@ public readonly unsafe struct ModuleTypeEntry : IEquatable<ModuleTypeEntry>
     /// </param>
     /// <param name="borrowedFactory">
     /// Creates a wrapper that borrows the instance: it owns nothing, and
-    /// disposing it detaches the wrapper rather than freeing anything.
+    /// disposing it detaches the wrapper rather than freeing anything. Only the
+    /// generated types of this binding can build one; see
+    /// <see cref="BorrowedFactory"/> for what an entry without it receives.
     /// </param>
     public ModuleTypeEntry(
         delegate*<nuint> getTypeFunction,
@@ -109,9 +113,28 @@ public readonly unsafe struct ModuleTypeEntry : IEquatable<ModuleTypeEntry>
     /// <see langword="null"/> when the type has none.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Only a wrapper that can stand for a value it does not own carries one:
     /// what reads it is an argument a signal hands out for the duration of the
     /// call, which the handler may read and edit in place and must not free.
+    /// </para>
+    /// <para>
+    /// Only the generated types of this binding can supply one today, because
+    /// the wrapper it has to build is one that owns nothing, and the
+    /// constructor that makes such a wrapper is internal to the binding. Leave
+    /// the argument out otherwise. A wrapper that does own what it is given
+    /// must never be answered here: the caller disposes it when the handler
+    /// returns, which would release a value the emitter still holds - for a
+    /// plain boxed type a <c>g_boxed_free</c> on a pointer that is regularly
+    /// an address on the stack of the emitter.
+    /// </para>
+    /// <para>
+    /// An entry without one is not refused. A mini object of such a type
+    /// reaches a dynamic signal handler as a wrapper holding a reference of
+    /// its own, which reads the emission's value but can never make it
+    /// writable; any other boxed type of such an entry reaches the handler as
+    /// its raw <c>nint</c>.
+    /// </para>
     /// </remarks>
     public delegate*<nint, object> BorrowedFactory => _borrowedFactory;
 

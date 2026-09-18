@@ -21,16 +21,21 @@ namespace GstSharp.IntegrationTests;
 /// the one every dynamically connected handler walks, whoever emitted.
 /// </para>
 /// <para>
-/// What is asserted is pointer identity and disposal, never a reference count:
-/// a signal that does not declare its argument static scope has GLib collect a
-/// copy of it, and that copy is itself a reference, so counts say nothing about
-/// whether the binding took one.
+/// What is asserted is pointer identity, disposal, and — for a mini object —
+/// the reference count seen twice inside one emission, never an absolute count.
+/// <c>g_signal_emitv</c> collects nothing; the <c>GValue</c> the handler is
+/// given is the one the emitting side filled with <c>g_value_set_boxed</c>, and
+/// that call takes a reference of its own. How many references stand around the
+/// value therefore says nothing on its own, while the difference between what a
+/// raw C callback sees and what the managed handler sees on the same emission
+/// says exactly whether the binding took one.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
 public sealed unsafe class DynamicSignalBoxedArgumentTests
 {
     private static nint _rawArgument;
+    private static int _rawMiniObjectCount;
 
     /// <summary>
     /// A <c>GstStructure</c> argument arrives as a <see cref="Structure"/>, and
@@ -118,8 +123,9 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
             {
                 usableInsideTheHandler = structure.Handle != nint.Zero;
 
-                // Keeping the argument means copying it, exactly as it does for
-                // a caps.
+                // Keeping the argument means copying it: gst_structure_copy
+                // answers a value of the handler's own, which the emission
+                // knows nothing about.
                 copied = structure.Copy();
                 kept = structure;
             }
@@ -212,16 +218,27 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
     /// caps the emission carries.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The boxed copy function of a mini object is <c>gst_mini_object_ref</c>,
-    /// so the value the emission collected is the caps this test built, and
-    /// pointer identity against it is readable from here. No reference count is
-    /// asserted: the collected reference is one of its own.
+    /// so the value the emitting side stored is the caps this test built, and
+    /// pointer identity against it is readable from here.
+    /// </para>
+    /// <para>
+    /// Pointer identity alone holds for a wrapper that takes a reference of the
+    /// emission's value as well, which is what this used to do, so the count is
+    /// read twice inside the one emission: once by a raw C callback that runs
+    /// before the managed handler, and once inside the handler. Equal is a
+    /// borrow; one more is a wrapper that took a reference. Nothing else runs
+    /// in between — <c>g_signal_emitv</c> collects nothing and the emission is
+    /// on this thread — so the reading is exact rather than a snapshot.
+    /// </para>
     /// </remarks>
     [Fact]
     public void AMiniObjectArgumentIsBorrowedByPointer()
     {
         Assert.True(ProbeSignalElement.IsRegistered);
         ProbeSignalElement.Reset();
+        Volatile.Write(ref _rawMiniObjectCount, 0);
 
         using Element made = ElementFactory.Make(ProbeSignalElement.FactoryName, "mini-object-argument")
             ?? throw new InvalidOperationException("The probe factory is missing.");
@@ -231,6 +248,11 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
         nint wrapped = nint.Zero;
         string? described = null;
         Caps? kept = null;
+        int insideTheHandler = 0;
+
+        // Connected first, so it runs first and reads the count the emission
+        // carries before the wrapper of the managed handler is built.
+        CULong raw = ConnectRawMiniObject(made.Handle, ProbeSignalElement.MiniObjectSignal);
 
         ulong handler = made.ConnectSignal(ProbeSignalElement.MiniObjectSignal, (sender, args) =>
         {
@@ -239,6 +261,7 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
             if (args.Length > 0 && args[0] is Caps caps)
             {
                 wrapped = caps.Handle;
+                insideTheHandler = RefCountOf(caps.Handle);
                 described = caps.ToString();
                 kept = caps;
             }
@@ -253,10 +276,17 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
         finally
         {
             made.RemoveHandler(handler);
+            TestNatives.SignalHandlerDisconnect(made.Handle, raw);
         }
 
         Assert.Equal(sent.Handle, wrapped);
         Assert.Equal("audio/x-raw, rate=(int)48000", described);
+
+        // The wrapper added no reference of its own: what the C callback
+        // counted is what the handler counted.
+        int beforeTheWrapper = Volatile.Read(ref _rawMiniObjectCount);
+        Assert.True(beforeTheWrapper > 0, "the raw callback read no reference count.");
+        Assert.Equal(beforeTheWrapper, insideTheHandler);
 
         // Borrowed the same way a boxed value is: the wrapper is detached when
         // the handler returns, and the caps themselves are untouched.
@@ -327,8 +357,9 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
 
         Assert.Equal(1, Volatile.Read(ref calls));
 
-        // The copy function of a GBytes is g_bytes_ref, so the handle the
-        // emission carries is the one this test made.
+        // The boxed copy function of a GBytes is g_bytes_ref, so the value
+        // g_value_set_boxed stored is the handle this test made rather than a
+        // duplicate of it.
         nint handle = Assert.IsType<nint>(seen);
         Assert.Equal(bytes, handle);
     }
@@ -341,6 +372,24 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
         Volatile.Write(ref _rawArgument, argument);
     }
 
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void OnRawMiniObjectArgument(nint instance, nint argument, nint userData)
+    {
+        _ = instance;
+        _ = userData;
+        Volatile.Write(ref _rawMiniObjectCount, argument == nint.Zero ? 0 : RefCountOf(argument));
+    }
+
+    /// <summary>Reads the reference count of a mini object.</summary>
+    /// <param name="handle">The mini object to read.</param>
+    /// <returns>The count at that moment.</returns>
+    /// <remarks>
+    /// A <c>GstMiniObject</c> opens with its <c>GType</c>, one machine word,
+    /// and the reference count is the <c>gint</c> behind it. The ABI probe
+    /// suite is what holds that layout to the running library.
+    /// </remarks>
+    private static int RefCountOf(nint handle) => *(int*)(handle + sizeof(nuint));
+
     /// <summary>
     /// Connects the raw C callback above, which is the only way to see the
     /// pointer an emission carries without going through the binding.
@@ -348,7 +397,25 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
     /// <param name="instance">The instance to connect to.</param>
     /// <param name="signal">The name of the signal.</param>
     /// <returns>The identifier of the handler.</returns>
-    private static CULong ConnectRaw(nint instance, string signal)
+    private static CULong ConnectRaw(nint instance, string signal) =>
+        Connect(instance, signal, (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&OnRawBoxedArgument);
+
+    /// <summary>
+    /// Connects the raw C callback that counts the references of a mini object
+    /// argument before the binding has built anything over it.
+    /// </summary>
+    /// <param name="instance">The instance to connect to.</param>
+    /// <param name="signal">The name of the signal.</param>
+    /// <returns>The identifier of the handler.</returns>
+    private static CULong ConnectRawMiniObject(nint instance, string signal) =>
+        Connect(instance, signal, (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&OnRawMiniObjectArgument);
+
+    /// <summary>Connects one of the raw C callbacks above by name.</summary>
+    /// <param name="instance">The instance to connect to.</param>
+    /// <param name="signal">The name of the signal.</param>
+    /// <param name="callback">The address of the callback.</param>
+    /// <returns>The identifier of the handler.</returns>
+    private static CULong Connect(nint instance, string signal, nint callback)
     {
         Span<byte> name = stackalloc byte[64];
         int written = Encoding.UTF8.GetBytes(signal, name);
@@ -359,7 +426,7 @@ public sealed unsafe class DynamicSignalBoxedArgumentTests
             return TestNatives.SignalConnectData(
                 instance,
                 first,
-                (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, void>)&OnRawBoxedArgument,
+                callback,
                 nint.Zero,
                 nint.Zero,
                 0);

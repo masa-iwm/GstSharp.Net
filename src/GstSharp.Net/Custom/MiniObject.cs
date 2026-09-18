@@ -106,7 +106,9 @@ public abstract class MiniObject : IDisposable
     /// See <see cref="Borrowed"/> for why the borrow is a real one rather than
     /// a reference of its own: an in-place transform receives a buffer that
     /// GStreamer has already made writable, and a second reference would take
-    /// that away.
+    /// that away. The argument a dynamic signal lends its handler is wrapped
+    /// this way for the same reason: it is the value the emitter reads back,
+    /// not a copy of it.
     /// </para>
     /// <para>
     /// Nothing is queued and nothing is drained here. This constructor runs per

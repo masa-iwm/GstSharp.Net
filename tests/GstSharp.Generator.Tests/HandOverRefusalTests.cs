@@ -78,6 +78,29 @@ public sealed class HandOverRefusalTests
                 </parameter>
               </parameters>
             </function>
+            <function name="wrap_maybe" c:identifier="gst_widget_wrap_maybe">
+              <return-value transfer-ownership="full" nullable="1">
+                <type name="Widget" c:type="GstWidget*"/>
+              </return-value>
+              <parameters>
+                <parameter name="child" transfer-ownership="full">
+                  <type name="Widget" c:type="GstWidget*"/>
+                </parameter>
+              </parameters>
+            </function>
+            <function name="join" c:identifier="gst_widget_join" throws="1">
+              <return-value transfer-ownership="none">
+                <type name="gboolean" c:type="gboolean"/>
+              </return-value>
+              <parameters>
+                <parameter name="first" transfer-ownership="full">
+                  <type name="Widget" c:type="GstWidget*"/>
+                </parameter>
+                <parameter name="second" transfer-ownership="full" nullable="1">
+                  <type name="Widget" c:type="GstWidget*"/>
+                </parameter>
+              </parameters>
+            </function>
         """;
 
     [Fact]
@@ -143,14 +166,103 @@ public sealed class HandOverRefusalTests
         Assert.True(wrap >= 0, "the answer is wrapped");
         Assert.InRange(release, call + 1, wrap - 1);
 
+        // The member answers a non-nullable Widget, so the NULL never reaches
+        // the caller: what the remark has to name is the raise it becomes.
         Assert.Contains(
-            "the <see langword=\"null\"/> the C answers is",
+            "<see cref=\"InvalidOperationException\"/> for rather than handing it on.",
             source,
             StringComparison.Ordinal);
 
         Assert.DoesNotContain(
             run.Result.Diagnostics,
             static diagnostic => diagnostic.Code is "GEN0050" or "GEN0051");
+    }
+
+    [Fact]
+    public void ANullableReturnKeepsTheRemarkThatNamesTheNull()
+    {
+        // A member that may answer null hands the refusal to the caller as it
+        // stands, so the remark names the null rather than a raise.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "handOverRefusals": {
+                "gst_widget_wrap_maybe": "gstwidget.c:7-8, a fixture that may answer NULL."
+              }
+            }
+            """);
+
+        string source = run.File("Global.cs");
+
+        Assert.Contains(
+            "the <see langword=\"null\"/> the C answers is",
+            source,
+            StringComparison.Ordinal);
+
+        Assert.DoesNotContain(
+            "<see cref=\"InvalidOperationException\"/> for rather than handing it on.",
+            source,
+            StringComparison.Ordinal);
+
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => diagnostic.Code is "GEN0050" or "GEN0051");
+    }
+
+    [Fact]
+    public void EveryHandedOverArgumentIsReleased()
+    {
+        // Two arguments are handed over and the second one is nullable: the
+        // mint of a null argument is a zero, which is not a reference, so its
+        // release stands behind a guard and the other one does not.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "handOverRefusals": {
+                "gst_widget_join": "gstwidget.c:9-10, a fixture that takes two widgets."
+              }
+            }
+            """);
+
+        string source = run.File("Global.cs");
+
+        Assert.Contains("Gst.Interop.GObjectNative.ObjectUnref(firstOwned);", source, StringComparison.Ordinal);
+        Assert.Contains("if (secondOwned != 0)", source, StringComparison.Ordinal);
+        Assert.Contains("Gst.Interop.GObjectNative.ObjectUnref(secondOwned);", source, StringComparison.Ordinal);
+
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => diagnostic.Code is "GEN0050" or "GEN0051");
+    }
+
+    [Fact]
+    public void TheReleaseStandsAheadOfTheErrorARaisingCallableThrows()
+    {
+        // A callable that takes a GError** raises before it converts anything,
+        // so a release written after the throw would never run on the very
+        // path the entry is about.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "handOverRefusals": {
+                "gst_widget_join": "gstwidget.c:9-10, a fixture that takes two widgets."
+              }
+            }
+            """);
+
+        string source = run.File("Global.cs");
+
+        int call = source.IndexOf("int nativeResult = GstWidgetJoin(", StringComparison.Ordinal);
+        int release = source.IndexOf(
+            "Gst.Interop.GObjectNative.ObjectUnref(firstOwned);",
+            StringComparison.Ordinal);
+        int raise = source.IndexOf(
+            "Gst.GLib.GException.ThrowIfSet(ref errorNative);",
+            StringComparison.Ordinal);
+
+        Assert.True(call >= 0, "the call is written");
+        Assert.True(raise >= 0, "the error is raised");
+        Assert.InRange(release, call + 1, raise - 1);
     }
 
     [Fact]

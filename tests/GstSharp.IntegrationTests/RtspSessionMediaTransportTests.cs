@@ -215,7 +215,9 @@ public sealed class RtspSessionMediaTransportTests
 
         using (url)
         {
-            RTSPMedia? media = factory.Construct(url);
+            // The media is disposed by the declaration rather than by hand, so
+            // an assertion that fails below still gives it back.
+            using RTSPMedia? media = factory.Construct(url);
             Assert.NotNull(media);
 
             // Construct hands the media out locked, and leaves it unprepared.
@@ -244,7 +246,6 @@ public sealed class RtspSessionMediaTransportTests
                 Assert.Equal(before, after);
                 Assert.False(media.IsDisposed);
                 Assert.Equal(RTSPMediaStatus.Unprepared, media.GetStatus());
-                media.Dispose();
                 return;
             }
 
@@ -252,7 +253,6 @@ public sealed class RtspSessionMediaTransportTests
             // Then the session owns it, and what is left is to give it back.
             Assert.False(session.ReleaseMedia(managed));
             managed.Dispose();
-            media.Dispose();
         }
     }
 
