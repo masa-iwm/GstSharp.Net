@@ -90,8 +90,11 @@ public abstract unsafe partial class WebRTCICE
     /// the 1.26 branch, or 1.27.50 or newer anywhere else.
     /// </returns>
     /// <remarks>
-    /// <see cref="Gst.Version"/> carries the four parts and equality alone, so
-    /// the comparison is written out. The read needs an initialised binding,
+    /// <see cref="Gst.Version.IsAtLeast(uint, uint, uint)"/> answers the
+    /// 1.27.50 half on its own, and the 1.26 half is that question asked of the
+    /// 1.26 branch alone, which is why the minor version is named beside it: a
+    /// bare <c>IsAtLeast(1, 26, 10)</c> would also answer
+    /// <see langword="true"/> for 1.27.1, where the fix is not. The read needs an initialised binding,
     /// which is given: the only caller is <see cref="AddStream"/>, and a live
     /// <c>WebRTCICE</c> wrapper cannot exist before <c>GstSharp.Initialize</c>
     /// has run.
@@ -100,11 +103,8 @@ public abstract unsafe partial class WebRTCICE
     {
         Gst.Version version = global::GstSharp.NativeVersion;
 
-        return version.Major > 1
-            || (version.Major == 1
-                && (version.Minor >= 28
-                    || (version.Minor == 27 && version.Micro >= 50)
-                    || (version.Minor == 26 && version.Micro >= 10)));
+        return version.IsAtLeast(1, 27, 50)
+            || (version.Major == 1 && version.Minor == 26 && version.IsAtLeast(1, 26, 10));
     }
 
     /// <summary>The <c>gst_webrtc_ice_add_stream</c> entry point.</summary>

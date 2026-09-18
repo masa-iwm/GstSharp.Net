@@ -74,6 +74,42 @@ public readonly struct Version : IEquatable<Version>
     public static bool operator !=(Version left, Version right) => !left.Equals(right);
 
     /// <summary>
+    /// Tells whether this version is <paramref name="major"/>.<paramref name="minor"/>.<paramref name="micro"/>
+    /// or newer.
+    /// </summary>
+    /// <param name="major">The major version to compare against.</param>
+    /// <param name="minor">The minor version to compare against.</param>
+    /// <param name="micro">The micro version to compare against, zero by default.</param>
+    /// <returns>
+    /// <see langword="true"/> when this version is the given one or a newer one.
+    /// </returns>
+    /// <remarks>
+    /// Compares major, minor and micro in that order and ignores
+    /// <see cref="Nano"/>: a git build or prerelease of 1.27.1 answers the same
+    /// as the 1.27.1 release, which is what the <c>GST_CHECK_VERSION</c> macro
+    /// of the C headers answers at compile time. This is the whole of the
+    /// ordering the struct offers: a relational operator or an
+    /// <see cref="IComparable{T}"/> implementation would have to order by
+    /// <see cref="Nano"/> as well, where 0 is a release and 1 a git build of
+    /// what is not released yet, and there is no order of the four parts that
+    /// is right for both questions.
+    /// </remarks>
+    public bool IsAtLeast(uint major, uint minor, uint micro = 0)
+    {
+        if (Major != major)
+        {
+            return Major > major;
+        }
+
+        if (Minor != minor)
+        {
+            return Minor > minor;
+        }
+
+        return Micro >= micro;
+    }
+
+    /// <summary>
     /// Reads the version of the loaded native library. This loads it if it is
     /// not loaded yet.
     /// </summary>

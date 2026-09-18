@@ -107,7 +107,11 @@ The floor at run time is **GStreamer 1.24**: the struct layouts the ABI probes
 mirror have been stable since then. An entry point that GStreamer added after
 1.24 is present in the managed surface and throws `EntryPointNotFoundException`
 against an older library — the missing export is the documented behavior, not a
-bug. CI runs the whole suite against four installations: Ubuntu 24.04 (1.24, the
+bug. Code that has to branch on the library rather than throw reads
+`GstSharp.NativeVersion` and asks it `IsAtLeast(1, 28)` — the managed
+counterpart of the `GST_CHECK_VERSION` macro, which compares major, minor and
+micro and ignores the nano version. CI runs the whole suite against four
+installations: Ubuntu 24.04 (1.24, the
 floor, on x64 and arm64), the official Windows MSVC build (1.28.6), MSYS2's
 MinGW build, and Homebrew on macOS.
 
