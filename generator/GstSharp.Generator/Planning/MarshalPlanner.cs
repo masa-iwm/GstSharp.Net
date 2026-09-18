@@ -513,6 +513,7 @@ internal sealed class MarshalPlanner
 
     /// <summary>The keys of the precondition entries this run has emitted.</summary>
     private readonly HashSet<string> _consumedPreconditions;
+    private readonly HashSet<string> _consumedHandOverRefusals;
 
     /// <summary>The sibling argument keys this run has matched, shared for the same reason.</summary>
     private readonly HashSet<string> _consumedSiblingArguments;
@@ -577,6 +578,10 @@ internal sealed class MarshalPlanner
     /// The set the precondition entries that were emitted are recorded in,
     /// shared for the same reason.
     /// </param>
+    /// <param name="consumedHandOverRefusals">
+    /// The set the hand over refusal entries that were read are recorded in,
+    /// shared for the same reason.
+    /// </param>
     /// <param name="consumedSiblingArguments">
     /// The set the sibling argument entries that matched a parameter of the
     /// shape they describe are recorded in, shared for the same reason.
@@ -599,6 +604,7 @@ internal sealed class MarshalPlanner
         HashSet<string>? consumedDocNotes = null,
         HashSet<string>? consumedSignalDocNotes = null,
         HashSet<string>? consumedPreconditions = null,
+        HashSet<string>? consumedHandOverRefusals = null,
         HashSet<string>? consumedSiblingArguments = null,
         HashSet<string>? lentOpaqueRecords = null)
     {
@@ -619,6 +625,8 @@ internal sealed class MarshalPlanner
             consumedSignalDocNotes ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedPreconditions =
             consumedPreconditions ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedHandOverRefusals =
+            consumedHandOverRefusals ?? new HashSet<string>(StringComparer.Ordinal);
         _consumedSiblingArguments =
             consumedSiblingArguments ?? new HashSet<string>(StringComparer.Ordinal);
         _lentOpaqueRecords = lentOpaqueRecords ?? new HashSet<string>(StringComparer.Ordinal);
@@ -896,6 +904,8 @@ internal sealed class MarshalPlanner
                 : null,
             DocNote = DocNoteFor(callable.CIdentifier),
             Preconditions = PreconditionsFor(callable.CIdentifier),
+            ReleasesHandOverOnRefusal =
+                ReleasesHandOverOnRefusal(callable.CIdentifier, arguments, returnPlan),
             InstanceType = form == CallableForm.ExtensionMethod ? context.OwnerType : null,
             InstanceConsumption = consumption,
             InstanceIsBorrowable = context.OwnerKind == TypeKind.MiniObject,
@@ -1537,6 +1547,64 @@ internal sealed class MarshalPlanner
 
         _consumedPreconditions.Add(cIdentifier);
         return statements;
+    }
+
+    /// <summary>
+    /// Tests whether the body releases the reference minted for a handed over
+    /// argument again when the call refuses it, and records that the entry was
+    /// read.
+    /// </summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable, when it has one.</param>
+    /// <param name="arguments">The planned arguments.</param>
+    /// <param name="returnPlan">The planned return.</param>
+    /// <returns>Whether the release is emitted.</returns>
+    /// <remarks>
+    /// The entry is consumed the moment it names this callable, whatever the
+    /// shape of the callable turns out to be: an entry that named a member and
+    /// was refused for its shape is a wrong entry rather than a stale one, and
+    /// reporting it as both would say the same thing twice.
+    /// </remarks>
+    private bool ReleasesHandOverOnRefusal(
+        string? cIdentifier,
+        IReadOnlyList<ArgumentPlan> arguments,
+        ReturnPlan returnPlan)
+    {
+        if (cIdentifier is null || !_overlays.TryGetHandOverRefusal(cIdentifier, out _))
+        {
+            return false;
+        }
+
+        _consumedHandOverRefusals.Add(cIdentifier);
+
+        // The refusal is read off the raw result of the call, which carries one
+        // only for the two returns a refusal is spelled in: a gboolean that is
+        // FALSE and a pointer that is NULL. Every other return leaves the
+        // refusal unreadable, and a callable that hands nothing over has no
+        // reference to release, so both are the entry naming the wrong member.
+        bool refusalIsReadable = returnPlan.Kind is ArgumentKind.Boolean or ArgumentKind.Handle;
+        bool handsOver = false;
+        foreach (ArgumentPlan argument in arguments)
+        {
+            if (argument.Kind == ArgumentKind.ConsumedHandle
+                && argument.ConsumedFamily == ConsumedFamily.HandedOver)
+            {
+                handsOver = true;
+                break;
+            }
+        }
+
+        if (refusalIsReadable && handsOver)
+        {
+            return true;
+        }
+
+        _diagnostics.Warn(
+            "GEN0050",
+            $"The hand over refusal entry '{cIdentifier}' names a callable that "
+            + (refusalIsReadable
+                ? "hands no argument over; there is no minted reference to release."
+                : "answers neither a gboolean nor a pointer; its refusal cannot be read."));
+        return false;
     }
 
     /// <summary>Reads the documentation note of a signal, and records that it was read.</summary>

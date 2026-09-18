@@ -55,6 +55,9 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
     /// reference of its own, minted for this call, and keeps it for as long as it
     /// needs the object. This wrapper keeps the reference it holds, so it stays
     /// usable after the call and the handlers connected to it keep firing.
+    /// When the call refuses the argument — the <see langword="null"/> the C answers is
+    /// that refusal — the reference minted for it is released again, so nothing
+    /// is leaked.
     /// </para>
     /// </remarks>
     /// <param name="path">the path</param>
@@ -79,6 +82,13 @@ public unsafe partial class RTSPSessionMedia : Gst.GObject.Object
         using Gst.Interop.Utf8Scope pathScope = Gst.Interop.GMarshal.StackUtf8(path, pathBuffer);
         nint mediaOwned = Gst.Interop.GObjectNative.ObjectRef(mediaNative);
         nint nativeResult = GstRtspSessionMediaNew(pathScope.Pointer, mediaOwned);
+        if (nativeResult == 0)
+        {
+            // The call refused the argument, which is the C stating that it did
+            // not take the reference minted for it. Releasing it here is what
+            // keeps a refusal from leaking one; the result is handed on unchanged.
+            Gst.Interop.GObjectNative.ObjectUnref(mediaOwned);
+        }
         Gst.RtspServer.RTSPSessionMedia result = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSessionMedia>(nativeResult, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("gst_rtsp_session_media_new returned no value.");
         System.GC.KeepAlive(media);

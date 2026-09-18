@@ -657,11 +657,22 @@ while the library still calls back into managed code through it.
 
 A few of these calls refuse what they are handed before they take it — a
 duplicate profile name, a media that is not prepared — and the reference minted
-for the call is then left with no owner. That is one leaked reference on a
-refusal path, neither worse nor better than before this rule; where the C
-answers such an argument with a `g_return_if_fail`, the binding refuses it
-first instead, which is what `AddFactory` does with a path that does not begin
-with `/`.
+for the call would then be left with no owner. **The binding releases it again
+on that path**: `EncodingTarget.AddProfile` (encoding-target.c:387-395),
+`RTSPSession.ManageMedia` (rtsp-session.c:268-272) and `RTSPSessionMedia.New`
+(rtsp-session-media.c:149-153) are the three whose C states that its refusal
+return — `FALSE`, `NULL` — means the reference was not taken, so the generated
+body unreferences the mint right after the call and hands the result on
+unchanged. The reading is per member and lives in the `handOverRefusals`
+overlay, because it is not one a binding may guess: `GES.Project.Save` and
+`RTSPServer.TransferConnection` also answer `FALSE` on a refusal, but their C
+releases what it was handed itself (ges-project.c:1257-1258,
+rtsp-server.c:1211, :1219), and a release here would be the second one. Where
+the C answers such an argument with a `g_return_if_fail` the binding refuses it
+before the call instead, which is what `AddFactory` does with a path that does
+not begin with `/`. `RTSPSession.ManageMedia` and `RTSPSessionMedia.New` answer
+a refusal with an `InvalidOperationException`, their return being non-nullable;
+the release runs before the throw.
 
 A handful of consuming calls shipped as hand written members before the
 generator learned the shape. They carry the same contract and stay the binding

@@ -185,6 +185,87 @@ public sealed class RtspSessionMediaTransportTests
     }
 
     /// <summary>
+    /// <c>gst_rtsp_session_manage_media</c> refuses a media that is neither
+    /// prepared nor suspended (rtsp-session.c:268-272) before it takes the
+    /// reference minted for the call, so the binding releases that reference
+    /// again and the count of the media lands back where it started.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Nothing is prepared here and nothing is pumped: a media straight out of
+    /// <c>Construct</c> is unprepared, which is the state the C refuses, so the
+    /// test is a call and two reads.
+    /// </para>
+    /// <para>
+    /// The refusal is a <c>g_return_val_if_fail</c>, so the run prints a GLib
+    /// CRITICAL and goes on; the suite does not promote one to a failure. On
+    /// 1.28 the check stands inside <c>#ifndef G_DISABLE_CHECKS</c>, so a
+    /// library built without them manages the media instead. What the running
+    /// library answered is what the assertions are gated on.
+    /// </para>
+    /// </remarks>
+    [RequiresElementFact("rtpL16pay")]
+    public void ManagingAnUnpreparedMediaReleasesTheMintedReference()
+    {
+        using RTSPMediaFactory factory = RTSPMediaFactory.New();
+        factory.SetLaunch(Launch);
+
+        Assert.Equal(RTSPResult.Ok, RTSPUrl.Parse("rtsp://127.0.0.1:8554/refused", out RTSPUrl? url));
+        Assert.NotNull(url);
+
+        using (url)
+        {
+            RTSPMedia? media = factory.Construct(url);
+            Assert.NotNull(media);
+
+            // Construct hands the media out locked, and leaves it unprepared.
+            media.Unlock();
+            Assert.Equal(RTSPMediaStatus.Unprepared, media.GetStatus());
+
+            using RTSPSession session = RTSPSession.New("refusal-session");
+
+            uint before = RefCountOf(media.Handle);
+            RTSPSessionMedia? managed = null;
+            try
+            {
+                managed = session.ManageMedia("/refused", media);
+            }
+            catch (System.InvalidOperationException)
+            {
+                // The refusal: the C answered NULL, and the member has a non
+                // nullable return, so it raises rather than handing one out.
+                // The release stands ahead of the raise.
+            }
+
+            uint after = RefCountOf(media.Handle);
+
+            if (managed is null)
+            {
+                Assert.Equal(before, after);
+                Assert.False(media.IsDisposed);
+                Assert.Equal(RTSPMediaStatus.Unprepared, media.GetStatus());
+                media.Dispose();
+                return;
+            }
+
+            // A library built without its checks managed the media after all.
+            // Then the session owns it, and what is left is to give it back.
+            Assert.False(session.ReleaseMedia(managed));
+            managed.Dispose();
+            media.Dispose();
+        }
+    }
+
+    /// <summary>Reads the <c>ref_count</c> field of a <c>GObject</c>.</summary>
+    /// <param name="handle">The instance to read.</param>
+    /// <returns>The reference count at that moment.</returns>
+    /// <remarks>
+    /// A <c>GObject</c> begins with its <c>GTypeInstance</c>, which is one
+    /// pointer, and the reference count is the field behind it.
+    /// </remarks>
+    private static unsafe uint RefCountOf(nint handle) => *(uint*)(handle + sizeof(nint));
+
+    /// <summary>
     /// Iterates the default main context until a condition holds or the
     /// deadline passes.
     /// </summary>

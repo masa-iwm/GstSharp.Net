@@ -715,6 +715,21 @@ internal sealed class MarshalPlan
     /// </remarks>
     internal IReadOnlyList<string> Preconditions { get; init; } = [];
 
+    /// <summary>
+    /// Gets a value indicating whether the body releases the reference minted
+    /// for every handed over argument again when the call refuses it.
+    /// </summary>
+    /// <remarks>
+    /// The mint is what a consuming call is handed instead of the reference the
+    /// wrapper holds, and a call that takes it keeps it. A call that refuses
+    /// the argument before it takes it - a duplicate profile name, a media that
+    /// is not prepared - takes nothing, and the mint would then be a reference
+    /// nothing owns. Where the C states that its refusal return means exactly
+    /// that, the overlays say so and the release is emitted right after the
+    /// call, so the return contract of the member is unchanged.
+    /// </remarks>
+    internal bool ReleasesHandOverOnRefusal { get; init; }
+
     /// <summary>Gets the C# type of the instance, for an extension method.</summary>
     internal string? InstanceType { get; init; }
 

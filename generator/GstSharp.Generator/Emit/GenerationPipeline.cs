@@ -101,6 +101,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedDocNotes = new(StringComparer.Ordinal);
         HashSet<string> consumedSignalDocNotes = new(StringComparer.Ordinal);
         HashSet<string> consumedPreconditions = new(StringComparer.Ordinal);
+        HashSet<string> consumedHandOverRefusals = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
         HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
 
@@ -139,6 +140,7 @@ internal static class GenerationPipeline
                     consumedDocNotes,
                     consumedSignalDocNotes,
                     consumedPreconditions,
+                    consumedHandOverRefusals,
                     consumedSiblingArguments,
                     lentOpaqueRecords,
                     subclasses,
@@ -271,6 +273,29 @@ internal static class GenerationPipeline
                 "GEN0049",
                 $"The preconditions of '{key}' name a callable that was not rendered by this run; "
                 + "the entry is stale.");
+        }
+
+        // A hand over refusal is read where the callable it releases for was
+        // planned, so a key nothing read releases nothing: the member it was
+        // written for goes on leaving the reference minted for its argument
+        // with no owner on the refusal path, which is the leak the entry
+        // exists to close.
+        List<string> staleHandOverRefusals = [];
+        foreach (string key in overlays.HandOverRefusalKeys)
+        {
+            if (!consumedHandOverRefusals.Contains(key))
+            {
+                staleHandOverRefusals.Add(key);
+            }
+        }
+
+        staleHandOverRefusals.Sort(StringComparer.Ordinal);
+        foreach (string key in staleHandOverRefusals)
+        {
+            diagnostics.Warn(
+                "GEN0051",
+                $"The hand over refusal entry '{key}' names a callable that was not rendered by "
+                + "this run; the entry is stale.");
         }
 
         // A sibling argument entry is only consumed where it named the shape it
@@ -447,6 +472,7 @@ internal static class GenerationPipeline
             shared.ConsumedDocNotes,
             shared.ConsumedSignalDocNotes,
             shared.ConsumedPreconditions,
+            shared.ConsumedHandOverRefusals,
             shared.ConsumedSiblingArguments,
             shared.LentOpaqueRecords);
 
@@ -581,6 +607,10 @@ internal static class GenerationPipeline
     /// The keys of the precondition entries the run has emitted, shared for
     /// the same reason.
     /// </param>
+    /// <param name="ConsumedHandOverRefusals">
+    /// The keys of the hand over refusal entries the run has read, shared for
+    /// the same reason.
+    /// </param>
     /// <param name="ConsumedSiblingArguments">
     /// The keys of the sibling argument entries the run has matched, shared
     /// for the same reason.
@@ -606,6 +636,7 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedDocNotes,
         HashSet<string> ConsumedSignalDocNotes,
         HashSet<string> ConsumedPreconditions,
+        HashSet<string> ConsumedHandOverRefusals,
         HashSet<string> ConsumedSiblingArguments,
         HashSet<string> LentOpaqueRecords,
         SubclassModel Subclasses,

@@ -207,6 +207,66 @@ public sealed unsafe class ConsumedArgumentTests
         Assert.True(read.IsAny());
     }
 
+    /// <summary>
+    /// <c>gst_encoding_target_add_profile</c> refuses a profile whose name is
+    /// already in the target (encoding-target.c:387-395) before it takes the
+    /// reference minted for the call, so the binding releases that reference
+    /// again and the count of the profile lands back where it started.
+    /// </summary>
+    /// <remarks>
+    /// The refusal is a <c>GST_WARNING</c> rather than a
+    /// <c>g_return_val_if_fail</c>, so the run prints a warning line and goes
+    /// on. What the library answers is what the assertions are gated on: only a
+    /// <see langword="false"/> is the refusal this covers.
+    /// </remarks>
+    [Fact]
+    public void AddingAProfileTheTargetAlreadyCarriesReleasesTheMintedReference()
+    {
+        using Caps format = Assert.IsType<Caps>(Caps.FromString("audio/x-vorbis"));
+
+        using Gst.Pbutils.EncodingAudioProfile first =
+            Gst.Pbutils.EncodingAudioProfile.New(format, null, null, 0);
+        first.SetName("consumed-argument-duplicate");
+
+        using Gst.Pbutils.EncodingTarget? target = Gst.Pbutils.EncodingTarget.New(
+            "consumed-argument-target",
+            "device",
+            "A target built by the test suite",
+            [first]);
+        Assert.NotNull(target);
+
+        using Gst.Pbutils.EncodingAudioProfile second =
+            Gst.Pbutils.EncodingAudioProfile.New(format, null, null, 0);
+        second.SetName("consumed-argument-duplicate");
+
+        uint before = RefCountOf(second.Handle);
+        bool added = target.AddProfile(second);
+        uint after = RefCountOf(second.Handle);
+        _output.WriteLine($"duplicate profile: added={added}, reference count {before} -> {after}");
+
+        // A library that took the profile all the same is a library whose
+        // duplicate check did not run; the leak this covers only exists on the
+        // path where the call refuses.
+        if (!added)
+        {
+            Assert.Equal(before, after);
+            Assert.False(second.IsDisposed);
+
+            IReadOnlyList<Gst.Pbutils.EncodingProfile> profiles = target.GetProfiles();
+            try
+            {
+                Assert.Single(profiles);
+            }
+            finally
+            {
+                foreach (Gst.Pbutils.EncodingProfile held in profiles)
+                {
+                    held.Dispose();
+                }
+            }
+        }
+    }
+
     /// <summary>Reads the <c>ref_count</c> field of a <c>GObject</c>.</summary>
     /// <param name="handle">The instance to read.</param>
     /// <returns>The reference count at that moment.</returns>

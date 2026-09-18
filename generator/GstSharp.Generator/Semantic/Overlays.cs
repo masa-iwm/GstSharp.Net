@@ -443,6 +443,14 @@ internal sealed class PlatformSupport
 /// dereferences what it must not - the meta adders that use the NULL
 /// gst_buffer_add_meta answers for a shared buffer - refuses the call instead
 /// of crashing the process.</description></item>
+/// <item><description><c>handOverRefusals</c>: <c>c:identifier</c> of a callable
+/// that refuses what it is handed before it takes it, mapped onto the citation
+/// of the C lines where it does. The generated body releases the reference
+/// minted for every handed over argument again when the call refuses - a
+/// <c>FALSE</c> or a <c>NULL</c> return - which is the one case where the mint
+/// would otherwise be left with no owner. The entry states that the refusal
+/// return means the reference was not taken, which is a reading of the C that
+/// only the C can settle.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -478,6 +486,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _docNotes;
     private readonly Dictionary<string, string> _signalDocNotes;
     private readonly Dictionary<string, IReadOnlyList<string>> _preconditions;
+    private readonly Dictionary<string, string> _handOverRefusals;
 
     private Overlays(
         HashSet<string> skip,
@@ -503,7 +512,8 @@ internal sealed class Overlays
         Dictionary<string, string> instanceKeyedCallbacks,
         Dictionary<string, string> docNotes,
         Dictionary<string, string> signalDocNotes,
-        Dictionary<string, IReadOnlyList<string>> preconditions)
+        Dictionary<string, IReadOnlyList<string>> preconditions,
+        Dictionary<string, string> handOverRefusals)
     {
         _skip = skip;
         _handBound = handBound;
@@ -529,6 +539,7 @@ internal sealed class Overlays
         _docNotes = docNotes;
         _signalDocNotes = signalDocNotes;
         _preconditions = preconditions;
+        _handOverRefusals = handOverRefusals;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -556,7 +567,8 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
-        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
+        new Dictionary<string, string>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -653,6 +665,12 @@ internal sealed class Overlays
 
     /// <summary>Gets the callables whose generated body opens with hand written statements.</summary>
     internal IReadOnlyCollection<string> PreconditionKeys => _preconditions.Keys;
+
+    /// <summary>
+    /// Gets the callables that release the reference minted for a handed over
+    /// argument again when they refuse the call.
+    /// </summary>
+    internal IReadOnlyCollection<string> HandOverRefusalKeys => _handOverRefusals.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -827,6 +845,24 @@ internal sealed class Overlays
             preconditions[entry.Key] = [.. statements];
         }
 
+        Dictionary<string, string> handOverRefusals = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, string> entry in fixups.HandOverRefusals ?? [])
+        {
+            // The value is the citation of the C lines the reading rests on,
+            // and the reading is the whole of the entry: an entry that cites
+            // nothing states that a refusal leaves the reference untaken
+            // without saying where the C says so, which is the one thing a
+            // reader of the overlay has to be able to check.
+            if (string.IsNullOrWhiteSpace(entry.Value))
+            {
+                throw new InvalidDataException(
+                    $"The hand over refusal entry '{entry.Key}' cites no C lines; "
+                    + "the citation is what the entry rests on.");
+            }
+
+            handOverRefusals[entry.Key] = entry.Value;
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -857,7 +893,8 @@ internal sealed class Overlays
             instanceKeyedCallbacks,
             docNotes,
             signalDocNotes,
-            preconditions);
+            preconditions,
+            handOverRefusals);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -1109,6 +1146,17 @@ internal sealed class Overlays
         [NotNullWhen(true)] out IReadOnlyList<string>? statements) =>
         _preconditions.TryGetValue(cIdentifier, out statements);
 
+    /// <summary>
+    /// Looks up whether a callable that refuses what it is handed leaves the
+    /// reference minted for the argument untaken, so that the generated body
+    /// releases it again on the refusal path.
+    /// </summary>
+    /// <param name="cIdentifier">The <c>c:identifier</c> of the callable.</param>
+    /// <param name="citation">Receives the citation of the C lines the reading rests on.</param>
+    /// <returns>Whether the callable releases a minted reference on refusal.</returns>
+    internal bool TryGetHandOverRefusal(string cIdentifier, [NotNullWhen(true)] out string? citation) =>
+        _handOverRefusals.TryGetValue(cIdentifier, out citation);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -1174,6 +1222,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? SignalDocNotes { get; set; }
 
         public Dictionary<string, Precondition>? Preconditions { get; set; }
+
+        public Dictionary<string, string>? HandOverRefusals { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

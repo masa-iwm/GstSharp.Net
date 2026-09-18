@@ -1819,6 +1819,16 @@ internal static class CallableRenderer
                 lines.Add("reference of its own, minted for this call, and keeps it for as long as it");
                 lines.Add("needs the object. This wrapper keeps the reference it holds, so it stays");
                 lines.Add("usable after the call and the handlers connected to it keep firing.");
+                if (plan.ReleasesHandOverOnRefusal)
+                {
+                    string refusal = plan.Return.Kind == ArgumentKind.Boolean
+                        ? "<see langword=\"false\"/>"
+                        : "<see langword=\"null\"/>";
+                    lines.Add("When the call refuses the argument — the " + refusal + " the C answers is");
+                    lines.Add("that refusal — the reference minted for it is released again, so nothing");
+                    lines.Add("is leaked.");
+                }
+
                 if (argument.IsNullable)
                 {
                     lines.Add("When <paramref name=\"" + name + "\"/> is <see langword=\"null\"/>, nothing is");
@@ -2139,6 +2149,7 @@ internal static class CallableRenderer
         }
 
         WriteCall(writer, plan);
+        WriteRefusalRelease(writer, plan);
         WriteConsumedDisposes(writer, plan);
 
         if (plan.Throws)
@@ -2183,6 +2194,78 @@ internal static class CallableRenderer
             writer.WriteLine(scopes[i].Name + "State.Free();");
             writer.CloseBlock();
         }
+    }
+
+    /// <summary>
+    /// Releases the reference minted for a handed over argument again when the
+    /// call refused the argument rather than taking it.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The member being written.</param>
+    /// <remarks>
+    /// <para>
+    /// A consuming call is handed a reference minted for it, and a call that
+    /// takes the argument keeps that reference. A few of them refuse what they
+    /// are handed before they take it — a profile whose name is already in the
+    /// target, a media that is not prepared — and the mint would then be a
+    /// reference nothing owns. The overlays name the callables whose refusal
+    /// return means exactly that, because only the C can settle the reading.
+    /// </para>
+    /// <para>
+    /// The release stands right after the call, ahead of every conversion, so
+    /// that it also runs on the path where a member with a non-nullable return
+    /// raises rather than answering the <c>NULL</c> the C gave it. Both
+    /// refusals read as a zero raw result: a <c>gboolean</c> that is
+    /// <c>FALSE</c> and a pointer that is <c>NULL</c>. Nothing about the result
+    /// of the member changes.
+    /// </para>
+    /// </remarks>
+    private static void WriteRefusalRelease(CodeWriter writer, MarshalPlan plan)
+    {
+        if (!plan.ReleasesHandOverOnRefusal || plan.Return.IsVoid)
+        {
+            return;
+        }
+
+        List<ArgumentPlan> handedOver = [];
+        foreach (ArgumentPlan argument in plan.Arguments)
+        {
+            if (argument.Kind == ArgumentKind.ConsumedHandle
+                && argument.ConsumedFamily == ConsumedFamily.HandedOver)
+            {
+                handedOver.Add(argument);
+            }
+        }
+
+        if (handedOver.Count == 0)
+        {
+            return;
+        }
+
+        writer.WriteLine("if (" + ResultLocal + " == 0)");
+        writer.OpenBlock();
+        writer.WriteLine("// The call refused the argument, which is the C stating that it did");
+        writer.WriteLine("// not take the reference minted for it. Releasing it here is what");
+        writer.WriteLine("// keeps a refusal from leaking one; the result is handed on unchanged.");
+        foreach (ArgumentPlan argument in handedOver)
+        {
+            string owned = argument.Name + "Owned";
+            string release = "Gst.Interop.GObjectNative.ObjectUnref(" + owned + ");";
+            if (!argument.IsNullable)
+            {
+                writer.WriteLine(release);
+                continue;
+            }
+
+            // Nothing was minted for an argument that was not there, and the
+            // zero the call was handed instead is not a reference to release.
+            writer.WriteLine("if (" + owned + " != 0)");
+            writer.OpenBlock();
+            writer.WriteLine(release);
+            writer.CloseBlock();
+        }
+
+        writer.CloseBlock();
     }
 
     /// <summary>
