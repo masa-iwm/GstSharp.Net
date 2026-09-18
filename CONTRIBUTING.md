@@ -306,8 +306,9 @@ The remaining keys address a callback type and a member rather than a slot:
   the one overlay that removes upstream text, and it exists for the sentence
   that states a rule of the C which is not the rule of the binding. Each
   substring has to stand in the documentation exactly once; one that stands
-  nowhere or twice is reported as `GEN0052`, and an entry that names no
-  rendered callable is `GEN0053`.
+  nowhere or twice — and an entry whose callable carries no documentation at
+  all — is reported as `GEN0052`, and an entry that names no rendered callable
+  is `GEN0053`.
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter

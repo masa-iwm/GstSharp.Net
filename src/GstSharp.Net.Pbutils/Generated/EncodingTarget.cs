@@ -135,7 +135,8 @@ public unsafe partial class EncodingTarget : Gst.GObject.Object
         {
             // The call refused the argument, which is the C stating that it did
             // not take the reference minted for it. Releasing it here is what
-            // keeps a refusal from leaking one; the result is handed on unchanged.
+            // keeps a refusal from leaking one; the raw result is then converted
+            // as it stands.
             Gst.Interop.GObjectNative.ObjectUnref(profileOwned);
         }
         bool result = nativeResult != 0;

@@ -966,8 +966,13 @@ afterwards throws `ObjectDisposedException`. Three rules follow:
 * **A mini object argument is borrowed as well**, which it was not before: the
   wrapper used to hold a reference of its own. `MakeWritable()` on such an
   argument now throws `InvalidOperationException` instead of quietly answering a
-  private copy that the emitter never saw. `Copy()` it and make the copy
-  writable when a writable value is what is wanted.
+  private copy that the emitter never saw. `Copy()` it and edit the copy when a
+  writable value is what is wanted. This holds for a type whose module
+  registered a borrowing factory for it, which every type of this binding is; a
+  mini object of a module registered without one still arrives as a wrapper
+  holding a reference of its own, and `MakeWritable()` on that one answers a
+  private copy the way it used to — see `ModuleTypeEntry.BorrowedFactory` and
+  [`docs/modules.md`](modules.md).
 
 A boxed type nothing registered still arrives as its raw `nint`, unchanged and
 nobody's to free. Since what is registered is what the initialised modules put
@@ -975,10 +980,10 @@ there, a handler for an `rtspsrc` signal sees `Gst.Rtsp.RTSPMessage` only if
 `GstRtsp.Initialize()` ran, and an SDP argument needs `GstSdp.Initialize()` the
 same way. The registry is consulted on every emission rather than when the
 handler is connected, so the requirement is really "before the emission";
-initialising the module before connecting is the way to be sure of it. The **return** value of an emission is
-a different question and is unchanged: `Object.EmitSignal` hands a boxed result
-back as an owned `nint`, except for a mini object, which comes back as its
-wrapper.
+initialising the module before connecting is the way to be sure of it. The
+**return** value of an emission is a different question and is unchanged:
+`Object.EmitSignal` hands a boxed result back as an owned `nint`, except for a
+mini object, which comes back as its wrapper.
 
 ## Tracks a timeline is answered with
 

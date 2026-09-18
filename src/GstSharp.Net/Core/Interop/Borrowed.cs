@@ -19,10 +19,11 @@ namespace Gst.Interop;
 /// <para>
 /// Taking a reference for the duration of the call instead — which is what a
 /// wrapper built with <see cref="Transfer.None"/> does — is not usable here: it
-/// makes the object non-writable, and <c>gst_buffer_map</c> refuses a write mapping on a buffer
-/// that somebody else holds. An in-place transform receives a buffer that
-/// GStreamer has already made writable, so the wrapper must not be the second
-/// holder that takes that away. See <c>docs/subclassing.md</c> §4.3.
+/// makes the object non-writable, and <c>gst_buffer_map</c> refuses a write
+/// mapping on a buffer that somebody else holds. An in-place transform
+/// receives a buffer that GStreamer has already made writable, so the wrapper
+/// must not be the second holder that takes that away. See
+/// <c>docs/subclassing.md</c> §4.3.
 /// </para>
 /// </remarks>
 internal readonly struct Borrowed

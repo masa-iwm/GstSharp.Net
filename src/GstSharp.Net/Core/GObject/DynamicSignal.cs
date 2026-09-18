@@ -60,7 +60,12 @@ namespace Gst.GObject;
 /// an argument throws <see cref="InvalidOperationException"/>, where it used to
 /// answer a private copy the emitter never saw. A handler that wants to edit a
 /// mini object argument that the emitter does not read back has to
-/// <c>Copy()</c> it first and make the copy writable.
+/// <c>Copy()</c> it first and edit the copy. This holds for a type whose module
+/// registered a borrowing factory for it, which every type of this binding is; a
+/// mini object of a module registered without one still arrives as a wrapper
+/// holding a reference of its own, and <c>MakeWritable()</c> on that one answers
+/// a private copy the way it used to. See
+/// <see cref="Gst.Interop.ModuleTypeEntry.BorrowedFactory"/>.
 /// </para>
 /// <para>
 /// Which types arrive as a wrapper depends on which modules are initialised,
@@ -355,6 +360,30 @@ internal static unsafe class DynamicSignalClosure
             return wrapper;
         }
 
+        if (fundamental == GType.BoxedValue &&
+            ReadBoxed(value.Type, value.GetBoxed(), ref borrowed) is { } boxed)
+        {
+            return boxed;
+        }
+
+        return value.GetDynamicContent();
+    }
+
+    /// <summary>
+    /// Converts a boxed argument of the emission into its wrapper.
+    /// </summary>
+    /// <param name="type">The boxed type the emission carries.</param>
+    /// <param name="content">The value of the argument, which the emission keeps owning.</param>
+    /// <param name="borrowed">
+    /// The wrappers that are only valid while the handler runs, and that are
+    /// disposed once it returns. The wrapper this builds joins them.
+    /// </param>
+    /// <returns>
+    /// The wrapper of the argument, or <see langword="null"/> when no
+    /// initialised module registered a wrapper for the type.
+    /// </returns>
+    internal static object? ReadBoxed(GType type, nint content, ref List<IDisposable>? borrowed)
+    {
         // A boxed argument — a mini object among them, since a mini object is
         // a boxed type as far as GObject is concerned — is handed over as its
         // wrapper rather than as a raw handle. The wrapper borrows: it holds
@@ -367,35 +396,29 @@ internal static unsafe class DynamicSignalClosure
         // A boxed type no initialised module registered has no wrapper to
         // build, and its raw handle is what arrives; a null pointer reads as
         // null, which GetDynamicContent already does.
-        if (fundamental == GType.BoxedValue)
+        if (TypeRegistry.TryCreateBorrowedWrapper(type, content, out object? lent) &&
+            lent is IDisposable detachable)
         {
-            nint content = value.GetBoxed();
-
-            if (TypeRegistry.TryCreateBorrowedWrapper(value.Type, content, out object? lent) &&
-                lent is IDisposable detachable)
-            {
-                (borrowed ??= []).Add(detachable);
-                return lent;
-            }
-
-            // A type a module registered before this binding emitted borrowing
-            // factories — or one a module outside this repository registered —
-            // has none to call. Such a mini object keeps arriving the way it
-            // did before: a wrapper holding a reference of its own. It reads
-            // the emission's value, but it is a reference more than the
-            // emitter holds, so the value is never writable through it and
-            // what the handler writes after copying it reaches nobody. A
-            // registered boxed type that is not a mini object and has no
-            // borrowing factory arrives as its raw handle, which is what it
-            // did before as well.
-            if (TypeRegistry.TryCreateMiniObjectWrapper(value.Type, content, Transfer.None, out object? owning) &&
-                owning is IDisposable releasable)
-            {
-                (borrowed ??= []).Add(releasable);
-                return owning;
-            }
+            (borrowed ??= []).Add(detachable);
+            return lent;
         }
 
-        return value.GetDynamicContent();
+        // A type a module registered before this binding emitted borrowing
+        // factories — or one a module outside this repository registered — has
+        // none to call. Such a mini object keeps arriving the way it did
+        // before: a wrapper holding a reference of its own. It reads the
+        // emission's value, but it is a reference more than the emitter holds,
+        // so the value is never writable through it and what the handler writes
+        // after copying it reaches nobody. A registered boxed type that is not
+        // a mini object and has no borrowing factory arrives as its raw handle,
+        // which is what it did before as well.
+        if (TypeRegistry.TryCreateMiniObjectWrapper(type, content, Transfer.None, out object? owning) &&
+            owning is IDisposable releasable)
+        {
+            (borrowed ??= []).Add(releasable);
+            return owning;
+        }
+
+        return null;
     }
 }

@@ -12,14 +12,14 @@ namespace GstSharp.Core.Tests;
 /// dynamically connected signal handler is given for it.
 /// </summary>
 /// <remarks>
-/// The arm itself lives in a private method of the closure marshaller, so what
-/// is asserted here is the pair of registry calls that arm makes, in the order
-/// it makes them: the borrowing factory first, and
+/// The arm itself is what is called here, through
+/// <see cref="DynamicSignalClosure.ReadBoxed"/>: the borrowing factory is asked
+/// first and answers nothing, and
 /// <see cref="TypeRegistry.TryCreateMiniObjectWrapper"/> with
-/// <see cref="Transfer.None"/> behind it. Without the second one a module
-/// compiled against an earlier version of this binding — or one outside this
-/// repository, which cannot build a borrowing wrapper at all — would see its
-/// mini objects arrive as a raw handle instead of as their wrapper.
+/// <see cref="Transfer.None"/> stands behind it. Without that second arm a
+/// module compiled against an earlier version of this binding — or one outside
+/// this repository, which cannot build a borrowing wrapper at all — would see
+/// its mini objects arrive as a raw handle instead of as their wrapper.
 /// </remarks>
 public sealed class BorrowlessModuleEntryTests
 {
@@ -51,13 +51,19 @@ public sealed class BorrowlessModuleEntryTests
         GType type = new(TypeId);
 
         // The primary mechanism has nothing to call for this entry.
-        Assert.False(TypeRegistry.TryCreateBorrowedWrapper(type, Instance, out object? borrowed));
-        Assert.Null(borrowed);
+        Assert.False(TypeRegistry.TryCreateBorrowedWrapper(type, Instance, out object? lent));
+        Assert.Null(lent);
 
-        // The fallback, which is what the handler ends up with.
-        Assert.True(TypeRegistry.TryCreateMiniObjectWrapper(type, Instance, Transfer.None, out object? wrapper));
+        // The arm of the closure marshaller, which is what the handler is
+        // given: the fallback behind the borrowing factory builds the wrapper
+        // and enters it among the wrappers the emission disposes.
+        List<IDisposable>? borrowed = null;
+        object? wrapper = DynamicSignalClosure.ReadBoxed(type, Instance, ref borrowed);
+
         using FixtureMiniObject built = Assert.IsType<FixtureMiniObject>(wrapper);
         Assert.Equal(Instance, built.Handle);
+        Assert.NotNull(borrowed);
+        Assert.Same(built, Assert.Single(borrowed));
     }
 
     /// <summary>

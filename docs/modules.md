@@ -145,16 +145,17 @@ private static ModuleTypeEntry[] CreateEntries() =>
 public — they are yours, and only your own module initialiser takes their
 address.
 
-A third overload takes a *borrowing* factory beside the ordinary one, and the
-generated modules of this binding pass it. Leave it out: the wrapper it has to
-answer is one that owns nothing at all, and the constructor that builds such a
-wrapper is internal to `GstSharp.Net`. Answering an owning wrapper there would
-be worse than answering none, because the caller disposes it as soon as the
-handler returns, which would release a value the emitter still holds. An entry
-without a borrowing factory is complete: a mini object of that type reaches a
-dynamically connected signal handler as a wrapper that holds a reference of its
-own — it reads the emission's value but can never make it writable — and any
-other boxed type of such an entry reaches the handler as its raw `nint`.
+An overload of each constructor takes a *borrowing* factory beside the ordinary
+one, and the generated modules of this binding pass it. Leave it out: the
+wrapper it has to answer is one that owns nothing at all, and the constructor
+that builds such a wrapper is internal to `GstSharp.Net`. Answering an owning
+wrapper there would be worse than answering none, because the caller disposes
+it as soon as the handler returns, which would release a value the emitter
+still holds. An entry without a borrowing factory is complete: a mini object of
+that type reaches a dynamically connected signal handler as a wrapper that
+holds a reference of its own — it reads the emission's value but can never make
+it writable — and any other boxed type of such an entry reaches the handler as
+its raw `nint`.
 
 Nothing is resolved when you register. The `get_type` functions are called when
 the registry is frozen, which happens the first time a wrapper is needed and

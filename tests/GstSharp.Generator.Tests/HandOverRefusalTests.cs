@@ -199,6 +199,9 @@ public sealed class HandOverRefusalTests
             source,
             StringComparison.Ordinal);
 
+        // The release stands even though the refusal is handed on.
+        Assert.Contains("ObjectUnref(childOwned);", source, StringComparison.Ordinal);
+
         Assert.DoesNotContain(
             "<see cref=\"InvalidOperationException\"/> for rather than handing it on.",
             source,

@@ -2255,7 +2255,8 @@ internal static class CallableRenderer
         writer.OpenBlock();
         writer.WriteLine("// The call refused the argument, which is the C stating that it did");
         writer.WriteLine("// not take the reference minted for it. Releasing it here is what");
-        writer.WriteLine("// keeps a refusal from leaking one; the result is handed on unchanged.");
+        writer.WriteLine("// keeps a refusal from leaking one; the raw result is then converted");
+        writer.WriteLine("// as it stands.");
         foreach (ArgumentPlan argument in handedOver)
         {
             string owned = argument.Name + "Owned";
