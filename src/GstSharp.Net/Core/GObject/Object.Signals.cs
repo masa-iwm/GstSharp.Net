@@ -249,6 +249,15 @@ public partial class Object
     /// The signal has to exist: this fails immediately rather than connecting
     /// to nothing, and the message lists what the object does have.
     /// </para>
+    /// <para>
+    /// What the handler is handed is described by
+    /// <see cref="DynamicSignalHandler"/>: every boxed argument whose type an
+    /// initialised module registered — a mini object among them — arrives as
+    /// its wrapper, borrowed for the length of the call and disposed once the
+    /// handler returns, and a boxed type nothing registered arrives as its raw
+    /// <see cref="nint"/>. The module that binds the type therefore has to be
+    /// initialised before the handler is connected.
+    /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">The object has no such signal.</exception>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>

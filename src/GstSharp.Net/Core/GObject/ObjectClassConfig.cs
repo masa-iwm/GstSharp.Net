@@ -255,6 +255,13 @@ public class ObjectClassConfig
     /// <see cref="SignalFlags.MustCollect"/> is dropped: it describes a
     /// variadic collection this binding never performs.
     /// </para>
+    /// <para>
+    /// Its arguments follow the contract of
+    /// <see cref="DynamicSignalHandler"/>, the class handler being one: an
+    /// argument of a registered boxed type — a mini object among them — is the
+    /// borrowed wrapper of the value the emission carries, so it is the same
+    /// value the connected handlers see and it must not be released or kept.
+    /// </para>
     /// </remarks>
     public unsafe uint AddSignal(
         string name,

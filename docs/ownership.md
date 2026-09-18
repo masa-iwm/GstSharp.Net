@@ -938,6 +938,39 @@ detail 0. Connecting the handler therefore never narrows it to one key: it runs
 for every field of the container that changes, and a handler that cares about
 one field tests `Key` itself.
 
+### An argument a dynamic signal lends
+
+A handler connected by name — `Gst.GObject.Object.ConnectSignal`, and the class
+handler of a signal a managed subclass defines — is handed every argument the
+way `Gst.GObject.Value.GetContent` reads it, with one addition: a boxed argument
+whose type an initialised module registered arrives as the wrapper of that type
+rather than as a raw `nint`. A mini object is a boxed type as far as GObject is
+concerned, so `GstCaps` and `GstStructure` take the same route.
+
+That wrapper **borrows**. It holds the value the emission carries rather than a
+copy or a reference of its own, and the emission disposes it as soon as the
+handler returns, which detaches the wrapper and frees nothing; using it
+afterwards throws `ObjectDisposedException`. Three rules follow:
+
+* **Keeping the value means copying it** — `Caps.Copy()`, `Structure.Copy()` —
+  or reading out the fields that are wanted.
+* **Writing into it reaches the emitter** where the signal lends its argument,
+  which is what makes the `handle-request`, `on-sdp` and `before-send` signals
+  of `rtspsrc`, and `handle-request` and `update-sdp` of `rtspclientsink`,
+  usable from managed code at all.
+* **Releasing it is the emitter's business, never the handler's.** No
+  `RTSPMessage.Unset()`, no `SDPMessage.Uninit()`, no other clearing call, and
+  no `Dispose()` on the argument.
+
+A boxed type nothing registered still arrives as its raw `nint`, unchanged and
+nobody's to free. Since what is registered is what the initialised modules put
+there, a handler for an `rtspsrc` signal sees `Gst.Rtsp.RTSPMessage` only if
+`GstRtsp.Initialize()` ran before the connection was made, and an SDP argument
+needs `GstSdp.Initialize()` the same way. The **return** value of an emission is
+a different question and is unchanged: `Object.EmitSignal` hands a boxed result
+back as an owned `nint`, except for a mini object, which comes back as its
+wrapper.
+
 ## Tracks a timeline is answered with
 
 `GES.Timeline.SelectTracksForObject` is answered with an array of tracks, and

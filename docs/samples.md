@@ -81,8 +81,10 @@ since `gst_value_get_caps` and `gst_value_get_structure` are not bound.
 `typefind` is a plugin element no `.gir` describes, so `have-type` is reached
 through `Object.ConnectSignal`, which looks the signal up in the introspection
 GObject itself keeps. The caps arrive as a `Gst.Caps` wrapper built through the
-type registry — `Value.GetMiniObject<T>()` is the same route for a value held
-directly — and are lent to the handler, so keeping them means `Caps.Copy()`.
+type registry, borrowed: the wrapper holds the emission's own caps rather than a
+reference of its own — which is what `Value.GetMiniObject<T>()` would take for a
+value held directly — and it is disposed when the handler returns, so keeping
+the caps means `Caps.Copy()`.
 
 **[`samples/GstStats`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/GstStats/Program.cs)**
 — `gst-stats-1.0`: the report of a debug log that carries `GST_TRACER` records,

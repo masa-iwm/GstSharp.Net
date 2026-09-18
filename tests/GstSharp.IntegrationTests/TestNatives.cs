@@ -244,6 +244,71 @@ internal static unsafe partial class TestNatives
     [LibraryImport("Gst", EntryPoint = "gst_caps_get_type")]
     internal static partial nuint CapsGetType();
 
+    /// <summary>The <c>GType</c> of a <c>GstStructure</c>.</summary>
+    /// <returns><c>GST_TYPE_STRUCTURE</c>.</returns>
+    /// <remarks>
+    /// The generated <c>Gst.Structure.GetGType</c> is internal to the binding,
+    /// and a test that declares a signal carrying a structure has to name the
+    /// type the library registered.
+    /// </remarks>
+    [LibraryImport("Gst", EntryPoint = "gst_structure_get_type")]
+    internal static partial nuint StructureGetType();
+
+    /// <summary>The <c>GType</c> of a <c>GBytes</c>.</summary>
+    /// <returns><c>G_TYPE_BYTES</c>.</returns>
+    /// <remarks>
+    /// A <c>GBytes</c> is a boxed type of GLib that no module of this binding
+    /// wraps, which is what makes it the type to test the raw handle fallback
+    /// of a dynamic signal argument with. The boxed registration of a GLib type
+    /// lives in GObject, not in GLib: <c>gboxed.c</c> is where it is declared.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_bytes_get_type")]
+    internal static partial nuint BytesGetType();
+
+    /// <summary>Creates a <c>GBytes</c> that copies the data it is given.</summary>
+    /// <param name="data">The bytes to copy.</param>
+    /// <param name="size">How many bytes to copy.</param>
+    /// <returns>The new <c>GBytes</c>, which the caller owns.</returns>
+    [LibraryImport("GLib", EntryPoint = "g_bytes_new")]
+    internal static partial nint BytesNew(byte* data, nuint size);
+
+    /// <summary>Releases a reference of a <c>GBytes</c>.</summary>
+    /// <param name="bytes">The value to release.</param>
+    [LibraryImport("GLib", EntryPoint = "g_bytes_unref")]
+    internal static partial void BytesUnref(nint bytes);
+
+    /// <summary>Connects a raw C callback to a signal by name.</summary>
+    /// <param name="instance">The instance to connect to.</param>
+    /// <param name="detailedSignal">The name of the signal, UTF-8 and null terminated.</param>
+    /// <param name="handler">The callback, whose signature is the one the signal declares.</param>
+    /// <param name="data">The user data of the callback.</param>
+    /// <param name="destroyData">The notifier of the user data, which is null here.</param>
+    /// <param name="connectFlags">The connection flags, which are none here.</param>
+    /// <returns>The identifier of the handler.</returns>
+    /// <remarks>
+    /// A test that wants to see the pointer an emission carries, rather than the
+    /// wrapper the binding builds over it, has to be on the C side of the
+    /// marshaller: this is the only route to it.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_signal_connect_data")]
+    internal static partial CULong SignalConnectData(
+        nint instance,
+        byte* detailedSignal,
+        nint handler,
+        nint data,
+        nint destroyData,
+        int connectFlags);
+
+    /// <summary>Disconnects a handler by identifier.</summary>
+    /// <param name="instance">The instance the handler is connected to.</param>
+    /// <param name="handlerId">The identifier the connection answered.</param>
+    /// <remarks>
+    /// A <c>gulong</c> is 32 bits wide on Windows and 64 bits wide elsewhere,
+    /// which is why the identifier travels as a <see cref="CULong"/>.
+    /// </remarks>
+    [LibraryImport("GObject", EntryPoint = "g_signal_handler_disconnect")]
+    internal static partial void SignalHandlerDisconnect(nint instance, CULong handlerId);
+
     /// <summary>The <c>GType</c> of a <c>GstDiscovererInfo</c>.</summary>
     /// <returns><c>GST_TYPE_DISCOVERER_INFO</c>.</returns>
     /// <remarks>

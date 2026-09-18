@@ -6,10 +6,14 @@ using GObjectObject = Gst.GObject.Object;
 namespace GstSharp.IntegrationTests;
 
 /// <summary>
-/// A managed push source that defines three signals of its own: one that
-/// answers nothing and has a class handler, one that stops at the first handler
-/// which says it handled the emission, and one that stops at the first handler
-/// to answer at all.
+/// A managed push source that defines six signals of its own: one that answers
+/// nothing and has a class handler, one that stops at the first handler which
+/// says it handled the emission, one that stops at the first handler to answer
+/// at all, and three that carry an argument the dynamic signal layer has to
+/// convert — a <c>GstStructure</c> (a registered boxed type, with a class
+/// handler that observes what an earlier handler wrote into it), a
+/// <c>GstCaps</c> (a registered mini object) and a <c>GBytes</c> (a boxed type
+/// no module of this binding wraps).
 /// </summary>
 internal sealed class ProbeSignalElement : PushSrc, IManagedSubclass<ProbeSignalElement>
 {
@@ -28,6 +32,21 @@ internal sealed class ProbeSignalElement : PushSrc, IManagedSubclass<ProbeSignal
     /// <summary>The signal whose emission stops at the first handler to answer.</summary>
     internal const string FirstWinsSignal = "gstsharp-first-wins";
 
+    /// <summary>The signal that carries a <c>GstStructure</c>, a registered boxed type.</summary>
+    internal const string BoxedSignal = "gstsharp-boxed";
+
+    /// <summary>The signal that carries a <c>GstCaps</c>, a registered mini object.</summary>
+    internal const string MiniObjectSignal = "gstsharp-mini-object";
+
+    /// <summary>
+    /// The signal that carries a <c>GBytes</c>, a boxed type no module of this
+    /// binding registers a wrapper for.
+    /// </summary>
+    internal const string UnboundBoxedSignal = "gstsharp-unbound-boxed";
+
+    /// <summary>The field the boxed argument tests write into the structure.</summary>
+    internal const string BoxedFieldName = "written-by-the-handler";
+
     private const string MediaType = "application/x-gstsharp-signal-element";
 
     private static readonly PadTemplate SrcTemplate = NewSrcTemplate();
@@ -44,6 +63,8 @@ internal sealed class ProbeSignalElement : PushSrc, IManagedSubclass<ProbeSignal
     private static int _classHandlerCalls;
     private static GObjectObject? _classHandlerSender;
     private static object?[]? _classHandlerArgs;
+    private static nint _boxedClassHandlerPointer;
+    private static string? _boxedClassHandlerReadBack;
 
     private ProbeSignalElement(SubclassCtorArgs args)
         : base(args)
@@ -68,12 +89,27 @@ internal sealed class ProbeSignalElement : PushSrc, IManagedSubclass<ProbeSignal
     /// <summary>Gets the arguments the class handler was given last.</summary>
     internal static object?[]? ClassHandlerArgs => Volatile.Read(ref _classHandlerArgs);
 
+    /// <summary>
+    /// Gets the handle of the wrapper the class handler of the boxed signal was
+    /// given last.
+    /// </summary>
+    internal static nint BoxedClassHandlerPointer => Volatile.Read(ref _boxedClassHandlerPointer);
+
+    /// <summary>
+    /// Gets what the class handler of the boxed signal read out of
+    /// <see cref="BoxedFieldName"/>, which is what an earlier handler wrote
+    /// into the very same value.
+    /// </summary>
+    internal static string? BoxedClassHandlerReadBack => Volatile.Read(ref _boxedClassHandlerReadBack);
+
     /// <summary>Forgets what the previous test observed.</summary>
     internal static void Reset()
     {
         Volatile.Write(ref _classHandlerCalls, 0);
         Volatile.Write(ref _classHandlerSender, null);
         Volatile.Write(ref _classHandlerArgs, null);
+        Volatile.Write(ref _boxedClassHandlerPointer, nint.Zero);
+        Volatile.Write(ref _boxedClassHandlerReadBack, null);
     }
 
     /// <summary>Builds the wrapper of an instance native code created.</summary>
@@ -122,6 +158,40 @@ internal sealed class ProbeSignalElement : PushSrc, IManagedSubclass<ProbeSignal
             [],
             null,
             SignalAccumulator.FirstWins);
+
+        // RunLast puts the class handler after the handlers connected without
+        // "after", so it observes what one of them wrote into the argument.
+        _ = config.AddSignal(
+            BoxedSignal,
+            SignalFlags.RunLast,
+            GType.None,
+            [new GType(TestNatives.StructureGetType())],
+            OnBoxed);
+
+        _ = config.AddSignal(
+            MiniObjectSignal,
+            SignalFlags.RunLast,
+            GType.None,
+            [new GType(TestNatives.CapsGetType())]);
+
+        _ = config.AddSignal(
+            UnboundBoxedSignal,
+            SignalFlags.RunLast,
+            GType.None,
+            [new GType(TestNatives.BytesGetType())]);
+    }
+
+    private static object? OnBoxed(GObjectObject sender, object?[] args)
+    {
+        _ = sender;
+
+        if (args.Length > 0 && args[0] is Structure structure)
+        {
+            Volatile.Write(ref _boxedClassHandlerPointer, structure.Handle);
+            Volatile.Write(ref _boxedClassHandlerReadBack, structure.GetString(BoxedFieldName));
+        }
+
+        return null;
     }
 
     private static object? OnPing(GObjectObject sender, object?[] args)

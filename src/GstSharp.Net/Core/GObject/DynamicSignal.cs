@@ -15,9 +15,14 @@ namespace Gst.GObject;
 /// <see cref="Value.GetContent"/> converts it: a primitive for the numeric
 /// types, a <see cref="string"/>, an <see cref="Object"/> wrapper, a
 /// <see cref="ParamSpec"/> for the parameter specification of a
-/// <c>notify</c>, the wrapper of a mini object whose type is registered — the
-/// <c>GstCaps</c> of a <c>have-type</c> arrives as a <see cref="Gst.Caps"/> —
-/// and the raw handle of anything else boxed.
+/// <c>notify</c>, and the wrapper of a boxed value whose type is registered —
+/// the <c>GstCaps</c> of a <c>have-type</c> arrives as a
+/// <see cref="Gst.Caps"/>, a <c>GstStructure</c> as a
+/// <see cref="Gst.Structure"/>, a <c>GstRTSPMessage</c> as the
+/// <c>Gst.Rtsp.RTSPMessage</c> of <c>GstSharp.Net.Rtsp</c>. A mini object is a
+/// boxed type as far as GObject is concerned, so both families arrive the same
+/// way. The raw handle is what arrives for a boxed type no initialised module
+/// registered a wrapper for.
 /// </param>
 /// <returns>
 /// The value the signal returns, or <see langword="null"/> to leave it at its
@@ -29,10 +34,31 @@ namespace Gst.GObject;
 /// <para>
 /// The arguments are borrowed for the duration of the call: the wrappers that
 /// this delegate receives belong to the emission, and a
-/// <see cref="ParamSpec"/> or a mini object among them is disposed as soon as
-/// the handler returns. A handler that wants to keep an argument has to take a
-/// reference of its own — <c>Gst.Caps.Copy</c> for a caps — or copy the value
-/// it needs out of it.
+/// <see cref="ParamSpec"/> or a boxed value among them is disposed as soon as
+/// the handler returns — using one afterwards throws
+/// <see cref="ObjectDisposedException"/>. A handler that wants to keep an
+/// argument has to take a copy of its own — <c>Gst.Caps.Copy</c> for a caps,
+/// <c>Gst.Structure.Copy</c> for a structure — or read the values it needs out
+/// of it.
+/// </para>
+/// <para>
+/// A borrowed wrapper holds the value the emission carries rather than a copy
+/// of it, so a handler that writes into one writes into what the emitter reads
+/// back where the signal lends its argument: the <c>handle-request</c>,
+/// <c>on-sdp</c> and <c>before-send</c> signals of <c>rtspsrc</c>, and the
+/// <c>handle-request</c> and <c>update-sdp</c> signals of
+/// <c>rtspclientsink</c>, are the ones this binding knows of. Because the value
+/// stays the emitter's, a handler must never release it: no
+/// <c>RTSPMessage.Unset()</c>, no <c>SDPMessage.Uninit()</c> and no other
+/// clearing call on such an argument, and no <c>Dispose</c> either — the
+/// emission disposes the wrapper itself.
+/// </para>
+/// <para>
+/// Which types arrive as a wrapper depends on which modules are initialised,
+/// because that is what fills the type registry: connecting to a signal that
+/// carries a <c>GstRTSPMessage</c> before <c>GstRtsp.Initialize()</c> ran, or
+/// to one that carries a <c>GstSDPMessage</c> before <c>GstSdp.Initialize()</c>
+/// ran, hands the handler the raw <see cref="nint"/> instead.
 /// </para>
 /// <para>
 /// An <see cref="Object"/> argument is the shared wrapper of that object, so
@@ -317,21 +343,24 @@ internal static unsafe class DynamicSignalClosure
             return wrapper;
         }
 
-        // A mini object argument is handed over as its wrapper rather than as
-        // a raw handle. The wrapper takes a reference of its own, which is what
-        // keeps the argument valid for the length of the call even if the
-        // emitter drops its own, and it is given back when the handler returns:
-        // the argument is borrowed, exactly as a ParamSpec is.
+        // A boxed argument — a mini object among them, since a mini object is
+        // a boxed type as far as GObject is concerned — is handed over as its
+        // wrapper rather than as a raw handle. The wrapper borrows: it holds
+        // the very value the emission carries rather than a copy of it, so what
+        // the handler writes into it is what the emitter reads back where the
+        // signal lends its argument, and disposing it when the handler returns
+        // detaches the wrapper without freeing anything. The argument is
+        // borrowed, exactly as a ParamSpec is.
+        //
+        // A boxed type no initialised module registered has no wrapper to
+        // build, and its raw handle is what arrives; a null pointer reads as
+        // null, which GetDynamicContent already does.
         if (fundamental == GType.BoxedValue &&
-            TypeRegistry.TryCreateMiniObjectWrapper(
-                value.Type,
-                value.GetBoxed(),
-                Transfer.None,
-                out object? miniObject) &&
-            miniObject is IDisposable disposable)
+            TypeRegistry.TryCreateBorrowedWrapper(value.Type, value.GetBoxed(), out object? boxed) &&
+            boxed is IDisposable disposable)
         {
             (borrowed ??= []).Add(disposable);
-            return miniObject;
+            return boxed;
         }
 
         return value.GetDynamicContent();
