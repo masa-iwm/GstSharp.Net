@@ -16,13 +16,13 @@ internal static unsafe partial class GstBaseModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.Aggregator.GetGType, &Gst.Base.Aggregator.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.AggregatorPad.GetGType, &Gst.Base.AggregatorPad.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.BaseParse.GetGType, &Gst.Base.BaseParse.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Base.BaseParseFrame.GetGType, &Gst.Base.BaseParseFrame.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Base.BaseParseFrame.GetGType, &Gst.Base.BaseParseFrame.CreateWrapper, &Gst.Base.BaseParseFrame.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.BaseSink.GetGType, &Gst.Base.BaseSink.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.BaseSrc.GetGType, &Gst.Base.BaseSrc.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.BaseTransform.GetGType, &Gst.Base.BaseTransform.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.CollectPads.GetGType, &Gst.Base.CollectPads.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.DataQueue.GetGType, &Gst.Base.DataQueue.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Base.FlowCombiner.GetGType, &Gst.Base.FlowCombiner.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Base.FlowCombiner.GetGType, &Gst.Base.FlowCombiner.CreateWrapper, &Gst.Base.FlowCombiner.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Base.PushSrc.GetGType, &Gst.Base.PushSrc.CreateWrapper),
     ];
 

@@ -15,16 +15,16 @@ internal static unsafe partial class GstWebRTCModule
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCDTLSTransport.GetGType, &Gst.WebRTC.WebRTCDTLSTransport.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCDataChannel.GetGType, &Gst.WebRTC.WebRTCDataChannel.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICE.GetGType, &Gst.WebRTC.WebRTCICE.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICECandidate.GetGType, &Gst.WebRTC.WebRTCICECandidate.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICECandidatePair.GetGType, &Gst.WebRTC.WebRTCICECandidatePair.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICECandidateStats.GetGType, &Gst.WebRTC.WebRTCICECandidateStats.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICECandidate.GetGType, &Gst.WebRTC.WebRTCICECandidate.CreateWrapper, &Gst.WebRTC.WebRTCICECandidate.BorrowWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICECandidatePair.GetGType, &Gst.WebRTC.WebRTCICECandidatePair.CreateWrapper, &Gst.WebRTC.WebRTCICECandidatePair.BorrowWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICECandidateStats.GetGType, &Gst.WebRTC.WebRTCICECandidateStats.CreateWrapper, &Gst.WebRTC.WebRTCICECandidateStats.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICEStream.GetGType, &Gst.WebRTC.WebRTCICEStream.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCICETransport.GetGType, &Gst.WebRTC.WebRTCICETransport.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCRTPReceiver.GetGType, &Gst.WebRTC.WebRTCRTPReceiver.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCRTPSender.GetGType, &Gst.WebRTC.WebRTCRTPSender.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCRTPTransceiver.GetGType, &Gst.WebRTC.WebRTCRTPTransceiver.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCSCTPTransport.GetGType, &Gst.WebRTC.WebRTCSCTPTransport.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCSessionDescription.GetGType, &Gst.WebRTC.WebRTCSessionDescription.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.WebRTC.WebRTCSessionDescription.GetGType, &Gst.WebRTC.WebRTCSessionDescription.CreateWrapper, &Gst.WebRTC.WebRTCSessionDescription.BorrowWrapper),
     ];
 
     /// <summary>Builds the interface table of the module.</summary>

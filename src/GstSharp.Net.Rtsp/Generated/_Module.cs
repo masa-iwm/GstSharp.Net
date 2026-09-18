@@ -12,10 +12,10 @@ internal static unsafe partial class GstRtspModule
     /// <returns>One entry per generated wrapper that GObject knows a type for.</returns>
     internal static Gst.Interop.ModuleTypeEntry[] CreateEntries() =>
     [
-        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPAuthCredential.GetGType, &Gst.Rtsp.RTSPAuthCredential.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPAuthParam.GetGType, &Gst.Rtsp.RTSPAuthParam.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPMessage.GetGType, &Gst.Rtsp.RTSPMessage.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPUrl.GetGType, &Gst.Rtsp.RTSPUrl.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPAuthCredential.GetGType, &Gst.Rtsp.RTSPAuthCredential.CreateWrapper, &Gst.Rtsp.RTSPAuthCredential.BorrowWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPAuthParam.GetGType, &Gst.Rtsp.RTSPAuthParam.CreateWrapper, &Gst.Rtsp.RTSPAuthParam.BorrowWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPMessage.GetGType, &Gst.Rtsp.RTSPMessage.CreateWrapper, &Gst.Rtsp.RTSPMessage.BorrowWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Rtsp.RTSPUrl.GetGType, &Gst.Rtsp.RTSPUrl.CreateWrapper, &Gst.Rtsp.RTSPUrl.BorrowWrapper),
     ];
 
     /// <summary>Builds the interface table of the module.</summary>

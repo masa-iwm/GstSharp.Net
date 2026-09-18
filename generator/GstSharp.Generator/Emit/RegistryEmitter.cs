@@ -11,7 +11,7 @@ namespace GstSharp.Generator.Emit;
 /// Whether the wrapper carries an <c>[Obsolete]</c> attribute, which the table
 /// has to name it despite.
 /// </param>
-internal sealed record RegistryEntry(string TypeName, bool IsDeprecated);
+internal sealed record RegistryEntry(string TypeName, bool IsDeprecated, bool Borrows = false);
 
 /// <summary>
 /// One row of the interface table of a module.
@@ -106,7 +106,9 @@ internal sealed class RegistryEmitter
         {
             writer.WriteLine(
                 "    new Gst.Interop.ModuleTypeEntry(&" + entry.TypeName + ".GetGType, &"
-                + entry.TypeName + ".CreateWrapper),");
+                + entry.TypeName + ".CreateWrapper"
+                + (entry.Borrows ? ", &" + entry.TypeName + "." + SurfaceBuilder.BorrowWrapperName : string.Empty)
+                + "),");
         }
 
         writer.WriteLine("];");

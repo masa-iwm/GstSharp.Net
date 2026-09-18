@@ -13,7 +13,7 @@ internal static unsafe partial class GstNetModule
     internal static Gst.Interop.ModuleTypeEntry[] CreateEntries() =>
     [
         new Gst.Interop.ModuleTypeEntry(&Gst.Net.NetClientClock.GetGType, &Gst.Net.NetClientClock.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Net.NetTimePacket.GetGType, &Gst.Net.NetTimePacket.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Net.NetTimePacket.GetGType, &Gst.Net.NetTimePacket.CreateWrapper, &Gst.Net.NetTimePacket.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Net.NetTimeProvider.GetGType, &Gst.Net.NetTimeProvider.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Net.NtpClock.GetGType, &Gst.Net.NtpClock.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Net.PtpClock.GetGType, &Gst.Net.PtpClock.CreateWrapper),

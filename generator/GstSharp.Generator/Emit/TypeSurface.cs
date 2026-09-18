@@ -255,6 +255,13 @@ internal sealed class SurfaceBuilder
     internal const string BorrowName = "Borrow";
 
     /// <summary>
+    /// The name of the shim the type registry holds the borrow of a wrapper
+    /// behind: a function pointer is not covariant in its return type, so the
+    /// table cannot hold <see cref="BorrowName"/> itself.
+    /// </summary>
+    internal const string BorrowWrapperName = "BorrowWrapper";
+
+    /// <summary>
     /// Names that a generated mini object wrapper inherits or declares beyond
     /// <see cref="WrapperNames"/>.
     /// </summary>
@@ -263,6 +270,7 @@ internal sealed class SurfaceBuilder
         "AdoptWritable",
         "BeginMakeWritable",
         BorrowName,
+        BorrowWrapperName,
         "IsWritable",
         "MakeWritableHandle",
     ];
@@ -277,6 +285,7 @@ internal sealed class SurfaceBuilder
         "AdoptWritable",
         "BeginMakeWritable",
         BorrowName,
+        BorrowWrapperName,
         "HandOver",
     ];
 

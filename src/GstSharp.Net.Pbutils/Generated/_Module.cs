@@ -25,7 +25,7 @@ internal static unsafe partial class GstPbutilsModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Pbutils.EncodingProfile.GetGType, &Gst.Pbutils.EncodingProfile.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Pbutils.EncodingTarget.GetGType, &Gst.Pbutils.EncodingTarget.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Pbutils.EncodingVideoProfile.GetGType, &Gst.Pbutils.EncodingVideoProfile.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Pbutils.InstallPluginsContext.GetGType, &Gst.Pbutils.InstallPluginsContext.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Pbutils.InstallPluginsContext.GetGType, &Gst.Pbutils.InstallPluginsContext.CreateWrapper, &Gst.Pbutils.InstallPluginsContext.BorrowWrapper),
     ];
 
     /// <summary>Builds the interface table of the module.</summary>

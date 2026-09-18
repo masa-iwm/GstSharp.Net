@@ -20,7 +20,7 @@ internal static unsafe partial class GstPlayModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Play.PlaySubtitleInfo.GetGType, &Gst.Play.PlaySubtitleInfo.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Play.PlayVideoInfo.GetGType, &Gst.Play.PlayVideoInfo.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Play.PlayVideoOverlayVideoRenderer.GetGType, &Gst.Play.PlayVideoOverlayVideoRenderer.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Play.PlayVisualization.GetGType, &Gst.Play.PlayVisualization.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Play.PlayVisualization.GetGType, &Gst.Play.PlayVisualization.CreateWrapper, &Gst.Play.PlayVisualization.BorrowWrapper),
     ];
 
     /// <summary>Builds the interface table of the module.</summary>

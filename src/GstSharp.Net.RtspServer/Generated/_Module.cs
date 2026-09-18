@@ -12,7 +12,7 @@ internal static unsafe partial class GstRtspServerModule
     /// <returns>One entry per generated wrapper that GObject knows a type for.</returns>
     internal static Gst.Interop.ModuleTypeEntry[] CreateEntries() =>
     [
-        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPAddress.GetGType, &Gst.RtspServer.RTSPAddress.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPAddress.GetGType, &Gst.RtspServer.RTSPAddress.CreateWrapper, &Gst.RtspServer.RTSPAddress.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPAddressPool.GetGType, &Gst.RtspServer.RTSPAddressPool.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPAuth.GetGType, &Gst.RtspServer.RTSPAuth.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPClient.GetGType, &Gst.RtspServer.RTSPClient.CreateWrapper),
@@ -24,16 +24,16 @@ internal static unsafe partial class GstRtspServerModule
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPOnvifMedia.GetGType, &Gst.RtspServer.RTSPOnvifMedia.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPOnvifMediaFactory.GetGType, &Gst.RtspServer.RTSPOnvifMediaFactory.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPOnvifServer.GetGType, &Gst.RtspServer.RTSPOnvifServer.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPPermissions.GetGType, &Gst.RtspServer.RTSPPermissions.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPPermissions.GetGType, &Gst.RtspServer.RTSPPermissions.CreateWrapper, &Gst.RtspServer.RTSPPermissions.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPServer.GetGType, &Gst.RtspServer.RTSPServer.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPSession.GetGType, &Gst.RtspServer.RTSPSession.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPSessionMedia.GetGType, &Gst.RtspServer.RTSPSessionMedia.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPSessionPool.GetGType, &Gst.RtspServer.RTSPSessionPool.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPStream.GetGType, &Gst.RtspServer.RTSPStream.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPStreamTransport.GetGType, &Gst.RtspServer.RTSPStreamTransport.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPThread.GetGType, &Gst.RtspServer.RTSPThread.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPThread.GetGType, &Gst.RtspServer.RTSPThread.CreateWrapper, &Gst.RtspServer.RTSPThread.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPThreadPool.GetGType, &Gst.RtspServer.RTSPThreadPool.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPToken.GetGType, &Gst.RtspServer.RTSPToken.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.RtspServer.RTSPToken.GetGType, &Gst.RtspServer.RTSPToken.CreateWrapper, &Gst.RtspServer.RTSPToken.BorrowWrapper),
     ];
 
     /// <summary>Builds the interface table of the module.</summary>

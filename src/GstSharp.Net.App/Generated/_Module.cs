@@ -13,9 +13,9 @@ internal static unsafe partial class GstAppModule
     internal static Gst.Interop.ModuleTypeEntry[] CreateEntries() =>
     [
         new Gst.Interop.ModuleTypeEntry(&Gst.App.AppSink.GetGType, &Gst.App.AppSink.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.App.AppSinkSimpleCallbacks.GetGType, &Gst.App.AppSinkSimpleCallbacks.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.App.AppSinkSimpleCallbacks.GetGType, &Gst.App.AppSinkSimpleCallbacks.CreateWrapper, &Gst.App.AppSinkSimpleCallbacks.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.App.AppSrc.GetGType, &Gst.App.AppSrc.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.App.AppSrcSimpleCallbacks.GetGType, &Gst.App.AppSrcSimpleCallbacks.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.App.AppSrcSimpleCallbacks.GetGType, &Gst.App.AppSrcSimpleCallbacks.CreateWrapper, &Gst.App.AppSrcSimpleCallbacks.BorrowWrapper),
     ];
 
     /// <summary>Builds the interface table of the module.</summary>

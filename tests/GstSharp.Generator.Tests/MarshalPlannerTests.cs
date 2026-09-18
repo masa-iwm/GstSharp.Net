@@ -1771,7 +1771,8 @@ public sealed class MarshalPlannerTests
             source,
             StringComparison.Ordinal);
         Assert.Contains(
-            "new Gst.Interop.ModuleTypeEntry(&Gst.Caps.GetGType, &Gst.Caps.CreateWrapper),",
+            "new Gst.Interop.ModuleTypeEntry(&Gst.Caps.GetGType, &Gst.Caps.CreateWrapper, "
+            + "&Gst.Caps.BorrowWrapper),",
             source,
             StringComparison.Ordinal);
         Assert.Contains(

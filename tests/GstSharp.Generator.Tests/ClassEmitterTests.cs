@@ -165,7 +165,8 @@ public sealed class ClassEmitterTests
             source,
             StringComparison.Ordinal);
         Assert.Contains(
-            "new Gst.Interop.ModuleTypeEntry(&Gst.Buffer.GetGType, &Gst.Buffer.CreateWrapper),",
+            "new Gst.Interop.ModuleTypeEntry(&Gst.Buffer.GetGType, &Gst.Buffer.CreateWrapper, "
+            + "&Gst.Buffer.BorrowWrapper),",
             source,
             StringComparison.Ordinal);
     }

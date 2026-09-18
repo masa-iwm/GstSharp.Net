@@ -15,6 +15,7 @@ public readonly unsafe struct ModuleTypeEntry : IEquatable<ModuleTypeEntry>
     private readonly delegate* unmanaged[Cdecl]<nuint> _nativeGetType;
     private readonly delegate*<nuint> _managedGetType;
     private readonly delegate*<nint, Transfer, object> _factory;
+    private readonly delegate*<nint, object> _borrowedFactory;
 
     /// <summary>
     /// Initialises a new entry from the raw address of the native
@@ -36,6 +37,28 @@ public readonly unsafe struct ModuleTypeEntry : IEquatable<ModuleTypeEntry>
     }
 
     /// <summary>
+    /// Initialises a new entry from the raw address of the native
+    /// <c>get_type</c> function, with the factory that borrows an instance
+    /// rather than taking one over.
+    /// </summary>
+    /// <param name="getTypeFunction">
+    /// The <c>get_type</c> entry point of the native type. It is only called
+    /// once the native library is loaded.
+    /// </param>
+    /// <param name="factory">
+    /// Creates the managed wrapper for an instance of the native type.
+    /// </param>
+    /// <param name="borrowedFactory">
+    /// Creates a wrapper that borrows the instance: it owns nothing, and
+    /// disposing it detaches the wrapper rather than freeing anything.
+    /// </param>
+    public ModuleTypeEntry(
+        delegate* unmanaged[Cdecl]<nuint> getTypeFunction,
+        delegate*<nint, Transfer, object> factory,
+        delegate*<nint, object> borrowedFactory)
+        : this(getTypeFunction, factory) => _borrowedFactory = borrowedFactory;
+
+    /// <summary>
     /// Initialises a new entry from a generated interop stub.
     /// </summary>
     /// <param name="getTypeFunction">
@@ -55,9 +78,42 @@ public readonly unsafe struct ModuleTypeEntry : IEquatable<ModuleTypeEntry>
     }
 
     /// <summary>
+    /// Initialises a new entry from a generated interop stub, with the factory
+    /// that borrows an instance rather than taking one over.
+    /// </summary>
+    /// <param name="getTypeFunction">
+    /// The address of the <see cref="System.Runtime.InteropServices.LibraryImportAttribute"/>
+    /// stub of the <c>get_type</c> function, which resolves the native library
+    /// on its first call.
+    /// </param>
+    /// <param name="factory">
+    /// Creates the managed wrapper for an instance of the native type.
+    /// </param>
+    /// <param name="borrowedFactory">
+    /// Creates a wrapper that borrows the instance: it owns nothing, and
+    /// disposing it detaches the wrapper rather than freeing anything.
+    /// </param>
+    public ModuleTypeEntry(
+        delegate*<nuint> getTypeFunction,
+        delegate*<nint, Transfer, object> factory,
+        delegate*<nint, object> borrowedFactory)
+        : this(getTypeFunction, factory) => _borrowedFactory = borrowedFactory;
+
+    /// <summary>
     /// Gets the factory that creates the managed wrapper.
     /// </summary>
     public delegate*<nint, Transfer, object> Factory => _factory;
+
+    /// <summary>
+    /// Gets the factory that creates a wrapper borrowing the instance, or
+    /// <see langword="null"/> when the type has none.
+    /// </summary>
+    /// <remarks>
+    /// Only a wrapper that can stand for a value it does not own carries one:
+    /// what reads it is an argument a signal hands out for the duration of the
+    /// call, which the handler may read and edit in place and must not free.
+    /// </remarks>
+    public delegate*<nint, object> BorrowedFactory => _borrowedFactory;
 
     /// <summary>
     /// Gets a value indicating whether the entry can be resolved.
@@ -96,14 +152,19 @@ public readonly unsafe struct ModuleTypeEntry : IEquatable<ModuleTypeEntry>
     public bool Equals(ModuleTypeEntry other) =>
         (nint)_nativeGetType == (nint)other._nativeGetType &&
         (nint)_managedGetType == (nint)other._managedGetType &&
-        (nint)_factory == (nint)other._factory;
+        (nint)_factory == (nint)other._factory &&
+        (nint)_borrowedFactory == (nint)other._borrowedFactory;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is ModuleTypeEntry other && Equals(other);
 
     /// <inheritdoc/>
     public override int GetHashCode() =>
-        HashCode.Combine((nint)_nativeGetType, (nint)_managedGetType, (nint)_factory);
+        HashCode.Combine(
+            (nint)_nativeGetType,
+            (nint)_managedGetType,
+            (nint)_factory,
+            (nint)_borrowedFactory);
 }
 
 /// <summary>

@@ -19,16 +19,16 @@ internal static unsafe partial class GstAudioModule
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioBaseSrc.GetGType, &Gst.Audio.AudioBaseSrc.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioCdSrc.GetGType, &Gst.Audio.AudioCdSrc.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioClock.GetGType, &Gst.Audio.AudioClock.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioConverter.GetGType, &Gst.Audio.AudioConverter.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioConverter.GetGType, &Gst.Audio.AudioConverter.CreateWrapper, &Gst.Audio.AudioConverter.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioDecoder.GetGType, &Gst.Audio.AudioDecoder.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioEncoder.GetGType, &Gst.Audio.AudioEncoder.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioFilter.GetGType, &Gst.Audio.AudioFilter.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioInfo.GetGType, &Gst.Audio.AudioInfo.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioInfo.GetGType, &Gst.Audio.AudioInfo.CreateWrapper, &Gst.Audio.AudioInfo.BorrowWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioRingBuffer.GetGType, &Gst.Audio.AudioRingBuffer.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioSink.GetGType, &Gst.Audio.AudioSink.CreateWrapper),
         new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioSrc.GetGType, &Gst.Audio.AudioSrc.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioStreamAlign.GetGType, &Gst.Audio.AudioStreamAlign.CreateWrapper),
-        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.DsdInfo.GetGType, &Gst.Audio.DsdInfo.CreateWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.AudioStreamAlign.GetGType, &Gst.Audio.AudioStreamAlign.CreateWrapper, &Gst.Audio.AudioStreamAlign.BorrowWrapper),
+        new Gst.Interop.ModuleTypeEntry(&Gst.Audio.DsdInfo.GetGType, &Gst.Audio.DsdInfo.CreateWrapper, &Gst.Audio.DsdInfo.BorrowWrapper),
     ];
 
     /// <summary>Builds the interface table of the module.</summary>

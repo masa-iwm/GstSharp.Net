@@ -314,7 +314,10 @@ internal sealed class RecordEmitter
 
             if (record.GlibGetType is { Length: > 0 } && kind is TypeKind.MiniObject or TypeKind.Boxed)
             {
-                _registry.Add(new RegistryEntry(module.ClrNamespace + "." + typeName, record.IsDeprecated));
+                _registry.Add(new RegistryEntry(
+                    module.ClrNamespace + "." + typeName,
+                    record.IsDeprecated,
+                    Borrows: true));
             }
         }
 
@@ -1096,6 +1099,19 @@ internal sealed class RecordEmitter
         ClassEmitter.WriteTypeFunction(writer, module, getType, CTypeOf(record), hidesBase: false);
         writer.WriteLine();
         ClassEmitter.WriteFactory(writer, typeName, isAbstract: false, hidesBase: false);
+        writer.WriteLine();
+        writer.WriteLine(
+            "/// <summary>Creates a wrapper that borrows a native instance, for the type registry.</summary>");
+        writer.WriteLine("/// <param name=\"handle\">The native instance, which stays the caller's.</param>");
+        writer.WriteLine("/// <returns>The new wrapper, which owns nothing.</returns>");
+        writer.WriteLine("/// <remarks>");
+        writer.WriteLine("/// It is <see cref=\"" + SurfaceBuilder.BorrowName + "\"/> behind the signature the type");
+        writer.WriteLine("/// registry holds: a function pointer is not covariant in its return type, so the");
+        writer.WriteLine("/// table cannot hold the borrow itself.");
+        writer.WriteLine("/// </remarks>");
+        writer.WriteLine(
+            "internal static object " + SurfaceBuilder.BorrowWrapperName + "(nint handle) => "
+            + SurfaceBuilder.BorrowName + "(handle);");
     }
 
     /// <summary>Writes the field accessors of a wrapper.</summary>

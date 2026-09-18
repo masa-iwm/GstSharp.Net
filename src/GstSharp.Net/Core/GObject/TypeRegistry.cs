@@ -194,7 +194,7 @@ public static class TypeRegistry
 
                     if (type != GType.InvalidValue)
                     {
-                        map[type] = new TypeEntry(entry.Factory);
+                        map[type] = new TypeEntry(entry.Factory, entry.BorrowedFactory);
                     }
                 }
             }
@@ -479,6 +479,45 @@ public static class TypeRegistry
     }
 
     /// <summary>
+    /// Creates a wrapper that borrows an instance of a registered type: it owns
+    /// nothing, and disposing it detaches the wrapper rather than freeing
+    /// anything.
+    /// </summary>
+    /// <param name="type">The registered type of the instance.</param>
+    /// <param name="handle">The instance to wrap.</param>
+    /// <param name="wrapper">The new wrapper.</param>
+    /// <returns>
+    /// <see langword="true"/> when <paramref name="type"/> is registered and
+    /// its wrapper can borrow.
+    /// </returns>
+    /// <remarks>
+    /// What reads this is an argument a signal hands its handler for the
+    /// duration of the call. The emitter keeps the value and reads it back
+    /// afterwards, so the wrapper must be the value the emitter holds rather
+    /// than a copy of it, and it must free nothing when the handler returns:
+    /// both are what a borrow is. A type whose wrapper cannot borrow - one the
+    /// generator emitted no borrowing factory for - answers
+    /// <see langword="false"/>, and the caller falls back to what it did before.
+    /// </remarks>
+    internal static unsafe bool TryCreateBorrowedWrapper(GType type, nint handle, out object? wrapper)
+    {
+        wrapper = null;
+
+        if (handle == nint.Zero || !type.IsValid)
+        {
+            return false;
+        }
+
+        if (!EnsureFrozen().TryGetValue(type.Value, out TypeEntry entry) || entry.BorrowedFactory is null)
+        {
+            return false;
+        }
+
+        wrapper = entry.BorrowedFactory(handle);
+        return wrapper is not null;
+    }
+
+    /// <summary>
     /// Creates the managed wrapper of a mini object that sits in a
     /// <c>GValue</c> as a boxed value, and answers whether that is what the
     /// value holds.
@@ -617,9 +656,18 @@ public static class TypeRegistry
     private readonly unsafe struct TypeEntry
     {
         private readonly delegate*<nint, Transfer, object> _factory;
+        private readonly delegate*<nint, object> _borrowedFactory;
 
-        internal TypeEntry(delegate*<nint, Transfer, object> factory) => _factory = factory;
+        internal TypeEntry(
+            delegate*<nint, Transfer, object> factory,
+            delegate*<nint, object> borrowedFactory)
+        {
+            _factory = factory;
+            _borrowedFactory = borrowedFactory;
+        }
 
         internal delegate*<nint, Transfer, object> Factory => _factory;
+
+        internal delegate*<nint, object> BorrowedFactory => _borrowedFactory;
     }
 }

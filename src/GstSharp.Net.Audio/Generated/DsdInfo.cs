@@ -316,6 +316,16 @@ public sealed unsafe partial class DsdInfo : Gst.GObject.Boxed
     /// <param name="transfer">How ownership of <paramref name="handle"/> is transferred.</param>
     /// <returns>The new wrapper.</returns>
     internal static object CreateWrapper(nint handle, Gst.Interop.Transfer transfer) => new DsdInfo(handle, transfer);
+
+    /// <summary>Creates a wrapper that borrows a native instance, for the type registry.</summary>
+    /// <param name="handle">The native instance, which stays the caller's.</param>
+    /// <returns>The new wrapper, which owns nothing.</returns>
+    /// <remarks>
+    /// It is <see cref="Borrow"/> behind the signature the type
+    /// registry holds: a function pointer is not covariant in its return type, so the
+    /// table cannot hold the borrow itself.
+    /// </remarks>
+    internal static object BorrowWrapper(nint handle) => Borrow(handle);
 }
 
 /// <summary>The native layout of <c>GstDsdInfo</c>.</summary>
