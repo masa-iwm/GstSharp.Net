@@ -875,7 +875,9 @@ public sealed class ClassEmitterTests
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
         //
-        // The thirteenth is not stale but illegal: a 'borrow' on a signal
+        // The thirteenth is not stale but illegal: a 'borrow' on a key that is
+        // no argument of a signal at all - a parameter of a method or of a
+        // callback, an argument of a virtual method, a return - or on a signal
         // argument the planner does not project onto a mini object or a boxed
         // wrapper (GEN0054). It is an error rather than a warning, so the verbs
         // do fail on it, and it is asserted here beside the others so that the

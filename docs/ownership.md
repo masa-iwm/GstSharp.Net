@@ -784,7 +784,7 @@ wrapper is still scoped to the handler and must not be stored, and
 `MakeWritable()` on it throws `InvalidOperationException`: it owns no reference
 to give away. An argument is marked only where the C grants both halves
 of it — the signal registers the argument `G_SIGNAL_TYPE_STATIC_SCOPE`, so no
-emission path copies it, *and* the emitter reads back what the handler wrote —
+emission path copies it, *and* the query's sender reads it back —
 which is why an argument that is merely `STATIC_SCOPE`, such as the segment of
 `Aggregator.SamplesSelected`, is left alone: it is the live segment of the
 source pad, and nothing reads it back.
@@ -818,10 +818,13 @@ receives, the one a borrowed signal argument is handed as, and the one the
 dynamic signal path builds — owns no reference to give, so it raises
 `InvalidOperationException`. What is lent that way is writable only where
 whoever lends it holds the only reference: an in place vfunc lends the value of
-its caller and promises exactly that, and so does the `ProposeAllocation` query
+its caller and normally promises exactly that — a base transform running in
+passthrough is the exception, as it calls `transform_ip` on a buffer it did not
+make writable — and so does the `ProposeAllocation` query
 as long as the element that sent it does not share it, while the dynamic signal
 path lends the reference or the boxed copy GObject took for the emission, which
-is a second one by construction — `Copy()` such a value and edit the copy. This
+is a second one for every argument but a `STATIC_SCOPE` one, whose emission
+takes no reference of its own — `Copy()` such a value and edit the copy. This
 holds for a boxed wrapper as much as for a mini object one: `Gst.Uri` is the
 one boxed type with a `MakeWritable`, and a borrowed uri refuses it rather than
 letting the C release a reference the wrapper never owned. And when the object

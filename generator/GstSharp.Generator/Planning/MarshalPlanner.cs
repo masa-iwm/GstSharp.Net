@@ -501,13 +501,6 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _consumedAnnotationOverrides;
 
     /// <summary>
-    /// The keys whose <c>borrow</c> this run has already refused, so that a key
-    /// several readers look up - a return is read once for its transfer, once
-    /// for its nullability and once for the discard flag - is reported once.
-    /// </summary>
-    private readonly HashSet<string> _refusedBorrowKeys = new(StringComparer.Ordinal);
-
-    /// <summary>
     /// The keys of the instance keyed callback entries this run has read, and
     /// the keys of the documentation notes it has attached, both shared across
     /// the modules of a run the way the corrections above are.
@@ -1516,10 +1509,15 @@ internal sealed class MarshalPlanner
     /// Reading a key consumes it, which keeps it out of the stale report, so a
     /// <c>borrow</c> on a key that some other path reads - a parameter of a
     /// method or of a callback, an argument of a virtual method, a return -
-    /// would be swallowed without a word. The spelling of a virtual method key
-    /// differs from the signal key of the same concept by an underscore alone,
+    /// would be swallowed without a word. A virtual method key is the signal
+    /// key of the same concept with the underscore of the slot in place of the
+    /// hyphen, and where the slot name is a single word it is the same string,
     /// which makes that the likeliest way to write the entry wrong, so it is
-    /// refused here, once per key, wherever the reader does not act on it.
+    /// refused here wherever the reader does not act on it. A key the signal
+    /// path and the slot path share therefore fails loudly - the signal path
+    /// honours the borrow, this one reports it - rather than applying it to a
+    /// slot in silence. The bag drops the repeats a key read several times
+    /// would otherwise produce.
     /// </para>
     /// </remarks>
     private AnnotationOverride? AnnotationOverrideFor(string key, bool borrowLegal = false)
@@ -1532,7 +1530,7 @@ internal sealed class MarshalPlanner
 
         _consumedAnnotationOverrides.Add(key);
 
-        if (!borrowLegal && correction.Borrow is not null && _refusedBorrowKeys.Add(key))
+        if (!borrowLegal && correction.Borrow is not null)
         {
             _diagnostics.Error(
                 "GEN0054",

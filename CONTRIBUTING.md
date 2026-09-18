@@ -297,9 +297,19 @@ The remaining keys address a callback type and a member rather than a slot:
   way the argument is writable in place. A `borrow` is legal on nothing else
   than an argument projected onto one of those two wrappers, and on no key but
   a signal argument: on a parameter of a method or of a callback, on an
-  argument of a virtual method — whose key differs from the signal key of the
-  same concept by an underscore alone — or on a return, it is `GEN0054`, an
-  error, rather than a key consumed in silence. `borrow: false` states the
+  argument of a virtual method — whose key is the signal key of the same
+  concept with the underscore of the slot in place of the hyphen — or on a
+  return, it is `GEN0054`, an error, rather than a key consumed in silence.
+  Where the slot name is a single word the two spellings are not merely close
+  but the **same string**, so one entry stands for both paths. That is a
+  documented limitation rather than a hazard: the signal path honours the
+  `borrow`, and the virtual method path refuses the very same key with
+  `GEN0054` as soon as the class is `subclassable`, so a colliding entry fails
+  loudly and never applies in silence to the slot. `nullable` has shared this
+  key space for as long as both paths have read corrections. The one collision
+  in a bound namespace today is `Gst.Bus::message#message`, whose class is not
+  subclassable and whose argument must not be borrowed in the first place.
+  `borrow: false` states the
   default and changes nothing, the way `nullable: false` does. The flag states
   two facts about the C that no gir carries: the signal registered the argument
   `G_SIGNAL_TYPE_STATIC_SCOPE`, so GObject copies it on no emission path, and
