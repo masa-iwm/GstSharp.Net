@@ -41,6 +41,25 @@ public abstract unsafe partial class WebRTCICE : Gst.Object
     }
 
     /// <summary>The <c>gst_webrtc_ice_add_candidate</c> function.</summary>
+    /// <remarks>
+    /// <para>
+    /// The promise is not answered on every path, and on the older releases it is answered on
+    /// no successful one. At 1.24.13 and 1.26.11 the libnice implementation replies only where
+    /// it refuses the candidate - an address it cannot parse (nice.c:868), an address that is
+    /// not .local (nice.c:885), and the two failures of the asynchronous .local resolve
+    /// (nice.c:782, :819) - while the end-of-candidates call (nice.c:846-849), a candidate
+    /// libnice accepts (nice.c:915) and a .local address that does resolve (nice.c:828-829)
+    /// leave it pending for good, so a caller that waits on it there waits forever. Nothing
+    /// interrupts or expires it either. 1.28.0 added the reply on the two synchronous success
+    /// paths (302c2dc5dc, not backported: 1.28.6 nice.c:882 for end-of-candidates and :953 for
+    /// an accepted candidate), and even 1.28.6 does not reply when a .local candidate resolves
+    /// successfully (nice.c:861-862). Nothing is leaked on any of them: the synchronous paths
+    /// neither reference nor release the promise, and the asynchronous one holds a reference of
+    /// its own (nice.c:899 at 1.24.13) that its destroy notify drops (nice.c:741). Pass null
+    /// unless the host is 1.28 or newer and the candidate is one of the two paths that answer
+    /// there.
+    /// </para>
+    /// </remarks>
     /// <param name="stream">The #GstWebRTCICEStream</param>
     /// <param name="candidate">The ICE candidate</param>
     /// <param name="promise">A #GstPromise for task notifications (Since: 1.24)</param>
