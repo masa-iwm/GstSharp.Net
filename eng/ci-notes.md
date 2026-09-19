@@ -22,6 +22,20 @@ Every job has `timeout-minutes`, the workflow cancels superseded runs of the
 same ref, and each job uploads its `.trx` files (or the AOT publish logs) as an
 artifact when it fails.
 
+**No job of `ci.yml` installs an SDK.** Every image in the matrix —
+`ubuntu-24.04`, `ubuntu-24.04-arm`, `ubuntu-latest`, `macos-latest`,
+`windows-latest` — preinstalls a 10.0.4xx SDK, which `global.json`
+(`10.0.100`, `rollForward: latestFeature`) accepts, while `actions/setup-dotnet`
+downloaded 300 MB per job to install the day's newest patch: 25 to 30 seconds
+on Windows and 8 to 11 elsewhere. The trade-off is deliberate: the patch level
+the gates run on now follows the runner image rather than being the newest that
+exists. Each job's first step is `dotnet --version`, which resolves through
+`global.json`, so an image that stops satisfying it — a dropped 10.0, or a
+feature band `global.json` asks for and the images lack — fails there first and
+with the SDK resolver's own message instead of somewhere inside `Restore`; the
+fix is to put `setup-dotnet` with `global-json-file` back. `release.yml`,
+`publish-nuget.yml` and `docs.yml` still install an SDK with `setup-dotnet`.
+
 ## GStreamer per operating system
 
 ### Windows, MSVC flavor — the official installer
@@ -557,9 +571,9 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 
 | Thing | Pin | Why |
 | --- | --- | --- |
-| `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit |
+| `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit. `setup-dotnet` is used by `release.yml`, `publish-nuget.yml` and `docs.yml` only — `ci.yml` builds with the SDK its runner images ship, see below |
 | `msys2/setup-msys2` | `v2` | the `msys2-location` output the MinGW job reads |
-| .NET SDK | `global.json` (`10.0.100`, `rollForward: latestFeature`) | one place for the SDK version. The floor is the whole .NET 10 line rather than a feature band: every gate — build, the four test suites, generator determinism, package validation and the NativeAOT publish — was verified on 10.0.111, so a narrower floor would turn a working SDK away. `latestFeature` always climbs to the newest band present, so this floor decides only what is *refused*: CI runs on whatever the runners ship (10.0.400 when this was written) and a contributor runs on whatever they have |
+| .NET SDK | `global.json` (`10.0.100`, `rollForward: latestFeature`) | one place for the SDK version. The floor is the whole .NET 10 line rather than a feature band: every gate — build, the four test suites, generator determinism, package validation and the NativeAOT publish — was verified on 10.0.111, so a narrower floor would turn a working SDK away. `latestFeature` always climbs to the newest band present, so this floor decides only what is *refused*: CI runs on whatever the runners ship (10.0.4xx when this was written) and a contributor runs on whatever they have |
 | docfx | `2.78.5` (`.config/dotnet-tools.json`) | the documentation site is built from a pinned tool, so a local preview and the `Docs` workflow render the same thing. `rollForward: false`, so the tool refuses to run on a runtime other than the one it targets rather than rolling forward silently |
 | Package validation baseline | `1.28.13` (`PackageValidationBaselineVersion` in `src/Directory.Build.props`) | the newest published 1.28.x, moved forward once nuget.org serves each release. Following the newest release is what puts each release's additions under the guard; against an older one they could vanish unnoticed. Never 1.28.0, which predates the promise. The anchor starts over at the next GStreamer series |
 | GStreamer, Windows MSVC | `1.28.6` (`GSTREAMER_VERSION` in the job) | the version the binding is generated from |
