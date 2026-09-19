@@ -46,11 +46,11 @@ that has code and does not need a window is here.
 
 Two of the nine playback tutorials are missing. Playback 9 will stay missing:
 there is no code upstream to port and it needs hardware this tree cannot offer.
-Playback 5 is only not written yet.
+Playback 5 is blocked on the binding, not on the tutorial.
 
 | Tutorial | What it is about | Why it is not here |
 | --- | --- | --- |
-| [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | not ported yet: a keyboard loop over the `GstColorBalance` channels of playbin, which `Object.As<IColorBalance>` reaches and playsink offers even behind a `fakesink` |
+| [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | blocked on a binding gap: the `label`, `min_value` and `max_value` of a `GstColorBalanceChannel` are instance fields, not GObject properties, and `Gst.Video.ColorBalanceChannel` does not expose them yet |
 | [Playback 9](https://gstreamer.freedesktop.org/documentation/tutorials/playback/digital-audio-pass-through.html) | Digital audio pass-through | no example code upstream, and it needs pass-through hardware |
 
 ## Running one

@@ -181,6 +181,7 @@ internal static class ShortCutting
         Feeder feeder = new();
         int pushed = 0;
         bool ended = false;
+        bool starved = false;
 
         // source_setup of the C program. It runs while the pipeline is going to
         // PLAYING, on whichever thread gets there first, and everything the
@@ -255,13 +256,20 @@ internal static class ShortCutting
                     // up, just before it is lowered, is therefore lost and
                     // nothing would ask again. A source that has already been
                     // fed and holds nothing is hungry whatever the flag says.
-                    if (!feeder.Hungry &&
+                    bool empty = !feeder.Hungry &&
                         pushed > 0 &&
                         pushed < options.Chunks &&
-                        feeder.Source is { CurrentLevelBytes: 0 })
+                        feeder.Source is { CurrentLevelBytes: 0 };
+
+                    // One empty tick can be the moment between the last buffer
+                    // leaving the queue and the source asking for more; two in
+                    // a row, 50 ms apart, is a source nobody is going to ask.
+                    if (empty && starved)
                     {
                         feeder.Resume();
                     }
+
+                    starved = empty;
 
                     GstSharp.DrainPendingReleases();
                     continue;
@@ -375,7 +383,14 @@ internal static class ShortCutting
         /// Raises the flag again for a source that is empty and was not asked
         /// for more, which is the one way the handshake can be left hanging.
         /// </summary>
-        internal void Resume() => _hungry = true;
+        internal void Resume()
+        {
+            if (!_hungry)
+            {
+                _hungry = true;
+                Console.WriteLine("Start feeding");
+            }
+        }
 
         /// <summary>
         /// Configures the source playbin has just created.

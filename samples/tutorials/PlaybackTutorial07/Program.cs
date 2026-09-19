@@ -14,11 +14,11 @@
 // Where this port differs from the C original, and why:
 //
 //   * gst_object_unref is gone. The elements, the pads and the bus are interned
-//     GObject wrappers, so nothing here disposes them; the bin owns what was
-//     added to it, playbin takes a reference of its own to the bin when
-//     audio-sink is written, and
-//     disposing the pipeline is the one sanctioned Dispose. That includes the
-//     static pad the ghost pad is built on, which the C unrefs.
+//     GObject wrappers, so nothing here disposes them: the bin takes a reference
+//     to what is added to it, ghost pad included, playbin takes one to the bin
+//     when audio-sink is written, and disposing the pipeline is the one
+//     sanctioned Dispose. That includes the static pad the ghost pad is built
+//     on, which the C unrefs.
 //
 //   * audio-sink is object-valued, so the bin goes in through a GValue.
 //     gst_util_set_object_arg deserializes a string into the type of the
