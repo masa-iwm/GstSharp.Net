@@ -54,12 +54,16 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Cache NuGet packages
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      # Restore only, and keyed like the verify job of ci.yml: this job runs on
+      # a tag, does the same restore-and-pack on the same Linux runner, and a
+      # tag reads the default branch's caches anyway. Writing one here would
+      # only duplicate what a push on main has already saved.
+      - name: Restore the NuGet cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
-          restore-keys: nuget-${{ runner.os }}-
+          key: nuget-${{ runner.os }}-verify-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-verify-
 
       # The tag is the single source of the version, so it has to be a version:
       # v<major>.<minor>.<patch>[-prerelease].

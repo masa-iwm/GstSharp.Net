@@ -285,14 +285,47 @@ Two consequences worth knowing:
   every job fetches them on `dotnet restore`, not only the one that packs.
   `**/Directory.Build.props` had to join the NuGet cache key for that to be
   paid once: the properties live there, the key hashed only
-  `Directory.Packages.props`, the `.csproj` files and `global.json`, and
-  `actions/cache` does not write a new cache when the key it was given already
-  exists. The baselines — one per package that has one — would have been
-  downloaded on every run of every job and cached on none of them.
+  `Directory.Packages.props`, the `.csproj` files and `global.json`, and a
+  cache entry is never rewritten once its key exists. The baselines — one per
+  package that has one — would have been downloaded on every run of every job
+  and cached on none of them.
 
 The baseline moves with the GStreamer series, not with the patch level: `1.30`
 is the release allowed to break compilation, and its first package becomes the
 new `PackageValidationBaselineVersion`.
+
+### How the NuGet cache is keyed and written
+
+Every job restores with `actions/cache/restore` at the top and writes with
+`actions/cache/save` as its last step, under
+`if: github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true'`:
+
+* **Restore everywhere, save on main only.** A cache written on a branch is
+  visible to that branch alone, while a branch, a pull request and a tag all
+  fall back to the default branch's entries. Only main's are ever read by
+  anyone else, so a `workflow_dispatch` run on a feature branch used to save a
+  full duplicate set of the matrix under the same keys for nobody — which is
+  what pushed the repository against the 10 GB cache limit, where GitHub
+  starts evicting entries that are still in use. `release.yml` and
+  `publish-nuget.yml` restore only for the same reason.
+* **Saved last, not beside the restore.** On the legs with a NativeAOT gate
+  the ILCompiler and the runtime packs enter `~/.nuget/packages` when the
+  publish at the end of the job restores them; a save next to the restore
+  would cache everything except the heaviest part. The step keeps the implicit
+  `success()`, so a failed job writes nothing and a half filled package
+  directory never becomes the entry the next run starts from.
+* **One key per job that restores a different set**, because an entry is
+  immutable once written and the first writer would otherwise decide what the
+  others get: `nuget-Linux-X64-…` and `nuget-Linux-ARM64-…` for the two legs
+  of the linux matrix, `nuget-Windows-mingw-…` and `nuget-Windows-msvc-…` for
+  the two Windows jobs, and `nuget-Linux-verify-…` for the verify job — which
+  `release.yml` and `publish-nuget.yml` share, being the same restore on the
+  same kind of runner. macOS has one job and keeps the plain
+  `nuget-macOS-…` key. The verify prefix also stops its `restore-keys` from
+  prefix-matching the architecture-qualified entries of the linux legs.
+
+The GStreamer installer cache of the MSVC job is split the same way; its save
+sits right after the install step, which is where the download exists.
 
 ## Release
 
