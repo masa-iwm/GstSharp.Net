@@ -689,9 +689,12 @@ public sealed unsafe partial class Caps : Gst.MiniObject
     /// no other thread uses this one, which is the rule the C API imposes as well.
     /// </para>
     /// <para>
-    /// A wrapper that borrows the object for the length of one call has no
-    /// reference to give and refuses instead; an object an in place vfunc receives
-    /// is writable already.
+    /// A wrapper that borrows the object for the length of one call has no reference
+    /// to give and refuses instead. What is lent is writable only where whoever lends
+    /// it holds the only reference: an in place vfunc lends the object of its caller
+    /// and normally promises exactly that, a base transform running in passthrough
+    /// being the exception, as it calls <c>transform_ip</c> on a buffer it did not make
+    /// writable; <c>Copy()</c> the object to get one that is yours to write.
     /// </para>
     /// </remarks>
     /// <returns>

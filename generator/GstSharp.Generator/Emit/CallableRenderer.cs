@@ -167,14 +167,22 @@ internal static class CallableRenderer
     /// <summary>
     /// The sentence that closes the remarks of an adopt in place member on a
     /// mini object, which an in place vfunc override, a borrowed signal
-    /// argument and the dynamic signal path all lend.
+    /// argument and the dynamic signal path all lend. What is lent is not
+    /// writable by construction: a base transform running in passthrough calls
+    /// <c>transform_ip</c> on a buffer it did not make writable
+    /// (gstbasetransform.c), so the note names that exception and gives the
+    /// same copy advice as its boxed sibling, which is the rule
+    /// <c>docs/ownership.md</c> states for both.
     /// </summary>
     private static readonly string[] BorrowedInstanceNote =
     [
         "<para>",
-        "A wrapper that borrows the object for the length of one call has no",
-        "reference to give and refuses instead; an object an in place vfunc receives",
-        "is writable already.",
+        "A wrapper that borrows the object for the length of one call has no reference",
+        "to give and refuses instead. What is lent is writable only where whoever lends",
+        "it holds the only reference: an in place vfunc lends the object of its caller",
+        "and normally promises exactly that, a base transform running in passthrough",
+        "being the exception, as it calls <c>transform_ip</c> on a buffer it did not make",
+        "writable; <c>Copy()</c> the object to get one that is yours to write.",
         "</para>",
     ];
 
