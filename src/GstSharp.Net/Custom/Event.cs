@@ -24,14 +24,18 @@ namespace Gst;
 /// </para>
 /// <para>
 /// The select-streams pair is a gap of the other kind. Its streams are a
-/// <c>GList</c> of stream-ids, and a <c>GList</c> is bound in the return
-/// position only, so the generator emits neither
-/// <c>gst_event_new_select_streams</c> nor
-/// <c>gst_event_parse_select_streams</c>. Without them the read side of
-/// <c>playbin3</c> is complete and useless: a
+/// <c>GList</c> of stream-ids, and only one half of the pair is a shape the
+/// generator binds: an in argument that is a <c>GList</c> of strings is planned
+/// and emitted today, while a list written back through a <c>GList**</c>, which
+/// is what <c>gst_event_parse_select_streams</c> takes, is planned in no
+/// position at all. Both halves are hand written here all the same, and
+/// <c>gst_event_new_select_streams</c> is filed under the hand bound ledger for
+/// it: it is the one call of the family that refuses an empty list, and it
+/// belongs beside the parse half that has no generated form. Without the pair
+/// the read side of <c>playbin3</c> is complete and useless: a
 /// <see cref="StreamCollection"/> can be inspected and nothing can be chosen
 /// out of it. The list lives for the length of one call in either direction,
-/// which is what keeps it out of the generator and inside this file.
+/// which is what keeps it inside this file.
 /// </para>
 /// </remarks>
 public sealed unsafe partial class Event
@@ -158,9 +162,11 @@ public sealed unsafe partial class Event
     /// pipeline.SendEvent(Event.NewSelectStreams(wanted));   // consumes the event
     /// </code>
     /// <para>
-    /// The <c>streams</c> parameter is a <c>GList</c> of strings, which the
-    /// generator does not emit in a parameter position, so the list is built
-    /// here for the length of the call and released afterwards. It is
+    /// The <c>streams</c> parameter is a <c>GList</c> of strings, which is a
+    /// shape the generator plans in a parameter position; this one is written
+    /// by hand for the refusal below rather than for the marshalling, and the
+    /// list is built here for the length of the call and released
+    /// afterwards. It is
     /// <c>transfer-ownership="none"</c> and the C call means it: every id is
     /// copied into a value of the payload structure while the call runs, so
     /// nothing that is allocated here outlives it.
