@@ -7,6 +7,7 @@ namespace Gst.Interop;
 /// code.
 /// </summary>
 /// <remarks>
+/// <para>
 /// A managed exception must never unwind through a native stack frame, so every
 /// callback that GStreamer or GLib can invoke wraps its body in a
 /// <c>try</c>/<c>catch</c> and reports the failure here. The default behaviour
@@ -14,6 +15,13 @@ namespace Gst.Interop;
 /// <c>GSTSHARP_FAILFAST=1</c> in the environment to turn such a failure into an
 /// immediate <see cref="Environment.FailFast(string, Exception)"/> instead,
 /// which is usually what you want in a test run.
+/// </para>
+/// <para>
+/// One more environment switch reports here: <c>GSTSHARP_DETECT_OVER_UNREF=1</c>
+/// turns on the detector of an object that dies while the binding still holds
+/// its reference, which is off by default because it costs a native call at
+/// either end of every wrapper. See <c>docs/ownership.md</c>.
+/// </para>
 /// </remarks>
 public static class ExceptionTrap
 {

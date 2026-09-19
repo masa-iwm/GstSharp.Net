@@ -325,6 +325,50 @@ view, and disposing the wrapper makes every view of it throw
 `ObjectDisposedException`. When the wrapper class does declare the interface,
 the cast is the wrapper itself and there is no view at all.
 
+### Detecting an over-unref
+
+A toggle reference is a strong native reference, so an object cannot die while
+a wrapper holds one. If it dies anyway, somebody dropped a reference they did
+not own, and the failure surfaces much later — usually as a crash inside
+`g_object_remove_toggle_ref` when the wrapper is released or the pending
+release queue is drained, with nothing left to say which object it was.
+
+Set `GSTSHARP_DETECT_OVER_UNREF=1` in the environment to move the report to the
+moment of the death. Every wrapper built from then on installs a weak
+notification next to its toggle reference. The notification runs inside the
+unref that killed the object, while the instance can still be read, and reports
+an `InvalidOperationException` through `Gst.Interop.ExceptionTrap` naming the
+native type, the wrapper type, the handle, and the managed stack the wrapper
+was built on. Combine it with `GSTSHARP_FAILFAST=1` to stop the process on the
+first report.
+
+The wrapper itself is fenced off at the same moment: it reads as disposed, its
+`Handle` throws an `ObjectDisposedException` that says the object was destroyed
+underneath it instead of handing out a dangling pointer, it leaves the interning
+table so that a later object at the same address gets a wrapper of its own, and
+its `Dispose` — and its finalizer — call nothing on the corpse.
+
+The switch is an environment variable rather than a `GstSharpOptions` member
+because wrappers are built before and during `GstSharp.Initialize`, which an
+option read at the end of the initialisation would miss.
+
+What it costs while it is on: one extra native call when a wrapper is built
+(`g_object_weak_ref`), one when it is released (`g_object_weak_unref`), and one
+captured managed stack per live wrapper. That is why it is off by default, and
+off costs nothing at all: nothing is installed and nothing is captured.
+
+Two limits are worth knowing before reading a report:
+
+* **The false positive.** `g_object_run_dispose` fires weak notifications on an
+  object that stays alive, and the detector cannot tell that from a death.
+  Inside GStreamer itself there is one such call, on the fence cache a Vulkan
+  device owns (`gst-libs/gst/vulkan/gstvkdevice.c`), so a report naming an
+  object the Vulkan backend owns may be this rather than a defect.
+* **What it cannot see.** The opposite defect — the binding releases its
+  reference first and the object dies later, of a reference somebody else
+  dropped afterwards — leaves no weak notification to fire while the wrapper is
+  still watching. It is structurally undetectable from here.
+
 ## Parameter specifications
 
 `Gst.GObject.ParamSpec` wraps a `GParamSpec`, the description of one property.
