@@ -223,17 +223,25 @@ public partial class Object : IDisposable
                 GObjectNative.ObjectRef(handle);
             }
 
+            // The detector is read once here, and the stack is captured once:
+            // both are what this wrapper is stuck with for its whole life, so
+            // that a release never mirrors a switch that was flipped in
+            // between. Capturing a stack is expensive, which is the reason the
+            // detector is off by default.
+            bool detecting = OverUnrefDetector.Enabled;
+            string? constructionStack = detecting ? Environment.StackTrace : null;
+
             // The identifier has to resolve before the toggle reference is
             // installed: the unref below drops the object back to the single
             // reference the toggle reference holds, which notifies straight
             // away.
-            ToggleRef toggleRef = new(this, NextToggleId());
+            ToggleRef toggleRef = new(this, NextToggleId(), constructionStack);
             while (!ToggleRefs.TryAdd(toggleRef.UserData, toggleRef))
             {
                 // The counter wrapped around, which needs four billion live
                 // wrappers on a 32 bit process to happen at all, and landed on
                 // an identifier that is still in use. Take the next one.
-                toggleRef = new ToggleRef(this, NextToggleId());
+                toggleRef = new ToggleRef(this, NextToggleId(), constructionStack);
             }
 
             _toggleRef = toggleRef;
@@ -243,14 +251,19 @@ public partial class Object : IDisposable
             // whenever native code is the only owner left.
             GObjectNative.ObjectAddToggleRef(handle, &ToggleNotify, toggleRef.UserData);
 
-            // A toggle reference is a strong native reference, so the object
-            // cannot die while it is installed. The weak notification is what
-            // catches somebody dropping a reference they did not own: it runs
-            // inside the killing unref, while the instance can still be read,
-            // rather than leaving the failure to crash the next drain. It
-            // carries the identifier of the toggle reference for the reason the
-            // remarks on ToggleRefs give — never a GCHandle.
-            GObjectNative.ObjectWeakRef(handle, &WeakNotify, toggleRef.UserData);
+            if (detecting)
+            {
+                // A toggle reference is a strong native reference, so the
+                // object cannot die while it is installed. The weak
+                // notification is what catches somebody dropping a reference
+                // they did not own: it runs inside the killing unref, while the
+                // instance can still be read, rather than leaving the failure
+                // to crash the next drain. It carries the identifier of the
+                // toggle reference for the reason the remarks on ToggleRefs
+                // give — never a GCHandle.
+                GObjectNative.ObjectWeakRef(handle, &WeakNotify, toggleRef.UserData);
+            }
+
             GObjectNative.ObjectUnref(handle);
         }
     }
@@ -1273,10 +1286,16 @@ public partial class Object : IDisposable
             ToggleRefs.TryRemove(new KeyValuePair<nint, ToggleRef>(toggleRef.UserData, toggleRef));
         }
 
-        // The object is alive here by construction: a death before this point
-        // would have run WeakNotify, which marks the toggle reference released,
-        // so this call would have returned above.
-        GObjectNative.ObjectWeakUnref(handle, &WeakNotify, toggleRef.UserData);
+        if (toggleRef.IsWatched)
+        {
+            // The weak reference is removed only by the wrapper that installed
+            // it, whatever the detector says by now. The object is alive here
+            // by construction: a death before this point would have run
+            // WeakNotify, which marks the toggle reference released, so this
+            // call would have returned above.
+            GObjectNative.ObjectWeakUnref(handle, &WeakNotify, toggleRef.UserData);
+        }
+
         GObjectNative.ObjectRemoveToggleRef(handle, &ToggleNotify, toggleRef.UserData);
     }
 
@@ -1415,7 +1434,8 @@ public partial class Object : IDisposable
                 $"Handle: 0x{instance:x}. " +
                 $"Toggle reference: {userData}. " +
                 $"Wrapper already collected: {!toggleRef.TryGetTarget(out _)}. " +
-                $"Managed stack: {Environment.StackTrace}";
+                $"Wrapper constructed at: {toggleRef.ConstructionStack}. " +
+                $"Object destroyed at: {Environment.StackTrace}";
 
             ExceptionTrap.Report(new InvalidOperationException(
                 "GstSharp.Net: a GObject was destroyed while the binding still held its toggle reference. " +
@@ -1510,11 +1530,12 @@ public partial class Object : IDisposable
         private Object? _strong;
         private bool _released;
 
-        internal ToggleRef(Object owner, nint id)
+        internal ToggleRef(Object owner, nint id, string? constructionStack)
         {
             _weak = new WeakReference<Object>(owner);
             _id = id;
             WrapperType = owner.GetType();
+            ConstructionStack = constructionStack;
 
             // Starts strong: the toggle notification demotes it as soon as the
             // toggle reference is the only one left.
@@ -1529,6 +1550,21 @@ public partial class Object : IDisposable
         /// the wrapper itself has been collected.
         /// </summary>
         internal Type WrapperType { get; }
+
+        /// <summary>
+        /// Gets the managed stack the wrapper was built on, or
+        /// <see langword="null"/> when the over-unref detector was off at that
+        /// moment. A non-null value is also what says that a weak reference is
+        /// installed next to this toggle reference and has to be removed with
+        /// it.
+        /// </summary>
+        internal string? ConstructionStack { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the object of this toggle reference
+        /// carries a weak notification of the over-unref detector.
+        /// </summary>
+        internal bool IsWatched => ConstructionStack is not null;
 
         /// <summary>
         /// Gets a value indicating whether this toggle reference has been
