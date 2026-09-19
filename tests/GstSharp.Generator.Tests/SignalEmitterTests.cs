@@ -976,7 +976,10 @@ public sealed class SignalEmitterTests
         // GstRTPBaseDepayload; the four signals beside them, add-extension and
         // clear-extensions on each of the two classes, carry action="1" and
         // are skipped on that rule, since an action signal is a call API and
-        // not a notification. The forty of the RTSP server are the
+        // not a notification. All four are hand bound as the AddExtension and
+        // ClearExtensions of src/GstSharp.Net.Rtp/Custom, which emit them, so
+        // the ledger reports them as hand bound rather than as the policy
+        // refusal they reach it as. The forty of the RTSP server are the
         // eighteen that carry no GstRTSPContext plus the twenty two signals of
         // GstRTSPClient whose context is copied out of the emission into the
         // arguments; check-requirements is one of them, and the NULL

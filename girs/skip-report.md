@@ -806,16 +806,13 @@ disappears shows up here as an added line.
 
 ## GstRtp
 
-### ActionSignal (4)
+### HandBound (15)
 
 - `GstRtp.RTPBaseDepayload::add-extension`
 - `GstRtp.RTPBaseDepayload::clear-extensions`
+- `GstRtp.RTPBaseDepayload:extensions`
 - `GstRtp.RTPBasePayload::add-extension`
 - `GstRtp.RTPBasePayload::clear-extensions`
-
-### HandBound (11)
-
-- `GstRtp.RTPBaseDepayload:extensions`
 - `GstRtp.RTPBasePayload:extensions`
 - `gst_buffer_add_rtp_source_meta`
 - `gst_rtcp_buffer_new_take_data`

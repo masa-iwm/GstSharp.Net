@@ -474,7 +474,7 @@ public sealed class SkipRulesTests
         // because its destroy notification belongs to whoever stored the
         // pointer and that is native code.
         // GstRtspServer.RTSPClient::send-message is the one signal of both
-        // lists, and the newest entry of either: the gir types its first
+        // lists: the gir types its first
         // argument as a GstRTSPSession where the C registers and emits a
         // GstRTSPContext, so the generated event raised on every emission
         // before the handler was reached. It is skipped and written by hand as
@@ -502,20 +502,28 @@ public sealed class SkipRulesTests
         // BufferList.Copy and Query.Copy in src/GstSharp.Net/Custom share the
         // one exported symbol; the four inline names are listed beside it
         // because the ledger names what a member binds, not what it imports.
-        // GstRtp.RTPBasePayload:extensions and
-        // GstRtp.RTPBaseDepayload:extensions are the newest, and the two
-        // properties that are on this list and on no skip list: the planner
-        // refuses them on their own, because the property is an array of
+        // The six GstRtp entries are the newest, and all six are on this list
+        // and on no skip list. GstRtp.RTPBasePayload:extensions and
+        // GstRtp.RTPBaseDepayload:extensions are the two properties the
+        // planner refuses on their own, because the property is an array of
         // objects and no projection carries that shape, so the entries move
         // them out of the unsupported signatures and into the hand bound
-        // ledger. Both are read by the Extensions property of
-        // src/GstSharp.Net.Rtp/Custom, beside the AddExtension and
-        // ClearExtensions that emit the action signals of the same two
-        // classes.
+        // ledger; both are read by the Extensions property of
+        // src/GstSharp.Net.Rtp/Custom. The four add-extension and
+        // clear-extensions signals of the same two classes are the action
+        // signals beside them, which the generator refuses by policy because
+        // an action signal normally doubles a C function - and these four
+        // double nothing, so the emission is the only way in and AddExtension
+        // and ClearExtensions in the same two files are it. They are the four
+        // signals of this list that no skip list carries.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
+                "GstRtp.RTPBaseDepayload::add-extension",
+                "GstRtp.RTPBaseDepayload::clear-extensions",
                 "GstRtp.RTPBaseDepayload:extensions",
+                "GstRtp.RTPBasePayload::add-extension",
+                "GstRtp.RTPBasePayload::clear-extensions",
                 "GstRtp.RTPBasePayload:extensions",
                 "GstRtspServer.RTSPClient::send-message",
                 "ges_asset_extract",

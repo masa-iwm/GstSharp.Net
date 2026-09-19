@@ -1168,7 +1168,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0, 6)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 8, 0, 3, 0, 0, 0, 4)]
-    [InlineData("GstRtp", 2, 0, 0, 0, 4, 0, 12)]
+    [InlineData("GstRtp", 2, 0, 0, 0, 0, 0, 16)]
     [InlineData("GstRtspServer", 4, 0, 1, 0, 0, 0, 5)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
