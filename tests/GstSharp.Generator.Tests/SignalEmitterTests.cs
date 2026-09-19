@@ -1215,11 +1215,47 @@ public sealed class SignalEmitterTests
         Assert.DoesNotContain("PadAdded", source, StringComparison.Ordinal);
         Assert.DoesNotContain("pad-added", source, StringComparison.Ordinal);
 
-        // The entry matched, so it is not reported stale, and a run that sees
-        // the signal skipped is a run a handBound entry beside it satisfies.
+        // The entry matched, so it is not reported stale, and what it kept out
+        // is counted where a skipped property is counted: one ledger row under
+        // the reason the key carries, spelt the way the census spells a signal.
         Assert.DoesNotContain(
             run.Result.Diagnostics,
             static diagnostic => string.Equals(diagnostic.Code, "GEN0055", StringComparison.Ordinal));
+
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.OverlaySkip));
+        Assert.Contains(
+            "### OverlaySkip (1)\n\n- `Gst.Element::pad-added`\n",
+            run.Result.SkipReport,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ASkippedSignalWithAHandBoundTwinIsFiledAsHandBound()
+    {
+        // The other half of the pair: the skip is what keeps the event out and
+        // the hand bound entry is what says the member exists all the same, so
+        // the row moves off the real gap and neither entry reads as stale.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "skip": [ "Gst.Element::pad-added" ],
+              "handBound": [ "Gst.Element::pad-added" ]
+            }
+            """);
+
+        Assert.DoesNotContain("PadAdded", run.File("Element.cs"), StringComparison.Ordinal);
+
+        Assert.Equal(1, run.Result.Census.SkippedCount("Gst", SkipReason.HandBound));
+        Assert.Equal(0, run.Result.Census.SkippedCount("Gst", SkipReason.OverlaySkip));
+        Assert.Contains(
+            "### HandBound (1)\n\n- `Gst.Element::pad-added`\n",
+            run.Result.SkipReport,
+            StringComparison.Ordinal);
+
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0023", StringComparison.Ordinal)
+                || string.Equals(diagnostic.Code, "GEN0055", StringComparison.Ordinal));
     }
 
     [Fact]

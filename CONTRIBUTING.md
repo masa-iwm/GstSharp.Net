@@ -170,15 +170,32 @@ zero on it; what it fails is the test suite, which asserts that a run over the
 committed overlays reports no `GEN0020`, `GEN0023`, `GEN0024`, `GEN0025`,
 `GEN0026` or `GEN0055`.
 
-The `skip` array beside it takes one key that names neither a callable nor a
-type: the GObject spelling of a signal, `GstRtspServer.RTSPClient::send-message`,
-for a signal whose C registration no annotation describes — one whose gir names
-an argument type the C never registered, say. The generated event for such a
-signal cannot be corrected, only kept out, so the entry belongs with a
-`handBound` twin and a hand written member under `Custom/` that carries the same
-name. The key is read in the signal loop alone; one that matched no signal of an
-emitted type is reported as `GEN0055`, because the event the entry exists to
-keep out would otherwise be generated again beside the member that replaced it.
+The `skip` array beside it takes a fourth kind of key, next to the
+`c:identifier` of a callable, the qualified gir name of a type and the GObject
+spelling of a property (`Gst.Bus:enable-async`): the GObject spelling of a
+signal, `GstRtspServer.RTSPClient::send-message`, for a signal whose C
+registration no annotation describes — one whose gir names an argument type the
+C never registered, say. The generated event for such a signal cannot be
+corrected, only kept out, so the entry belongs with a `handBound` twin and a
+hand written member under `Custom/` that carries the same name. The key is read
+in the signal loop alone; one that matched no signal of an emitted type is
+reported as `GEN0055`, because the event the entry exists to keep out would
+otherwise be generated again beside the member that replaced it. A key that
+matches wins over every rule based reason, so a signal the run would have filed
+under `ActionSignal` is filed under `OverlaySkip` — or, with the twin, under
+`HandBound` — instead.
+
+Hand binding a signal is therefore the pair of entries plus the member: the
+`Ns.Type::signal-name` key in `skip` and the same key in `handBound`, and a
+`partial` class under `Custom/` that declares the event, its arguments class and
+its trampoline under the same public names the generator would have taken. The
+names are what lets the hand binding be dropped again: if the gir is corrected
+upstream, deleting both entries brings the generated event back under the name
+the member had, and the members the hand binding added on its own are what the
+deletion costs. For `RTSPClient.SendingMessage` a corrected gir would generate
+the context as `Ctx` and a `Message` copied out of the emission; the `[Obsolete]`
+`Session` and the lent `Message` exist in the hand binding alone, and a lent
+argument needs a `borrow` overlay to be generated at all.
 
 A hand bound consumer keeps its callback type generated: a `<callback>` whose
 only consumers are on the `handBound` ledger is emitted all the same, so the

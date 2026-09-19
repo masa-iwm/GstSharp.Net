@@ -436,15 +436,3 @@ asserts the crossing the hierarchy makes possible: the same source handed to
     actually given, the probe pins their sizes and offsets, and a second probe
     watches the library fill a zeroed block so that the running platform says
     which of the two it uses.
-12. A signal whose introspection data names an argument type the C never
-    registered is skipped by name in `girs/overlays/fixups.json` and written by
-    hand under `Custom/`, under the names the generated event carried.
-    `RTSPClient.SendingMessage` is the one such signal: the C registers it with
-    `(GST_TYPE_RTSP_CONTEXT, G_TYPE_POINTER)` and emits the context of the
-    request, while the gir has called that argument a `GstRTSPSession` since
-    2014 — a known upstream documentation bug — so the generated event wrapped
-    a stack structure as a `GObject` and raised on every emission before the
-    handler ran. No annotation retypes an argument of a signal, and the shape
-    the corrected gir will generate is what the hand written member already
-    carries: `Ctx` beside an `[Obsolete]` `Session` that reads
-    `Ctx.Session`, and a lent `Message` the handler may edit in place.

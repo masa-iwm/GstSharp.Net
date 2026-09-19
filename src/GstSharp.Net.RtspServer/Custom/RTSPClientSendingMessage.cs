@@ -56,9 +56,14 @@ public unsafe partial class RTSPClient
         /// <remarks>
         /// <para>
         /// This reads <see cref="Gst.RtspServer.RTSPContext.Session"/> of
-        /// <see cref="Ctx"/>. It is <see langword="null"/> whenever the request
-        /// being answered carries no session, which is every <c>OPTIONS</c> and
-        /// every <c>DESCRIBE</c>.
+        /// <see cref="Ctx"/>. It is <see langword="null"/> whenever the context
+        /// carries no session at the moment the message is sent: a request that
+        /// opens none, which is every <c>OPTIONS</c> and every <c>DESCRIBE</c>;
+        /// every generic or error response, whatever the method, because the C
+        /// clears the session of the context before it sends one
+        /// (<c>rtsp-client.c:956</c> and <c>:992</c>); and a message sent
+        /// through <c>gst_rtsp_client_send_message</c> without one, where there
+        /// is no request being answered at all.
         /// </para>
         /// </remarks>
         [Obsolete(
@@ -69,14 +74,27 @@ public unsafe partial class RTSPClient
 
         /// <summary>The message that is about to be sent</summary>
         /// <remarks>
+        /// <para>
         /// The emission lends this value for the length of the handler: the
         /// wrapper borrows it, holds no reference and no copy of its own, and is
         /// disposed once the handler returns, so it must not be stored. It is
         /// the very message the client writes to the connection next - the C
         /// emits the signal, then sends this pointer and unsets it
         /// (<c>rtsp-client.c:935-945</c>) - so a header a handler adds to it is
-        /// a header the peer receives. Copy it where something has to outlive
-        /// the handler.
+        /// a header the peer receives. Edit this one:
+        /// <c>Ctx.GetResponse()</c> answers a copy of the same message, and
+        /// what a handler writes into that copy is sent nowhere. Copy it where
+        /// something has to outlive the handler, and do not call
+        /// <c>Unset()</c> on it, which would empty the message the client is
+        /// about to write.
+        /// </para>
+        /// <para>
+        /// It is a response on every path the server answers a request on, but
+        /// not only: <c>gst_rtsp_client_send_message</c> takes a request as
+        /// well and goes through the same emission, so a handler that cares has
+        /// to read <see cref="Gst.Rtsp.RTSPMessage.Type"/> rather than assume
+        /// one.
+        /// </para>
         /// </remarks>
         public Gst.Rtsp.RTSPMessage Message { get; }
     }

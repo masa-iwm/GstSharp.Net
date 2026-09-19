@@ -17,8 +17,10 @@ namespace GstSharp.IntegrationTests;
 /// <remarks>
 /// <para>
 /// The C registers the signal with
-/// <c>(GST_TYPE_RTSP_CONTEXT, G_TYPE_POINTER)</c> and emits the context of the
-/// request together with the response it is about to write to the connection
+/// <c>(GST_TYPE_RTSP_CONTEXT, G_TYPE_POINTER)</c> and emits the context
+/// together with the message it is about to write to the connection - a
+/// response on every path this test drives, though
+/// <c>gst_rtsp_client_send_message</c> takes a request just as well
 /// (1.28.6 <c>rtsp-client.c:531-535</c> and <c>:935</c>), while the gir has
 /// called the first argument a <c>GstRTSPSession</c> since 2014. The generated
 /// event followed the gir and wrapped a structure on the stack of the caller as
@@ -29,8 +31,9 @@ namespace GstSharp.IntegrationTests;
 /// </para>
 /// <para>
 /// A real client speaks RTSP over the loopback interface, as in
-/// <see cref="RtspClientRequirementsTests"/>: the signal is emitted for a
-/// response, and nothing short of a request produces one. The socket is spoken
+/// <see cref="RtspClientRequirementsTests"/>: the messages a server sends by
+/// itself are the responses it owes, and nothing short of a request produces
+/// one. The socket is spoken
 /// from a task of its own, because the server takes its clients on the
 /// iterating context - <c>SetMaxThreads(0)</c> - and a blocking read on the
 /// test thread would stop the pump the answer has to come from.
@@ -46,7 +49,7 @@ public sealed class RtspClientSendingMessageTests
     private const string ProbeHeader = "X-GstSharp-SendingMessage";
 
     /// <summary>What it says.</summary>
-    private const string ProbeValue = "step31";
+    private const string ProbeValue = "edited-in-place";
 
     private readonly ITestOutputHelper _output;
 
@@ -113,9 +116,12 @@ public sealed class RtspClientSendingMessageTests
         bool everySeenContextHadAConnection = true;
         bool secondHandlerSawTheHeader = true;
         int sessionsOnFirstResponse = -1;
+        RTSPClient? client = null;
 
         server.ClientConnected += (_, connected) =>
         {
+            client = connected.Object;
+
             connected.Object.SendingMessage += (_, args) =>
             {
                 if (Interlocked.Increment(ref handled) == 1)
@@ -210,15 +216,46 @@ public sealed class RtspClientSendingMessageTests
         Assert.Equal(handled, seen);
 
         // The server holds a reference of its own to every client it took
-        // (rtsp-server.c:1110) and lets it go from the closed signal of that
-        // client (:1129), which the socket being gone does not by itself
-        // deliver: the context is iterated until the server manages nobody.
-        // Neither request opens a session, so no session pool step is needed.
-        Assert.Empty(server.ClientFilter((_, _) => RTSPFilterResult.Remove));
+        // (rtsp-server.c:1110) and lets it go when that client is closed
+        // (:1129), which the socket being gone does not by itself deliver. A
+        // Remove verdict closes it (rtsp-server.c:1497-1500) and, with no
+        // client thread of its own to wait for, unmanages and unrefs it inside
+        // the filter call - where it is still managed at all, since the pump
+        // above also delivers the end of the socket the client task closed,
+        // which closes it just the same. The list a filter answers holds the
+        // clients it answered Ref for, so a Remove filter answers an empty one
+        // whatever it saw: nothing is learnt from that answer, and what is
+        // asserted is the state it leaves behind. Neither request opens a
+        // session, so no session pool step is needed.
+        int filtered = 0;
+        Assert.Empty(server.ClientFilter((_, _) =>
+        {
+            filtered++;
+            return RTSPFilterResult.Remove;
+        }));
+
+        _output.WriteLine($"the remove filter saw {filtered} client(s)");
 
         Assert.True(
             PumpUntil(context, () => DisposeAll(server.ClientFilter(null)) == 0),
             "a client was still managed after the filter removed it.");
+
+        // Every added handler is rooted by a handle the closure of the client
+        // frees when the client is finalized, and the first of the two captures
+        // the client wrapper, so the wrapper keeps the toggle reference that
+        // keeps the client alive that keeps the handle rooted. The server has
+        // let its own reference go by now, so disposing the wrapper here is
+        // what breaks that circle - and finalize is the one place the media the
+        // DESCRIBE prepared is taken back down (clean_cached_media,
+        // rtsp-client.c:825), which a leaked client would leave running for the
+        // rest of the process.
+        Assert.NotNull(client);
+        WeakProbe.Arm(client.Handle);
+        client.Dispose();
+
+        Assert.True(
+            PumpUntil(context, () => WeakProbe.Freed == 1),
+            "the client outlived the wrapper that held the last reference of it.");
     }
 
     /// <summary>
@@ -246,6 +283,13 @@ public sealed class RtspClientSendingMessageTests
     private static string Converse(int port)
     {
         using TcpClient socket = new("127.0.0.1", port);
+
+        // A read that is never answered has to end as a failed task rather than
+        // as a thread blocked for the life of the test process: the deadline of
+        // the pump is what bounds the test, and this is what bounds the task it
+        // waits for.
+        socket.ReceiveTimeout = socket.SendTimeout = (int)Deadline.TotalMilliseconds;
+
         using NetworkStream stream = socket.GetStream();
 
         string options = Request(stream, "OPTIONS * RTSP/1.0\r\nCSeq: 1\r\n\r\n", body: false);

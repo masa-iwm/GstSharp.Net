@@ -796,15 +796,16 @@ event is not generated at all: the C registers the signal with
 `(GST_TYPE_RTSP_CONTEXT, G_TYPE_POINTER)` and emits the context of the request
 as its first argument, while the introspection data has called that argument a
 `GstRTSPSession` since 2014 — an upstream documentation bug, worked around in
-this binding while a fix for it is drafted — so a generated event wrapped a stack structure
-as a `GObject` and raised before the handler was reached. The overlays skip the
-signal and the event is hand written beside the generated ones, which is what
-lets its `Message` be lent: the client emits the signal, then writes that very
-message to the connection, so a header the handler adds is a header the peer
-receives. The arguments carry the context as `Ctx`, the way every other
-context carrying signal of the class does, and the `Session` the generated
-shape promised is `[Obsolete]` and answers `Ctx.Session`, which is `null` on a
-request that has no session.
+this binding while a fix for it is drafted — so a generated event wrapped a
+stack structure as a `GObject` and raised before the handler was reached. The
+overlays skip the signal and the event is hand written beside the generated
+ones, which is what lets its `Message` be lent: the client emits the signal,
+then writes that very message to the connection, so a header the handler adds
+is a header the peer receives. `Ctx.GetResponse()` answers a copy of the same
+message, so it is the lent one a handler has to edit. The arguments carry the
+context as `Ctx`, the way every other context carrying signal of the class
+does, and the `Session` the generated shape promised is `[Obsolete]` and
+answers `Ctx.Session`, which is `null` whenever the context carries none.
 
 The dynamic path draws the line elsewhere on purpose: `ConnectSignal` borrows
 **every** mini object and boxed argument, because it marshals by `GType` at
