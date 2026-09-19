@@ -25,7 +25,7 @@ said here.
 | `BasicTutorial12` | [Streaming](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | buffering, a live source, a lost clock |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 
-The playback tutorials are a second series, and six of them are here as
+The playback tutorials are a second series, and seven of them are here as
 well:
 
 | Project | Upstream page | What it teaches |
@@ -35,6 +35,7 @@ well:
 | `PlaybackTutorial03` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | `appsrc://`, `source-setup`, `AudioInfo` caps, feeding playbin |
 | `PlaybackTutorial04` | [Progressive streaming](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | the download flag, buffering ranges, `deep-notify` |
 | `PlaybackTutorial06` | [Audio visualization](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | a registry feature filter, factory metadata, `vis-plugin` |
+| `PlaybackTutorial07` | [Custom playbin sinks](https://gstreamer.freedesktop.org/documentation/tutorials/playback/custom-playbin-sinks.html) | a sink bin, a ghost pad, `audio-sink`, the equalizer |
 | `PlaybackTutorial08` | [Hardware-accelerated video decoding](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | plugin feature ranks, the decoder list, walking a bin |
 
 ## What is not ported, and why
@@ -43,14 +44,13 @@ Of the basic tutorials, 5 needs a window and a widget toolkit, 10, 11 and 14
 have no code upstream, and 15 is Clutter, which is gone. Every basic tutorial
 that has code and does not need a window is here.
 
-Three of the nine playback tutorials are missing, and that list is final: each
-of them needs hardware this tree cannot offer, or has no code upstream to port,
-so nothing here is only waiting to be written.
+Two of the nine playback tutorials are missing. Playback 9 will stay missing:
+there is no code upstream to port and it needs hardware this tree cannot offer.
+Playback 5 is only not written yet.
 
 | Tutorial | What it is about | Why it is not here |
 | --- | --- | --- |
-| [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | needs a real video sink, so it cannot run headless in this tree |
-| [Playback 7](https://gstreamer.freedesktop.org/documentation/tutorials/playback/custom-playbin-sinks.html) | Custom playbin sinks | needs a real video sink, so it cannot run headless in this tree |
+| [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | not ported yet: a keyboard loop over the `GstColorBalance` channels of playbin, which `Object.As<IColorBalance>` reaches and playsink offers even behind a `fakesink` |
 | [Playback 9](https://gstreamer.freedesktop.org/documentation/tutorials/playback/digital-audio-pass-through.html) | Digital audio pass-through | no example code upstream, and it needs pass-through hardware |
 
 ## Running one
@@ -63,7 +63,7 @@ dotnet run --project samples/tutorials/BasicTutorial03 -- <file-or-uri>
 Every project takes `--native-path <directory>` and `--flavor msvc|mingw`, which
 point the loader at a particular GStreamer installation, and `--timeout
 <seconds>`, which bounds the run. The ones that are given media — basic 1, 3, 4,
-9, 12 and 13, and playback 1, 2, 4 and 6 — take a URI or the path of a local
+9, 12 and 13, and playback 1, 2, 4, 6 and 7 — take a URI or the path of a local
 file as a positional argument and default to whatever the upstream page uses, so
 a manual run with no arguments reproduces the tutorial exactly. **Those defaults
 need a network.** Basic 9 only asks what is inside its file; the rest play it.
@@ -162,11 +162,11 @@ not.
 
 ## Which of them CI runs
 
-All sixteen are built on every CI leg, which is the point of putting them in
+All seventeen are built on every CI leg, which is the point of putting them in
 the solution: a rename anywhere in the generated surface breaks a tutorial
 visibly.
 
-Fourteen are also *run*, on both Linux legs — x64 and arm64 — because those
+Fifteen are also *run*, on both Linux legs — x64 and arm64 — because those
 have the richest plugin set and no GUI. The `GstLaunch` sample encodes the
 fixtures in the same step, so the media is made on the spot rather than
 fetched:
@@ -174,7 +174,8 @@ fetched:
 * `tutorial-media.ogg`, ten seconds of Theora and Vorbis in an Ogg container,
   which is what basic 3 needs to have a pad to ignore, basic 4 and 13 need to
   have something to seek in, and basic 9 needs to have a topology worth walking.
-  Playback 8 plays it too, and names the decoder that got plugged.
+  Playback 8 plays it too, and names the decoder that got plugged; playback 7
+  plays it through a sink bin of its own, where its audio meets an equalizer.
 * `tutorial-multitrack.ogg`, the same but with **two** Vorbis streams, so that
   playback 1 and 2 have something to choose between. Each audio branch carries
   its own `num-buffers`, because a branch that never ends would keep the muxer
@@ -204,7 +205,7 @@ in the process and pushes it into the `appsrc` that playbin builds for
 
 Two are only built. Basic 1's default media is an https URI and nothing local
 would be the tutorial; basic 6's interesting output is the caps a real audio
-sink negotiates, which a fakesink cannot show. Playback 5, 7 and 9 are not
+sink negotiates, which a fakesink cannot show. Playback 5 and 9 are not
 ported.
 
 `wavescope`, which both tee tutorials draw with, is in `gst-plugins-bad`. The

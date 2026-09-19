@@ -413,8 +413,8 @@ jobs:
       - name: AppSrcPush
         run: dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
 
-      # The ported GStreamer tutorials. All sixteen are built by the solution on
-      # every leg; these fourteen are the ones that can also run, and they run
+      # The ported GStreamer tutorials. All seventeen are built by the solution
+      # on every leg; these fifteen are the ones that can also run, and they run
       # on both Linux legs rather than anywhere else because those have the
       # richest plugin set and no GUI to tempt them.
       #
@@ -441,10 +441,14 @@ jobs:
       #
       # Not run: basic tutorial 1, whose default media is an https URI, and
       # basic tutorial 6, whose interesting output is the caps a real audio
-      # sink negotiates. Those two are the only ones of the sixteen that are
-      # built and not run; playback 5, 7 and 9 are not ported at all.
+      # sink negotiates. Those two are the only ones of the seventeen that are
+      # built and not run; playback 5 and 9 are not ported at all.
       #
-      # Sixteen tutorials are built on every leg; fourteen are run here, on
+      # Playback 7 puts an equalizer-3bands in front of its audio sink. That
+      # element is in gst-plugins-good, which the install step of this job
+      # takes, so both legs of the matrix have it.
+      #
+      # Seventeen tutorials are built on every leg; fifteen are run here, on
       # both Linux legs. Three extra fixtures are made alongside the one above:
       # tutorial-multitrack.ogg carries two Vorbis streams so that playback 1
       # and 2 have something to choose between, tutorial-audio.ogg carries no
@@ -498,6 +502,7 @@ jobs:
           dotnet run --project samples/tutorials/PlaybackTutorial03 --no-restore -- --headless --chunks 200
           dotnet run --project samples/tutorials/PlaybackTutorial04 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial06 --no-restore -- --headless tutorial-audio.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial07 --no-restore -- --headless tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial08 --no-restore -- --headless --enable theoradec tutorial-media.ogg
 
       # The gst-discoverer port, run against both files the steps above made:

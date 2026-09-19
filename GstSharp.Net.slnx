@@ -47,6 +47,7 @@
     <Project Path="samples/tutorials/PlaybackTutorial03/PlaybackTutorial03.csproj" />
     <Project Path="samples/tutorials/PlaybackTutorial04/PlaybackTutorial04.csproj" />
     <Project Path="samples/tutorials/PlaybackTutorial06/PlaybackTutorial06.csproj" />
+    <Project Path="samples/tutorials/PlaybackTutorial07/PlaybackTutorial07.csproj" />
     <Project Path="samples/tutorials/PlaybackTutorial08/PlaybackTutorial08.csproj" />
   </Folder>
   <Folder Name="/src/">
