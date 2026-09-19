@@ -502,9 +502,21 @@ public sealed class SkipRulesTests
         // BufferList.Copy and Query.Copy in src/GstSharp.Net/Custom share the
         // one exported symbol; the four inline names are listed beside it
         // because the ledger names what a member binds, not what it imports.
+        // GstRtp.RTPBasePayload:extensions and
+        // GstRtp.RTPBaseDepayload:extensions are the newest, and the two
+        // properties that are on this list and on no skip list: the planner
+        // refuses them on their own, because the property is an array of
+        // objects and no projection carries that shape, so the entries move
+        // them out of the unsupported signatures and into the hand bound
+        // ledger. Both are read by the Extensions property of
+        // src/GstSharp.Net.Rtp/Custom, beside the AddExtension and
+        // ClearExtensions that emit the action signals of the same two
+        // classes.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
+                "GstRtp.RTPBaseDepayload:extensions",
+                "GstRtp.RTPBasePayload:extensions",
                 "GstRtspServer.RTSPClient::send-message",
                 "ges_asset_extract",
                 "ges_asset_request_async",

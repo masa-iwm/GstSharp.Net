@@ -229,7 +229,9 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 0, 2, 0, 0, 0, 0)]
     [InlineData("GstNet", 0, 3, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 0, 13, 0, 0, 10, 0)]
-    [InlineData("GstRtp", 2, 22, 1, 0, 2, 0)]
+    // The two extensions properties left the unsupported signatures for the
+    // hand bound ledger when the Extensions property of each class was written.
+    [InlineData("GstRtp", 2, 22, 1, 0, 0, 0)]
     [InlineData("GstRtspServer", 2, 1, 1, 3, 13, 0)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
@@ -1166,7 +1168,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstWebRTC", 1, 0, 4, 0, 4, 0, 6)]
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 8, 0, 3, 0, 0, 0, 4)]
-    [InlineData("GstRtp", 2, 0, 0, 0, 4, 0, 10)]
+    [InlineData("GstRtp", 2, 0, 0, 0, 4, 0, 12)]
     [InlineData("GstRtspServer", 4, 0, 1, 0, 0, 0, 5)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]

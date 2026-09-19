@@ -813,8 +813,10 @@ disappears shows up here as an added line.
 - `GstRtp.RTPBasePayload::add-extension`
 - `GstRtp.RTPBasePayload::clear-extensions`
 
-### HandBound (9)
+### HandBound (11)
 
+- `GstRtp.RTPBaseDepayload:extensions`
+- `GstRtp.RTPBasePayload:extensions`
 - `gst_buffer_add_rtp_source_meta`
 - `gst_rtcp_buffer_new_take_data`
 - `gst_rtcp_packet_app_get_data`
@@ -858,11 +860,6 @@ disappears shows up here as an added line.
 
 - `gst_rtp_buffer_get_extension_data`
 - `gst_rtp_buffer_get_payload`
-
-### UnsupportedSignature (2)
-
-- `GstRtp.RTPBaseDepayload:extensions`
-- `GstRtp.RTPBasePayload:extensions`
 
 ### VarArgs (1)
 
