@@ -63,19 +63,9 @@ jobs:
         with:
           global-json-file: global.json
 
-      # Restore here, save at the end of the job (see "Save the NuGet cache"
-      # below). The key carries the job name so that the restore-keys prefix
-      # cannot fall back onto another Linux job's entry: nuget-Linux- also
-      # prefix-matches the nuget-Linux-X64- and nuget-Linux-ARM64- caches of
-      # the linux legs, which are the NativeAOT ones this job has no use for.
-      - name: Restore the NuGet cache
-        id: nuget-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-verify-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
-          restore-keys: nuget-${{ runner.os }}-verify-
-
+      # No NuGet cache on this job: a cold restore here takes 9 seconds, which
+      # is no better than a warm restore plus the cache download. Only the two
+      # Windows legs keep one; eng/ci-notes.md has the measurements.
       - name: Restore
         run: dotnet restore GstSharp.Net.slnx
 
@@ -127,35 +117,6 @@ jobs:
           --configuration Release
           --output artifacts/surface-check
           -p:Version=1.28.999-surface-check
-
-      # The write half of the NuGet cache, and the only one in the workflow
-      # that writes: every job restores, main alone saves.
-      #
-      # A cache written on a branch is visible to that branch only, while a
-      # branch, a pull request and a tag all fall back to the default branch's
-      # caches. So only main's entries are ever read by anyone else, and a
-      # workflow_dispatch run on a feature branch used to save a full duplicate
-      # set under the same keys - invisible to main, which then saved its own -
-      # for every job of the matrix. That duplication is what pushed the
-      # repository against the 10 GB cache limit, where GitHub starts evicting
-      # the entries that are still in use.
-      #
-      # Saving last rather than beside the restore is deliberate: on the legs
-      # with a NativeAOT gate the ILCompiler and the runtime packs only enter
-      # ~/.nuget/packages when the publish at the end of the job restores them,
-      # so a save next to the restore step would cache everything except the
-      # heaviest part. There is no explicit success() either: the implicit one
-      # means a job that failed saves nothing, and a half filled package
-      # directory never becomes the entry the next run starts from.
-      #
-      # cache-hit != 'true' skips the save when the primary key already exists;
-      # writing it again is rejected anyway.
-      - name: Save the NuGet cache
-        if: ${{ github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: ${{ steps.nuget-cache.outputs.cache-primary-key }}
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -212,23 +173,6 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
-
-      # This job's cache key carries the architecture, which no other job's
-      # does: runner.os is Linux on both legs, the ILCompiler and runtime packs
-      # the NativeAOT gate below restores are RID specific, and a cache entry is
-      # immutable once it has been written under a key. With a key shared by
-      # the two legs, whichever leg saved first would hand its packs to the
-      # other, whose own would never be saved. The two Windows jobs carry
-      # their flavor in the key for the same reason.
-      #
-      # Restore only; the save is the last step of the job. See the verify job.
-      - name: Restore the NuGet cache
-        id: nuget-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
 
       # Runtime packages only: the binding loads versioned SONAMEs
       # (libgstreamer-1.0.so.0, libgstapp-1.0.so.0), which the runtime packages
@@ -877,22 +821,12 @@ jobs:
       # second ILC publish would roughly double the minutes this leg spends to
       # say that again.
       #
-      # Last of the gates on purpose: an ILC publish takes minutes, and a plain
+      # Last of the steps on purpose: an ILC publish takes minutes, and a plain
       # test or sample failure belongs on the log before it, not behind it.
-      # Only the cache save and the failure upload follow it.
+      # Only the failure upload follows it.
       - name: NativeAOT smoke (linux-${{ matrix.arch }})
         shell: pwsh
         run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid linux-${{ matrix.arch }}
-
-      # Restored at the top of the job, written here and on main only; the
-      # verify job says why. The ILCompiler and runtime packs the gate above
-      # restores are the reason this is the last step.
-      - name: Save the NuGet cache
-        if: ${{ github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: ${{ steps.nuget-cache.outputs.cache-primary-key }}
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -925,15 +859,6 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
-
-      # Restore only; the save is the last step of the job. See the verify job.
-      - name: Restore the NuGet cache
-        id: nuget-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/Directory.Build.props', 'global.json') }}
-          restore-keys: nuget-${{ runner.os }}-
 
       # The formula bundles core, base, good, bad, ugly and libav, and installs
       # into /opt/homebrew/lib on the arm64 runners, which is one of the
@@ -1061,22 +986,12 @@ jobs:
       # through the /opt/homebrew/lib directory of the planner, which is what
       # every step above already relies on.
       #
-      # Last of the gates on purpose: an ILC publish takes minutes, and a plain
+      # Last of the steps on purpose: an ILC publish takes minutes, and a plain
       # test or sample failure belongs on the log before it, not behind it.
-      # Only the cache save and the failure upload follow it.
+      # Only the failure upload follows it.
       - name: NativeAOT smoke (osx-arm64)
         shell: pwsh
         run: ./eng/aot-gate.ps1 -Project samples/AotSmoke -Rid osx-arm64
-
-      # Restored at the top of the job, written here and on main only; the
-      # verify job says why. The ILCompiler and runtime packs the gate above
-      # restores are the reason this is the last step.
-      - name: Save the NuGet cache
-        if: ${{ github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.nuget/packages
-          key: ${{ steps.nuget-cache.outputs.cache-primary-key }}
 
       - name: Upload test results
         if: ${{ failure() }}
@@ -1111,14 +1026,39 @@ jobs:
         with:
           global-json-file: global.json
 
+      # The two Windows legs are the only jobs with a NuGet cache: a cold
+      # dotnet restore costs 52 seconds here and 40 on the MSVC leg, against
+      # about 10 warm plus a 25 second cache download. On Linux and macOS a
+      # warm restore is about 5 seconds and the cache download 3 to 10, while
+      # the one cold restore measured there took 9 - so the cache breaks even
+      # at best and those jobs have none. eng/ci-notes.md has the numbers.
+      #
       # The flavor is in the key because runner.os is Windows on this job and
       # on windows-msvc-aot alike, and a cache entry is immutable once written:
       # with one shared key the leg that saved first would decide what the
       # other restores, and the ILCompiler packs of the MSVC leg would never be
-      # cached at all. Same hazard as the architectures of the linux job; see
-      # the comment there.
+      # cached at all.
       #
-      # Restore only; the save is the last step of the job. See the verify job.
+      # Restore here, save as the last step before the failure upload, and only
+      # on main. A cache written on a branch is visible to that branch only,
+      # while a branch, a pull request and a tag all fall back to the default
+      # branch's caches - so only main's entries are ever read by anyone else.
+      # A workflow_dispatch run on a feature branch, and a pull_request run
+      # under refs/pull/N/merge, each used to save a full duplicate set under
+      # the same keys, invisible to main, which then saved its own. That is
+      # what pushed the repository against the 10 GB cache limit, where GitHub
+      # starts evicting entries that are still in use.
+      #
+      # Saving last rather than beside the restore is deliberate: on the MSVC
+      # leg the ILCompiler and the runtime packs only enter ~/.nuget/packages
+      # when the publish at the end of the job restores them, so a save next to
+      # the restore step would cache everything except the heaviest part. There
+      # is no explicit success() either: the implicit one means a job that
+      # failed saves nothing, and a half filled package directory never becomes
+      # the entry the next run starts from.
+      #
+      # cache-hit != 'true' skips the save when the primary key already exists;
+      # writing it again is rejected anyway.
       - name: Restore the NuGet cache
         id: nuget-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -1289,7 +1229,8 @@ jobs:
       # headless session - the first run proved it by failing to start.
 
       # Restored at the top of the job, written here and on main only; the
-      # verify job says why.
+      # comment on the restore step says why. Last step before the failure
+      # upload, like the MSVC leg's.
       - name: Save the NuGet cache
         if: ${{ github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -1325,11 +1266,13 @@ jobs:
           global-json-file: global.json
 
       # The flavor is in the key because runner.os is Windows on this job and
-      # on windows-mingw alike, and this is the leg whose ILCompiler and
-      # runtime packs are worth caching; see the comment on the mingw job and,
-      # for the same hazard between architectures, the one on the linux job.
+      # on windows-mingw alike, and a cache entry is immutable once written:
+      # with one shared key the leg that saved first would decide what the
+      # other restores, and this is the leg whose ILCompiler and runtime packs
+      # are the ones worth caching. The mingw job's restore step carries the
+      # rest of the reasoning.
       #
-      # Restore only; the save is the last step of the job. See the verify job.
+      # Restore only; the save is the last step before the failure upload.
       - name: Restore the NuGet cache
         id: nuget-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -1341,7 +1284,9 @@ jobs:
       # The installer does not change for a pinned version, so downloading it
       # once per week of cache lifetime is enough. Restore and save are split
       # the same way the NuGet cache's are, and for the same reason: main is
-      # the only branch whose caches anyone else reads. The save is right after
+      # the only branch whose caches anyone else reads, so a branch, a
+      # workflow_dispatch or a pull_request run that saved one only duplicated
+      # it for nobody. The save is right after
       # the install step rather than at the end of the job because that is
       # where the download exists; nothing later adds to it.
       - name: Restore the GStreamer installer cache
@@ -1392,8 +1337,9 @@ jobs:
           -RunArguments '--mode','pull'
 
       # Restored at the top of the job, written here and on main only; the
-      # verify job says why. The ILCompiler and runtime packs the two gates
-      # above restore are the reason this is the last step.
+      # comment on the mingw job's restore step says why. The ILCompiler and
+      # runtime packs the two gates above restore are the reason this is the
+      # last step before the failure upload.
       - name: Save the NuGet cache
         if: ${{ github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

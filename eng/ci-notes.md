@@ -296,49 +296,68 @@ Two consequences worth knowing:
   the missing package rather than on an API change.
 * The baseline packages join the restore graph as `PackageDownload` items, so
   every job fetches them on `dotnet restore`, not only the one that packs.
-  `**/Directory.Build.props` had to join the NuGet cache key for that to be
-  paid once: the properties live there, the key hashed only
+  This is why `**/Directory.Build.props` is part of the NuGet cache key of the
+  two Windows legs — the properties live there, the key hashed only
   `Directory.Packages.props`, the `.csproj` files and `global.json`, and a
-  cache entry is never rewritten once its key exists. The baselines — one per
-  package that has one — would have been downloaded on every run of every job
-  and cached on none of them.
+  cache entry is never rewritten once its key exists, so a change to the
+  baseline version would otherwise have re-downloaded the baselines on every
+  run without ever caching them. The jobs that have no cache download the
+  baselines on every restore; that is part of the 9 second cold restore
+  measured below, and it is why dropping their cache cost nothing.
 
 The baseline moves with the GStreamer series, not with the patch level: `1.30`
 is the release allowed to break compilation, and its first package becomes the
 new `PackageValidationBaselineVersion`.
 
-### How the NuGet cache is keyed and written
+### Who caches NuGet packages, and why only Windows
 
-Every job restores with `actions/cache/restore` at the top and writes with
-`actions/cache/save` as its last step, under
-`if: github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true'`:
+Only `windows-mingw` and `windows-msvc-aot` have a NuGet cache. The numbers
+that decided it, measured on a branch run whose three re-keyed jobs were cold:
 
-* **Restore everywhere, save on main only.** A cache written on a branch is
-  visible to that branch alone, while a branch, a pull request and a tag all
-  fall back to the default branch's entries. Only main's are ever read by
-  anyone else, so a `workflow_dispatch` run on a feature branch used to save a
-  full duplicate set of the matrix under the same keys for nobody — which is
-  what pushed the repository against the 10 GB cache limit, where GitHub
-  starts evicting entries that are still in use. `release.yml` and
-  `publish-nuget.yml` restore only for the same reason.
-* **Saved last, not beside the restore.** On the legs with a NativeAOT gate
-  the ILCompiler and the runtime packs enter `~/.nuget/packages` when the
-  publish at the end of the job restores them; a save next to the restore
-  would cache everything except the heaviest part. The step keeps the implicit
-  `success()`, so a failed job writes nothing and a half filled package
-  directory never becomes the entry the next run starts from.
-* **One key per job that restores a different set**, because an entry is
-  immutable once written and the first writer would otherwise decide what the
-  others get: `nuget-Linux-X64-…` and `nuget-Linux-ARM64-…` for the two legs
-  of the linux matrix, `nuget-Windows-mingw-…` and `nuget-Windows-msvc-…` for
-  the two Windows jobs, and `nuget-Linux-verify-…` for the verify job — which
-  `release.yml` and `publish-nuget.yml` share, being the same restore on the
-  same kind of runner. macOS has one job and keeps the plain
-  `nuget-macOS-…` key. The verify prefix also stops its `restore-keys` from
-  prefix-matching the architecture-qualified entries of the linux legs.
+| Job | Cold `dotnet restore` | Warm restore | Cache download |
+| --- | --- | --- | --- |
+| `verify` (ubuntu) | 9 s | ~5 s | 3–10 s |
+| `linux`, `macos` | not measured (their keys were warm) | ~5 s | 3–10 s |
+| `windows-mingw` | 52 s | ~10 s | ~25 s |
+| `windows-msvc-aot` | 40 s | ~10 s | ~25 s |
 
-The GStreamer installer cache of the MSVC job is split the same way; its save
-sits right after the install step, which is where the download exists.
+`verify` is the only non-Windows job whose cold restore was actually timed —
+the `linux` and `macos` keys did not change on that run, so those legs were
+warm throughout — but 9 s cold against 5 s warm plus a 3–10 s download is
+already the whole argument: outside Windows the cache breaks even at best,
+while each key generation costs about 1.6 GB of the repository's 10 GB quota.
+So `verify`, both `linux` legs and `macos` restore from nuget.org every
+time, as do `release.yml` and `publish-nuget.yml`, which run the same restore
+on a Linux runner. The NativeAOT publishes were not measurably slower cold
+either (48 s cold against 60 s warm on the MSVC leg), so the ILCompiler and
+runtime packs are not an argument for a cache on the other legs.
+
+On the two legs that keep one:
+
+* **Restore at the top, save as the last step before the failure upload, and
+  only on `main`.** A cache written on a branch is visible to that branch
+  alone, while a branch, a pull request and a tag all fall back to the default
+  branch's entries — so only `main`'s are ever read by anyone else. A
+  `workflow_dispatch` run on a feature branch and a `pull_request` run, whose
+  ref is `refs/pull/N/merge`, each used to save a full duplicate set under the
+  same keys for nobody, which is what pushed the repository against the 10 GB
+  limit where GitHub starts evicting entries that are still in use. The
+  condition is
+  `github.ref == 'refs/heads/main' && steps.nuget-cache.outputs.cache-hit != 'true'`.
+* **Saved last, not beside the restore.** On the MSVC leg the ILCompiler and
+  the runtime packs enter `~/.nuget/packages` when the publish at the end of
+  the job restores them; a save next to the restore would cache everything
+  except the heaviest part. The step keeps the implicit `success()`, so a
+  failed job writes nothing and a half filled package directory never becomes
+  the entry the next run starts from.
+* **One key per leg**: `nuget-Windows-mingw-…` and `nuget-Windows-msvc-…`. A
+  cache entry is immutable once written, so under a shared `nuget-Windows-…`
+  key whichever leg saved first would decide what the other restored, and the
+  ILCompiler packs of the MSVC leg would never be cached at all.
+
+The GStreamer installer cache of the MSVC job is split into restore and save
+the same way and under the same `main`-only condition; its save sits right
+after the install step, which is where the download exists.
 
 ## Release
 
