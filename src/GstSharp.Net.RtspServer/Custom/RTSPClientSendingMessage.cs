@@ -58,7 +58,9 @@ public unsafe partial class RTSPClient
         /// This reads <see cref="Gst.RtspServer.RTSPContext.Session"/> of
         /// <see cref="Ctx"/>. It is <see langword="null"/> whenever the context
         /// carries no session at the moment the message is sent: a request that
-        /// opens none, which is every <c>OPTIONS</c> and every <c>DESCRIBE</c>;
+        /// names none, such as the first <c>OPTIONS</c> or a <c>DESCRIBE</c>
+        /// ahead of any <c>SETUP</c> (the C looks the session header up before
+        /// it dispatches on the method, <c>rtsp-client.c:4096-4116</c>);
         /// every generic or error response, whatever the method, because the C
         /// clears the session of the context before it sends one
         /// (<c>rtsp-client.c:956</c> and <c>:992</c>); and a message sent
