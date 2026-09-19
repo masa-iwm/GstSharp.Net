@@ -422,8 +422,8 @@ jobs:
       - name: AppSrcPush
         run: dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
 
-      # The ported GStreamer tutorials. All seventeen are built by the solution
-      # on every leg; these fifteen are the ones that can also run, and they run
+      # The ported GStreamer tutorials. All eighteen are built by the solution
+      # on every leg; these sixteen are the ones that can also run, and they run
       # on both Linux legs rather than anywhere else because those have the
       # richest plugin set and no GUI to tempt them.
       #
@@ -450,14 +450,21 @@ jobs:
       #
       # Not run: basic tutorial 1, whose default media is an https URI, and
       # basic tutorial 6, whose interesting output is the caps a real audio
-      # sink negotiates. Those two are the only ones of the seventeen that are
-      # built and not run; playback 5 and 9 are not ported at all.
+      # sink negotiates. Those two are the only ones of the eighteen that are
+      # built and not run; playback 9 is not ported at all.
+      #
+      # Playback 5 moves the colour balance of the picture. --keys drives the
+      # eight channel keys and quits, and the port turns each of them into a
+      # gate: the value the channel is expected to take is compared with what
+      # playbin reports afterwards, so a run that printed nothing useful exits
+      # 1. It needs no plugin beyond playbin itself — playsink answers from its
+      # own proxy channels whatever sink is in place.
       #
       # Playback 7 puts an equalizer-3bands in front of its audio sink. That
       # element is in gst-plugins-good, which the install step of this job
       # takes, so both legs of the matrix have it.
       #
-      # Seventeen tutorials are built on every leg; fifteen are run here, on
+      # Eighteen tutorials are built on every leg; sixteen are run here, on
       # both Linux legs. Three extra fixtures are made alongside the one above:
       # tutorial-multitrack.ogg carries two Vorbis streams so that playback 1
       # and 2 have something to choose between, tutorial-audio.ogg carries no
@@ -510,6 +517,7 @@ jobs:
           dotnet run --project samples/tutorials/PlaybackTutorial02 --no-restore -- --headless --keys 0 tutorial-multitrack.ogg tutorial-subs.srt
           dotnet run --project samples/tutorials/PlaybackTutorial03 --no-restore -- --headless --chunks 200
           dotnet run --project samples/tutorials/PlaybackTutorial04 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial05 --no-restore -- --headless --keys CCBbHhSsq tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial06 --no-restore -- --headless tutorial-audio.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial07 --no-restore -- --headless tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial08 --no-restore -- --headless --enable theoradec tutorial-media.ogg

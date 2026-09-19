@@ -313,6 +313,7 @@ numbering kept:
 | `PlaybackTutorial02` | [Subtitle management](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | `suburi`, the text flag, choosing a subtitle stream |
 | `PlaybackTutorial03` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | `appsrc://`, `source-setup`, `AudioInfo` caps, feeding playbin |
 | `PlaybackTutorial04` | [Progressive streaming](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | the download flag, buffering ranges, `deep-notify` |
+| `PlaybackTutorial05` | [Color Balance](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | `GstColorBalance`, its channels, the hand bound `Label`, `MinValue` and `MaxValue` |
 | `PlaybackTutorial06` | [Audio visualization](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | a registry feature filter, factory metadata, `vis-plugin` |
 | `PlaybackTutorial07` | [Custom playbin sinks](https://gstreamer.freedesktop.org/documentation/tutorials/playback/custom-playbin-sinks.html) | a sink bin, a ghost pad, `audio-sink`, the equalizer |
 | `PlaybackTutorial08` | [Hardware-accelerated video decoding](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | plugin feature ranks, the decoder list, walking a bin |
@@ -322,7 +323,7 @@ where the port differs from the C original and why — a polled bus instead of a
 `GMainLoop`, `using` instead of `gst_*_unref`, a typed event instead of
 `g_signal_connect`. `samples/tutorials/README.md` is the index and explains the
 options the tutorials do not have (`--headless`, the `--keys` of
-`BasicTutorial13` and of the two playback tutorials that read a keyboard, the
+`BasicTutorial13` and of the three playback tutorials that read a keyboard, the
 `--enable`/`--disable` of `PlaybackTutorial08` and the per-tutorial bounds),
 which exist so that a tutorial can be run unattended.
 

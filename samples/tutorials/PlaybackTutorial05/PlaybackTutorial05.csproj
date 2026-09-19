@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.PlaybackTutorial05</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/GstSharp.Net/GstSharp.Net.csproj" />
+    <ProjectReference Include="../../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -25,7 +25,7 @@ said here.
 | `BasicTutorial12` | [Streaming](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | buffering, a live source, a lost clock |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 
-The playback tutorials are a second series, and seven of them are here as
+The playback tutorials are a second series, and eight of them are here as
 well:
 
 | Project | Upstream page | What it teaches |
@@ -34,6 +34,7 @@ well:
 | `PlaybackTutorial02` | [Subtitle management](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | `suburi`, the text flag, choosing a subtitle stream |
 | `PlaybackTutorial03` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | `appsrc://`, `source-setup`, `AudioInfo` caps, feeding playbin |
 | `PlaybackTutorial04` | [Progressive streaming](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | the download flag, buffering ranges, `deep-notify` |
+| `PlaybackTutorial05` | [Color Balance](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | `GstColorBalance`, its channels, the hand bound `Label`, `MinValue` and `MaxValue` |
 | `PlaybackTutorial06` | [Audio visualization](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | a registry feature filter, factory metadata, `vis-plugin` |
 | `PlaybackTutorial07` | [Custom playbin sinks](https://gstreamer.freedesktop.org/documentation/tutorials/playback/custom-playbin-sinks.html) | a sink bin, a ghost pad, `audio-sink`, the equalizer |
 | `PlaybackTutorial08` | [Hardware-accelerated video decoding](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | plugin feature ranks, the decoder list, walking a bin |
@@ -44,13 +45,11 @@ Of the basic tutorials, 5 needs a window and a widget toolkit, 10, 11 and 14
 have no code upstream, and 15 is Clutter, which is gone. Every basic tutorial
 that has code and does not need a window is here.
 
-Two of the nine playback tutorials are missing. Playback 9 will stay missing:
-there is no code upstream to port and it needs hardware this tree cannot offer.
-Playback 5 is blocked on the binding, not on the tutorial.
+One of the nine playback tutorials is missing, and it will stay missing: there
+is no code upstream to port and it needs hardware this tree cannot offer.
 
 | Tutorial | What it is about | Why it is not here |
 | --- | --- | --- |
-| [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | blocked on a binding gap: the `label`, `min_value` and `max_value` of a `GstColorBalanceChannel` are instance fields, not GObject properties, and `Gst.Video.ColorBalanceChannel` does not expose them yet |
 | [Playback 9](https://gstreamer.freedesktop.org/documentation/tutorials/playback/digital-audio-pass-through.html) | Digital audio pass-through | no example code upstream, and it needs pass-through hardware |
 
 ## Running one
@@ -63,7 +62,7 @@ dotnet run --project samples/tutorials/BasicTutorial03 -- <file-or-uri>
 Every project takes `--native-path <directory>` and `--flavor msvc|mingw`, which
 point the loader at a particular GStreamer installation, and `--timeout
 <seconds>`, which bounds the run. The ones that are given media — basic 1, 3, 4,
-9, 12 and 13, and playback 1, 2, 4, 6 and 7 — take a URI or the path of a local
+9, 12 and 13, and playback 1, 2, 4, 5, 6 and 7 — take a URI or the path of a local
 file as a positional argument and default to whatever the upstream page uses, so
 a manual run with no arguments reproduces the tutorial exactly. **Those defaults
 need a network.** Basic 9 only asks what is inside its file; the rest play it.
@@ -75,7 +74,8 @@ it only prints the decoder ranking.
 `http://radio.hbr1.com:19800/ambient.ogg`, a radio station that stopped
 answering years ago, so that one is worth pointing at a local audio-only file.
 
-`PlaybackTutorial01 --keys` and `PlaybackTutorial02 --keys` script the keyboard
+`PlaybackTutorial01 --keys`, `PlaybackTutorial02 --keys` and
+`PlaybackTutorial05 --keys` script the keyboard
 the same way `BasicTutorial13 --keys` does, and `PlaybackTutorial08 --enable
 <factory>` / `--disable <factory>` change the rank of a factory before the list
 is printed.
@@ -107,6 +107,10 @@ the tutorial teaches, and each file says so where it uses them.
   to choose an audio and a subtitle stream, where a digit is the index the C
   original reads with `strtoull` and `q` quits. Those two read one character
   rather than a line, so an index of more than one digit cannot be typed.
+  `PlaybackTutorial05` uses it for the eight colour balance keys, and turns
+  each one into a gate: the value the channel should take is worked out before
+  the key is applied and compared with what the element reports afterwards, so
+  a scripted run that moved nothing exits 1.
 * `PlaybackTutorial08 --enable <factory>` and `--disable <factory>` apply the
   page's `enable_factory` snippet before anything else runs, as many times as
   they are given and in the order they are written. A name the registry does not
@@ -133,9 +137,10 @@ neither survives the port:
   is the one case where the C original still does something these ports do not:
   expect `autovideosink` not to come up there unless you wrap the run in
   `Gst.Global.MacosMain` yourself.
-* `basic-tutorial-13.c`, `playback-tutorial-1.c` and `playback-tutorial-2.c`
+* `basic-tutorial-13.c`, `playback-tutorial-1.c`, `playback-tutorial-2.c` and
+  `playback-tutorial-5.c`
   read the keyboard through `g_io_channel_win32_new_fd` on Windows and
-  `g_io_channel_unix_new` everywhere else. All three ports use `System.Console`
+  `g_io_channel_unix_new` everywhere else. All four ports use `System.Console`
   and are one program on every operating system, which is how the last
   `#ifdef` of the series disappears.
 
@@ -162,11 +167,11 @@ not.
 
 ## Which of them CI runs
 
-All seventeen are built on every CI leg, which is the point of putting them in
+All eighteen are built on every CI leg, which is the point of putting them in
 the solution: a rename anywhere in the generated surface breaks a tutorial
 visibly.
 
-Fifteen are also *run*, on both Linux legs — x64 and arm64 — because those
+Sixteen are also *run*, on both Linux legs — x64 and arm64 — because those
 have the richest plugin set and no GUI. The `GstLaunch` sample encodes the
 fixtures in the same step, so the media is made on the spot rather than
 fetched:
@@ -175,7 +180,8 @@ fetched:
   which is what basic 3 needs to have a pad to ignore, basic 4 and 13 need to
   have something to seek in, and basic 9 needs to have a topology worth walking.
   Playback 8 plays it too, and names the decoder that got plugged; playback 7
-  plays it through a sink bin of its own, where its audio meets an equalizer.
+  plays it through a sink bin of its own, where its audio meets an equalizer;
+  playback 5 moves the colour balance of its picture while it plays.
 * `tutorial-multitrack.ogg`, the same but with **two** Vorbis streams, so that
   playback 1 and 2 have something to choose between. Each audio branch carries
   its own `num-buffers`, because a branch that never ends would keep the muxer
@@ -205,8 +211,7 @@ in the process and pushes it into the `appsrc` that playbin builds for
 
 Two are only built. Basic 1's default media is an https URI and nothing local
 would be the tutorial; basic 6's interesting output is the caps a real audio
-sink negotiates, which a fakesink cannot show. Playback 5 and 9 are not
-ported.
+sink negotiates, which a fakesink cannot show. Playback 9 is not ported.
 
 `wavescope`, which both tee tutorials draw with, is in `gst-plugins-bad`. The
 Linux leg installs `gstreamer1.0-plugins-bad` — it needs it for `webrtcbin` —
