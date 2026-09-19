@@ -1425,7 +1425,7 @@ public sealed unsafe partial class Message : Gst.MiniObject
     /// it holds the only reference: an in place vfunc lends the object of its caller
     /// and normally promises exactly that, a base transform running in passthrough
     /// being the exception, as it calls <c>transform_ip</c> on a buffer it did not make
-    /// writable; <c>Copy()</c> the object to get one that is yours to write.
+    /// writable; <c>Copy</c> the object to get one that is yours to write.
     /// </para>
     /// </remarks>
     /// <returns>

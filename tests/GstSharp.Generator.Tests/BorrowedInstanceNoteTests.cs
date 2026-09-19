@@ -11,9 +11,12 @@ namespace GstSharp.Generator.Tests;
 /// base transform running in passthrough calls <c>transform_ip</c> on a buffer
 /// it did not make writable, so the note may not claim that what an in place
 /// vfunc receives is writable by construction, and it has to name the escape
-/// hatch. The escape hatch is <c>Copy()</c> rather than <c>MakeWritable()</c>,
+/// hatch. The escape hatch is <c>Copy</c> rather than <c>MakeWritable()</c>,
 /// because the note sits on <c>MakeWritable()</c> itself, which is the call
-/// that refuses on a borrowed wrapper. Nothing pinned that wording before, so
+/// that refuses on a borrowed wrapper. It is named without parentheses because
+/// the carriers do not agree on a signature: <c>Gst.Memory.Copy</c> takes an
+/// offset and a size, while the other nine take nothing. Nothing pinned that
+/// wording before, so
 /// it drifted away from <c>docs/ownership.md</c>; these tests hold the two
 /// together.
 /// </remarks>
@@ -30,7 +33,7 @@ public sealed class BorrowedInstanceNoteTests
         + "    /// it holds the only reference: an in place vfunc lends the object of its caller\n"
         + "    /// and normally promises exactly that, a base transform running in passthrough\n"
         + "    /// being the exception, as it calls <c>transform_ip</c> on a buffer it did not make\n"
-        + "    /// writable; <c>Copy()</c> the object to get one that is yours to write.\n"
+        + "    /// writable; <c>Copy</c> the object to get one that is yours to write.\n"
         + "    /// </para>\n";
 
     private static readonly Lazy<GenerationResult> LazyGenerated = new(
@@ -52,7 +55,8 @@ public sealed class BorrowedInstanceNoteTests
         // advising the call would be circular: on a borrowed wrapper it is the
         // one call that raises.
         Assert.DoesNotContain("MakeWritable()</c> the object", Note, StringComparison.Ordinal);
-        Assert.Contains("<c>Copy()</c>", Note, StringComparison.Ordinal);
+        Assert.Contains("<c>Copy</c>", Note, StringComparison.Ordinal);
+        Assert.DoesNotContain("<c>Copy()</c>", Note, StringComparison.Ordinal);
     }
 
     [Fact]

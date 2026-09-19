@@ -2180,6 +2180,14 @@ internal sealed class MarshalPlanner
     /// ask. The record emitter needs the same answer for the fields that hold a
     /// handle, and there is one rule for both.
     /// </summary>
+    /// <remarks>
+    /// Unlike the instance overload this one records no consumption, so it must
+    /// not be the only reader of a skip entry. Ask it about kinds an emitter
+    /// loop visits as well - classes, interfaces, records, enumerations - whose
+    /// skip is recorded there. A callback type has no such loop, so a callback
+    /// type skip read through this overload alone would be reported as stale
+    /// and invite the deletion of a live entry.
+    /// </remarks>
     /// <param name="symbol">The symbol to test.</param>
     /// <param name="overlays">The overlay configuration.</param>
     /// <param name="classifier">The type classifier.</param>

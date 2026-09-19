@@ -372,8 +372,9 @@ internal sealed class PlatformSupport
 /// property (<c>Gst.Element:name</c>) or of a signal
 /// (<c>Gst.Element::pad-added</c>) whose C implementation no annotation can
 /// describe. A key spelled as a signal is read by the signal loop alone, and
-/// one that matched no signal is reported as
-/// <c>GEN0055</c>.</description></item>
+/// one that matched no signal is reported as <c>GEN0055</c>; a key of any of
+/// the other shapes that matched nothing is reported as
+/// <c>GEN0056</c>.</description></item>
 /// <item><description><c>handBound</c>: <c>c:identifier</c> of a callable, or
 /// the GObject spelling of a signal (<c>Gst.Element::pad-added</c>) or property
 /// (<c>Gst.Element:name</c>) as the census reports it, whose managed surface is
@@ -383,7 +384,9 @@ internal sealed class PlatformSupport
 /// binding.</description></item>
 /// <item><description><c>rename</c>: qualified gir name of a type
 /// (<c>Gst.MessageType</c>), of an enumeration member
-/// (<c>Gst.MessageType.state_changed</c>) or a <c>c:identifier</c>.</description></item>
+/// (<c>Gst.MessageType.state_changed</c>) or a <c>c:identifier</c>. An entry
+/// the run never looked up is reported as
+/// <c>GEN0057</c>.</description></item>
 /// <item><description><c>annotationOverrides</c>: <c>c:identifier</c> of a
 /// callable, or the <c>c:type</c> of a callback, which has no identifier of its
 /// own; optionally suffixed with <c>#parameter-name</c> or

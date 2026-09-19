@@ -874,8 +874,8 @@ public sealed class ClassEmitterTests
         // a signal that matched no signal of an emitted type (GEN0055), a skip
         // entry of any other shape - the c:identifier of a callable, a
         // qualified type name, a property - that matched nothing either
-        // (GEN0056), and a rename that named nothing the run emitted
-        // (GEN0057). Every one of them
+        // (GEN0056), and a rename the run never looked up (GEN0057). Every one
+        // of them
         // describes a gir that has moved on, and every one of them is a
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.

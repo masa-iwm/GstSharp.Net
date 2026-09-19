@@ -187,9 +187,9 @@ in the signal loop alone; one that matched no signal of an emitted type is
 reported as `GEN0055`, because the event the entry exists to keep out would
 otherwise be generated again beside the member that replaced it. A key of any
 of the other three shapes that matched nothing is reported as `GEN0056`, for
-the same reason and in the same words; a `rename` that named nothing the run
-emitted is reported as `GEN0057`, because the name it decides is then a
-decision about nothing. A key that
+the same reason and in the same words; a `rename` the run never looked up is
+reported as `GEN0057`, because the name it decides is then a decision about
+nothing. A key that
 matches wins over every rule based reason, so a signal the run would have filed
 under `ActionSignal` is filed under `OverlaySkip` — or, with the twin, under
 `HandBound` — instead.

@@ -555,7 +555,7 @@ internal static class GenerationPipeline
         {
             diagnostics.Warn(
                 "GEN0057",
-                $"The rename '{key}' named nothing this run emitted; the entry is stale.");
+                $"The rename '{key}' was never looked up this run; nothing asked for the name it decides, so the entry is stale.");
         }
 
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
