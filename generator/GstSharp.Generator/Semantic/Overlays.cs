@@ -369,8 +369,11 @@ internal sealed class PlatformSupport
 /// <list type="bullet">
 /// <item><description><c>skip</c>: <c>c:identifier</c> of a callable, the
 /// qualified gir name of a type (<c>Gst.Foo</c>), or the GObject spelling of a
-/// property (<c>Gst.Element:name</c>) whose C implementation no annotation can
-/// describe.</description></item>
+/// property (<c>Gst.Element:name</c>) or of a signal
+/// (<c>Gst.Element::pad-added</c>) whose C implementation no annotation can
+/// describe. A key spelled as a signal is read by the signal loop alone, and
+/// one that matched no signal is reported as
+/// <c>GEN0055</c>.</description></item>
 /// <item><description><c>handBound</c>: <c>c:identifier</c> of a callable, or
 /// the GObject spelling of a signal (<c>Gst.Element::pad-added</c>) or property
 /// (<c>Gst.Element:name</c>) as the census reports it, whose managed surface is

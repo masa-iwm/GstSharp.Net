@@ -40,6 +40,12 @@ internal sealed class EmissionCensus
     private readonly SortedSet<string> _fieldAnnotations = new(StringComparer.Ordinal);
 
     /// <summary>
+    /// The skip keys spelled as a signal that the signal loop matched against
+    /// a signal of an emitted type.
+    /// </summary>
+    private readonly SortedSet<string> _signalSkips = new(StringComparer.Ordinal);
+
+    /// <summary>
     /// The field annotation keys whose <c>name</c> is the one the field derives
     /// anyway, which corrects nothing.
     /// </summary>
@@ -69,6 +75,17 @@ internal sealed class EmissionCensus
     /// record, so that the ones it never applied can be reported as stale.
     /// </summary>
     internal IReadOnlySet<string> FieldAnnotationKeys => _fieldAnnotations;
+
+    /// <summary>
+    /// Gets the skip keys spelled as a signal that the run matched against a
+    /// signal of an emitted type, so that the ones it never matched can be
+    /// reported as stale.
+    /// </summary>
+    internal IReadOnlySet<string> SignalSkipKeys => _signalSkips;
+
+    /// <summary>Records one skip key the signal loop matched.</summary>
+    /// <param name="key">The signal, as <c>Gst.Element::pad-added</c>.</param>
+    internal void SkippedSignalKey(string key) => _signalSkips.Add(key);
 
     /// <summary>Records one field annotation the run applied.</summary>
     /// <param name="key">The overlay key that matched, for the stale report.</param>

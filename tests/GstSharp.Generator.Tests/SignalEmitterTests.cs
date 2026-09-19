@@ -1190,6 +1190,52 @@ public sealed class SignalEmitterTests
             StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ASkippedSignalIsNotEmitted()
+    {
+        // A signal whose C registration no annotation can describe is kept off
+        // the surface by name, the way a property is, so that the member which
+        // answers it can be written by hand under the name the generator would
+        // have taken. Nothing of the signal is left behind: not the event, not
+        // its arguments class, not its trampoline.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "skip": [ "Gst.Element::pad-added" ]
+            }
+            """);
+
+        string source = run.File("Element.cs");
+
+        Assert.DoesNotContain("PadAdded", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("pad-added", source, StringComparison.Ordinal);
+
+        // The entry matched, so it is not reported stale, and a run that sees
+        // the signal skipped is a run a handBound entry beside it satisfies.
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0055", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ASkippedSignalThatNamesNoSignalIsReportedAsStale()
+    {
+        // The other half: a key the signal loop never matched keeps nothing
+        // out, and the event it was written against is generated again beside
+        // the hand written member that replaced it.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "skip": [ "Gst.Element::vanished" ]
+            }
+            """);
+
+        Assert.Contains(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0055", StringComparison.Ordinal)
+                && diagnostic.Message.Contains("Gst.Element::vanished", StringComparison.Ordinal));
+    }
+
     /// <summary>
     /// Runs the signal fixture, or another body, over a fixups file written for
     /// the run.

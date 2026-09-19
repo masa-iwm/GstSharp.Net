@@ -610,6 +610,20 @@ internal sealed class SurfaceBuilder
         foreach (GirSignal signal in declaration.Signals)
         {
             string symbol = context.Namespace.Name + "." + declaration.Name + "::" + signal.Name;
+
+            // A signal whose C registration is wrong in a way no annotation
+            // describes is kept out by name, the way a property is below. The
+            // entry is about the signal rather than about the shape the
+            // planner would give it, so it is asked here, ahead of the plan:
+            // what the planner would produce for such a signal is precisely
+            // the member the entry exists to keep off the surface.
+            if (_overlays.IsSkipped(symbol))
+            {
+                _census.SkippedSignalKey(symbol);
+                _census.Skipped(module, SkipReason.OverlaySkip, symbol);
+                continue;
+            }
+
             SignalPlan? plan = _planner.TryPlanSignal(signal, declaration, context, out SkipReason reason);
             if (plan is null)
             {

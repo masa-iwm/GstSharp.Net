@@ -167,8 +167,18 @@ the day it is written, and an entry the generator never sees skipped — because
 the symbol is generated after all, or no longer exists, or is misspelt — is
 reported as `GEN0023`. That is a warning, so `generate` and `verify` still exit
 zero on it; what it fails is the test suite, which asserts that a run over the
-committed overlays reports no `GEN0020`, `GEN0023`, `GEN0024`, `GEN0025` or
-`GEN0026`.
+committed overlays reports no `GEN0020`, `GEN0023`, `GEN0024`, `GEN0025`,
+`GEN0026` or `GEN0055`.
+
+The `skip` array beside it takes one key that names neither a callable nor a
+type: the GObject spelling of a signal, `GstRtspServer.RTSPClient::send-message`,
+for a signal whose C registration no annotation describes — one whose gir names
+an argument type the C never registered, say. The generated event for such a
+signal cannot be corrected, only kept out, so the entry belongs with a
+`handBound` twin and a hand written member under `Custom/` that carries the same
+name. The key is read in the signal loop alone; one that matched no signal of an
+emitted type is reported as `GEN0055`, because the event the entry exists to
+keep out would otherwise be generated again beside the member that replaced it.
 
 A hand bound consumer keeps its callback type generated: a `<callback>` whose
 only consumers are on the `handBound` ledger is emitted all the same, so the

@@ -468,6 +468,32 @@ internal static class GenerationPipeline
                 $"The hand bound entry '{identifier}' was not skipped by this run; the entry is stale.");
         }
 
+        // A skip entry spelled as a signal - Ns.Type::signal, the one skip key
+        // that names neither a callable, nor a type, nor a property - is read
+        // in the signal loop alone, and nowhere else reads a key of that
+        // shape. One the loop never matched names a signal that no longer
+        // exists, one of a type that is not emitted, or a misspelling, and the
+        // event it was written to keep out is generated again: the shape the
+        // entry calls wrong returns to the surface beside the hand written
+        // member that answers the signal, under a name that is then declared
+        // twice.
+        List<string> staleSignalSkips = [];
+        foreach (string key in overlays.SkippedIdentifiers)
+        {
+            if (key.Contains("::", StringComparison.Ordinal) && !census.SignalSkipKeys.Contains(key))
+            {
+                staleSignalSkips.Add(key);
+            }
+        }
+
+        staleSignalSkips.Sort(StringComparer.Ordinal);
+        foreach (string key in staleSignalSkips)
+        {
+            diagnostics.Warn(
+                "GEN0055",
+                $"The skipped signal '{key}' matched no signal of an emitted type; the entry is stale.");
+        }
+
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
         return new GenerationResult(files, diagnostics.Items, census);
     }
