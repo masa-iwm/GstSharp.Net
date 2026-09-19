@@ -26,14 +26,17 @@ public unsafe partial class ColorBalanceChannel
     /// in GStreamer writes the three fields once while constructing the
     /// channel, before the channel is reachable from
     /// <see cref="ColorBalanceExtensions.ListChannels"/>. A channel obtained
-    /// from that list is borrowed from the element that implements
-    /// <see cref="IColorBalance"/> and stays valid while that element lives.
+    /// from that list is an interned wrapper that keeps a reference of its own,
+    /// so the three fields stay readable for as long as the wrapper lives; the
+    /// channel only means something to the element that listed it, and it is
+    /// not the caller's to dispose.
     /// </para>
     /// <para>
-    /// The gir annotates the field as non-nullable, which the generator would
-    /// answer with a <c>string</c> that throws on a null pointer. This reads it
-    /// as <see langword="null"/> instead: the C instance init leaves the field
-    /// at <c>NULL</c> and nothing forces an implementer to set one.
+    /// The gir carries no nullable annotation on the field, which the generator
+    /// reads as non-nullable and would answer with a <c>string</c> that throws
+    /// on a null pointer. This reads it as <see langword="null"/> instead: the
+    /// C instance init leaves the field at <c>NULL</c> and nothing forces an
+    /// implementer to set one.
     /// </para>
     /// </remarks>
     /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
@@ -54,8 +57,10 @@ public unsafe partial class ColorBalanceChannel
     /// The field is written once while the channel is constructed, before the
     /// channel is reachable from
     /// <see cref="ColorBalanceExtensions.ListChannels"/>, and a channel from
-    /// that list is borrowed from the element that implements
-    /// <see cref="IColorBalance"/> and stays valid while that element lives.
+    /// that list is an interned wrapper that keeps a reference of its own, so
+    /// the field stays readable for as long as the wrapper lives; the channel
+    /// only means something to the element that listed it, and it is not the
+    /// caller's to dispose.
     /// </remarks>
     /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
     public int MinValue
@@ -73,8 +78,10 @@ public unsafe partial class ColorBalanceChannel
     /// The field is written once while the channel is constructed, before the
     /// channel is reachable from
     /// <see cref="ColorBalanceExtensions.ListChannels"/>, and a channel from
-    /// that list is borrowed from the element that implements
-    /// <see cref="IColorBalance"/> and stays valid while that element lives.
+    /// that list is an interned wrapper that keeps a reference of its own, so
+    /// the field stays readable for as long as the wrapper lives; the channel
+    /// only means something to the element that listed it, and it is not the
+    /// caller's to dispose.
     /// </remarks>
     /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
     public int MaxValue

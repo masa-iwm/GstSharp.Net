@@ -453,11 +453,14 @@ jobs:
       # sink negotiates. Those two are the only ones of the eighteen that are
       # built and not run; playback 9 is not ported at all.
       #
-      # Playback 5 moves the colour balance of the picture. --keys drives the
-      # eight channel keys and quits, and the port turns each of them into a
-      # gate: the value the channel is expected to take is compared with what
-      # playbin reports afterwards, so a run that printed nothing useful exits
-      # 1. It needs no plugin beyond playbin itself — playsink answers from its
+      # Playback 5 moves the colour balance of the picture. --keys drives all
+      # eight channel keys — ten presses, one every half second, so the last of
+      # them lands five seconds into a ten second fixture — and quits, and the
+      # port turns each of them into a gate: the value the channel is expected
+      # to take is compared with what playbin reports afterwards, so a run that
+      # moved nothing exits 1, as does a key that matched no channel of the
+      # element and an EOS reached with keys still unfed.
+      # It needs no plugin beyond playbin itself — playsink answers from its
       # own proxy channels whatever sink is in place.
       #
       # Playback 7 puts an equalizer-3bands in front of its audio sink. That
@@ -517,7 +520,7 @@ jobs:
           dotnet run --project samples/tutorials/PlaybackTutorial02 --no-restore -- --headless --keys 0 tutorial-multitrack.ogg tutorial-subs.srt
           dotnet run --project samples/tutorials/PlaybackTutorial03 --no-restore -- --headless --chunks 200
           dotnet run --project samples/tutorials/PlaybackTutorial04 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
-          dotnet run --project samples/tutorials/PlaybackTutorial05 --no-restore -- --headless --keys CCBbHhSsq tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial05 --no-restore -- --headless --keys CCcBbHhSsq tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial06 --no-restore -- --headless tutorial-audio.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial07 --no-restore -- --headless tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial08 --no-restore -- --headless --enable theoradec tutorial-media.ogg

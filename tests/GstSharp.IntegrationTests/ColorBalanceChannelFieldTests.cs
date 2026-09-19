@@ -66,9 +66,9 @@ public sealed class ColorBalanceChannelFieldTests
     /// construction.
     /// </summary>
     /// <remarks>
-    /// The channels are borrowed from the element, at
-    /// <see cref="Transfer.None"/>, so none of them is disposed here; the
-    /// element is.
+    /// The channels come out of the list at <see cref="Transfer.None"/> as
+    /// interned wrappers that hold their own reference, so none of them is the
+    /// caller's to dispose; the element is.
     /// </remarks>
     [RequiresElementFact("videobalance")]
     public void TheChannelsOfAVideoBalanceCarryTheirLabelsAndRanges()
@@ -101,7 +101,8 @@ public sealed class ColorBalanceChannelFieldTests
     /// <remarks>
     /// The channel handed to <c>set_value</c> has to be one of the objects the
     /// element itself listed, which is what holding on to the list gives. The
-    /// channels are borrowed and are not disposed.
+    /// channels are interned wrappers that hold their own reference and are not
+    /// the caller's to dispose.
     /// </remarks>
     [RequiresElementFact("playbin")]
     public void APlaybinRemembersAValueWrittenToOneOfItsChannels()

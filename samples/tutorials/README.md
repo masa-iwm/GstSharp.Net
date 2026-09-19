@@ -61,11 +61,12 @@ dotnet run --project samples/tutorials/BasicTutorial03 -- <file-or-uri>
 
 Every project takes `--native-path <directory>` and `--flavor msvc|mingw`, which
 point the loader at a particular GStreamer installation, and `--timeout
-<seconds>`, which bounds the run. The ones that are given media — basic 1, 3, 4,
-9, 12 and 13, and playback 1, 2, 4, 5, 6 and 7 — take a URI or the path of a local
-file as a positional argument and default to whatever the upstream page uses, so
-a manual run with no arguments reproduces the tutorial exactly. **Those defaults
-need a network.** Basic 9 only asks what is inside its file; the rest play it.
+<seconds>`, which bounds the run. The ones that are given media — basic 1, 3,
+4, 9, 12 and 13, and playback 1, 2, 4, 5, 6 and 7 — take a URI or the path of
+a local file as a positional argument and default to whatever the upstream page
+uses, so a manual run with no arguments reproduces the tutorial exactly.
+**Those defaults need a network.** Basic 9 only asks what is inside its file;
+the rest play it.
 `PlaybackTutorial02` takes a second positional argument, the subtitle file, and
 `PlaybackTutorial08` takes its media as an optional positional: with no media
 it only prints the decoder ranking.
@@ -75,10 +76,9 @@ it only prints the decoder ranking.
 answering years ago, so that one is worth pointing at a local audio-only file.
 
 `PlaybackTutorial01 --keys`, `PlaybackTutorial02 --keys` and
-`PlaybackTutorial05 --keys` script the keyboard
-the same way `BasicTutorial13 --keys` does, and `PlaybackTutorial08 --enable
-<factory>` / `--disable <factory>` change the rank of a factory before the list
-is printed.
+`PlaybackTutorial05 --keys` script the keyboard the same way
+`BasicTutorial13 --keys` does, and `PlaybackTutorial08 --enable <factory>` /
+`--disable <factory>` change the rank of a factory before the list is printed.
 
 `BasicTutorial13` is worth pointing at a local file even when there is one. A
 flushing rate seek travels back to the source, and against `souphttpsrc` the
@@ -110,7 +110,9 @@ the tutorial teaches, and each file says so where it uses them.
   `PlaybackTutorial05` uses it for the eight colour balance keys, and turns
   each one into a gate: the value the channel should take is worked out before
   the key is applied and compared with what the element reports afterwards, so
-  a scripted run that moved nothing exits 1.
+  a scripted run that moved nothing exits 1. So does a scripted key the element
+  has no channel for, and an end of stream that arrives while the script still
+  has keys to feed.
 * `PlaybackTutorial08 --enable <factory>` and `--disable <factory>` apply the
   page's `enable_factory` snippet before anything else runs, as many times as
   they are given and in the order they are written. A name the registry does not

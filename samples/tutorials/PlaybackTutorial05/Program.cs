@@ -12,7 +12,7 @@
 //
 // Where this port differs from the C original, and why:
 //
-//   * No GMainLoop, no GstBusFunc watch and no GIOChannel. The loop below polls
+//   * No GMainLoop and no GIOChannel. The loop below polls
 //     the bus with TimedPopFiltered and asks Console.KeyAvailable whether a key
 //     is waiting, which is one program on every operating system rather than
 //     the two the C original needs — g_io_channel_win32_new_fd on Windows and
@@ -30,8 +30,11 @@
 //     brightness, 'H'/'h' hue, 'S'/'s' saturation — upper case increases, lower
 //     case decreases — and 'Q'/'q' quits.
 //
-//   * 'q' quits with 0. The C program has no way out other than EOS, an error
-//     or Ctrl+C, which would leave an unattended run nothing to gate on.
+//   * 'q' is the tutorial's own key and quits with 0 here as it does there.
+//     What the port adds is every other way out: the C watches no bus at all
+//     and so handles neither an error nor the end of the stream, while this
+//     one polls for both and exits 1 on an error and 0 on EOS, and it bounds
+//     the whole run with --timeout so that an unattended run finishes.
 //
 //   * --keys is sample scaffolding, identical in mechanism to
 //     BasicTutorial13's: the characters are fed to the same handler the
@@ -39,8 +42,10 @@
 //     reported PLAYING. A scripted run also checks what it did: the value the
 //     channel is expected to take is computed before the key is applied and
 //     compared with the value the element reports afterwards, and a run where
-//     one of them did not match exits 1. Without that a headless run would
-//     print numbers nobody reads.
+//     one of them did not match exits 1. So do the two other ways a script can
+//     move nothing: a scripted key that names a channel the element does not
+//     list, and an end of stream that arrives while keys are still unfed.
+//     Without all that a headless run would print numbers nobody reads.
 //
 //   * --headless is not part of the tutorial. It gives playbin fakesinks so
 //     that the program runs where there is no display and no sound card. The
@@ -57,8 +62,8 @@
 //   * The channel list is read once and held. gst_color_balance_set_value
 //     matches the channel it is given against the element's own channel
 //     objects, so the objects the element listed are the ones that have to be
-//     handed back to it. The list is borrowed from the element and none of its
-//     channels is disposed.
+//     handed back to it. The channels are interned wrappers that hold their
+//     own reference; none of them is the caller's to dispose.
 //
 //   * GstVideo.Initialize rather than GstSharp.Initialize: it is a call into
 //     the GstVideo assembly, which is what makes sure that its module
@@ -101,7 +106,7 @@ internal static class ColorBalance
 
             Console.WriteLine($"version:     {GstSharp.NativeVersion.Description}");
             Console.WriteLine($"uri:         {options.Uri}");
-            Console.WriteLine("USAGE: Choose one of the following options, then press enter:");
+            Console.WriteLine("USAGE: Press one of the following keys:");
             Console.WriteLine(" 'C' to increase contrast, 'c' to decrease contrast");
             Console.WriteLine(" 'B' to increase brightness, 'b' to decrease brightness");
             Console.WriteLine(" 'H' to increase hue, 'h' to decrease hue");
@@ -188,8 +193,8 @@ internal static class ColorBalance
         {
             // The channels are read once and held: the element matches the
             // channel it is handed against its own objects, so a channel from
-            // any other list is refused. They are borrowed at Transfer.None and
-            // are released with the element, so none of them is disposed here.
+            // any other list is refused. They are interned wrappers that hold
+            // their own reference; not the caller's to dispose.
             IReadOnlyList<ColorBalanceChannel> channels = balance.ListChannels();
 
             if (channels.Count == 0)
@@ -236,6 +241,17 @@ internal static class ColorBalance
                         if (message.Type == MessageType.Eos)
                         {
                             Console.WriteLine("End-Of-Stream reached.");
+
+                            if (keys.Pending)
+                            {
+                                // A script the media outlasted applied only
+                                // some of its keys, which is not the run the
+                                // caller asked for.
+                                Console.Error.WriteLine(
+                                    "PlaybackTutorial05: the media ended with keys of --keys still unfed.");
+                                return 1;
+                            }
+
                             return 0;
                         }
 
@@ -269,7 +285,12 @@ internal static class ColorBalance
                 }
 
                 if (NameOf(key) is string channelName
-                    && !UpdateColorChannel(channelName, char.IsAsciiLetterUpper(key), balance, channels))
+                    && !UpdateColorChannel(
+                        channelName,
+                        char.IsAsciiLetterUpper(key),
+                        balance,
+                        channels,
+                        options.Script is not null))
                 {
                     return 1;
                 }
@@ -310,16 +331,18 @@ internal static class ColorBalance
     /// <param name="increase">Whether the value goes up rather than down.</param>
     /// <param name="balance">The colour balance to write to.</param>
     /// <param name="channels">The channels that balance listed.</param>
+    /// <param name="scripted">Whether the key came from <c>--keys</c>.</param>
     /// <returns>
     /// <see langword="false"/> when the element did not take the value that was
-    /// written, which is what makes an unattended run a gate rather than a
-    /// print.
+    /// written, or when a scripted key names a channel the element does not
+    /// list, which is what makes an unattended run a gate rather than a print.
     /// </returns>
     private static bool UpdateColorChannel(
         string channelName,
         bool increase,
         IColorBalance balance,
-        IReadOnlyList<ColorBalanceChannel> channels)
+        IReadOnlyList<ColorBalanceChannel> channels,
+        bool scripted)
     {
         // The C matches with g_strrstr, a substring search, because an element
         // is free to give its channels longer names than the four the tutorial
@@ -338,6 +361,16 @@ internal static class ColorBalance
 
         if (channel is null)
         {
+            // A person who pressed a key the element has no channel for is left
+            // alone, as upstream leaves them. A script is not: a key that moves
+            // nothing is the failure this sample is run unattended to catch.
+            if (scripted)
+            {
+                Console.Error.WriteLine(
+                    $"PlaybackTutorial05: no channel of this element is labelled {channelName}.");
+                return false;
+            }
+
             return true;
         }
 
@@ -414,6 +447,12 @@ internal static class ColorBalance
         private TimeSpan _due;
 
         private Keys(string? script) => _script = script;
+
+        /// <summary>
+        /// Gets a value indicating whether a script has keys left to feed. It
+        /// is false for the interactive path, which has no end of its own.
+        /// </summary>
+        internal bool Pending => _script is not null && _index < _script.Length;
 
         /// <summary>
         /// Chooses the source of the keys.
