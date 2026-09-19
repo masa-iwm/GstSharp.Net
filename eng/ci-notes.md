@@ -174,6 +174,19 @@ the plain SONAME.
   makes the installation discoverable through the documented probes instead of
   through a test-only switch.
 
+Every test step, and every sample invocation of a native job, passes
+`--no-build`. `dotnet build GstSharp.Net.slnx` earlier in the same job has
+already built the whole solution in the same configuration, and `--no-restore`
+alone still re-enters the incremental build once per invocation — two to four
+seconds each, on a Linux leg that runs about fifty of them. `--no-build`
+implies `--no-restore`. The consequence is worth knowing: a sample or test
+project that is not on `GstSharp.Net.slnx` fails its step with a missing
+assembly instead of being built on the spot by its first run, which is the
+behaviour to keep — the solution is what the Build step, and therefore every
+gate, is defined over. The recipe under "Running the gates locally" keeps
+`--no-restore` because it is meant to be usable a command at a time, without a
+prior build.
+
 Each suite is its own step rather than one solution-wide `dotnet test`. A
 solution-level run is what a development machine does; here the per-project
 steps keep a failure attributable in the job log, and they let a native job skip

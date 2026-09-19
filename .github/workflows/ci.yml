@@ -92,17 +92,17 @@ jobs:
         run: dotnet build GstSharp.Net.slnx --no-restore -warnaserror
 
       - name: Test the generator
-        run: dotnet test tests/GstSharp.Generator.Tests --no-restore --logger "trx;LogFileName=generator.trx" --results-directory artifacts/test-results
+        run: dotnet test tests/GstSharp.Generator.Tests --no-build --logger "trx;LogFileName=generator.trx" --results-directory artifacts/test-results
 
       - name: Test the analyzers
-        run: dotnet test tests/GstSharp.Analyzers.Tests --no-restore --logger "trx;LogFileName=analyzers.trx" --results-directory artifacts/test-results
+        run: dotnet test tests/GstSharp.Analyzers.Tests --no-build --logger "trx;LogFileName=analyzers.trx" --results-directory artifacts/test-results
 
       # GstSharp.Core.Tests is native free by construction: the loader rules run
       # against FakePlatformProbe and the marshalling tests stop before the
       # first call into GLib. Running them on a machine without GStreamer is
       # what keeps that true.
       - name: Test the runtime (proves it needs no GStreamer)
-        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+        run: dotnet test tests/GstSharp.Core.Tests --no-build --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
       # The compatibility gate, and the reason it runs here rather than at
       # release time only: EnablePackageValidation is a pack-time check
@@ -286,8 +286,19 @@ jobs:
       - name: Build
         run: dotnet build GstSharp.Net.slnx --no-restore
 
+      # Everything below this point runs what the Build step above produced,
+      # in the same Debug configuration, so --no-build is what every test and
+      # sample invocation of the job carries. --no-restore alone was not
+      # enough: it still re-enters the incremental build, which costs two to
+      # four seconds per invocation, and a leg runs about fifty of them.
+      # --no-build implies --no-restore.
+      #
+      # The price is that a sample or test project outside GstSharp.Net.slnx
+      # fails here with a missing assembly instead of being built silently by
+      # its first run - which is the behaviour to keep: the solution is what
+      # the Build step, and therefore every gate, is defined over.
       - name: Test the runtime
-        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+        run: dotnet test tests/GstSharp.Core.Tests --no-build --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
       # GSTSHARP_REQUIRED_ELEMENTS is the promise this leg makes about its
       # installation, and RequiredElementsTests is what holds it to it: the
@@ -364,18 +375,18 @@ jobs:
       - name: Test against the installation
         env:
           GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtpL16depay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert,gesdemux,opusenc,opusdec,rtpopuspay,rtpopusdepay,videobalance,playbin,rtphdrextclientaudiolevel
-        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
+        run: dotnet test tests/GstSharp.IntegrationTests --no-build --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
       # through the GType registry, read every frame through a span.
       - name: AppSinkSpans
-        run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+        run: dotnet run --project samples/AppSinkSpans --no-build -- --mode pull
 
       # The RTP module on the same route: a payloader feeding an appsink, every
       # header read through a mapped RTPBuffer, and a compound RTCP packet
       # built and read back.
       - name: RtpPacketDump
-        run: dotnet run --project samples/RtpPacketDump --no-restore
+        run: dotnet run --project samples/RtpPacketDump --no-build
 
       # A metadata implementation of the application's own, carried across a
       # real conversion: the sample registers its API type with no tags,
@@ -385,7 +396,7 @@ jobs:
       # sequence number in it, exits 1. appsrc, appsink and videoconvert all
       # come from the base and app plugins this job already installs.
       - name: CustomMeta
-        run: dotnet run --project samples/CustomMeta --no-restore
+        run: dotnet run --project samples/CustomMeta --no-build
 
       # The gst-launch port, run headless three ways: the plain end of stream,
       # the buffering state machine, and the interrupt, which travels through a
@@ -396,9 +407,9 @@ jobs:
       # and base plugins this job already installs.
       - name: GstLaunch
         run: |
-          dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
-          dotnet run --project samples/GstLaunch --no-restore -- --no-position videotestsrc num-buffers=60 ! queue2 use-buffering=true max-size-buffers=0 max-size-bytes=0 max-size-time=1000000000 ! fakesink sync=true
-          dotnet run --project samples/GstLaunch --no-restore -- -m -e --interrupt-after 1 videotestsrc ! fakesink
+          dotnet run --project samples/GstLaunch --no-build -- videotestsrc num-buffers=100 ! fakesink
+          dotnet run --project samples/GstLaunch --no-build -- --no-position videotestsrc num-buffers=60 ! queue2 use-buffering=true max-size-buffers=0 max-size-bytes=0 max-size-time=1000000000 ! fakesink sync=true
+          dotnet run --project samples/GstLaunch --no-build -- -m -e --interrupt-after 1 videotestsrc ! fakesink
 
       # The gst-typefind port. The media is made here rather than fetched: the
       # first line writes a wav with the GstLaunch sample, the second identifies
@@ -407,8 +418,8 @@ jobs:
       # only prove that nothing crashed. The detected type is on the log line.
       - name: GstTypefind
         run: |
-          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
-          dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+          dotnet run --project samples/GstLaunch --no-build -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
+          dotnet run --project samples/GstTypefind --no-build -- --fail-on-unknown typefind-sample.wav
 
       # The gst-stats port. The log it reads is made here rather than committed:
       # the first step runs a short pipeline with the tracers on and points the
@@ -429,10 +440,10 @@ jobs:
           GST_DEBUG: GST_TRACER:7
           GST_DEBUG_FILE: gst-stats-trace.log
           GST_DEBUG_NO_COLOR: "1"
-        run: dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
+        run: dotnet run --project samples/GstLaunch --no-build -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
 
       - name: GstStats
-        run: dotnet run --project samples/GstStats --no-restore -- --fail-if-empty gst-stats-trace.log
+        run: dotnet run --project samples/GstStats --no-build -- --fail-if-empty gst-stats-trace.log
 
       # The gate the sample exists for: the report it prints has to be the
       # report the real tool prints. Both read the same log, so nothing is
@@ -451,7 +462,7 @@ jobs:
           unset GST_DEBUG
           export LC_ALL=C
           gst-stats-1.0 gst-stats-trace.log | tr -d '\r' > gst-stats-expected.txt
-          dotnet run --project samples/GstStats --no-restore --no-build -- gst-stats-trace.log | tr -d '\r' > gst-stats-actual.txt
+          dotnet run --project samples/GstStats --no-build -- gst-stats-trace.log | tr -d '\r' > gst-stats-actual.txt
           echo "--- gst-stats-1.0"
           cat gst-stats-expected.txt
           echo "--- samples/GstStats"
@@ -467,7 +478,7 @@ jobs:
       # was pushed — and filesink and audioconvert are core and base elements
       # this job already has.
       - name: AppSrcPush
-        run: dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
+        run: dotnet run --project samples/AppSrcPush --no-build -- --buffers 200 --output appsrc-push.raw
 
       # The ported GStreamer tutorials. All eighteen are built by the solution
       # on every leg; these sixteen are the ones that can also run, and they run
@@ -547,31 +558,31 @@ jobs:
       # that it is killed even when a gate fails.
       - name: Tutorials
         run: |
-          dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
-          dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-multitrack.ogg audiotestsrc num-buffers=430 freq=440 wave=sine ! audioconvert ! vorbisenc ! mux. audiotestsrc num-buffers=430 freq=880 wave=square ! audioconvert ! vorbisenc ! mux.
-          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! oggmux ! filesink location=tutorial-audio.ogg
+          dotnet run --project samples/GstLaunch --no-build -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
+          dotnet run --project samples/GstLaunch --no-build -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-multitrack.ogg audiotestsrc num-buffers=430 freq=440 wave=sine ! audioconvert ! vorbisenc ! mux. audiotestsrc num-buffers=430 freq=880 wave=square ! audioconvert ! vorbisenc ! mux.
+          dotnet run --project samples/GstLaunch --no-build -- -q audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! oggmux ! filesink location=tutorial-audio.ogg
           printf '1\n00:00:00,500 --> 00:00:02,000\nFirst subtitle cue, long enough to typefind\n\n2\n00:00:02,500 --> 00:00:04,000\nSecond subtitle cue, long enough to typefind\n\n3\n00:00:04,500 --> 00:00:06,000\nThird subtitle cue, long enough to typefind\n\n4\n00:00:06,500 --> 00:00:09,000\nFourth subtitle cue, long enough to typefind\n\n' > tutorial-subs.srt
           python3 eng/ci/range-http-server.py 8765 --bind 127.0.0.1 &
           server=$!
           trap 'kill $server' EXIT
           for i in $(seq 1 30); do [ "$(curl -sf -r 0-0 -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg -w '%{http_code}')" = "206" ] && break; sleep 1; done
           test "$(curl -sf -r 0-0 -o /dev/null http://127.0.0.1:8765/tutorial-media.ogg -w '%{http_code}')" = "206"
-          dotnet run --project samples/tutorials/BasicTutorial02 --no-restore -- --headless
-          dotnet run --project samples/tutorials/BasicTutorial03 --no-restore -- --headless tutorial-media.ogg
-          dotnet run --project samples/tutorials/BasicTutorial04 --no-restore -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg
-          dotnet run --project samples/tutorials/BasicTutorial07 --no-restore -- --headless --buffers 200
-          dotnet run --project samples/tutorials/BasicTutorial08 --no-restore -- --headless --chunks 200
-          dotnet run --project samples/tutorials/BasicTutorial09 --no-restore -- tutorial-media.ogg
-          dotnet run --project samples/tutorials/BasicTutorial12 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
-          dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
-          dotnet run --project samples/tutorials/PlaybackTutorial01 --no-restore -- --headless --keys 1 tutorial-multitrack.ogg
-          dotnet run --project samples/tutorials/PlaybackTutorial02 --no-restore -- --headless --keys 0 tutorial-multitrack.ogg tutorial-subs.srt
-          dotnet run --project samples/tutorials/PlaybackTutorial03 --no-restore -- --headless --chunks 200
-          dotnet run --project samples/tutorials/PlaybackTutorial04 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
-          dotnet run --project samples/tutorials/PlaybackTutorial05 --no-restore -- --headless --keys CCcBbHhSsq tutorial-media.ogg
-          dotnet run --project samples/tutorials/PlaybackTutorial06 --no-restore -- --headless tutorial-audio.ogg
-          dotnet run --project samples/tutorials/PlaybackTutorial07 --no-restore -- --headless tutorial-media.ogg
-          dotnet run --project samples/tutorials/PlaybackTutorial08 --no-restore -- --headless --enable theoradec tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial02 --no-build -- --headless
+          dotnet run --project samples/tutorials/BasicTutorial03 --no-build -- --headless tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial04 --no-build -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial07 --no-build -- --headless --buffers 200
+          dotnet run --project samples/tutorials/BasicTutorial08 --no-build -- --headless --chunks 200
+          dotnet run --project samples/tutorials/BasicTutorial09 --no-build -- tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial12 --no-build -- --headless http://127.0.0.1:8765/tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial13 --no-build -- --headless --keys SsPNNPDq tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial01 --no-build -- --headless --keys 1 tutorial-multitrack.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial02 --no-build -- --headless --keys 0 tutorial-multitrack.ogg tutorial-subs.srt
+          dotnet run --project samples/tutorials/PlaybackTutorial03 --no-build -- --headless --chunks 200
+          dotnet run --project samples/tutorials/PlaybackTutorial04 --no-build -- --headless http://127.0.0.1:8765/tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial05 --no-build -- --headless --keys CCcBbHhSsq tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial06 --no-build -- --headless tutorial-audio.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial07 --no-build -- --headless tutorial-media.ogg
+          dotnet run --project samples/tutorials/PlaybackTutorial08 --no-build -- --headless --enable theoradec tutorial-media.ogg
 
       # The gst-discoverer port, run against both files the steps above made:
       # the wav for a single elementary stream and the ogg for a container with
@@ -585,8 +596,8 @@ jobs:
       # gst-plugins-base, and typefind from core.
       - name: GstDiscoverer
         run: |
-          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error typefind-sample.wav
-          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error --verbose --toc tutorial-media.ogg
+          dotnet run --project samples/GstDiscoverer --no-build -- --fail-on-error typefind-sample.wav
+          dotnet run --project samples/GstDiscoverer --no-build -- --fail-on-error --verbose --toc tutorial-media.ogg
 
       # The transcoder port, on the only leg provisioned for it: uritranscodebin
       # and transcodebin come from the transcode plugin of gst-plugins-bad,
@@ -601,7 +612,7 @@ jobs:
       # produced nothing would otherwise pass.
       - name: GstTranscode
         run: |
-          dotnet run --project samples/GstTranscode --no-restore -- "file://$PWD/typefind-sample.wav" "file://$PWD/transcoded.ogg"
+          dotnet run --project samples/GstTranscode --no-build -- "file://$PWD/typefind-sample.wav" "file://$PWD/transcoded.ogg"
           test -s transcoded.ogg
 
       # The gst-play port, backed by the Play object of GstSharp.Net.Play rather
@@ -620,10 +631,10 @@ jobs:
       # run when what landed differs, so the line gates the by-name write.
       - name: GstPlay
         run: |
-          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink tutorial-media.ogg
-          dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+          dotnet run --project samples/GstPlay --no-build -- --duration 2 --videosink fakesink --audiosink fakesink tutorial-media.ogg
+          dotnet run --project samples/GstPlay --no-build -- --list-visualizations
           printf '# the sample skips this line and every blank one\n%s\n' tutorial-media.ogg > play-list.txt
-          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
+          dotnet run --project samples/GstPlay --no-build -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
 
       # The plain application sample: a pipeline built from a description and
       # driven from a polled bus, with no main loop and no signal handler
@@ -639,7 +650,7 @@ jobs:
       # build an autovideosink and an autoaudiosink, and a hosted runner has
       # neither a display nor a sound card to give them.
       - name: PlaybinPlayer
-        run: dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
+        run: dotnet run --project samples/PlaybinPlayer --no-build -- --timeout 30
 
       # The test-launch port: an RTSP server that mounts one factory, serves it
       # and stops itself again in the order docs/ownership.md prescribes. No
@@ -655,11 +666,11 @@ jobs:
       # port so the step never collides with whatever else the runner has
       # bound.
       - name: RtspServer
-        run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
+        run: dotnet run --project samples/RtspServer --no-build -- --port 0 --timeout 5
 
       # Loopback mode: the client hosts the RtspServer sample's mount itself.
       - name: RtspClient
-        run: dotnet run --project samples/RtspClient --no-restore -- --buffers 100 --timeout 60
+        run: dotnet run --project samples/RtspClient --no-build -- --buffers 100 --timeout 60
 
       # The editing services with a managed clip and a managed source in the
       # timeline: what this gates is the child contract, since the clip is only
@@ -668,7 +679,7 @@ jobs:
       # and good plugin sets a video source bin is built from, and --timeout 20
       # is the deadline the half second clip has to reach the end of stream in.
       - name: GesCustomSource
-        run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
+        run: dotnet run --project samples/GesCustomSource --no-build -- --timeout 20
 
       # ges-launch-1.0 on the binding. This first run is the whole load path:
       # the "ges:" description is parsed by the library's own formatter, the
@@ -676,13 +687,13 @@ jobs:
       # only ever arrives because the sample iterates the default main context
       # itself - a sample that forgot to would hang here until the timeout.
       - name: GesLaunch (playback)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
+        run: dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
 
       # The informative path, which needs no pipeline at all: the transition
       # nicks are read out of the type system, so this is what proves the
       # enumeration is registered by the time the sample asks for it.
       - name: GesLaunch (list transitions)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
+        run: dotnet run --project samples/GesLaunch --no-build -- --no-interactive --timeout 30 --list-transitions
 
       # Save a project and load it again. Saving is the first GESProject.Save
       # anywhere in this repository, and loading is the only path where the
@@ -691,8 +702,8 @@ jobs:
       # than passing quietly with an empty timeline.
       - name: GesLaunch (save and load a project)
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
       # Rendering, on the only leg whose encoders are proven: theoraenc,
       # vorbisenc and oggmux are in GSTSHARP_REQUIRED_ELEMENTS above, so the
@@ -702,8 +713,8 @@ jobs:
       # turns "the render mode ran" into "the render mode produced media".
       - name: GesLaunch (render)
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-render.ogg" +test-clip snow d=1.0
-          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-render.ogg
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-render.ogg" +test-clip snow d=1.0
+          dotnet run --project samples/GstDiscoverer --no-build -- --fail-on-error ges-render.ogg
 
       # The three paths that pick an encoding profile without --format, all of
       # them chained after the render step above because two of them need a
@@ -718,9 +729,9 @@ jobs:
       - name: GesLaunch (container profile)
         run: |
           set -o pipefail
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-container.ogg" -f "application/ogg:video/x-theora:audio/x-vorbis" --container-profile "application/ogg" +test-clip snow d=1.0 | tee ges-container.log
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-container.ogg" -f "application/ogg:video/x-theora:audio/x-vorbis" --container-profile "application/ogg" +test-clip snow d=1.0 | tee ges-container.log
           grep -q -- "Re-parented the encoding profile into --container-profile application/ogg" ges-container.log
-          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-container.ogg
+          dotnet run --project samples/GstDiscoverer --no-build -- --fail-on-error ges-container.ogg
 
       # --profile-from also rebuilds the track topology out of the discoverer
       # information of the named clip, so a run that picked the profile some
@@ -728,9 +739,9 @@ jobs:
       - name: GesLaunch (profile from a named clip)
         run: |
           set -o pipefail
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-profile-from.ogg" --profile-from src +clip "file://$PWD/ges-render.ogg" name=src d=1.0 | tee ges-profile-from.log
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -o "file://$PWD/ges-profile-from.ogg" --profile-from src +clip "file://$PWD/ges-render.ogg" name=src d=1.0 | tee ges-profile-from.log
           grep -q -- "Encoding profile from: --profile-from src" ges-profile-from.log
-          dotnet run --project samples/GstDiscoverer --no-restore -- --fail-on-error ges-profile-from.ogg
+          dotnet run --project samples/GstDiscoverer --no-build -- --fail-on-error ges-profile-from.ogg
 
       # Smart rendering with neither --format nor a project profile, which is
       # the get_smart_profile path. The candidate count in the line is part of
@@ -747,7 +758,7 @@ jobs:
       # set is left out here for that reason.
       - name: GesLaunch (smart rendering profile)
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --smart-rendering -o "file://$PWD/ges-smart.ogg" +clip "file://$PWD/ges-render.ogg" d=1.0 | tee ges-smart.log
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --smart-rendering -o "file://$PWD/ges-smart.ogg" +clip "file://$PWD/ges-render.ogg" d=1.0 | tee ges-smart.log
           grep -q -- "Encoding profile from: smart rendering (1 candidate profiles)" ges-smart.log
 
       # A project that carries another project as a clip. The inner one is
@@ -770,9 +781,9 @@ jobs:
       - name: GesLaunch (embed nested timelines)
         run: |
           set -o pipefail
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-nested.xges --embed-nesteds +clip "file://$PWD/ges-launch-saved.xges" d=1.0 | tee ges-nested.log
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-nested.xges --embed-nesteds +clip "file://$PWD/ges-launch-saved.xges" d=1.0 | tee ges-nested.log
           grep -q "Embedded nested projects: 1" ges-nested.log
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-nested.xges
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-nested.xges
 
       # The inspect-lite port, run the two ways it can be run. The census walks
       # the whole registry and needs no plugin in particular; the element page
@@ -783,8 +794,8 @@ jobs:
       # is where the three installations differ most.
       - name: GstInspect
         run: |
-          dotnet run --project samples/GstInspect --no-restore
-          dotnet run --project samples/GstInspect --no-restore -- fakesink
+          dotnet run --project samples/GstInspect --no-build
+          dotnet run --project samples/GstInspect --no-build -- fakesink
 
       # The gate the sample exists for: the page it prints has to be the page
       # the real tool prints, byte for byte. What is compared, why these six
@@ -812,7 +823,7 @@ jobs:
       # offer and the answer on the log, which is what a failed negotiation is
       # read from afterwards.
       - name: WebRtcLoopback
-        run: dotnet run --project samples/WebRtcLoopback --no-restore -- --buffers 100 --timeout 90 --print-sdp
+        run: dotnet run --project samples/WebRtcLoopback --no-build -- --buffers 100 --timeout 90 --print-sdp
 
       # The gst-device-monitor port. A hosted runner has no capture or playback
       # hardware, so finding zero devices is the expected outcome and is exit 0,
@@ -841,8 +852,8 @@ jobs:
       - name: GstDeviceMonitor
         timeout-minutes: 5
         run: |
-          dotnet run --project samples/GstDeviceMonitor --no-restore -- Video/Source
-          dotnet run --project samples/GstDeviceMonitor --no-restore -- --follow --follow-for 3 Video/Source
+          dotnet run --project samples/GstDeviceMonitor --no-build -- Video/Source
+          dotnet run --project samples/GstDeviceMonitor --no-build -- --follow --follow-for 3 Video/Source
 
       # The Linux half of the NativeAOT promise. Both AOT gates used to run on
       # win-x64 alone, which left the ILC toolchain, the native link and the
@@ -942,34 +953,34 @@ jobs:
         run: dotnet build GstSharp.Net.slnx --no-restore
 
       - name: Test the runtime
-        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+        run: dotnet test tests/GstSharp.Core.Tests --no-build --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
       - name: Test against the installation
-        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
+        run: dotnet test tests/GstSharp.IntegrationTests --no-build --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       - name: AppSinkSpans
-        run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+        run: dotnet run --project samples/AppSinkSpans --no-build -- --mode pull
 
       # The RTP module on the same route: a payloader feeding an appsink, every
       # header read through a mapped RTPBuffer, and a compound RTCP packet
       # built and read back.
       - name: RtpPacketDump
-        run: dotnet run --project samples/RtpPacketDump --no-restore
+        run: dotnet run --project samples/RtpPacketDump --no-build
 
       # Same run as the Linux leg; see the comments there.
       - name: CustomMeta
-        run: dotnet run --project samples/CustomMeta --no-restore
+        run: dotnet run --project samples/CustomMeta --no-build
 
       - name: GstLaunch
-        run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
+        run: dotnet run --project samples/GstLaunch --no-build -- videotestsrc num-buffers=100 ! fakesink
 
       # Same two ports as the Linux leg; see the comments there. The device
       # provider that keeps the monitor startable here is osxaudio, out of
       # gst-plugins-good, which the formula bundles.
       - name: GstTypefind
         run: |
-          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
-          dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+          dotnet run --project samples/GstLaunch --no-build -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
+          dotnet run --project samples/GstTypefind --no-build -- --fail-on-unknown typefind-sample.wav
 
       # Same two steps as the Linux leg; see the comments there.
       - name: GstStats trace
@@ -978,62 +989,62 @@ jobs:
           GST_DEBUG: GST_TRACER:7
           GST_DEBUG_FILE: gst-stats-trace.log
           GST_DEBUG_NO_COLOR: "1"
-        run: dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
+        run: dotnet run --project samples/GstLaunch --no-build -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
 
       - name: GstStats
-        run: dotnet run --project samples/GstStats --no-restore -- --fail-if-empty gst-stats-trace.log
+        run: dotnet run --project samples/GstStats --no-build -- --fail-if-empty gst-stats-trace.log
 
       # Same port as the Linux leg; see the comments there. The media here is
       # the wav the step above made rather than the ogg, which only the Linux
       # leg builds.
       - name: GstPlay
         run: |
-          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
-          dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+          dotnet run --project samples/GstPlay --no-build -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
+          dotnet run --project samples/GstPlay --no-build -- --list-visualizations
           printf '# the sample skips this line and every blank one\n%s\n' typefind-sample.wav > play-list.txt
-          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
+          dotnet run --project samples/GstPlay --no-build -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
 
       # Same run as the Linux leg; see the comments there.
       - name: PlaybinPlayer
-        run: dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
+        run: dotnet run --project samples/PlaybinPlayer --no-build -- --timeout 30
 
       # Same run as the Linux leg; see the comments there.
       - name: RtspServer
-        run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
+        run: dotnet run --project samples/RtspServer --no-build -- --port 0 --timeout 5
 
       # Same run as the Linux leg; see the comments there.
       - name: RtspClient
-        run: dotnet run --project samples/RtspClient --no-restore -- --buffers 100 --timeout 60
+        run: dotnet run --project samples/RtspClient --no-build -- --buffers 100 --timeout 60
 
       # Same run as the Linux leg; see the comments there.
       - name: GesCustomSource
-        run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
+        run: dotnet run --project samples/GesCustomSource --no-build -- --timeout 20
 
       # Same three runs as the Linux leg; see the comments there. The render
       # run stays on Linux, where the theora, vorbis and ogg elements it needs
       # are the ones CI already requires.
       - name: GesLaunch (playback)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
+        run: dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
 
       - name: GesLaunch (list transitions)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
+        run: dotnet run --project samples/GesLaunch --no-build -- --no-interactive --timeout 30 --list-transitions
 
       - name: GesLaunch (save and load a project)
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
       # No filter here: the osxaudio provider comes up without a daemon to wait
       # for, so the full listing is safe. See the Linux step for why that leg
       # filters.
       - name: GstDeviceMonitor
-        run: dotnet run --project samples/GstDeviceMonitor --no-restore
+        run: dotnet run --project samples/GstDeviceMonitor --no-build
 
       # Same two runs as the Linux leg; see the comments there.
       - name: GstInspect
         run: |
-          dotnet run --project samples/GstInspect --no-restore
-          dotnet run --project samples/GstInspect --no-restore -- fakesink
+          dotnet run --project samples/GstInspect --no-build
+          dotnet run --project samples/GstInspect --no-build -- fakesink
 
       # Same script as the Linux leg; see the comments there and in the script.
       # This leg's gst-inspect-1.0 is newer than 1.28.3, so the diff really
@@ -1159,40 +1170,40 @@ jobs:
         run: dotnet build GstSharp.Net.slnx --no-restore
 
       - name: Test the runtime
-        run: dotnet test tests/GstSharp.Core.Tests --no-restore --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
+        run: dotnet test tests/GstSharp.Core.Tests --no-build --logger "trx;LogFileName=core.trx" --results-directory artifacts/test-results
 
       - name: Test against the installation
-        run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
+        run: dotnet test tests/GstSharp.IntegrationTests --no-build --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # Also the diagnostic of this job: the sample prints which flavor and
       # which directory the loader pinned, so a detection change shows up in
       # the log even while the tests still pass.
       - name: AppSinkSpans
-        run: dotnet run --project samples/AppSinkSpans --no-restore -- --mode pull
+        run: dotnet run --project samples/AppSinkSpans --no-build -- --mode pull
 
       # The RTP module on the same route: a payloader feeding an appsink, every
       # header read through a mapped RTPBuffer, and a compound RTCP packet
       # built and read back.
       - name: RtpPacketDump
-        run: dotnet run --project samples/RtpPacketDump --no-restore
+        run: dotnet run --project samples/RtpPacketDump --no-build
 
       # Same run as the Linux leg; see the comments there.
       - name: CustomMeta
-        run: dotnet run --project samples/CustomMeta --no-restore
+        run: dotnet run --project samples/CustomMeta --no-build
 
       # The Windows half of the gst-launch port: this is the only leg where the
       # multimedia timer is raised, and the sample says which precision it got
       # on its first line.
       - name: GstLaunch
-        run: dotnet run --project samples/GstLaunch --no-restore -- videotestsrc num-buffers=100 ! fakesink
+        run: dotnet run --project samples/GstLaunch --no-build -- videotestsrc num-buffers=100 ! fakesink
 
       # Same port as the Linux leg; see the comments there. The relative
       # location= path keeps the two lines identical across bash and pwsh, and
       # dotnet run leaves the working directory at the repository root on both.
       - name: GstTypefind
         run: |
-          dotnet run --project samples/GstLaunch --no-restore -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
-          dotnet run --project samples/GstTypefind --no-restore -- --fail-on-unknown typefind-sample.wav
+          dotnet run --project samples/GstLaunch --no-build -- -q audiotestsrc num-buffers=50 ! wavenc ! filesink location=typefind-sample.wav
+          dotnet run --project samples/GstTypefind --no-build -- --fail-on-unknown typefind-sample.wav
 
       # Same two steps as the Linux leg; see the comments there.
       # There is no rusage tracer in the MinGW build -- gstrusage.c needs the
@@ -1204,10 +1215,10 @@ jobs:
           GST_DEBUG: GST_TRACER:7
           GST_DEBUG_FILE: gst-stats-trace.log
           GST_DEBUG_NO_COLOR: "1"
-        run: dotnet run --project samples/GstLaunch --no-restore -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
+        run: dotnet run --project samples/GstLaunch --no-build -- -q videotestsrc num-buffers=50 ! videoconvert ! fakesink
 
       - name: GstStats
-        run: dotnet run --project samples/GstStats --no-restore -- --fail-if-empty gst-stats-trace.log
+        run: dotnet run --project samples/GstStats --no-build -- --fail-if-empty gst-stats-trace.log
 
       # Same port as the Linux leg; see the comments there. This is also where
       # libgstplay-1.0-0.dll, the "lib" prefixed MinGW file name of the module,
@@ -1218,49 +1229,49 @@ jobs:
         # also what makes the printf below portable on this leg.
         shell: bash
         run: |
-          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
-          dotnet run --project samples/GstPlay --no-restore -- --list-visualizations
+          dotnet run --project samples/GstPlay --no-build -- --duration 2 --videosink fakesink --audiosink fakesink typefind-sample.wav
+          dotnet run --project samples/GstPlay --no-build -- --list-visualizations
           printf '# the sample skips this line and every blank one\n%s\n' typefind-sample.wav > play-list.txt
-          dotnet run --project samples/GstPlay --no-restore -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
+          dotnet run --project samples/GstPlay --no-build -- --duration 2 --videosink fakesink --audiosink fakesink --flags video+audio+soft-volume --playlist play-list.txt
 
       # Same run as the Linux leg; see the comments there.
       - name: PlaybinPlayer
-        run: dotnet run --project samples/PlaybinPlayer --no-restore -- --timeout 30
+        run: dotnet run --project samples/PlaybinPlayer --no-build -- --timeout 30
 
       # Same run as the Linux leg; see the comments there.
       - name: RtspServer
-        run: dotnet run --project samples/RtspServer --no-restore -- --port 0 --timeout 5
+        run: dotnet run --project samples/RtspServer --no-build -- --port 0 --timeout 5
 
       # Same run as the Linux leg; see the comments there.
       - name: RtspClient
-        run: dotnet run --project samples/RtspClient --no-restore -- --buffers 100 --timeout 60
+        run: dotnet run --project samples/RtspClient --no-build -- --buffers 100 --timeout 60
 
       # Same run as the Linux leg; see the comments there.
       - name: GesCustomSource
-        run: dotnet run --project samples/GesCustomSource --no-restore -- --timeout 20
+        run: dotnet run --project samples/GesCustomSource --no-build -- --timeout 20
 
       # Same three runs as the Linux leg; see the comments there. The render
       # run stays on Linux, where the theora, vorbis and ogg elements it needs
       # are the ones CI already requires.
       - name: GesLaunch (playback)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
+        run: dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 +test-clip snow d=1.0 +test-clip smpte d=1.0
 
       - name: GesLaunch (list transitions)
-        run: dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --timeout 30 --list-transitions
+        run: dotnet run --project samples/GesLaunch --no-build -- --no-interactive --timeout 30 --list-transitions
 
       - name: GesLaunch (save and load a project)
         # The runners default to pwsh on Windows, which only propagates the
         # exit code of the last line; a save that failed would pass here.
         shell: bash
         run: |
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
-          dotnet run --project samples/GesLaunch --no-restore -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 --save-only ges-launch-saved.xges +test-clip snow d=1.0
+          dotnet run --project samples/GesLaunch --no-build -- --no-interactive --videosink fakesink --audiosink fakesink --timeout 30 -l ges-launch-saved.xges
 
       # Same two runs as the Linux leg; see the comments there.
       - name: GstInspect
         run: |
-          dotnet run --project samples/GstInspect --no-restore
-          dotnet run --project samples/GstInspect --no-restore -- fakesink
+          dotnet run --project samples/GstInspect --no-build
+          dotnet run --project samples/GstInspect --no-build -- fakesink
 
       # Same script as the Linux leg; see the comments there and in the script.
       # The MinGW gst-inspect-1.0 of this leg is 1.28.3 or newer, so the diff
