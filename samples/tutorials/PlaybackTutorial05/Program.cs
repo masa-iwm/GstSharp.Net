@@ -12,10 +12,10 @@
 //
 // Where this port differs from the C original, and why:
 //
-//   * No GMainLoop and no GIOChannel. The loop below polls
-//     the bus with TimedPopFiltered and asks Console.KeyAvailable whether a key
-//     is waiting, which is one program on every operating system rather than
-//     the two the C original needs — g_io_channel_win32_new_fd on Windows and
+//   * No GMainLoop and no GIOChannel. The loop below polls the bus with
+//     TimedPopFiltered and asks Console.KeyAvailable whether a key is waiting,
+//     which is one program on every operating system rather than the two the C
+//     original needs — g_io_channel_win32_new_fd on Windows and
 //     g_io_channel_unix_new everywhere else.
 //
 //   * The pipeline is built with ElementFactory.Make rather than with
@@ -42,10 +42,12 @@
 //     reported PLAYING. A scripted run also checks what it did: the value the
 //     channel is expected to take is computed before the key is applied and
 //     compared with the value the element reports afterwards, and a run where
-//     one of them did not match exits 1. So do the two other ways a script can
-//     move nothing: a scripted key that names a channel the element does not
-//     list, and an end of stream that arrives while keys are still unfed.
-//     Without all that a headless run would print numbers nobody reads.
+//     one of them did not match exits 1. So do the three other ways a script
+//     can move nothing: a key that names a channel the element does not list,
+//     a character that is none of the tutorial's keys at all, and an end of
+//     stream that arrives while keys are still unfed; an empty --keys is
+//     refused as it is written. Without all that a headless run would print
+//     numbers nobody reads.
 //
 //   * --headless is not part of the tutorial. It gives playbin fakesinks so
 //     that the program runs where there is no display and no sound card. The
@@ -284,14 +286,26 @@ internal static class ColorBalance
                     return 0;
                 }
 
-                if (NameOf(key) is string channelName
-                    && !UpdateColorChannel(
+                if (NameOf(key) is string channelName)
+                {
+                    if (!UpdateColorChannel(
                         channelName,
                         char.IsAsciiLetterUpper(key),
                         balance,
                         channels,
                         options.Script is not null))
+                    {
+                        return 1;
+                    }
+                }
+                else if (options.Script is not null)
                 {
+                    // A person who pressed something else is left alone, as
+                    // upstream leaves them. A script is not: a character that
+                    // is neither a channel key nor 'q' moves nothing, which is
+                    // the failure an unattended run is here to catch.
+                    Console.Error.WriteLine(
+                        $"PlaybackTutorial05: '{key}' of --keys is none of the tutorial's keys.");
                     return 1;
                 }
 
@@ -556,6 +570,16 @@ internal static class ColorBalance
 
                     case "--keys":
                         options.Script = Cli.ValueOf(arguments, ref i);
+
+                        if (options.Script.Length == 0)
+                        {
+                            // An empty script feeds nothing and would end at
+                            // EOS with nothing moved and nothing to report.
+                            throw new ArgumentException(
+                                "\"--keys\" needs at least one key.",
+                                nameof(arguments));
+                        }
+
                         break;
 
                     case "--native-path":

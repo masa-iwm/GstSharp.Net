@@ -12,7 +12,7 @@ namespace Gst.Video;
 /// </summary>
 public unsafe partial class ColorBalanceChannel
 {
-    /// <summary>A string containing a descriptive name for this channel</summary>
+    /// <summary>A string containing a descriptive name for this channel.</summary>
     /// <remarks>
     /// <para>
     /// The string is copied out of the instance on every read. The storage
@@ -54,8 +54,8 @@ public unsafe partial class ColorBalanceChannel
 
     /// <summary>The minimum valid value for this channel.</summary>
     /// <remarks>
-    /// The field is written once while the channel is constructed, before the
-    /// channel is reachable from
+    /// Every implementer in GStreamer writes the field once while constructing
+    /// the channel, before the channel is reachable from
     /// <see cref="ColorBalanceExtensions.ListChannels"/>, and a channel from
     /// that list is an interned wrapper that keeps a reference of its own, so
     /// the field stays readable for as long as the wrapper lives; the channel
@@ -75,8 +75,8 @@ public unsafe partial class ColorBalanceChannel
 
     /// <summary>The maximum valid value for this channel.</summary>
     /// <remarks>
-    /// The field is written once while the channel is constructed, before the
-    /// channel is reachable from
+    /// Every implementer in GStreamer writes the field once while constructing
+    /// the channel, before the channel is reachable from
     /// <see cref="ColorBalanceExtensions.ListChannels"/>, and a channel from
     /// that list is an interned wrapper that keeps a reference of its own, so
     /// the field stays readable for as long as the wrapper lives; the channel

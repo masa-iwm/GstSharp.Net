@@ -453,15 +453,16 @@ jobs:
       # sink negotiates. Those two are the only ones of the eighteen that are
       # built and not run; playback 9 is not ported at all.
       #
-      # Playback 5 moves the colour balance of the picture. --keys drives all
-      # eight channel keys — ten presses, one every half second, so the last of
-      # them lands five seconds into a ten second fixture — and quits, and the
-      # port turns each of them into a gate: the value the channel is expected
-      # to take is compared with what playbin reports afterwards, so a run that
-      # moved nothing exits 1, as does a key that matched no channel of the
-      # element and an EOS reached with keys still unfed.
-      # It needs no plugin beyond playbin itself — playsink answers from its
-      # own proxy channels whatever sink is in place.
+      # Playback 5 moves the colour balance of the picture. --keys covers all
+      # eight channel keys in nine presses and then quits, one key every half
+      # second, so the tenth and last of them — the q — lands five seconds into
+      # a ten second fixture. The port turns each press into a gate: the value
+      # the channel is expected to take is compared with what playbin reports
+      # afterwards, so a run that moved nothing exits 1, as does a key that
+      # matched no channel of the element, a character that is none of the
+      # tutorial's keys at all, and an EOS reached with keys still unfed. It
+      # needs no plugin beyond playbin itself — playsink answers from its own
+      # proxy channels whatever sink is in place.
       #
       # Playback 7 puts an equalizer-3bands in front of its audio sink. That
       # element is in gst-plugins-good, which the install step of this job

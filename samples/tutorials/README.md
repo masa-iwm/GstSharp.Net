@@ -111,8 +111,9 @@ the tutorial teaches, and each file says so where it uses them.
   each one into a gate: the value the channel should take is worked out before
   the key is applied and compared with what the element reports afterwards, so
   a scripted run that moved nothing exits 1. So does a scripted key the element
-  has no channel for, and an end of stream that arrives while the script still
-  has keys to feed.
+  has no channel for, a scripted character that is none of the tutorial's keys
+  at all, and an end of stream that arrives while the script still has keys to
+  feed; an empty `--keys` is refused as it is written.
 * `PlaybackTutorial08 --enable <factory>` and `--disable <factory>` apply the
   page's `enable_factory` snippet before anything else runs, as many times as
   they are given and in the order they are written. A name the registry does not
