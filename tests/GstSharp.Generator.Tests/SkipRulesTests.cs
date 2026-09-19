@@ -286,6 +286,7 @@ public sealed class SkipRulesTests
                 "GstPlay.PlayVideoOverlayVideoRenderer:video-sink",
                 "GstRtsp.RTSPWatch",
                 "GstRtsp.RTSPWatchFuncs",
+                "GstRtspServer.RTSPClient::send-message",
                 "GstVideo.VideoGLTextureUpload",
                 "ges_container_ungroup",
                 "ges_deinit",
@@ -478,6 +479,13 @@ public sealed class SkipRulesTests
         // src/GstSharp.Net/Custom; the setter beside them stays skipped,
         // because its destroy notification belongs to whoever stored the
         // pointer and that is native code.
+        // GstRtspServer.RTSPClient::send-message is the one signal of both
+        // lists, and the newest entry of either: the gir types its first
+        // argument as a GstRTSPSession where the C registers and emits a
+        // GstRTSPContext, so the generated event raised on every emission
+        // before the handler was reached. It is skipped and written by hand as
+        // RTSPClient.SendingMessage in
+        // src/GstSharp.Net.RtspServer/Custom/RTSPClientSendingMessage.cs.
         // Gst.Bus:enable-async is the one property of the list. It is
         // construct only and write only, so no accessor of a wrapper can carry
         // it; Bus.New(bool) in src/GstSharp.Net/Custom gives it its value
@@ -503,6 +511,7 @@ public sealed class SkipRulesTests
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
+                "GstRtspServer.RTSPClient::send-message",
                 "ges_asset_extract",
                 "ges_asset_request_async",
                 "ges_asset_request_finish",

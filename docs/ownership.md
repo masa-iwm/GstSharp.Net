@@ -773,8 +773,10 @@ is refused, and a boxed value the emission duplicated takes writes that are
 dropped with the duplicate. `Copy()` it, or read out of it what is needed, to
 keep anything past the handler.
 
-The exception is an argument the overlays mark `borrow`, and it is one today:
-the query of `AppSink.ProposeAllocation`. Such a wrapper **borrows** — no
+The exception is an argument that is **lent** rather than copied, and there are
+two of them today: the query of `AppSink.ProposeAllocation`, which the overlays
+mark `borrow`, and the message of `RTSPClient.SendingMessage`, whose event is
+written by hand. Such a wrapper **borrows** — no
 reference, no copy, the object of the emitter itself — which is what leaves it
 **writable in place**, so that a handler can call `Query.AddAllocationMeta` and
 have the element that sent the query read it back. It is as writable as that
@@ -788,6 +790,21 @@ emission path copies it, *and* the query's sender reads it back —
 which is why an argument that is merely `STATIC_SCOPE`, such as the segment of
 `Aggregator.SamplesSelected`, is left alone: it is the live segment of the
 source pad, and nothing reads it back.
+
+`RTSPClient.SendingMessage` reaches the same shape from the other side. Its
+event is not generated at all: the C registers the signal with
+`(GST_TYPE_RTSP_CONTEXT, G_TYPE_POINTER)` and emits the context of the request
+as its first argument, while the introspection data has called that argument a
+`GstRTSPSession` since 2014 — an upstream documentation bug, worked around in
+this binding while a fix for it is drafted — so a generated event wrapped a stack structure
+as a `GObject` and raised before the handler was reached. The overlays skip the
+signal and the event is hand written beside the generated ones, which is what
+lets its `Message` be lent: the client emits the signal, then writes that very
+message to the connection, so a header the handler adds is a header the peer
+receives. The arguments carry the context as `Ctx`, the way every other
+context carrying signal of the class does, and the `Session` the generated
+shape promised is `[Obsolete]` and answers `Ctx.Session`, which is `null` on a
+request that has no session.
 
 The dynamic path draws the line elsewhere on purpose: `ConnectSignal` borrows
 **every** mini object and boxed argument, because it marshals by `GType` at
@@ -820,8 +837,9 @@ dynamic signal path builds — owns no reference to give, so it raises
 whoever lends it holds the only reference: an in place vfunc lends the value of
 its caller and normally promises exactly that — a base transform running in
 passthrough is the exception, as it calls `transform_ip` on a buffer it did not
-make writable — and so does the `ProposeAllocation` query
-as long as the element that sent it does not share it, while the dynamic signal
+make writable — and so do the `ProposeAllocation` query,
+as long as the element that sent it does not share it, and the
+`SendingMessage` message, which the client owns alone, while the dynamic signal
 path lends the reference or the boxed copy GObject took for the emission, which
 is a second one for every argument but a `STATIC_SCOPE` one, whose emission
 takes no reference of its own — `Copy()` such a value and edit the copy. This

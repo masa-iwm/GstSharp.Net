@@ -183,7 +183,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 5, 3, 0, 1, 0, 25, 17, 0, 4)]
     [InlineData("GstRtsp", 1, 10, 1, 1, 2, 114, 0, 1, 28)]
     [InlineData("GstRtp", 5, 5, 0, 0, 0, 188, 21, 2, 9)]
-    [InlineData("GstRtspServer", 19, 6, 0, 8, 0, 384, 58, 41, 21)]
+    [InlineData("GstRtspServer", 19, 6, 0, 8, 0, 384, 58, 40, 21)]
     [InlineData("GstAllocators", 6, 0, 1, 0, 0, 23, 2, 0, 0)]
     [InlineData("GstTag", 3, 0, 1, 0, 0, 46, 0, 0, 0)]
     [InlineData("GstTranscoder", 2, 0, 0, 0, 3, 26, 9, 6, 0)]
@@ -1035,13 +1035,14 @@ public sealed class ClassEmitterTests
             SourceOf("GstSharp.Net.RtspServer/Generated/RTSPOnvifMediaFactory.cs"),
             StringComparison.Ordinal);
 
-        // The renamed signal and the method whose name it had taken both
-        // stand, and the two send function setters are gone.
+        // The signal the rename was written for is skipped by the overlays
+        // now - the gir names an argument type the C never registered - so
+        // nothing of it is generated and the event is written by hand under
+        // the name the rename decided. The method whose name it had taken
+        // stands, and the two send function setters are gone.
         string client = SourceOf("GstSharp.Net.RtspServer/Generated/RTSPClient.cs");
-        Assert.Contains(
-            "> SendingMessage",
-            client,
-            StringComparison.Ordinal);
+        Assert.DoesNotContain("SendingMessage", client, StringComparison.Ordinal);
+        Assert.DoesNotContain("send-message", client, StringComparison.Ordinal);
         Assert.Contains(
             "public Gst.Rtsp.RTSPResult SendMessage(",
             client,
@@ -1160,7 +1161,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstNet", 0, 0, 1, 0, 0, 0, 0)]
     [InlineData("GstRtsp", 8, 0, 3, 0, 0, 0, 4)]
     [InlineData("GstRtp", 2, 0, 0, 0, 4, 0, 10)]
-    [InlineData("GstRtspServer", 4, 0, 1, 0, 0, 0, 4)]
+    [InlineData("GstRtspServer", 4, 0, 1, 0, 0, 0, 5)]
     [InlineData("GstAllocators", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]

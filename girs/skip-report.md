@@ -921,8 +921,9 @@ disappears shows up here as an added line.
 
 ## GstRtspServer
 
-### HandBound (4)
+### HandBound (5)
 
+- `GstRtspServer.RTSPClient::send-message`
 - `gst_rtsp_media_prepare`
 - `gst_rtsp_session_media_get_transports`
 - `gst_rtsp_thread_pool_get_thread`

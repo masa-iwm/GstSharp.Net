@@ -1682,68 +1682,6 @@ public unsafe partial class RTSPClient : Gst.GObject.Object
         }
     }
 
-    /// <summary>The arguments of the <c>send-message</c> signal of <c>GstRTSPClient</c>.</summary>
-    public sealed class SendingMessageSignalArgs : System.EventArgs
-    {
-        /// <summary>Initializes a new instance of the <see cref="SendingMessageSignalArgs"/> class.</summary>
-        /// <param name="session">The session</param>
-        /// <param name="message">The message</param>
-        internal SendingMessageSignalArgs(Gst.RtspServer.RTSPSession session, Gst.Rtsp.RTSPMessage message)
-        {
-            Session = session;
-            Message = message;
-        }
-
-        /// <summary>The session</summary>
-        public Gst.RtspServer.RTSPSession Session { get; }
-
-        /// <summary>The message</summary>
-        /// <remarks>
-        /// The value is only valid while the handler runs: the wrapper is disposed
-        /// once it returns. Read out of it what is needed, or copy it where the
-        /// type offers a copy.
-        /// </remarks>
-        public Gst.Rtsp.RTSPMessage Message { get; }
-    }
-
-    /// <summary>Raised for the <c>send-message</c> signal of <c>GstRTSPClient</c>.</summary>
-    /// <remarks>
-    /// The handler is remembered on the wrapper it was added to and has to be
-    /// removed from that same instance. Looking the object up again normally
-    /// hands the same wrapper out, but one that was disposed in between is
-    /// replaced by a new one, which knows nothing of the handler.
-    /// </remarks>
-    public event System.EventHandler<Gst.RtspServer.RTSPClient.SendingMessageSignalArgs> SendingMessage
-    {
-        add => Gst.RtspServer.SignalConnections.Add(this, "send-message", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, void>)&SendingMessageTrampoline, value);
-        remove => Gst.RtspServer.SignalConnections.Remove(this, "send-message", value);
-    }
-
-    /// <summary>The native handler of the <c>send-message</c> signal of <c>GstRTSPClient</c>.</summary>
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
-    private static void SendingMessageTrampoline(nint instance, nint session, nint message, nint userData)
-    {
-        try
-        {
-            if (Gst.Interop.CallbackHandle.GetState<System.EventHandler<Gst.RtspServer.RTSPClient.SendingMessageSignalArgs>>(userData) is not { } handler)
-            {
-                return;
-            }
-
-            Gst.RtspServer.RTSPSession sessionValue = Gst.GObject.Object.FromNative<Gst.RtspServer.RTSPSession>(session, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("The send-message signal of GstRTSPClient passed no session.");
-            using Gst.Rtsp.RTSPMessage messageValue = Gst.Rtsp.RTSPMessage.FromNative(message, Gst.Interop.Transfer.None)
-                ?? throw new InvalidOperationException("The send-message signal of GstRTSPClient passed no message.");
-            handler(
-                Gst.GObject.Object.FromNative(instance, Gst.Interop.Transfer.None),
-                new Gst.RtspServer.RTSPClient.SendingMessageSignalArgs(sessionValue, messageValue));
-        }
-        catch (Exception exception)
-        {
-            Gst.Interop.ExceptionTrap.Report(exception);
-        }
-    }
-
     /// <summary>The arguments of the <c>set-parameter-request</c> signal of <c>GstRTSPClient</c>.</summary>
     public sealed class SetParameterRequestSignalArgs : System.EventArgs
     {

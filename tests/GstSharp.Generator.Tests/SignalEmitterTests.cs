@@ -919,7 +919,7 @@ public sealed class SignalEmitterTests
     [InlineData("GstNet", 0)]
     [InlineData("GstRtsp", 1)]
     [InlineData("GstRtp", 2)]
-    [InlineData("GstRtspServer", 41)]
+    [InlineData("GstRtspServer", 40)]
     [InlineData("GstAllocators", 0)]
     [InlineData("GstTag", 0)]
     [InlineData("GstTranscoder", 6)]
@@ -957,8 +957,8 @@ public sealed class SignalEmitterTests
             removers += file.Content.Split("    public static void Remove").Length - 1;
         }
 
-        // A hundred and fifty signals are emitted over the seventeen
-        // modules. A hundred and forty five are events of a class; the
+        // A hundred and forty nine signals are emitted over the seventeen
+        // modules. A hundred and forty four are events of a class; the
         // remaining five belong to a gir interface and are a pair of extension
         // methods instead. The editing services are thirty nine of them:
         // thirty eight events and the one signal of a GES interface,
@@ -976,22 +976,27 @@ public sealed class SignalEmitterTests
         // GstRTPBaseDepayload; the four signals beside them, add-extension and
         // clear-extensions on each of the two classes, carry action="1" and
         // are skipped on that rule, since an action signal is a call API and
-        // not a notification. The forty one of the RTSP server are the
-        // nineteen that carry no GstRTSPContext plus the twenty two signals of
+        // not a notification. The forty of the RTSP server are the
+        // eighteen that carry no GstRTSPContext plus the twenty two signals of
         // GstRTSPClient whose context is copied out of the emission into the
         // arguments; check-requirements is one of them, and the NULL
         // terminated vector of strings beside its context is read out into an
-        // array the handler owns. send-message is the one
-        // whose C# name the method beside it had taken, so the rename of
-        // fixups.json makes the event SendingMessage. The adder and remover counts carry matches that are
+        // array the handler owns. send-message would have been a nineteenth of
+        // the first group, and it is the one signal of the corpus the overlays
+        // skip: the gir types its first argument as a GstRTSPSession where the
+        // C registers and emits a GstRTSPContext, which no annotation can
+        // correct. The event is written by hand in
+        // src/GstSharp.Net.RtspServer/Custom instead, under the name the
+        // rename of fixups.json decided - SendingMessage, because the method
+        // beside it had taken SendMessage. The adder and remover counts carry matches that are
         // not a signal pair at all: Gst.ITagSetter's AddTagValue extension, and
         // the AddAllSchemas, AddSchema, RemoveAllSchemas and RemoveSchema
         // extensions of Gst.Tag.ITagXmpWriter, methods whose names the pattern
         // cannot tell from a subscription adder or remover.
-        Assert.Equal(145, events);
+        Assert.Equal(144, events);
         Assert.Equal(8, adders);
         Assert.Equal(7, removers);
-        Assert.Equal(150, trampolines);
+        Assert.Equal(149, trampolines);
 
         string[] withSignals =
         [
