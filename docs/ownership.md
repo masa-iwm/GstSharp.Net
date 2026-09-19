@@ -376,9 +376,11 @@ Two limits are worth knowing before reading a report:
   dropped afterwards — leaves no weak notification to fire while the wrapper is
   still watching. It is structurally undetectable from here. So is a death that
   lands in the narrow window inside the release itself, after the bookkeeping
-  of the toggle reference is done, or after a `Dispose` has passed the same
-  guard: the notification finds nothing to report, exactly as the removal of a
-  toggle reference has always raced that window.
+  of the toggle reference is done: the notification finds nothing to report,
+  exactly as the removal of a toggle reference has always raced that window. A
+  death that lands after a `Dispose` has passed its guard but before that
+  bookkeeping is reported, but that `Dispose` can no longer be stopped from
+  touching the object.
 
 ## Parameter specifications
 
