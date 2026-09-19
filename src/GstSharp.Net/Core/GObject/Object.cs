@@ -105,6 +105,7 @@ public partial class Object : IDisposable
     private ToggleRef? _toggleRef;
     private List<ulong>? _handlers;
     private int _disposed;
+    private int _nativeDestroyed;
 
     /// <summary>
     /// Wraps a native <c>GObject</c> and takes part in its lifetime.
@@ -276,10 +277,25 @@ public partial class Object : IDisposable
     /// <summary>
     /// Gets the native <c>GObject</c>.
     /// </summary>
+    /// <remarks>
+    /// The wrapper of an object that died underneath it — which only the
+    /// over-unref detector can see, see
+    /// <see cref="OverUnrefDetector"/> — throws as well, and says so: the
+    /// handle it carries points at freed memory and handing it out would turn
+    /// a reported defect into a crash somewhere else.
+    /// </remarks>
     public nint Handle
     {
         get
         {
+            if (Volatile.Read(ref _nativeDestroyed) != 0)
+            {
+                throw new ObjectDisposedException(
+                    GetType().FullName,
+                    "The native object was destroyed underneath this wrapper: something dropped a reference " +
+                    "it did not own (over-unref). The handle of this wrapper points at freed memory.");
+            }
+
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             return _handle;
         }
@@ -290,10 +306,17 @@ public partial class Object : IDisposable
     /// the lifetime of the object.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The flag is set by <see cref="Dispose()"/> and by the finalizer, and the
     /// release of the native object follows it: a wrapper can be disposed while
     /// its release is still queued. <see cref="FromNative(nint, Transfer)"/>
     /// therefore never hands a disposed wrapper out, it builds a fresh one.
+    /// </para>
+    /// <para>
+    /// A wrapper whose object died underneath it reads as disposed too, from
+    /// the moment the over-unref detector sees the death: it has nothing left
+    /// to give up.
+    /// </para>
     /// </remarks>
     public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 
@@ -1213,6 +1236,22 @@ public partial class Object : IDisposable
     }
 
     /// <summary>
+    /// Marks this wrapper as one whose object died underneath it.
+    /// </summary>
+    /// <remarks>
+    /// Only the weak notification of the over-unref detector gets here, and
+    /// only with the interning lock held. The disposed flag is set along with
+    /// the death: there is nothing left to give up, the toggle reference is
+    /// released already, and both <see cref="Dispose(bool)"/> and the finalizer
+    /// stop at the flag without calling anything on the corpse.
+    /// </remarks>
+    private void MarkNativeDestroyed()
+    {
+        Volatile.Write(ref _nativeDestroyed, 1);
+        Interlocked.Exchange(ref _disposed, 1);
+    }
+
+    /// <summary>
     /// Stops this wrapper halfway through <see cref="Dispose()"/>: the flag is
     /// set, and the toggle reference is still installed and still interned.
     /// </summary>
@@ -1423,9 +1462,21 @@ public partial class Object : IDisposable
                 }
 
                 // Both removals are by key and value, as in Release: a fresh
-                // wrapper of the same object may hold the entry by now.
+                // wrapper of the same object may hold the entry by now. Taking
+                // the entry out is also what keeps a later object that reuses
+                // this address from resolving to the dead wrapper.
                 Wrappers.TryRemove(new KeyValuePair<nint, ToggleRef>(instance, toggleRef));
                 ToggleRefs.TryRemove(new KeyValuePair<nint, ToggleRef>(userData, toggleRef));
+
+                if (toggleRef.TryGetTarget(out Object wrapper))
+                {
+                    // The wrapper outlives its object, and everything it can
+                    // still be asked dereferences freed memory. It is marked
+                    // dead here so that Handle throws instead of handing the
+                    // dangling pointer out, and so that a Dispose, or the
+                    // finalizer, stops before it touches the corpse.
+                    wrapper.MarkNativeDestroyed();
+                }
             }
 
             string details =
