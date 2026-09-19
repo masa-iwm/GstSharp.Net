@@ -311,6 +311,7 @@ numbering kept:
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 | `PlaybackTutorial01` | [Playbin usage](https://gstreamer.freedesktop.org/documentation/tutorials/playback/playbin-usage.html) | `playbin`, its flags, its stream counts, its tag signals |
 | `PlaybackTutorial02` | [Subtitle management](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | `suburi`, the text flag, choosing a subtitle stream |
+| `PlaybackTutorial03` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | `appsrc://`, `source-setup`, `AudioInfo` caps, feeding playbin |
 | `PlaybackTutorial04` | [Progressive streaming](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | the download flag, buffering ranges, `deep-notify` |
 | `PlaybackTutorial06` | [Audio visualization](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | a registry feature filter, factory metadata, `vis-plugin` |
 | `PlaybackTutorial08` | [Hardware-accelerated video decoding](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | plugin feature ranks, the decoder list, walking a bin |

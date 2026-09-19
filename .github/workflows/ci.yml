@@ -494,6 +494,7 @@ jobs:
           dotnet run --project samples/tutorials/BasicTutorial13 --no-restore -- --headless --keys SsPNNPDq tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial01 --no-restore -- --headless --keys 1 tutorial-multitrack.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial02 --no-restore -- --headless --keys 0 tutorial-multitrack.ogg tutorial-subs.srt
+          dotnet run --project samples/tutorials/PlaybackTutorial03 --no-restore -- --headless --chunks 200
           dotnet run --project samples/tutorials/PlaybackTutorial04 --no-restore -- --headless http://127.0.0.1:8765/tutorial-media.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial06 --no-restore -- --headless tutorial-audio.ogg
           dotnet run --project samples/tutorials/PlaybackTutorial08 --no-restore -- --headless --enable theoradec tutorial-media.ogg

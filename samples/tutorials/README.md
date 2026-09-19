@@ -25,13 +25,14 @@ said here.
 | `BasicTutorial12` | [Streaming](https://gstreamer.freedesktop.org/documentation/tutorials/basic/streaming.html) | buffering, a live source, a lost clock |
 | `BasicTutorial13` | [Playback speed](https://gstreamer.freedesktop.org/documentation/tutorials/basic/playback-speed.html) | seek events with a rate, reverse playback, step events |
 
-The playback tutorials are a second series, and five of them are here as
+The playback tutorials are a second series, and six of them are here as
 well:
 
 | Project | Upstream page | What it teaches |
 | --- | --- | --- |
 | `PlaybackTutorial01` | [Playbin usage](https://gstreamer.freedesktop.org/documentation/tutorials/playback/playbin-usage.html) | `playbin`, its flags, its stream counts, its tag signals |
 | `PlaybackTutorial02` | [Subtitle management](https://gstreamer.freedesktop.org/documentation/tutorials/playback/subtitle-management.html) | `suburi`, the text flag, choosing a subtitle stream |
+| `PlaybackTutorial03` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | `appsrc://`, `source-setup`, `AudioInfo` caps, feeding playbin |
 | `PlaybackTutorial04` | [Progressive streaming](https://gstreamer.freedesktop.org/documentation/tutorials/playback/progressive-streaming.html) | the download flag, buffering ranges, `deep-notify` |
 | `PlaybackTutorial06` | [Audio visualization](https://gstreamer.freedesktop.org/documentation/tutorials/playback/audio-visualization.html) | a registry feature filter, factory metadata, `vis-plugin` |
 | `PlaybackTutorial08` | [Hardware-accelerated video decoding](https://gstreamer.freedesktop.org/documentation/tutorials/playback/hardware-accelerated-video-decoding.html) | plugin feature ranks, the decoder list, walking a bin |
@@ -42,12 +43,12 @@ Of the basic tutorials, 5 needs a window and a widget toolkit, 10, 11 and 14
 have no code upstream, and 15 is Clutter, which is gone. Every basic tutorial
 that has code and does not need a window is here.
 
-Four of the nine playback tutorials are still missing, each for a reason of its
-own:
+Three of the nine playback tutorials are missing, and that list is final: each
+of them needs hardware this tree cannot offer, or has no code upstream to port,
+so nothing here is only waiting to be written.
 
 | Tutorial | What it is about | Why it is not here |
 | --- | --- | --- |
-| [Playback 3](https://gstreamer.freedesktop.org/documentation/tutorials/playback/short-cutting-the-pipeline.html) | Short-cutting the pipeline | not ported yet; it is an `appsrc` inside a playbin |
 | [Playback 5](https://gstreamer.freedesktop.org/documentation/tutorials/playback/color-balance.html) | Color Balance | needs a real video sink, so it cannot run headless in this tree |
 | [Playback 7](https://gstreamer.freedesktop.org/documentation/tutorials/playback/custom-playbin-sinks.html) | Custom playbin sinks | needs a real video sink, so it cannot run headless in this tree |
 | [Playback 9](https://gstreamer.freedesktop.org/documentation/tutorials/playback/digital-audio-pass-through.html) | Digital audio pass-through | no example code upstream, and it needs pass-through hardware |
@@ -112,10 +113,11 @@ the tutorial teaches, and each file says so where it uses them.
   have exits 1 rather than returning silently as the snippet does.
 * `BasicTutorial04 --seek-at` / `--seek-to` move
   the two thresholds of the C original, so that a short local file can be used
-  instead of the 52 second trailer. `BasicTutorial07 --buffers` and
-  `BasicTutorial08 --chunks` say how many buffers to produce, or to push,
-  before ending the stream; giving either one bounds the run on its own, so a
-  run that does open its windows can be bounded too.
+  instead of the 52 second trailer. `BasicTutorial07 --buffers` and the
+  `--chunks` of `BasicTutorial08` and `PlaybackTutorial03` say how many buffers
+  to produce, or to push, before ending the stream; giving any one of them
+  bounds the run on its own, so a run that does open its windows can be bounded
+  too.
 
 ## The two `#ifdef`s of the C originals
 
@@ -160,11 +162,11 @@ not.
 
 ## Which of them CI runs
 
-All fifteen are built on every CI leg, which is the point of putting them in
+All sixteen are built on every CI leg, which is the point of putting them in
 the solution: a rename anywhere in the generated surface breaks a tutorial
 visibly.
 
-Thirteen are also *run*, on both Linux legs — x64 and arm64 — because those
+Fourteen are also *run*, on both Linux legs — x64 and arm64 — because those
 have the richest plugin set and no GUI. The `GstLaunch` sample encodes the
 fixtures in the same step, so the media is made on the spot rather than
 fetched:
@@ -198,8 +200,12 @@ ends, whether or not a gate failed.
 
 Two are only built. Basic 1's default media is an https URI and nothing local
 would be the tutorial; basic 6's interesting output is the caps a real audio
-sink negotiates, which a fakesink cannot show. Playback 3, 5, 7 and 9 are not
+sink negotiates, which a fakesink cannot show. Playback 5, 7 and 9 are not
 ported.
+
+Playback 3 is given no file either, and needs none: it generates its waveform
+in the process and pushes it into the `appsrc` that playbin builds for
+`appsrc://`, so `--headless --chunks 200` is the whole run.
 
 `wavescope`, which both tee tutorials draw with, is in `gst-plugins-bad`. The
 Linux leg installs `gstreamer1.0-plugins-bad` — it needs it for `webrtcbin` —
