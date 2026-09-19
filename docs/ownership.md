@@ -339,9 +339,10 @@ once, so setting it from inside the process is too late. Every wrapper then
 installs a weak notification next to its toggle reference. The notification runs inside the
 unref that killed the object, while the instance can still be read, and reports
 an `InvalidOperationException` through `Gst.Interop.ExceptionTrap` naming the
-native type, the wrapper type, the handle, and the managed stack the wrapper
-was built on. Combine it with `GSTSHARP_FAILFAST=1` to stop the process on the
-first report.
+native type, the wrapper type, the handle, the managed stack the wrapper was
+built on (`Wrapper constructed at`) and the managed stack of the unref that
+killed the object (`Object destroyed at`). Combine it with
+`GSTSHARP_FAILFAST=1` to stop the process on the first report.
 
 The wrapper itself is fenced off at the same moment: it reads as disposed, its
 `Handle` throws an `ObjectDisposedException` that says the object was destroyed
@@ -356,7 +357,8 @@ option read at the end of the initialisation would miss.
 What it costs while it is on: one extra native call when a wrapper is built
 (`g_object_weak_ref`), one when it is released (`g_object_weak_unref`), and one
 captured managed stack per live wrapper. That is why it is off by default, and
-off costs nothing at all: nothing is installed and nothing is captured.
+off costs no native call, no capture, no allocation: nothing is installed and
+nothing is captured.
 
 Two limits are worth knowing before reading a report:
 
@@ -364,11 +366,19 @@ Two limits are worth knowing before reading a report:
   object that stays alive, and the detector cannot tell that from a death.
   Inside GStreamer itself there is one such call, on the fence cache a Vulkan
   device owns (`gst-libs/gst/vulkan/gstvkdevice.c`), so a report naming an
-  object the Vulkan backend owns may be this rather than a defect.
+  object the Vulkan backend owns may be this rather than a defect. The wrapper
+  is fenced off all the same, although its object is alive: its toggle
+  reference is never removed, so the object is leaked, and a later lookup of
+  the same object builds a second wrapper. The detector is a diagnostic run,
+  not a mode to ship.
 * **What it cannot see.** The opposite defect — the binding releases its
   reference first and the object dies later, of a reference somebody else
   dropped afterwards — leaves no weak notification to fire while the wrapper is
-  still watching. It is structurally undetectable from here.
+  still watching. It is structurally undetectable from here. So is a death that
+  lands in the narrow window inside the release itself, after the bookkeeping
+  of the toggle reference is done, or after a `Dispose` has passed the same
+  guard: the notification finds nothing to report, exactly as the removal of a
+  toggle reference has always raced that window.
 
 ## Parameter specifications
 

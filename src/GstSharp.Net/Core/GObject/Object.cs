@@ -288,14 +288,7 @@ public partial class Object : IDisposable
     {
         get
         {
-            if (Volatile.Read(ref _nativeDestroyed) != 0)
-            {
-                throw new ObjectDisposedException(
-                    GetType().FullName,
-                    "The native object was destroyed underneath this wrapper: something dropped a reference " +
-                    "it did not own (over-unref). The handle of this wrapper points at freed memory.");
-            }
-
+            ThrowIfNativeDestroyed();
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             return _handle;
         }
@@ -323,7 +316,20 @@ public partial class Object : IDisposable
     /// <summary>
     /// Gets the type of the wrapped instance.
     /// </summary>
-    public GType NativeType => TypeRegistry.GetInstanceType(_handle);
+    /// <remarks>
+    /// Reading the type dereferences the instance, so the wrapper of an object
+    /// that died underneath it — which only the over-unref detector can see,
+    /// see <see cref="OverUnrefDetector"/> — refuses, the same way
+    /// <see cref="Handle"/> does.
+    /// </remarks>
+    public GType NativeType
+    {
+        get
+        {
+            ThrowIfNativeDestroyed();
+            return TypeRegistry.GetInstanceType(_handle);
+        }
+    }
 
     /// <summary>
     /// Casts to a GObject interface that the native instance implements but
@@ -1252,6 +1258,24 @@ public partial class Object : IDisposable
     }
 
     /// <summary>
+    /// Refuses every member that dereferences the instance once the object has
+    /// died underneath this wrapper.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">
+    /// The over-unref detector saw the object die.
+    /// </exception>
+    private void ThrowIfNativeDestroyed()
+    {
+        if (Volatile.Read(ref _nativeDestroyed) != 0)
+        {
+            throw new ObjectDisposedException(
+                GetType().FullName,
+                "The native object was destroyed underneath this wrapper: something dropped a reference " +
+                "it did not own (over-unref). The handle of this wrapper points at freed memory.");
+        }
+    }
+
+    /// <summary>
     /// Stops this wrapper halfway through <see cref="Dispose()"/>: the flag is
     /// set, and the toggle reference is still installed and still interned.
     /// </summary>
@@ -1273,8 +1297,12 @@ public partial class Object : IDisposable
     internal void CompleteInterruptedDispose()
     {
         ToggleRef? toggleRef = Interlocked.Exchange(ref _toggleRef, null);
-        if (toggleRef is not null)
+        if (toggleRef is not null && !toggleRef.IsReleased)
         {
+            // The same guard Dispose(bool) uses: a toggle reference the weak
+            // notification has released already belongs to an object that died
+            // underneath this wrapper, and disconnecting a handler on it would
+            // dereference a corpse.
             DisconnectAll();
             Release(_handle, toggleRef);
         }
@@ -1328,10 +1356,12 @@ public partial class Object : IDisposable
         if (toggleRef.IsWatched)
         {
             // The weak reference is removed only by the wrapper that installed
-            // it, whatever the detector says by now. The object is alive here
-            // by construction: a death before this point would have run
-            // WeakNotify, which marks the toggle reference released, so this
-            // call would have returned above.
+            // it, whatever the detector says by now. A death before the
+            // bookkeeping above would have run WeakNotify, which marks the
+            // toggle reference released, so this call would have returned
+            // there; a death between the bookkeeping and this call is not
+            // observed, as it never was for the removal of the toggle
+            // reference below.
             GObjectNative.ObjectWeakUnref(handle, &WeakNotify, toggleRef.UserData);
         }
 

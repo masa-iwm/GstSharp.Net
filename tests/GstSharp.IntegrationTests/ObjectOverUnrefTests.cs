@@ -70,6 +70,7 @@ public sealed partial class ObjectOverUnrefTests
         Assert.True(element.IsDisposed);
         ObjectDisposedException refused = Assert.Throws<ObjectDisposedException>(() => element.Handle);
         Assert.Contains("destroyed underneath", refused.Message, StringComparison.Ordinal);
+        Assert.Throws<ObjectDisposedException>(() => element.NativeType);
         Assert.Null(Gst.GObject.Object.TryGetInterned(handle));
         Assert.False(Gst.GObject.Object.HasDisposedInterned(handle));
 
@@ -168,9 +169,17 @@ public sealed partial class ObjectOverUnrefTests
         Assert.Equal(handle, element.Handle);
 
         // The release removes the toggle reference only — removing a weak
-        // reference that was never installed would warn in GLib and would say
-        // the detector charges for itself while it is off.
-        element.Dispose();
+        // reference that was never installed makes GLib log a critical
+        // ("couldn't find weak ref"), which is what the capture below watches
+        // for: it would say the detector charges for itself while it is off.
+        IReadOnlyList<string> logged = InitializeLogProbe.CaptureWhile(element.Dispose);
+
+        if (InitializeLogProbe.IsInstalled)
+        {
+            Assert.DoesNotContain(
+                logged,
+                message => message.Contains("weak ref", StringComparison.Ordinal));
+        }
 
         lock (failures)
         {
@@ -179,15 +188,19 @@ public sealed partial class ObjectOverUnrefTests
     }
 
     /// <summary>
-    /// A wrapper that was built while the switch was on removes its weak
-    /// reference when it is released, whatever the switch says by then. Turning
-    /// the detector off in between must not leave one behind, and a wrapper
-    /// built while it was off must not remove one that was never installed —
-    /// GLib warns about either, and the trap would carry nothing about it, so
-    /// the ordinary release of a watched wrapper is walked here end to end.
+    /// A wrapper that was built while the switch was on releases without a
+    /// report once the switch is off: whether the weak reference is removed is
+    /// the wrapper's own decision, taken per wrapper, and the switch does not
+    /// speak for it any more. What this walks end to end is that decision and
+    /// the import behind it — that <c>g_object_weak_unref</c> binds and returns
+    /// when it is reached, and that the ordinary death of the object is not
+    /// reported. That the removal is paired with the install is by
+    /// construction: a weak reference left behind would fire into a
+    /// notification whose bookkeeping is gone, which returns silently and logs
+    /// nothing, so no test can observe it without a product seam.
     /// </summary>
     [Fact]
-    public void AWatchedWrapperTakesItsWeakReferenceBackWhenItIsReleased()
+    public void AWatchedWrapperReleasesWithoutAReportOnceTheSwitchIsOff()
     {
         List<Exception> failures = [];
         using FailureLog log = new(failures);
@@ -245,8 +258,15 @@ public sealed partial class ObjectOverUnrefTests
     private static partial void RawRunDispose(nint instance);
 
     /// <summary>
-    /// Collects what the exception trap reports for as long as it is alive.
+    /// Collects what the exception trap reports about an over-unref for as long
+    /// as it is alive.
     /// </summary>
+    /// <remarks>
+    /// The trap is process-wide, so an unrelated report — from the finalizer
+    /// thread, or from an idle drain another test of this collection left
+    /// behind — would land here too and make both the single and the empty
+    /// assertions flaky. Only the report this suite is about is kept.
+    /// </remarks>
     private sealed class FailureLog : IDisposable
     {
         private readonly List<Exception> _failures;
@@ -261,6 +281,11 @@ public sealed partial class ObjectOverUnrefTests
 
         private void OnFailure(Exception exception)
         {
+            if (!exception.Message.Contains("over-unref", StringComparison.Ordinal))
+            {
+                return;
+            }
+
             lock (_failures)
             {
                 _failures.Add(exception);
