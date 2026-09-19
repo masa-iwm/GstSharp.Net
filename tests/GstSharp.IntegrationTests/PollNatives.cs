@@ -7,9 +7,10 @@ namespace GstSharp.IntegrationTests;
 /// binding does not offer.
 /// </summary>
 /// <remarks>
-/// <c>gst_poll_new</c> and <c>gst_poll_new_timer</c> are not introspectable, so
-/// no managed code can build a <c>GstPoll</c>; the tests import the constructor
-/// and wrap what it answers. <c>gst_poll_get_read_gpollfd</c> is imported a
+/// <c>gst_poll_new</c> is bound by hand as <c>Gst.Poll.New</c>, which is what
+/// the tests of the binding use; the width probe imports it here instead,
+/// because what it measures is the block the library writes into and it holds
+/// the raw handle to do so. <c>gst_poll_get_read_gpollfd</c> is imported a
 /// second time here, beside the member that binds it, so that the width probe
 /// can watch the library write into a block of its own and check where the
 /// bytes landed.

@@ -75,10 +75,7 @@ public sealed class PollFDTests
     [Fact]
     public void TheDescriptorOfAPollSetIsFilledByTheLibrary()
     {
-        nint handle = PollNatives.New(1);
-        Assert.NotEqual(nint.Zero, handle);
-
-        Poll set = Assert.IsType<Poll>(Poll.FromNative(handle));
+        Poll set = Poll.New(controllable: true);
         try
         {
             Gst.GLib.PollFD fd = set.GetReadGpollfd();

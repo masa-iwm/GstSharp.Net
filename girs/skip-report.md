@@ -80,7 +80,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (69)
+### HandBound (71)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_copy`
@@ -138,6 +138,8 @@ disappears shows up here as an added line.
 - `gst_param_spec_array`
 - `gst_param_spec_fraction`
 - `gst_poll_get_read_gpollfd`
+- `gst_poll_new`
+- `gst_poll_new_timer`
 - `gst_promise_reply`
 - `gst_query_copy`
 - `gst_query_new_custom`
@@ -282,7 +284,7 @@ disappears shows up here as an added line.
 - `gst_sample_is_writable`
 - `gst_tag_list_is_writable`
 
-### NotIntrospectable (112)
+### NotIntrospectable (110)
 
 - `gst_buffer_is_writable`
 - `gst_buffer_list_ref`
@@ -367,8 +369,6 @@ disappears shows up here as an added line.
 - `gst_pad_create_stream_id_printf_valist`
 - `gst_pipeline_get_clock`
 - `gst_pipeline_set_clock`
-- `gst_poll_new`
-- `gst_poll_new_timer`
 - `gst_query_replace`
 - `gst_query_steal`
 - `gst_query_unref`

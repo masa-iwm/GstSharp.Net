@@ -608,6 +608,8 @@ public sealed class SkipRulesTests
                 "gst_play_visualizations_free",
                 "gst_play_visualizations_get",
                 "gst_poll_get_read_gpollfd",
+                "gst_poll_new",
+                "gst_poll_new_timer",
                 "gst_promise_reply",
                 "gst_query_copy",
                 "gst_query_new_custom",
