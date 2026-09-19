@@ -53,7 +53,7 @@ status=0
 
 for element in fakesink identity videotestsrc capsfilter multiqueue input-selector; do
   gst-inspect-1.0 --no-colors "$element" | tr -d '\r' > "$pages/expected-$element.txt"
-  dotnet run --project samples/GstInspect --no-restore --no-build -- "$element" \
+  dotnet run --project samples/GstInspect --no-build -- "$element" \
     | tr -d '\r' > "$pages/actual-$element.txt"
   if ! diff -u "$pages/expected-$element.txt" "$pages/actual-$element.txt"; then
     echo "::error::gst-inspect-1.0 and samples/GstInspect disagree about $element"

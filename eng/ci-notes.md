@@ -393,7 +393,16 @@ then packs and pushes.
   matrix — and so does a tag pushed together with its commit, because `main`'s
   run is then still in flight rather than successful. Any failure of the query
   itself also answers `false`; the worst outcome is the matrix that used to
-  run unconditionally.
+  run unconditionally. If the `ci-status` **job** dies instead — an
+  infrastructure failure, or its five minute cap — `ci` and `pack` are both
+  skipped and the tag's workflow has to be re-run: the gate is "`ci-status`
+  succeeded and said something", not "said nothing, so publish".
+* The reused run has no age bound. A tag put on an old `main` commit reuses
+  gates that ran against the runner images and the distribution packages of
+  that day. That is acceptable because the packages are managed-only — nothing
+  in them is compiled against the native library — and when today's
+  environment is wanted, running `ci.yml` by hand on the commit before tagging
+  it is the way out.
 * The version comes from the tag and only from the tag:
   `v1.28.0-preview.1` -> `-p:Version=1.28.0-preview.1`. A tag that is not a
   version fails the job before anything is built.

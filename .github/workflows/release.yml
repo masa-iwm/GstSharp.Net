@@ -1,6 +1,7 @@
 # Tag -> pack -> GitHub Packages -> GitHub Release.
 #
-# Pushing a tag such as v1.28.0-preview.1 runs the whole CI matrix first and
+# Pushing a tag such as v1.28.0-preview.1 runs the whole CI matrix first -
+# unless the tagged commit is already green on main, see the ci-status job -
 # then publishes every package of the set under the version the tag names,
 # and finally cuts the GitHub release of the tag with the packages attached.
 # Nothing is published from a branch: the tag is the only trigger.
@@ -40,8 +41,19 @@ jobs:
   # missed optimization.
   #
   # Every failure mode of the query itself - a network error, a rate limit, an
-  # unexpected body - is also false. The job never fails for it; the cost of
+  # unexpected body - is also false. The step never fails for it; the cost of
   # being wrong here is running the matrix that used to run unconditionally.
+  # If the job as a whole dies, though - infrastructure, or the five minute
+  # cap - then ci and pack are both skipped and the tag's workflow has to be
+  # re-run: the gate is deliberately "ci-status succeeded and said something",
+  # not "ci-status said nothing, so publish".
+  #
+  # The reused run carries no age bound. A tag put on an old main commit
+  # reuses gates that ran against the runner images and the distribution
+  # packages of that day, which is acceptable here because the packages are
+  # managed only - nothing in them is built against the native library - and
+  # because a maintainer who does want today's environment can run ci.yml by
+  # hand on the commit before tagging it.
   ci-status:
     name: is this commit already green on main?
     runs-on: ubuntu-latest
@@ -61,15 +73,18 @@ jobs:
         run: |
           green=false
           url=""
-          if body=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${{ github.sha }}&branch=main&event=push&status=success&per_page=1" 2>&1); then
+          # No 2>&1 on the call: gh writes its diagnostics to stderr, the
+          # runner puts them on the log by itself, and folding them into the
+          # body would only make jq fail and turn a green answer into false.
+          # Assigning inside an if keeps errexit from killing the step.
+          if body=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${{ github.sha }}&branch=main&event=push&status=success&per_page=1"); then
             total=$(printf '%s' "$body" | jq -r '.total_count // 0' 2>/dev/null || echo 0)
             if [[ "$total" =~ ^[0-9]+$ ]] && [[ "$total" -ge 1 ]]; then
               green=true
               url=$(printf '%s' "$body" | jq -r '.workflow_runs[0].html_url // ""' 2>/dev/null || echo "")
             fi
           else
-            echo "The query failed; assuming the matrix has to run."
-            printf '%s\n' "$body"
+            echo "The query failed (its error is above); assuming the matrix has to run."
           fi
           echo "green=$green" >> "$GITHUB_OUTPUT"
           if [[ "$green" == "true" ]]; then
