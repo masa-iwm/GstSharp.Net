@@ -198,14 +198,14 @@ which makes souphttpsrc — seekable by its own account, and asked to seek to th
 end by oggdemux — fail the run at exactly 100% buffering. The server is killed when the step
 ends, whether or not a gate failed.
 
+Playback 3 is given no file either, and needs none: it generates its waveform
+in the process and pushes it into the `appsrc` that playbin builds for
+`appsrc://`, so `--headless --chunks 200` is the whole run.
+
 Two are only built. Basic 1's default media is an https URI and nothing local
 would be the tutorial; basic 6's interesting output is the caps a real audio
 sink negotiates, which a fakesink cannot show. Playback 5, 7 and 9 are not
 ported.
-
-Playback 3 is given no file either, and needs none: it generates its waveform
-in the process and pushes it into the `appsrc` that playbin builds for
-`appsrc://`, so `--headless --chunks 200` is the whole run.
 
 `wavescope`, which both tee tutorials draw with, is in `gst-plugins-bad`. The
 Linux leg installs `gstreamer1.0-plugins-bad` — it needs it for `webrtcbin` —

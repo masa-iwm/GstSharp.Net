@@ -413,8 +413,8 @@ jobs:
       - name: AppSrcPush
         run: dotnet run --project samples/AppSrcPush --no-restore -- --buffers 200 --output appsrc-push.raw
 
-      # The ported GStreamer tutorials. All fifteen are built by the solution on
-      # every leg; these thirteen are the ones that can also run, and they run
+      # The ported GStreamer tutorials. All sixteen are built by the solution on
+      # every leg; these fourteen are the ones that can also run, and they run
       # on both Linux legs rather than anywhere else because those have the
       # richest plugin set and no GUI to tempt them.
       #
@@ -429,7 +429,8 @@ jobs:
       # what basic tutorial 3 needs to have a pad to ignore, basic 4 and 13 need
       # to have something to seek in, and basic 9 needs to have a topology to
       # walk. theoraenc, vorbisenc and oggmux are all in gst-plugins-base, which
-      # this job installs.
+      # this job installs. Playback 3 takes no fixture: it generates what it
+      # plays and pushes it into the appsrc that playbin builds for appsrc://.
       #
       # Basic tutorial 9 takes no --headless: it builds no sink at all, only a
       # discoverer, and its gate is its own exit code — a URI that was not
@@ -440,10 +441,10 @@ jobs:
       #
       # Not run: basic tutorial 1, whose default media is an https URI, and
       # basic tutorial 6, whose interesting output is the caps a real audio
-      # sink negotiates. Those two are the only ones of the fifteen that are
-      # built and not run; playback 3, 5, 7 and 9 are not ported at all.
+      # sink negotiates. Those two are the only ones of the sixteen that are
+      # built and not run; playback 5, 7 and 9 are not ported at all.
       #
-      # Fifteen tutorials are built on every leg; thirteen are run here, on
+      # Sixteen tutorials are built on every leg; fourteen are run here, on
       # both Linux legs. Three extra fixtures are made alongside the one above:
       # tutorial-multitrack.ogg carries two Vorbis streams so that playback 1
       # and 2 have something to choose between, tutorial-audio.ogg carries no

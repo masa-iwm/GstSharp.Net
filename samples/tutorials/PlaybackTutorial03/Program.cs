@@ -22,13 +22,22 @@
 //     the application's own loop, which is the shape docs/ownership.md argues
 //     for, and it is what BasicTutorial08 does with the same waveform.
 //
+//   * The C idle source starts pushing again the moment need-data is emitted;
+//     here the loop is inside a 50 ms bus poll when the flag goes back up, so
+//     a refill can start up to 50 ms late. On the audible path playsink's own
+//     queue and the ring buffer of the audio sink — 200 ms by default — are
+//     deeper than that, so nothing is heard of it.
+//
 //   * source-setup is a signal of playbin, an element of the playback plugin
 //     that no .gir describes, so there is no generated event for it. It is
 //     connected by name with Object.ConnectSignal, which is the machinery a
 //     generated event is built on; the element it carries arrives as the
-//     wrapper its GType is registered for, which is Gst.App.AppSrc once
-//     GstApp.Initialize has run. Initialising that module before connecting is
-//     therefore not optional — see the remarks on DynamicSignalHandler.
+//     wrapper its GType is registered for, which is Gst.App.AppSrc only once
+//     the GstApp module is in the type registry. GstSharp.Initialize sweeps the
+//     assemblies that are loaded and runs their module initialisers, so this
+//     one would be registered anyway; calling GstApp.Initialize is the
+//     deterministic way to say it rather than the only way — see the remarks
+//     on Gst.App.GstApp.
 //
 //   * The C emits the push-buffer action signal. AppSrc.PushBuffer is the same
 //     call without the emission, and it consumes the buffer: after it the
@@ -80,12 +89,15 @@ internal static class ShortCutting
         {
             Options options = Options.Parse(arguments);
 
-            // Both modules have to be initialised before the signal below is
-            // connected: GstApp puts GstAppSrc into the type registry, which is
-            // what makes the element the signal carries arrive as an AppSrc
-            // rather than a plain Element, and GstAudio is where AudioInfo
-            // lives. Each call initialises the binding as a whole, so the
-            // loader options are given once.
+            // GstAppSrc has to be in the type registry before the signal below
+            // is connected, or the element the signal carries arrives as a
+            // plain Element rather than as an AppSrc. The first call already
+            // covers that — it runs the module initialiser of every binding
+            // assembly that is loaded, GstApp included — and the second one
+            // names the module this file depends on instead of relying on the
+            // sweep. Both calls initialise the binding as a whole, which is why
+            // the loader options are given once: a later call with no options
+            // cannot contradict the first.
             GstAudio.Initialize(options.Native);
             GstApp.Initialize();
             ExceptionTrap.UnhandledException += OnCallbackFailure;
@@ -188,6 +200,15 @@ internal static class ShortCutting
 
             while (elapsed.Elapsed < options.Timeout)
             {
+                if (feeder.Failed)
+                {
+                    // Nothing will ever be pushed, so waiting for the bound to
+                    // elapse would only make the failure slower.
+                    Console.Error.WriteLine(
+                        "PlaybackTutorial03: playbin did not hand over an appsrc.");
+                    return 1;
+                }
+
                 // The idle handler of the C program, inlined into the loop the
                 // application owns. There is nothing to push until playbin has
                 // built its source, and nothing to push after the source says
@@ -209,7 +230,15 @@ internal static class ShortCutting
                 {
                     // Nothing else will come, and this is what turns that into
                     // the end-of-stream message the loop is waiting for.
-                    finished.EndOfStream();
+                    FlowReturn end = finished.EndOfStream();
+
+                    if (end != FlowReturn.Ok)
+                    {
+                        Console.Error.WriteLine(
+                            $"PlaybackTutorial03: the end of the stream was answered with {end}.");
+                        return 1;
+                    }
+
                     ended = true;
                 }
 
@@ -219,6 +248,21 @@ internal static class ShortCutting
 
                 if (message is null)
                 {
+                    // The flag is advisory. enough-data is emitted on this
+                    // thread from inside PushBuffer and need-data on a
+                    // streaming thread, and appsrc asks only once per empty
+                    // queue: a need-data that arrives while the flag is still
+                    // up, just before it is lowered, is therefore lost and
+                    // nothing would ask again. A source that has already been
+                    // fed and holds nothing is hungry whatever the flag says.
+                    if (!feeder.Hungry &&
+                        pushed > 0 &&
+                        pushed < options.Chunks &&
+                        feeder.Source is { CurrentLevelBytes: 0 })
+                    {
+                        feeder.Resume();
+                    }
+
                     GstSharp.DrainPendingReleases();
                     continue;
                 }
@@ -310,6 +354,7 @@ internal static class ShortCutting
     {
         private volatile AppSrc? _source;
         private volatile bool _hungry;
+        private volatile bool _failed;
 
         /// <summary>Gets the source playbin built, once it exists.</summary>
         /// <remarks>
@@ -320,6 +365,17 @@ internal static class ShortCutting
 
         /// <summary>Gets a value indicating whether the source wants more.</summary>
         internal bool Hungry => _hungry;
+
+        /// <summary>
+        /// Gets a value indicating whether the source could not be configured.
+        /// </summary>
+        internal bool Failed => _failed;
+
+        /// <summary>
+        /// Raises the flag again for a source that is empty and was not asked
+        /// for more, which is the one way the handshake can be left hanging.
+        /// </summary>
+        internal void Resume() => _hungry = true;
 
         /// <summary>
         /// Configures the source playbin has just created.
@@ -336,6 +392,10 @@ internal static class ShortCutting
 
             if (arguments.Length == 0 || arguments[0] is not AppSrc source)
             {
+                // The throw is what ExceptionTrap prints; the flag is what the
+                // loop reads, so that the run ends now rather than at the bound.
+                _failed = true;
+
                 throw new InvalidOperationException(
                     "The source-setup signal of playbin carried no appsrc.");
             }
@@ -388,8 +448,10 @@ internal static class ShortCutting
         {
             if (!_hungry)
             {
-                Console.WriteLine("Start feeding");
+                // The flag first and the line afterwards: the console write is
+                // the slow part, and the other handler runs on another thread.
                 _hungry = true;
+                Console.WriteLine("Start feeding");
             }
         }
 
@@ -400,8 +462,8 @@ internal static class ShortCutting
         {
             if (_hungry)
             {
-                Console.WriteLine("Stop feeding");
                 _hungry = false;
+                Console.WriteLine("Stop feeding");
             }
         }
     }
