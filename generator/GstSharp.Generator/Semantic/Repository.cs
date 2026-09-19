@@ -149,6 +149,15 @@ internal sealed class Repository
                 AddSymbol(ns, declaration.Name, GirSymbolKind.Union, declaration);
             }
         }
+
+        // Build every search order here rather than on demand, so that nothing
+        // of the repository is written after construction. An include may name
+        // a namespace that comes later in the list, so this runs once the loop
+        // above has filled _namespacesByName for all of them.
+        foreach (GirNamespace ns in namespaces)
+        {
+            _searchOrder[ns] = BuildSearchOrder(ns);
+        }
     }
 
     /// <summary>Gets the parsed gir files, ordered by file name.</summary>
@@ -355,11 +364,16 @@ internal sealed class Repository
             return Namespaces;
         }
 
-        if (_searchOrder.TryGetValue(context, out IReadOnlyList<GirNamespace>? cached))
-        {
-            return cached;
-        }
+        // Every namespace of the repository is in the cache. A namespace from
+        // somewhere else is answered without being written down, which is what
+        // keeps the repository read only once it is built.
+        return _searchOrder.TryGetValue(context, out IReadOnlyList<GirNamespace>? cached)
+            ? cached
+            : BuildSearchOrder(context);
+    }
 
+    private IReadOnlyList<GirNamespace> BuildSearchOrder(GirNamespace context)
+    {
         List<GirNamespace> order = [context];
         order.AddRange(IncludeClosure(context));
         foreach (GirNamespace ns in Namespaces)
@@ -370,7 +384,6 @@ internal sealed class Repository
             }
         }
 
-        _searchOrder[context] = order;
         return order;
     }
 
