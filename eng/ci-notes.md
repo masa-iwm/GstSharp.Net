@@ -29,7 +29,10 @@ artifact when it fails.
 downloaded 300 MB per job to install the day's newest patch: 25 to 30 seconds
 on Windows and 8 to 11 elsewhere. The trade-off is deliberate: the patch level
 the gates run on now follows the runner image rather than being the newest that
-exists. Each job's first step is `dotnet --version`, which resolves through
+exists, and the action's other job — registering the dotnet problem matcher —
+goes with it, so build errors and warnings of `ci.yml` no longer appear as
+inline annotations and are read from the log.
+The first step after checkout is `dotnet --version`, which resolves through
 `global.json`, so an image that stops satisfying it — a dropped 10.0, or a
 feature band `global.json` asks for and the images lack — fails there first and
 with the SDK resolver's own message instead of somewhere inside `Restore`; the
@@ -326,20 +329,23 @@ new `PackageValidationBaselineVersion`.
 ### Who caches NuGet packages, and why only Windows
 
 Only `windows-mingw` and `windows-msvc-aot` have a NuGet cache. The numbers
-that decided it, measured on a branch run whose three re-keyed jobs were cold:
+that decided it, from two branch runs: the first with the three re-keyed jobs
+cold, the second with no cache anywhere but Windows.
 
 | Job | Cold `dotnet restore` | Warm restore | Cache download |
 | --- | --- | --- | --- |
-| `verify` (ubuntu) | 9 s | ~5 s | 3–10 s |
-| `linux`, `macos` | not measured (their keys were warm) | ~5 s | 3–10 s |
-| `windows-mingw` | 52 s | ~10 s | ~25 s |
-| `windows-msvc-aot` | 40 s | ~10 s | ~25 s |
+| `verify` (ubuntu) | 9–13 s | ~5 s | 3–10 s |
+| `linux` x64 / arm64 | 11 s | ~5 s | 3–10 s |
+| `macos` | 8 s | ~5 s | 3–10 s |
+| `windows-mingw` | 52 s, 73 s | ~10 s | ~25 s |
+| `windows-msvc-aot` | 40 s, 32 s | ~10 s | ~25 s |
 
-`verify` is the only non-Windows job whose cold restore was actually timed —
-the `linux` and `macos` keys did not change on that run, so those legs were
-warm throughout — but 9 s cold against 5 s warm plus a 3–10 s download is
-already the whole argument: outside Windows the cache breaks even at best,
-while each key generation costs about 1.6 GB of the repository's 10 GB quota.
+Outside Windows a cold restore costs 8–13 s against 5 s warm plus a 3–10 s
+download, so the cache breaks even at best, while each key generation costs
+about 1.6 GB of the repository's 10 GB quota. Windows is the opposite case and
+not only because it is slower: the two cold measurements of each leg are 40 s
+apart between runs, so the cache is also what keeps a leg from occasionally
+paying a minute for nothing.
 So `verify`, both `linux` legs and `macos` restore from nuget.org every
 time, as do `release.yml` and `publish-nuget.yml`, which run the same restore
 on a Linux runner. The NativeAOT publishes were not measurably slower cold
@@ -580,7 +586,7 @@ Everything the scripts write goes below `artifacts/`, which is ignored by git.
 
 | Thing | Pin | Why |
 | --- | --- | --- |
-| `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit. `setup-dotnet` is used by `release.yml`, `publish-nuget.yml` and `docs.yml` only — `ci.yml` builds with the SDK its runner images ship, see below |
+| `actions/checkout` `v7`, `actions/upload-artifact` `v7`, `actions/setup-dotnet` `v6`, `actions/cache` `v6` | major version only | current major versions; a major bump is a deliberate edit. `setup-dotnet` is used by `release.yml`, `publish-nuget.yml` and `docs.yml` only — `ci.yml` builds with the SDK its runner images ship, see "The gates" |
 | `msys2/setup-msys2` | `v2` | the `msys2-location` output the MinGW job reads |
 | .NET SDK | `global.json` (`10.0.100`, `rollForward: latestFeature`) | one place for the SDK version. The floor is the whole .NET 10 line rather than a feature band: every gate — build, the four test suites, generator determinism, package validation and the NativeAOT publish — was verified on 10.0.111, so a narrower floor would turn a working SDK away. `latestFeature` always climbs to the newest band present, so this floor decides only what is *refused*: CI runs on whatever the runners ship (10.0.4xx when this was written) and a contributor runs on whatever they have |
 | docfx | `2.78.5` (`.config/dotnet-tools.json`) | the documentation site is built from a pinned tool, so a local preview and the `Docs` workflow render the same thing. `rollForward: false`, so the tool refuses to run on a runtime other than the one it targets rather than rolling forward silently |

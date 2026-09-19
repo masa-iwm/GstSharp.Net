@@ -65,7 +65,9 @@ jobs:
       # the day's newest patch, 25 to 30 seconds on Windows and 8 to 11
       # elsewhere. The trade-off, accepted deliberately: the SDK patch level
       # this workflow builds with now follows the runner image rather than
-      # being the newest one that exists.
+      # being the newest one that exists. The action also registered the dotnet
+      # problem matcher, so the build errors and warnings of this workflow no
+      # longer turn into inline annotations and are read from the log.
       #
       # dotnet --version resolves through global.json, so it is also the
       # gate. If an image stops shipping 10.0, or global.json asks for a band
@@ -1045,11 +1047,12 @@ jobs:
         run: dotnet --version
 
       # The two Windows legs are the only jobs with a NuGet cache: a cold
-      # dotnet restore costs 52 seconds here and 40 on the MSVC leg, against
-      # about 10 warm plus a 25 second cache download. On Linux and macOS a
-      # warm restore is about 5 seconds and the cache download 3 to 10, while
-      # the one cold restore measured there took 9 - so the cache breaks even
-      # at best and those jobs have none. eng/ci-notes.md has the numbers.
+      # dotnet restore costs 32 to 73 seconds on Windows, measured over two
+      # runs, against about 10 warm plus a 25 second cache download - slow and
+      # noisy enough to be worth covering. A cold restore on the other legs
+      # takes 8 to 13 seconds (macos 8, linux 11, verify 13), against about 5
+      # warm plus a 3 to 10 second download, so there the cache breaks even at
+      # best and those jobs have none. eng/ci-notes.md has the numbers.
       #
       # The flavor is in the key because runner.os is Windows on this job and
       # on windows-msvc-aot alike, and a cache entry is immutable once written:
@@ -1305,9 +1308,9 @@ jobs:
       # the same way the NuGet cache's are, and for the same reason: main is
       # the only branch whose caches anyone else reads, so a branch, a
       # workflow_dispatch or a pull_request run that saved one only duplicated
-      # it for nobody. The save is right after
-      # the install step rather than at the end of the job because that is
-      # where the download exists; nothing later adds to it.
+      # it for nobody. The save is right after the install step rather than at
+      # the end of the job because that is where the download exists; nothing
+      # later adds to it.
       - name: Restore the GStreamer installer cache
         id: gstreamer-installer-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
