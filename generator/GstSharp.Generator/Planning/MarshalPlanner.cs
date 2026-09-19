@@ -532,6 +532,13 @@ internal sealed class MarshalPlanner
     private readonly HashSet<string> _lentOpaqueRecords;
 
     /// <summary>
+    /// The skip entries this planner matched against a type it was asked to
+    /// project, shared across the modules of a run and folded into the census
+    /// of the run once every module has been planned.
+    /// </summary>
+    private readonly HashSet<string> _consumedSkips;
+
+    /// <summary>
     /// The callback uses the callable that is being planned has claimed, and
     /// the scope each of them claimed it under. Claiming a use decides how the
     /// shared trampoline of the callback type ends, so it is only written to
@@ -599,6 +606,10 @@ internal sealed class MarshalPlanner
     /// The set the opaque records a slot is lent are recorded in, shared for
     /// the same reason.
     /// </param>
+    /// <param name="consumedSkips">
+    /// The set the skip entries this planner matched are recorded in, shared
+    /// for the same reason.
+    /// </param>
     internal MarshalPlanner(
         Repository repository,
         Classifier classifier,
@@ -616,7 +627,8 @@ internal sealed class MarshalPlanner
         HashSet<string>? consumedHandOverRefusals = null,
         HashSet<string>? consumedDocStrips = null,
         HashSet<string>? consumedSiblingArguments = null,
-        HashSet<string>? lentOpaqueRecords = null)
+        HashSet<string>? lentOpaqueRecords = null,
+        HashSet<string>? consumedSkips = null)
     {
         _repository = repository;
         _classifier = classifier;
@@ -641,6 +653,7 @@ internal sealed class MarshalPlanner
         _consumedSiblingArguments =
             consumedSiblingArguments ?? new HashSet<string>(StringComparer.Ordinal);
         _lentOpaqueRecords = lentOpaqueRecords ?? new HashSet<string>(StringComparer.Ordinal);
+        _consumedSkips = consumedSkips ?? new HashSet<string>(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -2147,7 +2160,20 @@ internal sealed class MarshalPlanner
     /// </summary>
     /// <param name="symbol">The symbol to test.</param>
     /// <returns><see langword="true"/> when the type exists in the output.</returns>
-    private bool IsEmitted(GirSymbol symbol) => IsEmitted(symbol, _overlays, _classifier);
+    private bool IsEmitted(GirSymbol symbol)
+    {
+        // A type the overlays skip is read here and nowhere else when nothing
+        // declares it but a parameter: a callback type has no emitter loop of
+        // its own, so this is the only place its skip entry can be seen doing
+        // work. Recording it here is what keeps the stale report from calling
+        // such an entry inert.
+        if (_overlays.IsSkipped(symbol.QualifiedName))
+        {
+            _consumedSkips.Add(symbol.QualifiedName);
+        }
+
+        return IsEmitted(symbol, _overlays, _classifier);
+    }
 
     /// <summary>
     /// Tests whether this run emits a wrapper of a symbol, without a planner to

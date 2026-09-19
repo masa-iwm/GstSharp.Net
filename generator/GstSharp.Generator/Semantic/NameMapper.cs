@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using GstSharp.Generator.GirParsing.Model;
@@ -27,14 +28,41 @@ internal sealed class NameMapper
 
     private readonly Overlays _overlays;
     private readonly DiagnosticBag _diagnostics;
+    private readonly HashSet<string> _consumedRenames;
 
     /// <summary>Initializes a new instance of the <see cref="NameMapper"/> class.</summary>
     /// <param name="overlays">The overlay configuration holding the renames.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
-    internal NameMapper(Overlays overlays, DiagnosticBag diagnostics)
+    /// <param name="consumedRenames">
+    /// Where the keys of the renames this mapper answered with are recorded, so
+    /// that a run can report the ones that named nothing. The overlays
+    /// themselves stay immutable, because the test suite shares one instance of
+    /// them; a run that does not care passes nothing.
+    /// </param>
+    internal NameMapper(Overlays overlays, DiagnosticBag diagnostics, HashSet<string>? consumedRenames = null)
     {
         _overlays = overlays;
         _diagnostics = diagnostics;
+        _consumedRenames = consumedRenames ?? new HashSet<string>(StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// Looks up a rename and records the key when one answered. Every lookup of
+    /// the mapper goes through here, so that the stale report sees the whole
+    /// truth about which entries did work.
+    /// </summary>
+    /// <param name="key">The rename key.</param>
+    /// <param name="name">The overriding C# name.</param>
+    /// <returns><see langword="true"/> when an override exists.</returns>
+    private bool TryRename(string key, [NotNullWhen(true)] out string? name)
+    {
+        if (!_overlays.TryGetRename(key, out name))
+        {
+            return false;
+        }
+
+        _consumedRenames.Add(key);
+        return true;
     }
 
     /// <summary>
@@ -120,7 +148,7 @@ internal sealed class NameMapper
     /// </remarks>
     internal string TypeName(GirSymbol symbol)
     {
-        if (_overlays.TryGetRename(symbol.QualifiedName, out string? renamed))
+        if (TryRename(symbol.QualifiedName, out string? renamed))
         {
             return renamed;
         }
@@ -138,7 +166,7 @@ internal sealed class NameMapper
     /// </remarks>
     internal string CallableName(GirCallable callable)
     {
-        if (callable.CIdentifier is { } identifier && _overlays.TryGetRename(identifier, out string? renamed))
+        if (callable.CIdentifier is { } identifier && TryRename(identifier, out string? renamed))
         {
             return renamed;
         }
@@ -152,7 +180,7 @@ internal sealed class NameMapper
     /// <param name="property">The property to name.</param>
     /// <returns>The C# property name.</returns>
     internal string PropertyName(GirNamespace declarationNamespace, GirTypeDeclaration owner, GirProperty property) =>
-        _overlays.TryGetRename(
+        TryRename(
             declarationNamespace.Name + "." + owner.Name + ":" + property.Name,
             out string? renamed)
             ? renamed
@@ -172,7 +200,7 @@ internal sealed class NameMapper
     /// in the corpus has such a pair.
     /// </remarks>
     internal string SignalName(GirNamespace declarationNamespace, GirTypeDeclaration owner, GirSignal signal) =>
-        _overlays.TryGetRename(
+        TryRename(
             declarationNamespace.Name + "." + owner.Name + "::" + signal.Name,
             out string? renamed)
             ? renamed
@@ -208,7 +236,7 @@ internal sealed class NameMapper
     /// </para>
     /// </remarks>
     internal string VirtualMethodName(string overlayKey, string girName) =>
-        _overlays.TryGetRename(overlayKey, out string? renamed)
+        TryRename(overlayKey, out string? renamed)
             ? renamed
             : ToPascalCase(girName);
 
@@ -227,7 +255,7 @@ internal sealed class NameMapper
     /// <c>Ns.Class::vfunc#parameter</c>.
     /// </remarks>
     internal string VirtualMethodParameterName(string overlayKey, string girName) =>
-        _overlays.TryGetRename(overlayKey + "#" + girName, out string? renamed)
+        TryRename(overlayKey + "#" + girName, out string? renamed)
             ? renamed
             : ParameterName(girName);
 
@@ -287,7 +315,7 @@ internal sealed class NameMapper
         GirField field,
         bool barePointer = false)
     {
-        if (_overlays.TryGetRename(
+        if (TryRename(
                 fieldNamespace.Name + "." + owner.Name + "." + field.Name,
                 out string? renamed))
         {
@@ -327,7 +355,7 @@ internal sealed class NameMapper
     internal string EnumMemberName(GirEnumeration enumeration, GirNamespace enumerationNamespace, GirEnumMember member)
     {
         string key = enumerationNamespace.Name + "." + enumeration.Name + "." + member.Name;
-        if (_overlays.TryGetRename(key, out string? renamed))
+        if (TryRename(key, out string? renamed))
         {
             return renamed;
         }

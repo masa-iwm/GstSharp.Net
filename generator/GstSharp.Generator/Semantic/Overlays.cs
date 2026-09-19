@@ -644,6 +644,12 @@ internal sealed class Overlays
     internal IReadOnlyCollection<string> ArrayOverrideKeys => _arrayOverrides.Keys;
 
     /// <summary>
+    /// Gets the keys of every declared rename, so that a run can report the
+    /// ones that named nothing it emitted.
+    /// </summary>
+    internal IReadOnlyCollection<string> RenameKeys => _rename.Keys;
+
+    /// <summary>
     /// Gets the keys of every declared field skip, so that a run can report the
     /// ones no field of an emitted record matched.
     /// </summary>

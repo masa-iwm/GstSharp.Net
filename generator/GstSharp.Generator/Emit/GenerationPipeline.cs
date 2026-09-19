@@ -63,7 +63,12 @@ internal static class GenerationPipeline
     internal static GenerationResult Execute(Repository repository, Overlays overlays)
     {
         DiagnosticBag diagnostics = new();
-        NameMapper names = new(overlays, diagnostics);
+
+        // The renames the mapper answered with, recorded here rather than in
+        // the overlays, which stay immutable: Overlays.Empty is shared by every
+        // fixture of the test suite.
+        HashSet<string> consumedRenames = new(StringComparer.Ordinal);
+        NameMapper names = new(overlays, diagnostics, consumedRenames);
         Classifier classifier = new(repository, overlays, diagnostics);
 
         // Classify everything once so that the diagnostics of a run do not
@@ -88,7 +93,7 @@ internal static class GenerationPipeline
         TypeMap types = new(repository, classifier, names, diagnostics);
         SkipRules skipRules = new(overlays);
         EmissionCensus census = new(overlays);
-        EnumEmitter enumEmitter = new(names, overlays, diagnostics);
+        EnumEmitter enumEmitter = new(names, overlays, diagnostics, census);
         Dictionary<string, List<string>> inherited = new(StringComparer.Ordinal);
 
         // The array corrections are consumed by a planner that is built per
@@ -105,6 +110,12 @@ internal static class GenerationPipeline
         HashSet<string> consumedDocStrips = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
         HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
+
+        // The skip entries the planner matched against a type nothing else
+        // reads: a callback type has no emitter loop of its own. They are
+        // folded into the census below, so that the stale report has one place
+        // to ask.
+        HashSet<string> consumedSkips = new(StringComparer.Ordinal);
 
         List<GeneratedFile> files = [];
         foreach (ModuleInfo module in ModuleMap.Modules)
@@ -145,6 +156,7 @@ internal static class GenerationPipeline
                     consumedDocStrips,
                     consumedSiblingArguments,
                     lentOpaqueRecords,
+                    consumedSkips,
                     subclasses,
                     emittedVirtuals),
                 module,
@@ -494,6 +506,58 @@ internal static class GenerationPipeline
                 $"The skipped signal '{key}' matched no signal of an emitted type; the entry is stale.");
         }
 
+        // Every other shape of skip entry - the c:identifier of a callable, a
+        // qualified type name, and the Gst.Type:property spelling - is read
+        // where the thing it names would otherwise be emitted, and the run
+        // records the key it matched there. One that matched nothing keeps
+        // nothing off the surface: it names a symbol the gir no longer
+        // declares, a type of a module this run does not generate, or a
+        // misspelling, and what it was written to hold back is either gone or
+        // generated anyway. The signal shape is left to GEN0055 above, which
+        // says the same thing about it in the words of a signal.
+        foreach (string key in consumedSkips)
+        {
+            census.SkippedOverlayKey(key);
+        }
+
+        List<string> staleSkips = [];
+        foreach (string key in overlays.SkippedIdentifiers)
+        {
+            if (!key.Contains("::", StringComparison.Ordinal) && !census.OverlaySkipKeys.Contains(key))
+            {
+                staleSkips.Add(key);
+            }
+        }
+
+        staleSkips.Sort(StringComparer.Ordinal);
+        foreach (string key in staleSkips)
+        {
+            diagnostics.Warn(
+                "GEN0056",
+                $"The skip entry '{key}' matched no callable, type or property of this run; the entry is stale.");
+        }
+
+        // A rename the mapper never answered with names nothing this run emits.
+        // The name it decided is therefore not the name anything carries, and
+        // the entry reads as a decision that is in force when it is not: the
+        // next reader of the overlays has no way of telling the two apart.
+        List<string> staleRenames = [];
+        foreach (string key in overlays.RenameKeys)
+        {
+            if (!consumedRenames.Contains(key))
+            {
+                staleRenames.Add(key);
+            }
+        }
+
+        staleRenames.Sort(StringComparer.Ordinal);
+        foreach (string key in staleRenames)
+        {
+            diagnostics.Warn(
+                "GEN0057",
+                $"The rename '{key}' named nothing this run emitted; the entry is stale.");
+        }
+
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
         return new GenerationResult(files, diagnostics.Items, census);
     }
@@ -524,7 +588,8 @@ internal static class GenerationPipeline
             shared.ConsumedHandOverRefusals,
             shared.ConsumedDocStrips,
             shared.ConsumedSiblingArguments,
-            shared.LentOpaqueRecords);
+            shared.LentOpaqueRecords,
+            shared.ConsumedSkips);
 
         SurfaceBuilder surfaces = new(
             planner,
@@ -673,6 +738,10 @@ internal static class GenerationPipeline
     /// The gir names of the opaque records the run has seen a slot lent, shared
     /// for the same reason.
     /// </param>
+    /// <param name="ConsumedSkips">
+    /// The skip entries the planner of a module matched against a type it was
+    /// asked to project, shared for the same reason.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -694,6 +763,7 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedDocStrips,
         HashSet<string> ConsumedSiblingArguments,
         HashSet<string> LentOpaqueRecords,
+        HashSet<string> ConsumedSkips,
         SubclassModel Subclasses,
         Dictionary<string, HashSet<string>> EmittedVirtuals);
 

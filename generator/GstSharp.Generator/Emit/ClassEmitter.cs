@@ -187,9 +187,14 @@ internal sealed class ClassEmitter
 
     private GeneratedFile? EmitEnumFunctions(ModuleInfo module, GirNamespace ns, GirEnumeration enumeration)
     {
-        if (enumeration.Functions.Count == 0
-            || !enumeration.IsIntrospectable
-            || _overlays.IsSkipped(ns.Name + "." + enumeration.Name))
+        string enumerationName = ns.Name + "." + enumeration.Name;
+        if (_overlays.IsSkipped(enumerationName))
+        {
+            _census.SkippedOverlayKey(enumerationName);
+            return null;
+        }
+
+        if (enumeration.Functions.Count == 0 || !enumeration.IsIntrospectable)
         {
             return null;
         }
@@ -804,7 +809,13 @@ internal sealed class ClassEmitter
     private GeneratedFile? Emit(ModuleInfo module, GirNamespace ns, GirClass declaration)
     {
         string qualifiedName = ns.Name + "." + declaration.Name;
-        if (!declaration.IsIntrospectable || _overlays.IsSkipped(qualifiedName))
+        if (_overlays.IsSkipped(qualifiedName))
+        {
+            _census.SkippedOverlayKey(qualifiedName);
+            return null;
+        }
+
+        if (!declaration.IsIntrospectable)
         {
             return null;
         }

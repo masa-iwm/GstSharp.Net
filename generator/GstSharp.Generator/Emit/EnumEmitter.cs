@@ -13,16 +13,27 @@ internal sealed class EnumEmitter
     private readonly NameMapper _names;
     private readonly Overlays _overlays;
     private readonly DiagnosticBag _diagnostics;
+    private readonly EmissionCensus _census;
 
     /// <summary>Initializes a new instance of the <see cref="EnumEmitter"/> class.</summary>
     /// <param name="names">The name mapper.</param>
     /// <param name="overlays">The overlay configuration.</param>
     /// <param name="diagnostics">The diagnostic sink.</param>
-    internal EnumEmitter(NameMapper names, Overlays overlays, DiagnosticBag diagnostics)
+    /// <param name="census">
+    /// The census of the run, which records the skip entries this emitter
+    /// matched so that the ones nothing matched can be reported as stale. A
+    /// test that only reads the emitted enumerations passes none.
+    /// </param>
+    internal EnumEmitter(
+        NameMapper names,
+        Overlays overlays,
+        DiagnosticBag diagnostics,
+        EmissionCensus? census = null)
     {
         _names = names;
         _overlays = overlays;
         _diagnostics = diagnostics;
+        _census = census ?? new EmissionCensus(overlays);
     }
 
     /// <summary>Emits the enumerations of one module.</summary>
@@ -34,7 +45,14 @@ internal sealed class EnumEmitter
         List<GirEnumeration> enumerations = [];
         foreach (GirEnumeration enumeration in ns.AllEnumerations)
         {
-            if (_overlays.IsSkipped(ns.Name + "." + enumeration.Name) || !enumeration.IsIntrospectable)
+            string qualifiedName = ns.Name + "." + enumeration.Name;
+            if (_overlays.IsSkipped(qualifiedName))
+            {
+                _census.SkippedOverlayKey(qualifiedName);
+                continue;
+            }
+
+            if (!enumeration.IsIntrospectable)
             {
                 continue;
             }

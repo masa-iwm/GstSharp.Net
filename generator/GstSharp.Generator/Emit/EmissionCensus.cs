@@ -51,6 +51,13 @@ internal sealed class EmissionCensus
     /// </summary>
     private readonly SortedSet<string> _redundantFieldNames = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// Every skip key the run matched, whatever the key names: the
+    /// <c>c:identifier</c> of a callable, a qualified type name, a property or
+    /// a signal. A key that is absent from this set matched nothing.
+    /// </summary>
+    private readonly SortedSet<string> _overlaySkips = new(StringComparer.Ordinal);
+
     /// <summary>Initializes a new instance of the <see cref="EmissionCensus"/> class.</summary>
     /// <param name="overlays">
     /// The overlays, read for the hand bound ledger. A census built without
@@ -86,6 +93,21 @@ internal sealed class EmissionCensus
     /// <summary>Records one skip key the signal loop matched.</summary>
     /// <param name="key">The signal, as <c>Gst.Element::pad-added</c>.</param>
     internal void SkippedSignalKey(string key) => _signalSkips.Add(key);
+
+    /// <summary>
+    /// Gets every skip key the run matched, so that the ones it never matched
+    /// can be reported as stale.
+    /// </summary>
+    internal IReadOnlySet<string> OverlaySkipKeys => _overlaySkips;
+
+    /// <summary>
+    /// Records one skip key the run matched against something it therefore did
+    /// not emit. A callable, a property and a signal reach this through
+    /// <see cref="Skipped"/>, which counts them as well; a whole type is not
+    /// counted anywhere, so its emitter records the key here alone.
+    /// </summary>
+    /// <param name="key">The key that matched, as it is spelled in the overlay.</param>
+    internal void SkippedOverlayKey(string key) => _overlaySkips.Add(key);
 
     /// <summary>Records one field annotation the run applied.</summary>
     /// <param name="key">The overlay key that matched, for the stale report.</param>
@@ -138,6 +160,15 @@ internal sealed class EmissionCensus
         // gir declares a handful of functions twice, once at namespace scope
         // with a moved-to and once inside the record they belong to - and
         // GEN0023 would never see the entry it exists to report.
+        // The key matched before anything else is decided about it, so the
+        // record of the match is taken before the hand bound ledger rewrites
+        // the reason: a symbol that is both skipped and hand written is a skip
+        // entry that did its work, and the stale report may not call it inert.
+        if (reason is SkipReason.OverlaySkip)
+        {
+            _overlaySkips.Add(symbol);
+        }
+
         if ((reason is not SkipReason.MovedTo and not SkipReason.ShadowedBy)
             && _overlays.IsHandBound(symbol))
         {

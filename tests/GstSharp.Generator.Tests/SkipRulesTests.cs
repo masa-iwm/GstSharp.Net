@@ -268,12 +268,6 @@ public sealed class SkipRulesTests
         Assert.Equal(
             [
                 "Gst.BusSyncHandler",
-                "Gst.MetaClearFunction",
-                "Gst.MetaDeserializeFunction",
-                "Gst.MetaFreeFunction",
-                "Gst.MetaInitFunction",
-                "Gst.MetaSerializeFunction",
-                "Gst.MetaTransformFunction",
                 "Gst.ParamSpecArray",
                 "Gst.ParamSpecFraction",
                 "GstBase.BitReader",

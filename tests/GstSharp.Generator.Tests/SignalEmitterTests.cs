@@ -986,9 +986,8 @@ public sealed class SignalEmitterTests
         // skip: the gir types its first argument as a GstRTSPSession where the
         // C registers and emits a GstRTSPContext, which no annotation can
         // correct. The event is written by hand in
-        // src/GstSharp.Net.RtspServer/Custom instead, under the name the
-        // rename of fixups.json decided - SendingMessage, because the method
-        // beside it had taken SendMessage. The adder and remover counts carry matches that are
+        // src/GstSharp.Net.RtspServer/Custom instead, as SendingMessage,
+        // because the method beside it had taken SendMessage. The adder and remover counts carry matches that are
         // not a signal pair at all: Gst.ITagSetter's AddTagValue extension, and
         // the AddAllSchemas, AddSchema, RemoveAllSchemas and RemoveSchema
         // extensions of Gst.Tag.ITagXmpWriter, methods whose names the pattern

@@ -83,7 +83,13 @@ internal sealed class InterfaceEmitter
     private GeneratedFile? Emit(ModuleInfo module, GirNamespace ns, GirInterface declaration)
     {
         string qualifiedName = ns.Name + "." + declaration.Name;
-        if (!declaration.IsIntrospectable || _overlays.IsSkipped(qualifiedName))
+        if (_overlays.IsSkipped(qualifiedName))
+        {
+            _census.SkippedOverlayKey(qualifiedName);
+            return null;
+        }
+
+        if (!declaration.IsIntrospectable)
         {
             return null;
         }

@@ -861,7 +861,7 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Eleven of the fourteen name an overlay entry that matched nothing: an
+        // Thirteen of the sixteen name an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
@@ -871,13 +871,16 @@ public sealed class ClassEmitterTests
         // precondition on no rendered callable (GEN0049), and a hand over
         // refusal on no rendered callable (GEN0051), and a documentation
         // strip on no rendered callable (GEN0053), and a skip entry spelled as
-        // a signal that matched no signal of an emitted type (GEN0055). Every
-        // one of them
+        // a signal that matched no signal of an emitted type (GEN0055), a skip
+        // entry of any other shape - the c:identifier of a callable, a
+        // qualified type name, a property - that matched nothing either
+        // (GEN0056), and a rename that named nothing the run emitted
+        // (GEN0057). Every one of them
         // describes a gir that has moved on, and every one of them is a
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
         //
-        // The fourteenth is not stale but illegal: a 'borrow' on a key that is
+        // The sixteenth is not stale but illegal: a 'borrow' on a key that is
         // no argument of a signal at all - a parameter of a method or of a
         // callback, an argument of a virtual method, a return - or on a signal
         // argument the planner does not project onto a mini object or a boxed
@@ -891,7 +894,8 @@ public sealed class ClassEmitterTests
         // documentation strip whose sentence upstream reworded (GEN0052). The
         // key is still read, so no stale report follows it; what disappears is
         // the release, or the sentence returns to the member. Neither would be
-        // caught by the ten above, which is why both are asserted here too.
+        // caught by the thirteen above, which is why both are asserted here
+        // too.
         //
         // GEN0049, GEN0050 and GEN0051 are the ones with teeth. A key a gir
         // refresh renamed or a member whose shape it changed stops being
@@ -925,6 +929,8 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0053", diagnostic.Code);
             Assert.NotEqual("GEN0054", diagnostic.Code);
             Assert.NotEqual("GEN0055", diagnostic.Code);
+            Assert.NotEqual("GEN0056", diagnostic.Code);
+            Assert.NotEqual("GEN0057", diagnostic.Code);
         }
     }
 

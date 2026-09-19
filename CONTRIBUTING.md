@@ -167,8 +167,13 @@ the day it is written, and an entry the generator never sees skipped — because
 the symbol is generated after all, or no longer exists, or is misspelt — is
 reported as `GEN0023`. That is a warning, so `generate` and `verify` still exit
 zero on it; what it fails is the test suite, which asserts that a run over the
-committed overlays reports no `GEN0020`, `GEN0023`, `GEN0024`, `GEN0025`,
-`GEN0026` or `GEN0055`.
+committed overlays reports none of the sixteen findings an entry that no longer
+describes the gir produces: `GEN0020`, `GEN0023`, `GEN0024`, `GEN0025`,
+`GEN0026`, `GEN0042`, `GEN0048`, `GEN0049`, `GEN0050`, `GEN0051`, `GEN0052`,
+`GEN0053`, `GEN0054`, `GEN0055`, `GEN0056` and `GEN0057`. Thirteen of them say
+an entry matched nothing, `GEN0054` says a `borrow` names no signal argument at
+all, and `GEN0050` and `GEN0052` say an entry is still read but silently does
+nothing.
 
 The `skip` array beside it takes a fourth kind of key, next to the
 `c:identifier` of a callable, the qualified gir name of a type and the GObject
@@ -180,7 +185,11 @@ corrected, only kept out, so the entry belongs with a `handBound` twin and a
 hand written member under `Custom/` that carries the same name. The key is read
 in the signal loop alone; one that matched no signal of an emitted type is
 reported as `GEN0055`, because the event the entry exists to keep out would
-otherwise be generated again beside the member that replaced it. A key that
+otherwise be generated again beside the member that replaced it. A key of any
+of the other three shapes that matched nothing is reported as `GEN0056`, for
+the same reason and in the same words; a `rename` that named nothing the run
+emitted is reported as `GEN0057`, because the name it decides is then a
+decision about nothing. A key that
 matches wins over every rule based reason, so a signal the run would have filed
 under `ActionSignal` is filed under `OverlaySkip` — or, with the twin, under
 `HandBound` — instead.
@@ -190,12 +199,22 @@ Hand binding a signal is therefore the pair of entries plus the member: the
 `partial` class under `Custom/` that declares the event, its arguments class and
 its trampoline under the same public names the generator would have taken. The
 names are what lets the hand binding be dropped again: if the gir is corrected
-upstream, deleting both entries brings the generated event back under the name
-the member had, and the members the hand binding added on its own are what the
-deletion costs. For `RTSPClient.SendingMessage` a corrected gir would generate
+upstream, deleting both entries brings the generated event back, and the
+members the hand binding added on its own are what the deletion costs. Where
+the public name is not the one the gir derives, dropping the hand binding is
+three edits rather than two — the two entries go and a `rename` at the same key
+comes back, which is then held to the gir by `GEN0057`; a `rename` is not kept
+beside a skip entry for a name only the hand written member carries, because
+while the signal is skipped it names nothing and `GEN0057` reports it. For
+`RTSPClient.SendingMessage` a corrected gir would generate
 the context as `Ctx` and a `Message` copied out of the emission; the `[Obsolete]`
 `Session` and the lent `Message` exist in the hand binding alone, and a lent
-argument needs a `borrow` overlay to be generated at all.
+argument needs a `borrow` overlay to be generated at all. It would also
+generate the event as `SendMessage`, which `gst_rtsp_client_send_message` has
+taken and which `GEN0011` reports as a collision: the `rename` that gives the
+event the `SendingMessage` the hand written member carries is exactly the third
+edit above, and it belongs in the same change as the deletion of the two
+entries rather than years before it.
 
 A hand bound consumer keeps its callback type generated: a `<callback>` whose
 only consumers are on the `handBound` ledger is emitted all the same, so the

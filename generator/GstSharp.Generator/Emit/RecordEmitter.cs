@@ -139,7 +139,13 @@ internal sealed class RecordEmitter
     internal GeneratedFile? Emit(ModuleInfo module, GirNamespace ns, GirRecord record)
     {
         string qualifiedName = ns.Name + "." + record.Name;
-        if (!record.IsIntrospectable || _overlays.IsSkipped(qualifiedName) || Classifier.IsPrivateShell(record))
+        if (_overlays.IsSkipped(qualifiedName))
+        {
+            _census.SkippedOverlayKey(qualifiedName);
+            return null;
+        }
+
+        if (!record.IsIntrospectable || Classifier.IsPrivateShell(record))
         {
             return null;
         }
