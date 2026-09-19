@@ -415,7 +415,10 @@ asserts the crossing the hierarchy makes possible: the same source handed to
    `[StructLayout(LayoutKind.Sequential)]` mirror of the instance head, with the
    offset derivation written next to it and an integration test that drives the
    library into a state the field reflects on every CI leg (`AudioRingBufferHeadRaw`
-   and the acquire probe are the model).
+   and the acquire probe are the model; `ColorBalanceChannelRaw` with the
+   `videobalance` and `playbin` probes is the second one, and it mirrors the
+   whole instance rather than its head, so the size the library reports for the
+   type can be asserted against it).
 10. A zero terminated `Record**` return that comes with a free of its own is
     hand bound. Walk to the terminator, and wrap every element with the
     transfer the C dictates: a deep boxed copy when one free releases the whole

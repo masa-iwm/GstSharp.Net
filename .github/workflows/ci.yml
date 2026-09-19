@@ -281,6 +281,15 @@ jobs:
       # that lost that plugin red on this step, which names the missing
       # factory, instead of red further down on a load that cannot say why.
       #
+      # videobalance and playbin are the two elements the ColorBalanceChannel
+      # field tests read a real channel off: videobalance comes from the
+      # videofilter plugin of gstreamer1.0-plugins-good and builds the four
+      # channels the plugin names, playbin comes from the playback plugin of
+      # gstreamer1.0-plugins-base and lists the four proxy channels of its
+      # sink. Both are installed here on purpose, so a leg that lost either
+      # turns this step red rather than skipping the tests that prove the
+      # hand bound fields against a live instance.
+      #
       # opusenc, opusdec, rtpopuspay and rtpopusdepay are here for a step as
       # well: they are the codec and the payloaders the WebRtcLoopback step
       # below builds its call out of, and they come from the opus plugin of
@@ -307,7 +316,7 @@ jobs:
       # upload step already takes.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtpL16depay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert,gesdemux,opusenc,opusdec,rtpopuspay,rtpopusdepay
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtpL16depay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert,gesdemux,opusenc,opusdec,rtpopuspay,rtpopusdepay,videobalance,playbin
         run: dotnet test tests/GstSharp.IntegrationTests --no-restore --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
