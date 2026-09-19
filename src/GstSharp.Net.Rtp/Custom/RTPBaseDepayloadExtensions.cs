@@ -41,7 +41,7 @@ public abstract unsafe partial class RTPBaseDepayload
     /// the interned wrapper of that extension, holding a reference of its own,
     /// so it is the very instance that was handed to
     /// <see cref="AddExtension(Gst.Rtp.RTPHeaderExtension)"/> and the caller
-    /// does not dispose it.
+    /// does not dispose it on account of having read it here.
     /// </para>
     /// <para>
     /// The depayloader also fills the list itself out of the <c>extmap-</c>
@@ -58,9 +58,9 @@ public abstract unsafe partial class RTPBaseDepayload
 
     /// <summary>Adds a header extension to the ones the depayloader reads.</summary>
     /// <param name="extension">
-    /// The extension to add. Its id has to be set, and the depayloader takes a
-    /// reference of its own: the caller keeps its wrapper and disposes it as it
-    /// otherwise would.
+    /// The extension to add. Its id has to be set, between 1 and 255, and the
+    /// depayloader takes a reference of its own: the caller keeps its wrapper
+    /// and disposes it as it otherwise would.
     /// </param>
     /// <remarks>
     /// <para>
@@ -81,8 +81,9 @@ public abstract unsafe partial class RTPBaseDepayload
     /// <paramref name="extension"/> is <see langword="null"/>.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// The id of <paramref name="extension"/> is 0, which the C refuses with a
-    /// critical and a silent no-op.
+    /// The id of <paramref name="extension"/> is not between 1 and 255: 0,
+    /// which the C refuses with a critical and a silent no-op, or never set,
+    /// which the C accepts and every later use of the extension refuses.
     /// </exception>
     public void AddExtension(Gst.Rtp.RTPHeaderExtension extension)
     {

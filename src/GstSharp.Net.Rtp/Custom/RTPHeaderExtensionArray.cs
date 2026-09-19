@@ -79,29 +79,37 @@ internal static class RTPHeaderExtensionArray
     /// no way for the caller to tell. The managed members raise instead.
     /// </para>
     /// <para>
-    /// Only the two the C checks are checked here. An extension that was never
+    /// The check here is the wider one, because the check of the C is not
+    /// enough. An id is valid between 1 and 255:
+    /// <c>gst_rtp_header_extension_set_id</c> refuses anything from
+    /// <c>MAX_RTP_EXT_ID</c> up and leaves the id it had
+    /// (<c>gstrtphdrext.c:44</c>, <c>:389</c>), and an extension that was never
     /// given an id carries <c>G_MAXUINT32</c> rather than 0
-    /// (<c>gstrtphdrext.c:200</c>), which passes the check of the C and of this
-    /// one and is refused by every later use of the extension, so an id has to
-    /// be set with <see cref="Gst.Rtp.RTPHeaderExtension.SetId(uint)"/> before
-    /// an extension built from its URI is added.
+    /// (<c>gstrtphdrext.c:200</c>), which the check of the C lets through: the
+    /// extension is then added, written into no packet and reported by no
+    /// <c>extmap-</c> field, and every later use of it logs a critical. That is
+    /// the same "the C only complains and the caller cannot tell" case the id
+    /// of 0 is refused for, so an extension built from its URI is refused here
+    /// until <see cref="Gst.Rtp.RTPHeaderExtension.SetId(uint)"/> has given it
+    /// a usable id.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="extension"/> is <see langword="null"/>.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// The id of <paramref name="extension"/> is 0.
+    /// The id of <paramref name="extension"/> is not between 1 and 255: 0, or
+    /// never set.
     /// </exception>
     internal static void CheckAddable(Gst.Rtp.RTPHeaderExtension extension)
     {
         ArgumentNullException.ThrowIfNull(extension);
 
-        if (extension.GetId() == 0)
+        if (extension.GetId() is 0 or > 255)
         {
             throw new ArgumentException(
-                "A header extension is added under its id, and this one has none: set an id between 1 and 255 "
-                + "with SetId before adding it.",
+                "A header extension is added under its id, and this one has no usable one: set an id between "
+                + "1 and 255 with SetId before adding it.",
                 nameof(extension));
         }
     }

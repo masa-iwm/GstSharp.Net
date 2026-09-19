@@ -122,6 +122,8 @@ public sealed class RtspContextBorrowRequestTests
 
         _output.WriteLine($"source {sourceId} on 127.0.0.1:{port}");
 
+        bool detached;
+
         try
         {
             string response = Exchange(context, port);
@@ -136,8 +138,13 @@ public sealed class RtspContextBorrowRequestTests
         }
         finally
         {
-            Assert.True(server.Detach(sourceId, context));
+            // The detach itself belongs here, so that a failed assertion above
+            // still takes the server off the context; whether it succeeded is
+            // asserted outside, where it cannot mask the first failure.
+            detached = server.Detach(sourceId, context);
         }
+
+        Assert.True(detached, "the server was still attached to the context.");
 
         // The teardown of RtspClientRequirementsTests, for the same reason: the
         // server holds a reference of its own to every client it took and lets
@@ -173,6 +180,12 @@ public sealed class RtspContextBorrowRequestTests
     private static string Request(int port)
     {
         using TcpClient socket = new("127.0.0.1", port);
+
+        // A server that never answers must not leave this task blocked in Read
+        // for the life of the test host: the read gives up on the same deadline
+        // the pump does.
+        socket.ReceiveTimeout = (int)Deadline.TotalMilliseconds;
+
         using NetworkStream stream = socket.GetStream();
 
         byte[] request = Encoding.ASCII.GetBytes("OPTIONS * RTSP/1.0\r\nCSeq: 1\r\n\r\n");

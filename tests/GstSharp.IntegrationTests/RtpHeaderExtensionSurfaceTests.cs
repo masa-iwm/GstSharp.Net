@@ -12,18 +12,19 @@ namespace GstSharp.IntegrationTests;
 /// <remarks>
 /// <para>
 /// <c>rtpL16pay</c> and <c>rtpL16depay</c> are in the required element set of
-/// the legs that promise one; <c>rtphdrextclientaudiolevel</c> - the RFC 6464
-/// client-to-mixer audio level extension - comes from <c>rtpmanager</c> and is
-/// promised by nobody, so the tests skip where it is not installed, the way
-/// every other test of an optional plugin does.
+/// the legs that promise one, and so is
+/// <c>rtphdrextclientaudiolevel</c> - the RFC 6464 client-to-mixer audio level
+/// extension - which comes from <c>rtpmanager</c>, the plugin that carries
+/// <c>rtpbin</c>; the tests skip where it is not installed, the way every other
+/// test of an optional plugin does.
 /// </para>
 /// <para>
-/// The id of 0 the C refuses with a critical and a silent no-op is raised on
-/// instead, which is asserted before a usable id is set and the extension is
-/// added for real. An extension that was never given an id carries
-/// <c>G_MAXUINT32</c> rather than 0 (<c>gstrtphdrext.c:200</c>), which the add
-/// check of the C lets through and every later use of the extension refuses, so
-/// the test sets the refused id itself.
+/// Both ids the managed members refuse are asserted before a usable one is set
+/// and the extension is added for real: the id of 0 that the C refuses with a
+/// critical and a silent no-op, and the id an extension built from its URI
+/// starts with, which is <c>G_MAXUINT32</c> rather than 0
+/// (<c>gstrtphdrext.c:200</c>) and which the add check of the C lets through
+/// while every later use of the extension refuses it.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -79,9 +80,16 @@ public sealed class RtpHeaderExtensionSurfaceTests
         Assert.NotNull(extension);
 
         // An extension that was never given an id carries G_MAXUINT32 rather
-        // than zero (gstrtphdrext.c:200), so the id the C refuses is set here
-        // on purpose.
+        // than zero (gstrtphdrext.c:200): the add check of the C lets that
+        // through and the managed one does not, because an extension with it is
+        // never written and criticals on every later use.
         Assert.Equal(uint.MaxValue, extension.GetId());
+
+        ArgumentException unset = Assert.Throws<ArgumentException>(() => add(element, extension));
+        Assert.Equal("extension", unset.ParamName);
+        Assert.Empty(read(element));
+
+        // The id the C refuses itself, set here on purpose.
         extension.SetId(0);
 
         ArgumentException refused = Assert.Throws<ArgumentException>(() => add(element, extension));

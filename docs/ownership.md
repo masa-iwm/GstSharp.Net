@@ -774,9 +774,11 @@ dropped with the duplicate. `Copy()` it, or read out of it what is needed, to
 keep anything past the handler.
 
 The exception is an argument that is **lent** rather than copied, and there are
-two of them today: the query of `AppSink.ProposeAllocation`, which the overlays
-mark `borrow`, and the message of `RTSPClient.SendingMessage`, whose event is
-written by hand. Such a wrapper **borrows** — no
+two such arguments today: the query of `AppSink.ProposeAllocation`, which the
+overlays mark `borrow`, and the message of `RTSPClient.SendingMessage`, whose
+event is written by hand; a third lent wrapper, `RTSPContext.BorrowRequest()`,
+is asked for rather than handed and is described below. Such a wrapper
+**borrows** — no
 reference, no copy, the object of the emitter itself — which is what leaves it
 **writable in place**, so that a handler can call `Query.AddAllocationMeta` and
 have the element that sent the query read it back. It is as writable as that
@@ -820,10 +822,10 @@ does to its own request as well. It is `null` where the context carries none, as
 scoped to the handler even more sharply than the others: the request goes back to
 the watch when the handler returns, so it has to be disposed before that, and
 calling it on a stored snapshot reads a pointer that dangles — the one case the
-binding cannot check for. There is deliberately no response twin: the response is
-already unset when a `*-request` signal runs, and one `OPTIONS` failure path
-frees it, so the message to edit on the way out is the one
-`RTSPClient.SendingMessage` lends.
+binding cannot check for. There is deliberately no response twin: when a
+`*-request` signal runs the response is already unset, or for `TEARDOWN` not yet
+built, and one `OPTIONS` failure path frees it, so the message to edit on the
+way out is the one `RTSPClient.SendingMessage` lends.
 
 The dynamic path draws the line elsewhere on purpose: `ConnectSignal` borrows
 **every** mini object and boxed argument, because it marshals by `GType` at

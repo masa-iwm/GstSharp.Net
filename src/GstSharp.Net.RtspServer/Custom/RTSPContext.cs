@@ -66,10 +66,13 @@ public unsafe partial struct RTSPContext
     /// asked about is what the request said on arrival.
     /// </para>
     /// <para>
-    /// There is no response twin. The response of a context is unset by the
-    /// time a <c>*-request</c> signal runs - the C sends it and unsets it
-    /// before it emits (<c>rtsp-client.c:946</c>) - and one failure path of
-    /// <c>OPTIONS</c> frees the stack response outright (<c>:3869</c>), so a
+    /// There is no response twin. There is no usable response by the time a
+    /// <c>*-request</c> signal runs: on nine of the ten pairs the C has sent
+    /// the response and unset it before it emits (<c>rtsp-client.c:946</c>),
+    /// and on <c>TEARDOWN</c>, which emits before it closes the connection
+    /// (<c>:1534</c>), the response is not built yet (<c>:1545</c>,
+    /// <c>:1549</c>). One failure path of <c>OPTIONS</c> frees the stack
+    /// response outright (<c>:3869</c>), so a
     /// borrowed response would be a pointer to freed storage on a path no
     /// handler can recognise. The message a handler may edit on the way out is
     /// the one <see cref="RTSPClient.SendingMessage"/> lends it.
