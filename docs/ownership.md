@@ -807,6 +807,24 @@ context as `Ctx`, the way every other context carrying signal of the class
 does, and the `Session` the generated shape promised is `[Obsolete]` and
 answers `Ctx.Session`, which is `null` whenever the context carries none.
 
+`RTSPContext.BorrowRequest()` is the third lent wrapper, and the only one a
+caller asks for rather than is handed. The context every request signal of
+`RTSPClient` carries is a value snapshot of a structure on the stack of the
+emitter, and its `GetRequest()` answers a deep copy: correct, and of no use to a
+handler that wants to change what the server serves, because the C reads
+`ctx->request` itself after the `pre-*-request` handler returns and never looks
+at a copy. `BorrowRequest()` lends that message instead — no reference, no copy
+— so a header a handler adds is a header the server reads, which is what the C
+does to its own request as well. It is `null` where the context carries none, as
+`handle-response` and a server originated `send-message` do. The borrow is
+scoped to the handler even more sharply than the others: the request goes back to
+the watch when the handler returns, so it has to be disposed before that, and
+calling it on a stored snapshot reads a pointer that dangles — the one case the
+binding cannot check for. There is deliberately no response twin: the response is
+already unset when a `*-request` signal runs, and one `OPTIONS` failure path
+frees it, so the message to edit on the way out is the one
+`RTSPClient.SendingMessage` lends.
+
 The dynamic path draws the line elsewhere on purpose: `ConnectSignal` borrows
 **every** mini object and boxed argument, because it marshals by `GType` at
 emission time and has no per-signal knowledge to select with. The consequence
