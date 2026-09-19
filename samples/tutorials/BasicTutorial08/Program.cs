@@ -34,10 +34,13 @@
 //     state means. The `using` around it stays correct because Dispose is
 //     idempotent. See docs/ownership.md, "Calls that consume their argument".
 //
-//   * gst_audio_info_set_format is not bound (girs/skip-report.md), so the caps
-//     are written out with Caps.FromString. Every field that
-//     gst_audio_info_to_caps would have produced has to be there — layout
-//     included, or audioconvert has nothing to negotiate against.
+//   * The caps are written out with Caps.FromString rather than built with
+//     gst_audio_info_set_format and gst_audio_info_to_caps. Those are bound,
+//     as Gst.Audio.AudioInfo.SetFormat and ToCaps in GstSharp.Net.Audio, and
+//     PlaybackTutorial03 uses them; this port keeps to the core and App
+//     modules. Every field that gst_audio_info_to_caps would have produced
+//     has to be there — layout included, or audioconvert has nothing to
+//     negotiate against.
 //
 //   * The new-sample handler runs on a streaming thread of the sink and the
 //     need-data handler on one of the source, exactly as in C. Both do the
