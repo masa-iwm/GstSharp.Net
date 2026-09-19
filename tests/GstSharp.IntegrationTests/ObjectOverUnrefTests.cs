@@ -179,6 +179,56 @@ public sealed partial class ObjectOverUnrefTests
     }
 
     /// <summary>
+    /// A wrapper that was built while the switch was on removes its weak
+    /// reference when it is released, whatever the switch says by then. Turning
+    /// the detector off in between must not leave one behind, and a wrapper
+    /// built while it was off must not remove one that was never installed —
+    /// GLib warns about either, and the trap would carry nothing about it, so
+    /// the ordinary release of a watched wrapper is walked here end to end.
+    /// </summary>
+    [Fact]
+    public void AWatchedWrapperTakesItsWeakReferenceBackWhenItIsReleased()
+    {
+        List<Exception> failures = [];
+        using FailureLog log = new(failures);
+
+        bool detecting = OverUnrefDetector.Enabled;
+        OverUnrefDetector.Enabled = true;
+
+        Element element;
+
+        try
+        {
+            element = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "released-watched"));
+        }
+        finally
+        {
+            // Off again before the release: whether the weak reference is
+            // removed is the wrapper's own business, not the switch's.
+            OverUnrefDetector.Enabled = false;
+        }
+
+        try
+        {
+            // Removes the weak reference and then the toggle reference, which
+            // kills the object. The death is the ordinary one, so nothing is
+            // reported.
+            element.Dispose();
+
+            Assert.True(element.IsDisposed);
+
+            lock (failures)
+            {
+                Assert.Empty(failures);
+            }
+        }
+        finally
+        {
+            OverUnrefDetector.Enabled = detecting;
+        }
+    }
+
+    /// <summary>
     /// Drops a reference without going through the binding, the way native code
     /// that unrefs one time too many does.
     /// </summary>

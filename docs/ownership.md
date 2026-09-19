@@ -333,9 +333,10 @@ not own, and the failure surfaces much later — usually as a crash inside
 `g_object_remove_toggle_ref` when the wrapper is released or the pending
 release queue is drained, with nothing left to say which object it was.
 
-Set `GSTSHARP_DETECT_OVER_UNREF=1` in the environment to move the report to the
-moment of the death. Every wrapper built from then on installs a weak
-notification next to its toggle reference. The notification runs inside the
+Set `GSTSHARP_DETECT_OVER_UNREF=1` in the environment of the process, before it
+starts, to move the report to the moment of the death — the variable is read
+once, so setting it from inside the process is too late. Every wrapper then
+installs a weak notification next to its toggle reference. The notification runs inside the
 unref that killed the object, while the instance can still be read, and reports
 an `InvalidOperationException` through `Gst.Interop.ExceptionTrap` naming the
 native type, the wrapper type, the handle, and the managed stack the wrapper
