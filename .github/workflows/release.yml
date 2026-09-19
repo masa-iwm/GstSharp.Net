@@ -26,14 +26,76 @@ permissions:
   contents: read
 
 jobs:
-  # The same gates a branch gets. A release is rare, so it pays for the full
-  # matrix rather than for a shortened copy of it.
+  # A release tag is normally put on a commit that is already the head of
+  # main, and the push that put it there ran ci.yml over that exact SHA with
+  # the workflow file the tag resolves to. Running the six legs again proved
+  # nothing new and cost about seven minutes in front of every publish, so
+  # this job asks whether such a run exists and is green.
+  #
+  # Only a successful push run on main at this very SHA counts. A tag on any
+  # other commit - an older one, a branch head that was never pushed to main,
+  # or one whose run is red - answers false and gets the full matrix. So does
+  # a tag pushed together with its commit, because main's run is then still in
+  # flight rather than successful: that is the fail-closed path working, not a
+  # missed optimization.
+  #
+  # Every failure mode of the query itself - a network error, a rate limit, an
+  # unexpected body - is also false. The job never fails for it; the cost of
+  # being wrong here is running the matrix that used to run unconditionally.
+  ci-status:
+    name: is this commit already green on main?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      actions: read
+
+    outputs:
+      green: ${{ steps.probe.outputs.green }}
+
+    steps:
+      - name: Look for a successful push run of ci.yml at this SHA
+        id: probe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          green=false
+          url=""
+          if body=$(gh api "repos/${{ github.repository }}/actions/workflows/ci.yml/runs?head_sha=${{ github.sha }}&branch=main&event=push&status=success&per_page=1" 2>&1); then
+            total=$(printf '%s' "$body" | jq -r '.total_count // 0' 2>/dev/null || echo 0)
+            if [[ "$total" =~ ^[0-9]+$ ]] && [[ "$total" -ge 1 ]]; then
+              green=true
+              url=$(printf '%s' "$body" | jq -r '.workflow_runs[0].html_url // ""' 2>/dev/null || echo "")
+            fi
+          else
+            echo "The query failed; assuming the matrix has to run."
+            printf '%s\n' "$body"
+          fi
+          echo "green=$green" >> "$GITHUB_OUTPUT"
+          if [[ "$green" == "true" ]]; then
+            echo "${{ github.sha }} is already green on main: $url"
+            echo "Skipping the matrix."
+          else
+            echo "No successful push run of ci.yml on main at ${{ github.sha }}; running the matrix."
+          fi
+
+  # The same gates a branch gets, unless ci-status found them already passed
+  # over this commit. A release is rare, so it pays for the full matrix rather
+  # than for a shortened copy of it.
   ci:
+    needs: ci-status
+    if: ${{ needs.ci-status.outputs.green != 'true' }}
     uses: ./.github/workflows/ci.yml
 
   pack:
     name: pack and push
-    needs: ci
+    # always(), because ci is skipped on the shortcut and a skipped need would
+    # otherwise skip this job as well. The condition then spells out the two
+    # acceptable shapes: the matrix ran and passed, or it was skipped because
+    # ci-status found the same commit green on main. A red or cancelled matrix
+    # leaves neither, and a failed ci-status leaves neither either.
+    needs: [ci-status, ci]
+    if: ${{ always() && needs.ci-status.result == 'success' && (needs.ci.result == 'success' || (needs.ci.result == 'skipped' && needs.ci-status.outputs.green == 'true')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

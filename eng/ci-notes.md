@@ -346,6 +346,21 @@ sits right after the install step, which is where the download exists.
 through `workflow_call` so that a tag runs the same matrix as a branch, and
 then packs and pushes.
 
+* The matrix is skipped when the tagged commit has already passed it. A
+  release tag is normally put on a commit that is already the head of `main`,
+  and the push that put it there ran `ci.yml` over that exact SHA with the
+  workflow file the tag resolves to; re-running the six legs proved nothing
+  new and cost about seven minutes in front of every publish. The first job,
+  `ci-status`, asks the API for a **successful `push` run of `ci.yml` on
+  `main` at `github.sha`** and publishes `green`; the `ci` job runs unless
+  `green` is `true`, and `pack` accepts either a green matrix or a matrix
+  skipped for that reason.
+* It fails closed in every other case. A tag on an older commit, on a branch
+  head that never reached `main`, or on one whose run is red gets the full
+  matrix — and so does a tag pushed together with its commit, because `main`'s
+  run is then still in flight rather than successful. Any failure of the query
+  itself also answers `false`; the worst outcome is the matrix that used to
+  run unconditionally.
 * The version comes from the tag and only from the tag:
   `v1.28.0-preview.1` -> `-p:Version=1.28.0-preview.1`. A tag that is not a
   version fails the job before anything is built.
