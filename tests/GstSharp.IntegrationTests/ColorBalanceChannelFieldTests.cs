@@ -205,11 +205,54 @@ public sealed class ColorBalanceChannelFieldTests
     {
         Assert.Throws<ArgumentNullException>(() => ColorBalanceChannel.New(null!, 0, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => ColorBalanceChannel.New("HUE", 1, 0));
+        Assert.Throws<ArgumentException>(() => ColorBalanceChannel.New("HU\0E", 0, 1));
 
         using ColorBalanceChannel channel = ColorBalanceChannel.New("HUE", 0, 0);
 
-        Assert.Throws<ArgumentNullException>(() => channel.Label = null);
+        Assert.Throws<ArgumentNullException>(() => channel.Label = null!);
+        Assert.Throws<ArgumentException>(() => channel.Label = "HU\0E");
         Assert.Equal("HUE", channel.Label);
+    }
+
+    /// <summary>
+    /// The label travels as UTF-8 of any length, including one longer than the
+    /// stack buffer the marshaller starts with.
+    /// </summary>
+    /// <remarks>
+    /// <c>GMarshal.StackUtf8</c> encodes into a 256 byte stack buffer and falls
+    /// back to a native allocation for anything longer, and the copy that
+    /// reaches the field is made with <c>g_strdup</c> either way; a label of 300
+    /// characters takes the second branch. Both are read back, which is what
+    /// proves the encoding and the copy rather than the allocation.
+    /// </remarks>
+    [Fact]
+    public void ALabelSurvivesNonAsciiTextAndTheHeapPathOfTheMarshaller()
+    {
+        const string nonAscii = "BRIGHTNESS ±µ — café";
+        string longLabel = new('a', 300);
+
+        using ColorBalanceChannel channel = ColorBalanceChannel.New(nonAscii, -1, 1);
+
+        Assert.Equal(nonAscii, channel.Label);
+
+        channel.Label = longLabel;
+        Assert.Equal(longLabel, channel.Label);
+
+        channel.Label = nonAscii;
+        Assert.Equal(nonAscii, channel.Label);
+    }
+
+    /// <summary>
+    /// The channel the factory answers is registered the way every other
+    /// producer of a GObject wrapper registers one, so wrapping the same
+    /// instance again answers the very same wrapper.
+    /// </summary>
+    [Fact]
+    public void AChannelOfOnesOwnIsInterned()
+    {
+        using ColorBalanceChannel channel = ColorBalanceChannel.New("HUE", -1000, 1000);
+
+        Assert.Same(channel, Gst.GObject.Object.FromNative(channel.Handle, Transfer.None));
     }
 
     /// <summary>Reads the label of every channel of a list.</summary>

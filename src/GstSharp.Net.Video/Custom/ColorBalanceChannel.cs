@@ -86,6 +86,10 @@ public unsafe partial class ColorBalanceChannel
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="label"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="label"/> contains a null character, which native code
+    /// would only see the part in front of.
+    /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
     /// <paramref name="minValue"/> is greater than <paramref name="maxValue"/>.
     /// </exception>
@@ -95,17 +99,23 @@ public unsafe partial class ColorBalanceChannel
         ArgumentNullException.ThrowIfNull(label);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(minValue, maxValue);
 
+        // The label is copied before the instance exists, so the one label the
+        // copy refuses — a string with a null character in it — cannot leave an
+        // instance behind with nothing to release it. The copy is the channel's
+        // own: the C dispose frees the field with g_free, whoever wrote it.
+        nint labelCopy = StrDupNative(label);
+
         nint handle = Gst.Interop.GObjectNative.ObjectNewWithProperties(GetGType(), 0, null, null);
         if (handle == nint.Zero)
         {
+            Gst.Interop.GLibNative.Free(labelCopy);
             throw new InvalidOperationException("g_object_new_with_properties returned no color balance channel.");
         }
 
         // The fields are written before the wrapper exists, so nothing can
-        // observe the channel half filled in. The label is a copy of its own:
-        // the C dispose frees the field with g_free, whoever wrote it.
+        // observe the channel half filled in.
         ColorBalanceChannelRaw* raw = (ColorBalanceChannelRaw*)handle;
-        raw->Label = StrDupNative(label);
+        raw->Label = labelCopy;
         raw->MinValue = minValue;
         raw->MaxValue = maxValue;
 
@@ -229,15 +239,22 @@ public unsafe partial class ColorBalanceChannel
     /// on a null pointer. This reads it as <see langword="null"/> instead: the
     /// C instance init leaves the field at <c>NULL</c> and nothing forces an
     /// implementer to set one. The setter, being hand-written, refuses
-    /// <see langword="null"/> rather than writing one back.
+    /// <see langword="null"/> rather than writing one back, and carries
+    /// <c>DisallowNull</c> so that the refusal is a compile-time one wherever
+    /// the compiler can see it.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">The value written is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// The value written contains a null character, which native code would
+    /// only see the part in front of.
+    /// </exception>
     /// <exception cref="InvalidOperationException">
     /// The channel was listed by an element rather than made by
     /// <see cref="New(string, int, int)"/>.
     /// </exception>
     /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    [System.Diagnostics.CodeAnalysis.DisallowNull]
     public string? Label
     {
         get
