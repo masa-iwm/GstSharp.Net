@@ -1202,7 +1202,7 @@ disappears shows up here as an added line.
 
 - `gst_webrtc_data_channel_send_data`
 
-## Virtuals (24)
+## Virtuals (25)
 
 The class struct slots that carry no `OnX` member, with the reason.
 `UnsupportedSignature` is the planner refusing a shape, `OpaqueSlot` is a
@@ -1231,12 +1231,13 @@ what is listed here is the managed surface and not the ABI.
 - `GES.VideoSource::get_natural_size` — OpaqueSlot
 - `GES.VideoSource::needs_converters` — OpaqueSlot
 
-### Gst (8)
+### Gst (9)
 
 - `Gst.Bin::deep_element_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Bin::deep_element_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Bin::element_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Bin::element_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
+- `Gst.DeviceProvider::probe` — UnsupportedSignature
 - `Gst.Element::no_more_pads` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_added` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead
 - `Gst.Element::pad_removed` — signal class closure: read by g_signal at emission time, never called through the class pointer by the base class; managed code subscribes to the signal instead

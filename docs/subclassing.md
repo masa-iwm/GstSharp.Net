@@ -1234,8 +1234,9 @@ whenever a clip is copied, split or pasted.
 
 ## 11. Using it
 
-What ships is a **generated surface for an allowlist of twenty eight base
-classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.Base.BaseSrc`, `PushSrc`,
+What ships is a **generated surface for an allowlist of twenty nine base
+classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.DeviceProvider`,
+`Gst.Base.BaseSrc`, `PushSrc`,
 `BaseSink`, `BaseTransform`, `BaseParse`, `Aggregator`, `AggregatorPad`,
 `Gst.Audio.AudioBaseSink`, `AudioBaseSrc`, `AudioSink`, `AudioSrc`,
 `AudioFilter`, `AudioDecoder`, `AudioEncoder`, `Gst.Video.VideoSink`,
@@ -1557,6 +1558,7 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Element` | `request_new_pad`, `release_pad`, `get_state`, `set_state`, `change_state`, `state_changed`, `set_bus`, `provide_clock`, `set_clock`, `send_event`, `query`, `post_message`, `set_context` |
 | `Gst.Bin` | `add_element`, `remove_element`, `handle_message`, `do_latency` |
 | `Gst.Pad` | `linked`, `unlinked` |
+| `Gst.DeviceProvider` | `start`, `stop` |
 | `Gst.Base.BaseSrc` | `get_caps`, `negotiate`, `fixate`, `set_caps`, `decide_allocation`, `start`, `stop`, `get_times`, `get_size`, `is_seekable`, `prepare_seek_segment`, `do_seek`, `unlock`, `unlock_stop`, `query`, `event`, `create`, `alloc`, `fill` |
 | `Gst.Base.PushSrc` | `create`, `alloc`, `fill` |
 | `Gst.Base.BaseSink` | `get_caps`, `set_caps`, `fixate`, `activate_pull`, `get_times`, `propose_allocation`, `start`, `stop`, `unlock`, `unlock_stop`, `query`, `event`, `wait_event`, `prepare`, `prepare_list`, `preroll`, `render`, `render_list` |
@@ -1581,10 +1583,12 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `GES.Clip` | `create_track_element` |
 
 `Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
-type is answered from. Seven slots of the GStreamer classes above carry no
-`OnX` member, and all seven are the signal class closures of `Element` and
+type is answered from. Eight slots of the GStreamer classes above carry no
+`OnX` member: seven are the signal class closures of `Element` and
 `Bin`, which the base library never calls through the class pointer —
-subscribing to the signal is the same hook. Three slots of the editing
+subscribing to the signal is the same hook — and the eighth is
+`DeviceProvider::probe`, whose `GList` answer the reverse planner has no
+bucket for. Three slots of the editing
 services classes above are left out as well: the two dead `TrackElement` twins
 of the child property slots and `Clip::create_track_elements`.
 `girs/skip-report.md` lists all of them with their reason.
@@ -1681,6 +1685,30 @@ classes do not, and the registration says so before it takes the type name:
 | `AudioSink` | `write` | the thread of the ring buffer stops before it starts when the slot is NULL |
 | `AudioSrc` | `read` | the same |
 | `BaseParse`, `AudioDecoder`, `AudioEncoder`, `VideoDecoder`, `VideoEncoder` | `handle_frame` | the base class calls it for every frame, and for the drain at the end of the stream, unguarded |
+
+### A device provider has to declare `start`
+
+**This one the registration does not check for, and getting it wrong crashes
+the process rather than throwing.** A managed `Gst.DeviceProvider` takes over
+`start`, `stop` or both. `gst_device_provider_start` calls `klass->probe`
+**without a NULL check** when `klass->start` is NULL
+(`gstdeviceprovider.c:476-481`), and `probe` answers a `GList` the reverse
+planner has no bucket for — it is `introspectable="0"`, it is in the virtual
+ledger, and no managed provider ever installs it. A provider that declares
+`StopOverride` alone therefore leaves both slots that matter NULL, and the
+first `Start()` call on it is a call through a NULL function pointer.
+
+Declare `StartOverride` on every managed provider, even one with nothing to
+start: only declared slots are patched into the class (§4.2), so the
+declaration is what puts a non-NULL `start` there. Nothing below it implements
+`start` — no class in the chain does — so `ChainUpStart()` answers `true`,
+"nothing below refuses to start", and a subclass with no work to do can leave
+`OnStart` alone.
+
+`stop` has no equivalent hazard: its dispatch is guarded
+(`gstdeviceprovider.c:522-536`). Neither has `GetDevices()`, which guards its
+own `probe` call and answers an empty list for a provider that has not been
+started (`gstdeviceprovider.c:402-433`).
 
 ### The limits
 

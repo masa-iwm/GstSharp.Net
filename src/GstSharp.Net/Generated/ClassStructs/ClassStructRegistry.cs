@@ -58,6 +58,15 @@ internal static unsafe class ClassStructRegistry
                 new Gst.GObject.ClassSlotProbe("deep_element_removed", Gst.BinClassRaw.DeepElementRemovedOffset),
             ]),
         new Gst.GObject.ClassStructProbe(
+            "GstDeviceProviderClass",
+            &Gst.DeviceProvider.GetGType,
+            Unsafe.SizeOf<Gst.DeviceProviderClassRaw>(),
+            [
+                new Gst.GObject.ClassSlotProbe("probe", Gst.DeviceProviderClassRaw.ProbeOffset),
+                new Gst.GObject.ClassSlotProbe("start", Gst.DeviceProviderClassRaw.StartOffset),
+                new Gst.GObject.ClassSlotProbe("stop", Gst.DeviceProviderClassRaw.StopOffset),
+            ]),
+        new Gst.GObject.ClassStructProbe(
             "GstPadClass",
             &Gst.Pad.GetGType,
             Unsafe.SizeOf<Gst.PadClassRaw>(),

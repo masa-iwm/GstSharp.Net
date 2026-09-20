@@ -30,7 +30,7 @@ public sealed class SubclassCensusTests
     /// <param name="classStructs">The mirrored class structs.</param>
     /// <param name="vfuncs">The slots those mirrors give an <c>OnX</c> member.</param>
     [Theory]
-    [InlineData("Gst", 4, 19)]
+    [InlineData("Gst", 5, 21)]
     [InlineData("GstBase", 7, 99)]
     [InlineData("GstApp", 0, 0)]
     [InlineData("GstAudio", 7, 56)]
@@ -56,11 +56,11 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: thirty mirrors and two hundred and forty five slots,
-    /// the numbers the release notes and <c>docs/subclassing.md</c> quote.
+    /// The run as a whole: thirty one mirrors and two hundred and forty seven
+    /// slots, the numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsThirtyMirrorsAndTwoHundredAndFortyFiveSlots()
+    public void TheRunEmitsThirtyOneMirrorsAndTwoHundredAndFortySevenSlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -71,8 +71,8 @@ public sealed class SubclassCensusTests
             slots += census.EmittedCount(module, "vfunc");
         }
 
-        Assert.Equal(30, mirrors);
-        Assert.Equal(245, slots);
+        Assert.Equal(31, mirrors);
+        Assert.Equal(247, slots);
     }
 
     /// <summary>
@@ -99,6 +99,7 @@ public sealed class SubclassCensusTests
                 ["Gst.Bin::deep_element_removed"] = ClassClosure,
                 ["Gst.Bin::element_added"] = ClassClosure,
                 ["Gst.Bin::element_removed"] = ClassClosure,
+                ["Gst.DeviceProvider::probe"] = "UnsupportedSignature",
                 ["Gst.Element::no_more_pads"] = ClassClosure,
                 ["Gst.Element::pad_added"] = ClassClosure,
                 ["Gst.Element::pad_removed"] = ClassClosure,
@@ -159,6 +160,6 @@ public sealed class SubclassCensusTests
             },
             census.SkippedVirtuals("GES"));
 
-        Assert.Equal(24, census.SkippedVirtualCount());
+        Assert.Equal(25, census.SkippedVirtualCount());
     }
 }
