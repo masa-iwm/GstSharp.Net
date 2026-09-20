@@ -1,4 +1,5 @@
 using Gst;
+using Gst.Interop;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -37,10 +38,15 @@ public sealed class ManagedDeviceProviderTests
 
         Assert.True(provider.Start());
 
-        Assert.Equal(1, provider.Started);
-        Assert.True(provider.IsStarted());
-
-        provider.Stop();
+        try
+        {
+            Assert.Equal(1, provider.Started);
+            Assert.True(provider.IsStarted());
+        }
+        finally
+        {
+            provider.Stop();
+        }
 
         Assert.Equal(1, provider.Stopped);
         Assert.False(provider.IsStarted());
@@ -52,36 +58,162 @@ public sealed class ManagedDeviceProviderTests
     /// withdrawal from <c>stop</c> takes it off the list again.
     /// </summary>
     /// <remarks>
-    /// The device is borrowed from whatever provider this machine has, because
-    /// <c>GstDevice</c> is abstract and only a plugin creates one. A machine
-    /// with no device at all is a valid one; the test says so and stops.
+    /// <para>
+    /// The device is one the test project mints itself, so the fact runs on a
+    /// machine with no hardware at all. <c>GstDevice</c> has no managed
+    /// subclassing surface — that limit is in <c>docs/subclassing.md</c> — so
+    /// <see cref="ProbeDevice"/> registers its type through the internal
+    /// <c>SubclassType.Define</c>.
+    /// </para>
+    /// <para>
+    /// The withdrawal is asserted through the <c>removed</c> signal of the
+    /// device, which is the one thing <c>gst_device_provider_device_remove</c>
+    /// does that the base class does not do by itself: stop clears whatever is
+    /// left of the list with <c>gst_object_unparent</c> and no signal
+    /// (<c>gstdeviceprovider.c:536-539</c>), so an empty list after
+    /// <c>Stop()</c> — and an unparented device — would stay true with the
+    /// <c>DeviceRemove</c> call taken out of the override.
+    /// </para>
     /// </remarks>
     [Fact]
     public void AManagedProviderAnnouncesTheDevicesOfItsStartOverride()
     {
-        using Device? borrowed = BorrowDevice();
-        if (borrowed is null)
-        {
-            _output.WriteLine("No device provider of this machine lists a device; nothing to announce.");
-            return;
-        }
-
+        using ProbeDevice device = new("Probe device");
         using ProbeDeviceProvider provider = new();
-        provider.Announce.Add(borrowed);
+        provider.Announce.Add(device);
 
-        Assert.True(provider.Start());
+        int removals = 0;
+        void OnRemoved(object? sender, EventArgs args) =>
+            Interlocked.Increment(ref removals);
 
-        IReadOnlyList<Device> listed = provider.GetDevices();
-        Assert.Single(listed);
-        Assert.Equal(borrowed.Handle, listed[0].Handle);
-        foreach (Device device in listed)
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
         {
-            device.Dispose();
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
         }
 
-        provider.Stop();
+        // An exception out of either override is reported and swallowed by the
+        // trampoline, so what the trap saw is what says the announcement ran
+        // the way the assertions below read it.
+        device.Removed += OnRemoved;
+        ExceptionTrap.UnhandledException += OnFailure;
 
-        Assert.Empty(provider.GetDevices());
+        try
+        {
+            using Bus bus = provider.GetBus();
+
+            Assert.True(provider.Start());
+
+            try
+            {
+                IReadOnlyList<Device> listed = provider.GetDevices();
+
+                // Wrappers are interned, so the listed device is the very
+                // object that was announced - and disposing it here would take
+                // the device the provider still holds away from it.
+                Assert.Same(device, Assert.Single(listed));
+                Assert.Same(provider, device.Parent);
+                Assert.Equal(0, Volatile.Read(ref removals));
+
+                using Message? added = bus.Pop();
+                Assert.NotNull(added);
+                Assert.Equal(MessageType.DeviceAdded, added.Type);
+            }
+            finally
+            {
+                provider.Stop();
+            }
+
+            Assert.Empty(provider.GetDevices());
+            Assert.Equal(1, Volatile.Read(ref removals));
+            Assert.Null(device.Parent);
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+            device.Removed -= OnRemoved;
+        }
+
+        Assert.Empty(failures);
+    }
+
+    /// <summary>
+    /// A <c>start</c> override that refuses: <c>Start()</c> answers false, the
+    /// provider is not started, and the <c>stop</c> override the provider
+    /// declares beside it never runs, because the base class calls no stop for
+    /// a provider whose use count never left zero.
+    /// </summary>
+    [Fact]
+    public void AStartOverrideThatAnswersFalseRefusesToStart()
+    {
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
+        {
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        using ProbeRefusingDeviceProvider provider = new();
+        ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            Assert.False(provider.Start());
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        Assert.Equal(1, provider.Started);
+        Assert.False(provider.IsStarted());
+        Assert.Equal(0, provider.Stopped);
+
+        // A refusal is an answer, not a failure: nothing was reported.
+        Assert.Empty(failures);
+    }
+
+    /// <summary>
+    /// A <c>start</c> override that throws: the trampoline reports the
+    /// exception and answers the default of the slot, which is false, so the
+    /// provider refuses to start the same way.
+    /// </summary>
+    [Fact]
+    public void AStartOverrideThatThrowsRefusesToStart()
+    {
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
+        {
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        using ProbeRefusingDeviceProvider provider = new() { Throws = true };
+        ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            Assert.False(provider.Start());
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        Assert.Equal(1, provider.Started);
+        Assert.False(provider.IsStarted());
+        Assert.Equal(0, provider.Stopped);
+
+        Exception reported = Assert.Single(failures);
+        Assert.IsType<InvalidOperationException>(reported);
+        Assert.Equal(ProbeRefusingDeviceProvider.Excuse, reported.Message);
     }
 
     /// <summary>
@@ -97,9 +229,15 @@ public sealed class ManagedDeviceProviderTests
         using ProbeChainUpDeviceProvider provider = new();
 
         Assert.True(provider.Start());
-        Assert.True(provider.IsStarted());
 
-        provider.Stop();
+        try
+        {
+            Assert.True(provider.IsStarted());
+        }
+        finally
+        {
+            provider.Stop();
+        }
 
         Assert.False(provider.IsStarted());
     }
@@ -123,56 +261,5 @@ public sealed class ManagedDeviceProviderTests
 
         Assert.Contains("StartOverride", error.Message, StringComparison.Ordinal);
         Assert.False(Gst.GObject.GType.FromName("GstSharpTestStopOnlyDeviceProvider").IsValid);
-    }
-
-    private static Device? BorrowDevice()
-    {
-        IReadOnlyList<DeviceProviderFactory> factories =
-            DeviceProviderFactory.ListGetDeviceProviders(Rank.None);
-
-        try
-        {
-            foreach (DeviceProviderFactory factory in factories)
-            {
-                using DeviceProvider? provider = factory.Get();
-                if (provider is null || !provider.Start())
-                {
-                    continue;
-                }
-
-                try
-                {
-                    Device? first = null;
-                    foreach (Device device in provider.GetDevices())
-                    {
-                        if (first is null)
-                        {
-                            first = device;
-                            continue;
-                        }
-
-                        device.Dispose();
-                    }
-
-                    if (first is not null)
-                    {
-                        return first;
-                    }
-                }
-                finally
-                {
-                    provider.Stop();
-                }
-            }
-        }
-        finally
-        {
-            foreach (DeviceProviderFactory factory in factories)
-            {
-                factory.Dispose();
-            }
-        }
-
-        return null;
     }
 }
