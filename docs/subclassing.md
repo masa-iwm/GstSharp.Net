@@ -968,10 +968,13 @@ base classes keep a field an override legitimately wants to read, and the
 generator exposes one of them today: the `GstSegment` of `BaseSink`, `BaseSrc`,
 `BaseTransform` and `BaseParse`, as `GetSegment()`. The method answers a copy
 the caller disposes and takes no lock, which is what makes *where* it is called
-the whole contract. The library rewrites that field on the streaming thread, and
-the pad holds `STREAM_LOCK` around a chain, a getrange and a serialized event,
-so the read is consistent inside an override the base class calls on that
-thread: `OnRender` or `OnPreroll`, `OnCreate` or `OnFill`, `OnTransform` or
+the whole contract. The base class holds the locks its own writers take around
+the overrides that may read the field: the pad holds `STREAM_LOCK` around a
+chain, a getrange and a serialized event, and `BaseSink` holds `PREROLL_LOCK` for
+the whole of its chain function, which is the lock an instant rate change takes
+to rewrite the segment from the thread that sent the event
+(`gstbasesink.c:4500-4562`). So the read is consistent inside one of those
+overrides: `OnRender` or `OnPreroll`, `OnCreate` or `OnFill`, `OnTransform` or
 `OnTransformIp`, `OnHandleFrame`. Called from anywhere else — a property setter,
 a bus handler, a thread of the subclass's own — it still answers a segment and
 is still memory safe, but the segment may mix the fields of two: `GstSegment` is

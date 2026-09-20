@@ -686,17 +686,23 @@ nullable at all, because what they read is storage the instance is made of
 rather than a pointer the library fills in. They are also the only members of
 this section that read a field of a class rather than of a structure a call
 handed over, so the window is not a call the caller is inside of but an override
-the base class calls on the streaming thread — `OnRender` or `OnPreroll` for
-`BaseSink`, `OnCreate` or `OnFill` for `BaseSrc`, `OnTransform` or
-`OnTransformIp` for `BaseTransform`, `OnHandleFrame` for `BaseParse` — where the
-pad holds `STREAM_LOCK` around the call (`gstpad.c:4554`, `:5072`, `:6053`).
+the base class calls with the locks its own writers take already held —
+`OnRender` or `OnPreroll` for `BaseSink`, `OnCreate` or `OnFill` for `BaseSrc`,
+`OnTransform` or `OnTransformIp` for `BaseTransform`, `OnHandleFrame` for
+`BaseParse`. The pad holds `STREAM_LOCK` around a chain, a getrange and a
+serialized event (`gstpad.c:4554`, `:5072`, `:6053`), which covers every writer
+of the four fields but one: an instant rate change rewrites
+`GstBaseSink.segment` from the thread that sent the event and holds
+`PREROLL_LOCK` alone to do it (`gstbasesink.c:4500-4562`), and that lock is held
+for the whole of the chain function `OnRender` and `OnPreroll` run inside.
 Outside it the read is still memory safe and still answers a segment: a
 `GstSegment` is 120 flat bytes and owns no pointer, so the worst a racing
 rewrite can produce is a value that mixes the fields of two segments. That is
-the whole cost of the accessor taking no lock, which it cannot: both locks are C
-macros with no exported function, `OBJECT_LOCK` is a non recursive `GMutex` that
-item 8 of `docs/modules.md` forbids a member to take, and `STREAM_LOCK` lives
-inside `GstPad`, whose layout differs between ABIs.
+the whole cost of the accessor taking no lock, which it cannot: every one of
+these locks is a C macro with no exported function, `OBJECT_LOCK` is a non
+recursive `GMutex` that item 8 of `docs/modules.md` forbids a member to take, and
+`STREAM_LOCK` and `PREROLL_LOCK` live inside `GstPad` and `GstBaseSink`, whose
+layouts differ between ABIs.
 
 * `BaseSink.GetSegment()`, `BaseSrc.GetSegment()`,
   `BaseTransform.GetSegment()` and `BaseParse.GetSegment()` — a copy, good for

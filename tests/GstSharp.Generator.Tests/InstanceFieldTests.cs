@@ -44,7 +44,10 @@ public sealed class InstanceFieldTests
     }
 
     [Theory]
-    [InlineData("BaseSink.cs", "STREAM_LOCK", "<see cref=\"OnRender\"/> or <see cref=\"OnPreroll\"/>")]
+    [InlineData(
+        "BaseSink.cs",
+        "STREAM_LOCK and, for an instant rate change, PREROLL_LOCK",
+        "<see cref=\"OnRender\"/> or <see cref=\"OnPreroll\"/>")]
     [InlineData("BaseSrc.cs", "STREAM_LOCK and OBJECT_LOCK", "<see cref=\"OnCreate\"/> or <see cref=\"OnFill\"/>")]
     [InlineData("BaseTransform.cs", "STREAM_LOCK", "<see cref=\"OnTransform\"/> or <see cref=\"OnTransformIp\"/>")]
     [InlineData("BaseParse.cs", "STREAM_LOCK", "<see cref=\"OnHandleFrame\"/>")]
