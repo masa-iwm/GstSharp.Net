@@ -5774,6 +5774,11 @@ internal sealed class MarshalPlanner
             instance,
             "managed",
             "result",
+
+            // The raw handle a floating hand out mints is a local of the same
+            // block the arguments of the trampoline are declared in, so a
+            // parameter the gir spells `result_handle` would shadow it.
+            "resultHandle",
             "parent",
             "slot",
         };
