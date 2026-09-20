@@ -115,14 +115,20 @@ public abstract unsafe partial class TimelineElement
     /// <para>
     /// This is <c>ges_timeline_element_set_child_property</c>. Its
     /// <c>_full</c> sibling reports why a write failed through a
-    /// <c>GError</c>; this one answers only whether the property was found,
-    /// which is what the exception below says.
+    /// <c>GError</c>; this one answers only whether the write succeeded, so a
+    /// failure is told apart here by looking the name up afterwards: a name
+    /// that exists was refused, and one that does not is the unknown-property
+    /// case. Only the <c>_full</c> sibling carries the reason behind a
+    /// refusal.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="propertyName"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">
     /// No child of this element has such a property, or
     /// <paramref name="value"/> holds nothing.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// A child has the property, but the write was refused.
     /// </exception>
     /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
     public void SetChildProperty(string propertyName, in Gst.GObject.Value value)
@@ -147,11 +153,30 @@ public abstract unsafe partial class TimelineElement
             found = GesTimelineElementSetChildProperty(self, scope.Pointer, native);
         }
 
-        // Handle was the last use of this wrapper.
         GC.KeepAlive(this);
 
         if (found == 0)
         {
+            // FALSE stands for two different things, and the call does not say
+            // which: the name matched no child property at all, or it matched
+            // one and the write was refused — which is what an
+            // OnSetChildPropertyFull override does when it answers false. The
+            // lookup below is the very one the native call makes first, so it
+            // settles that: a name it finds was refused, not missing.
+            bool exists = LookupChild(propertyName, out _, out Gst.GObject.ParamSpec? pspec);
+
+            // The lookup transferred a reference of the specification, and the
+            // wrapper of one holds it until it is disposed: nothing here wants
+            // the specification itself, only whether there was one.
+            pspec?.Dispose();
+
+            if (exists)
+            {
+                throw new InvalidOperationException(
+                    $"The \"{propertyName}\" child property of {NativeType.Name} exists, but the write was " +
+                    "refused. SetChildPropertyFull reports the reason a refusal carries.");
+            }
+
             throw new ArgumentException(
                 $"No child of {NativeType.Name} has a \"{propertyName}\" property. " +
                 "A clip has children once it is in a layer of a timeline.",

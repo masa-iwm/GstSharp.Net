@@ -200,6 +200,42 @@ public sealed class GesChildPropertyTests
     }
 
     /// <summary>
+    /// A write a <c>set_child_property_full</c> override refuses is not an
+    /// unknown name: the property is there, so the call fails as an
+    /// <see cref="InvalidOperationException"/> rather than as the
+    /// <see cref="ArgumentException"/> a missing one gives.
+    /// </summary>
+    /// <remarks>
+    /// The NULL error call is the only one that has to tell the two apart by
+    /// itself. <c>SetChildPropertyFull</c> carries the reason a refusal gives,
+    /// and answers false when it gives none, which is the case here.
+    /// </remarks>
+    [Fact]
+    public void ARefusedChildPropertyWriteIsNotAnUnknownName()
+    {
+        GstGES.Initialize();
+
+        using ProbeVideoSource source = ProbeVideoSource.New();
+        source.RefuseWithoutReason = true;
+
+        using Value written = Value.New(GType.String);
+        written.SetString("refused");
+
+        // The name is one the source really has, so the failure is the refusal.
+        Assert.True(source.LookupChild(ProbeVideoSource.TagName, out Gst.GObject.Object? child, out ParamSpec? pspec));
+        Assert.NotNull(child);
+
+        // The lookup transferred a reference of the specification, which the
+        // wrapper adopted; the child is a GObject wrapper and stays as it is.
+        pspec?.Dispose();
+
+        InvalidOperationException refused = Assert.Throws<InvalidOperationException>(
+            () => source.SetChildProperty(ProbeVideoSource.TagName, written));
+        Assert.Contains(ProbeVideoSource.TagName, refused.Message, StringComparison.Ordinal);
+        Assert.Null(source.Tag);
+    }
+
+    /// <summary>
     /// A clip that is not in a layer has no children yet, so it has no child
     /// properties either. This is the shape of the mistake an application
     /// makes, and it fails the way an unknown name does.
