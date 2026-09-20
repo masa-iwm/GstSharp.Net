@@ -266,10 +266,10 @@ or only the default, and one that states both are reported as `GEN0026`.
 ## The overlay keys of the subclassing surface
 
 `girs/overlays/fixups.json` steers what a subclassable class emits through
-nine keys, each documented by a `$comment-` entry beside it. `subclassable`
+ten keys, each documented by a `$comment-` entry beside it. `subclassable`
 is the allowlist itself: a class named there gets a class struct mirror, one
 `OnX` member per bindable slot and a registration, and its whole parent chain
-gets mirrors as well. The other eight address a single slot, keyed
+gets mirrors as well. The other nine address a single slot, keyed
 `Ns.Class::vfunc`, or a single parameter of one, keyed
 `Ns.Class::vfunc#param`:
 
