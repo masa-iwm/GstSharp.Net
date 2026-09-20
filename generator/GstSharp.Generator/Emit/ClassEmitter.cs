@@ -930,7 +930,7 @@ internal sealed class ClassEmitter
         // is refused rather than declared twice.
         List<string> taken = [.. reserved, .. members];
         IReadOnlyList<InstanceFieldPlan> exposed = _instanceFields.Plan(ns, declaration, taken);
-        _instanceFields.WriteAccessors(writer, ns, declaration, typeName, exposed);
+        _instanceFields.WriteAccessors(writer, module, ns, declaration, typeName, exposed);
         foreach (InstanceFieldPlan plan in exposed)
         {
             members.Add(plan.Member);

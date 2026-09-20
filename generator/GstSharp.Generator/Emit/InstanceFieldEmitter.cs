@@ -214,12 +214,14 @@ internal sealed class InstanceFieldEmitter
 
     /// <summary>Writes the accessors of the exposed fields of one class.</summary>
     /// <param name="writer">The writer of the class.</param>
+    /// <param name="module">The module the class belongs to.</param>
     /// <param name="ns">The gir namespace of the class.</param>
     /// <param name="declaration">The class being emitted.</param>
     /// <param name="typeName">The C# name of the wrapper.</param>
     /// <param name="plans">The exposed fields.</param>
     internal void WriteAccessors(
         CodeWriter writer,
+        ModuleInfo module,
         GirNamespace ns,
         GirClass declaration,
         string typeName,
@@ -229,6 +231,7 @@ internal sealed class InstanceFieldEmitter
         string cName = declaration.CType is { Length: > 0 } declared ? declared : declaration.Name;
         foreach (InstanceFieldPlan plan in plans)
         {
+            _census.Emitted(module.GirNamespace, "instance field");
             writer.WriteLine();
             writer.WriteLine(
                 "/// <summary>Answers a copy of the <c>" + plan.Field.Name + "</c> field of <c>" + cName

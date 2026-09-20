@@ -1370,7 +1370,7 @@ public sealed class RecordEmitterTests
 
     [Theory]
     [InlineData("GstSharp.Net", 126)]
-    [InlineData("GstSharp.Net.Base", 34)]
+    [InlineData("GstSharp.Net.Base", 39)]
     [InlineData("GstSharp.Net.App", 8)]
     [InlineData("GstSharp.Net.Audio", 52)]
     [InlineData("GstSharp.Net.Video", 81)]

@@ -865,7 +865,7 @@ public sealed class ClassEmitterTests
 
     [Theory]
     [InlineData("Gst", 69)]
-    [InlineData("GstBase", 42)]
+    [InlineData("GstBase", 38)]
     [InlineData("GstAudio", 40)]
     [InlineData("GstVideo", 8)]
     [InlineData("GstSdp", 0)]
@@ -898,8 +898,8 @@ public sealed class ClassEmitterTests
         string report = Generated.SkipReport;
         string ledger = ClassFieldLedger(report);
 
-        Assert.Equal(209, Generated.Census.ClassFieldCount());
-        Assert.Contains("## Class fields (209)\n", report, StringComparison.Ordinal);
+        Assert.Equal(205, Generated.Census.ClassFieldCount());
+        Assert.Contains("## Class fields (205)\n", report, StringComparison.Ordinal);
         Assert.Contains("### Gst (69)\n", ledger, StringComparison.Ordinal);
 
         // One line per shape the ledger measures. The shapes are what says how
@@ -971,6 +971,12 @@ public sealed class ClassEmitterTests
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
         //
+        // GEN0060 is the one of the eighteen that is an error rather than a
+        // warning: an instance field entry that matched nothing is the only
+        // reason a public accessor of that field exists, so the verbs do fail on
+        // it. It is asserted here beside the others so that the suite names the
+        // entry rather than only the exit code.
+        //
         // GEN0058 is the one vfunc key of its family asserted here, because it
         // is the one whose loss is silent in a new way: the slot keeps its
         // member and its census row, and what disappears is the reference the
@@ -1029,6 +1035,7 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0056", diagnostic.Code);
             Assert.NotEqual("GEN0057", diagnostic.Code);
             Assert.NotEqual("GEN0058", diagnostic.Code);
+            Assert.NotEqual("GEN0060", diagnostic.Code);
         }
     }
 
