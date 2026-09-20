@@ -966,9 +966,8 @@ public sealed class ClassEmitterTests
         // entry of any other shape - the c:identifier of a callable, a
         // qualified type name, a property - that matched nothing either
         // (GEN0056), a rename the run never looked up (GEN0057), and a floating
-        // return on no slot of a subclassable class (GEN0058). Every one
-        // of them
-        // describes a gir that has moved on, and every one of them is a
+        // return on no slot of a subclassable class (GEN0058). Every one of
+        // them describes a gir that has moved on, and every one of them is a
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
         //

@@ -1726,8 +1726,9 @@ a `GstDevice` — `display-name`, `device-class`, `caps` and `properties` — ar
 `CONSTRUCT_ONLY` (`gstdevice.c:89-104`), so they are given while the instance
 is being built and nothing can write them afterwards: pass them to the
 dictionary overload of `NewInstance` (§11, "A managed pad type"), the same way a
-`GstPad` takes its `direction`. Neither slot is required. `gst_device_create_element` answers NULL
-and `gst_device_reconfigure_element` answers `false` when the class leaves the
+`GstPad` takes its `direction`. Neither slot is required.
+`gst_device_create_element` answers NULL and
+`gst_device_reconfigure_element` answers `false` when the class leaves the
 slot empty (`gstdevice.c:210-215`, `:338-341`), and `ChainUpCreateElement()` /
 `ChainUpReconfigureElement()` answer the same.
 
