@@ -643,9 +643,9 @@ internal sealed class InstanceFieldEmitter
             // the loop below would put the other way round.
             _diagnostics.Error(
                 "GEN0060",
-                $"The instance field '{key}' states a window of overrides, but '{ns.Name}.{declaration.Name}' is "
-                + "not on 'subclassable' and emits no override at all; the field has to wait for the class to be "
-                + "subclassable.");
+                $"The instance field '{key}' states a window of overrides, but '{ns.Name}.{declaration.Name}' "
+                + "emits no override at all - it is not on 'subclassable', or it declares no class struct to read "
+                + "slots from; the field has to wait for the class to carry a subclassing surface.");
             return null;
         }
 
@@ -747,9 +747,9 @@ internal sealed class InstanceFieldEmitter
             // closed table refuses the shape rather than laying it out wide.
             _diagnostics.Error(
                 "GEN0062",
-                $"The instance field '{field.Name}' occupies {bits} bits of a word it shares with its "
-                + "neighbours, which the own fields mirror has no storage for; a member of the whole word "
-                + "would move every field behind it.");
+                $"The instance field '{field.Name}' occupies {bits} {(bits == 1 ? "bit" : "bits")} of a word it "
+                + "shares with its neighbours, which the own fields mirror has no storage for; a member of the "
+                + "whole word would move every field behind it.");
             return "nint";
         }
 

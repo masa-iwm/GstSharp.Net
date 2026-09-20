@@ -690,8 +690,8 @@ the base class calls with the locks its own writers take already held —
 `OnRender` or `OnPreroll` for `BaseSink`, `OnCreate` or `OnFill` for `BaseSrc`,
 `OnTransform` or `OnTransformIp` for `BaseTransform`, `OnHandleFrame` for
 `BaseParse`. The pad holds `STREAM_LOCK` around a chain, a getrange and a
-serialized event (`gstpad.c:4554`, `:5072`, `:6053`), which covers every writer
-of the four fields but one: an instant rate change rewrites
+serialized event (`gstpad.c:4554`, `:5072`, `:6053`), which covers the writers
+the four overlay entries cite save one: an instant rate change rewrites
 `GstBaseSink.segment` from the thread that sent the event and holds
 `PREROLL_LOCK` alone to do it (`gstbasesink.c:4500-4562`), and that lock is held
 for the whole of the chain function `OnRender` and `OnPreroll` run inside.

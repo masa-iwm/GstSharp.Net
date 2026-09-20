@@ -215,7 +215,7 @@ public sealed class InstanceFieldDiagnosticTests
     [InlineData(
         Entries + "{ \"GstDoodad.segment\": { " + Window + " } } }",
         "GEN0062",
-        "occupies 1 bits of a word it shares with its neighbours")]
+        "occupies 1 bit of a word it shares with its neighbours")]
     [InlineData(
         Entries + "{ \"GstThing.segment\": { " + Window + " } } }",
         "GEN0062",
@@ -242,7 +242,7 @@ public sealed class InstanceFieldDiagnosticTests
 
         Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0060");
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
-        Assert.Contains("is not on 'subclassable'", error.Message, StringComparison.Ordinal);
+        Assert.Contains("emits no override at all", error.Message, StringComparison.Ordinal);
     }
 
     /// <summary>
