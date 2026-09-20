@@ -317,20 +317,6 @@ internal struct GstObjectInstanceRaw
     internal nint GstReserved;
 }
 
-/// <summary>A <c>GCond</c>, which is one pointer and two <c>guint</c>.</summary>
-[StructLayout(LayoutKind.Sequential)]
-internal struct GCondRaw
-{
-    /// <summary>The <c>p</c> field.</summary>
-    internal nint Pointer;
-
-    /// <summary>The first of the two <c>i</c> fields.</summary>
-    internal uint First;
-
-    /// <summary>The second of the two <c>i</c> fields.</summary>
-    internal uint Second;
-}
-
 /// <summary>
 /// The head of a <c>GstAudioRingBuffer</c> instance, up to and including the
 /// <c>spec</c> field.
@@ -376,7 +362,7 @@ internal struct AudioRingBufferHeadRaw
     internal GstObjectInstanceRaw Object;
 
     /// <summary>The <c>cond</c> field.</summary>
-    internal GCondRaw Cond;
+    internal Gst.GLib.CondRaw Cond;
 
     /// <summary>The <c>open</c> field.</summary>
     internal int Open;
