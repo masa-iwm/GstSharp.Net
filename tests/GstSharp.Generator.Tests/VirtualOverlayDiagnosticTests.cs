@@ -271,6 +271,45 @@ public sealed class VirtualOverlayDiagnosticTests
             </record>
         """;
 
+    /// <summary>
+    /// The object answering slot with a <c>GError</c> out of band, which the
+    /// planner refuses before it ever looks at the answer. The mode would apply
+    /// to the answer perfectly well, so nothing about the return value says the
+    /// entry lands nowhere.
+    /// </summary>
+    private const string BodyWithAThrowingObjectReturn =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type" glib:type-struct="WidgetClass">
+              <virtual-method name="mint" throws="1">
+                <return-value transfer-ownership="none" nullable="1">
+                  <type name="Widget" c:type="GstWidget*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="WidgetClass" c:type="GstWidgetClass" glib:is-gtype-struct-for="Widget">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="mint">
+                <callback name="mint" throws="1">
+                  <return-value transfer-ownership="none" nullable="1">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="widget" transfer-ownership="none">
+                      <type name="Widget" c:type="GstWidget*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+        """;
+
     private const string Allowlist = "\"subclassable\": [\"Gst.Widget\"]";
 
     [Fact]
@@ -460,6 +499,52 @@ public sealed class VirtualOverlayDiagnosticTests
 
         // And the slot really is off the surface, which is what makes the
         // refusal the only report there is.
+        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "vfunc"));
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0058");
+    }
+
+    [Fact]
+    public void AFloatingReturnOnASlotThatThrowsStopsTheRun()
+    {
+        // The answer of this slot is exactly the shape the mode applies to, and
+        // the entry still lands nowhere: a slot with a GError out of band is
+        // refused before the answer is planned at all, so no bucket is chosen
+        // and the key names a real field of a real class struct either way.
+        FixtureRun run = Run(
+            BodyWithAThrowingObjectReturn,
+            """{ "subclassable": ["Gst.Widget"], "vfuncFloatingReturns": ["Gst.Widget::mint"] }""",
+            allowErrors: true);
+
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0059");
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains("Gst.Widget::mint", error.Message, StringComparison.Ordinal);
+
+        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "vfunc"));
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0058");
+    }
+
+    [Fact]
+    public void AFloatingReturnOnASkippedSlotStopsTheRun()
+    {
+        // The third way out, and the one that never reaches the planner: a slot
+        // the overlays take out of the surface by hand. Two entries that
+        // contradict each other are a mistake in the overlay whichever of them
+        // was meant.
+        FixtureRun run = Run(
+            BodyWithAnObjectReturn,
+            """
+            {
+              "subclassable": ["Gst.Widget"],
+              "skipVirtuals": { "Gst.Widget::mint": "UnsupportedSignature" },
+              "vfuncFloatingReturns": ["Gst.Widget::mint"]
+            }
+            """,
+            allowErrors: true);
+
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0059");
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains("Gst.Widget::mint", error.Message, StringComparison.Ordinal);
+
         Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "vfunc"));
         Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0058");
     }

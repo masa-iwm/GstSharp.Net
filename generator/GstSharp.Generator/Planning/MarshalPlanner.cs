@@ -6290,9 +6290,13 @@ internal sealed class MarshalPlanner
         MappedType mapped = _types.Map(value.Type, context.Namespace);
 
         // The floating hand out is the one return mode no transfer kind spells,
-        // so it is read here and every way out of the method is checked against
-        // it: a key consumed by a slot the mode cannot apply to would leave the
-        // stale key report silent about an overlay entry that does nothing.
+        // so it is read here and every way out of the method that plans a bucket
+        // is checked against it: a key consumed by a slot the mode cannot apply
+        // to would leave the stale key report silent about an overlay entry that
+        // does nothing. The exits that plan nothing at all take the slot out of
+        // the surface, which the emitter reports as it drops it - the same
+        // treatment a slot that throws or that the overlays skip needs, and
+        // neither of those reaches this method.
         bool floating = _overlays.IsFloatingReturn(overlayKey);
         if (mapped.Kind == MarshalKind.Void)
         {
@@ -6348,7 +6352,6 @@ internal sealed class MarshalPlanner
 
         if (scalar is null)
         {
-            Refuse();
             return null;
         }
 
@@ -6378,7 +6381,6 @@ internal sealed class MarshalPlanner
 
         if (bucket is not { } kind)
         {
-            Refuse();
             return null;
         }
 
@@ -6413,26 +6415,6 @@ internal sealed class MarshalPlanner
             }
 
             return (plan, bucket);
-        }
-
-        // The two exits that plan nothing at all take the slot out of the
-        // surface as UnsupportedSignature, and the key of such a slot names a
-        // real field of a real class struct, so no stale report catches it: it
-        // would be consumed in silence. The refusal is reported here for the
-        // same reason as above - an entry that states the C contract of a slot
-        // the binding does not project is a mistake in the overlay.
-        void Refuse()
-        {
-            if (!floating)
-            {
-                return;
-            }
-
-            _diagnostics.Error(
-                "GEN0059",
-                $"The floating return '{overlayKey}' names a slot whose answer the binding does not "
-                + "project at all. Only a slot that answers a class instance can hand out a floating "
-                + "reference.");
         }
     }
 }

@@ -271,6 +271,7 @@ internal sealed class VfuncEmitter
             string key = model.KeyOf(method.Name);
             if (_overlays.IsVirtualSkipped(key))
             {
+                ReportFloatingReturnOnNoMember(key);
                 _census.SkippedVirtual(module.GirNamespace, key, _overlays.VirtualSkipReason(key));
                 continue;
             }
@@ -283,6 +284,7 @@ internal sealed class VfuncEmitter
 
             if (plan is null)
             {
+                ReportFloatingReturnOnNoMember(key);
                 _census.SkippedVirtual(module.GirNamespace, key, reason);
                 continue;
             }
@@ -835,6 +837,38 @@ internal sealed class VfuncEmitter
             + "'vfuncDocNotes' entry. The generated note says the base class takes a reference of its own; "
             + "state in that entry which call site does, and what the override owes it.");
         return true;
+    }
+
+    /// <summary>
+    /// Reports a floating return entry on a slot that gets no managed member at
+    /// all, which is the one way the key could be consumed in silence.
+    /// </summary>
+    /// <param name="key">The key of the slot that is about to be left out.</param>
+    /// <remarks>
+    /// A slot the overlays skip, one that throws, and one with a parameter the
+    /// planner cannot project are all taken out of the surface before any return
+    /// bucket is chosen, so nothing inside the planner can check the entry
+    /// against one. The key of such a slot still names a real field of a real
+    /// class struct, so the stale report of <c>GEN0058</c> does not catch it
+    /// either. It is reported here, from the one place every exit passes
+    /// through, for the same reason the mismatched bucket is: an entry that
+    /// states the C contract of a slot the binding does not project is a mistake
+    /// in the overlay. A slot of a class that is only mirrored is a different
+    /// case and belongs to <c>GEN0058</c>, whose known set holds the slots of
+    /// the subclassable classes alone.
+    /// </remarks>
+    private void ReportFloatingReturnOnNoMember(string key)
+    {
+        if (!_overlays.IsFloatingReturn(key))
+        {
+            return;
+        }
+
+        _diagnostics.Error(
+            "GEN0059",
+            $"The floating return '{key}' names a slot that gets no managed member, so nothing can hand "
+            + "out the reference it describes. Only a slot that answers a class instance can hand out a "
+            + "floating reference.");
     }
 
     private static string SignatureOf(VirtualMethodPlan plan)
