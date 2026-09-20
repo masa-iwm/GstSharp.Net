@@ -153,23 +153,21 @@ public abstract unsafe partial class TimelineElement
             found = GesTimelineElementSetChildProperty(self, scope.Pointer, native);
         }
 
+        // FALSE stands for two different things, and the call does not say
+        // which: the name matched no child property at all, or it matched one
+        // and the write was refused — which is what an OnSetChildPropertyFull
+        // override does when it answers false. The lookup here is the very one
+        // the native call makes first, so it settles that short of a concurrent
+        // change of the children: a name it finds was refused, not missing.
+        // Both out parameters are optional and the C only takes a reference
+        // when one is given, so passing neither asks the question without
+        // fabricating a wrapper for a child this call has no use for.
+        bool exists = found == 0 && GesTimelineElementLookupChild(self, scope.Pointer, null, null) != 0;
+
         GC.KeepAlive(this);
 
         if (found == 0)
         {
-            // FALSE stands for two different things, and the call does not say
-            // which: the name matched no child property at all, or it matched
-            // one and the write was refused — which is what an
-            // OnSetChildPropertyFull override does when it answers false. The
-            // lookup below is the very one the native call makes first, so it
-            // settles that: a name it finds was refused, not missing.
-            bool exists = LookupChild(propertyName, out _, out Gst.GObject.ParamSpec? pspec);
-
-            // The lookup transferred a reference of the specification, and the
-            // wrapper of one holds it until it is disposed: nothing here wants
-            // the specification itself, only whether there was one.
-            pspec?.Dispose();
-
             if (exists)
             {
                 throw new InvalidOperationException(
