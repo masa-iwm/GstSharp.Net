@@ -567,8 +567,8 @@ public sealed partial class GesSubclassTests
         using ProbeVideoSource source = ProbeVideoSource.New();
 
         Gst.GLib.GException refusal = new(
-            GESGlobal.ErrorQuark(),
-            (int)GES.Error.NotEnoughInternalContent,
+            CoreErrorExtensions.Quark(),
+            (int)CoreError.Failed,
             "the probe has nothing to write the tag onto");
         source.RefuseWith = refusal;
 
@@ -694,8 +694,8 @@ public sealed partial class GesSubclassTests
         using ProbeVideoSource source = ProbeVideoSource.New();
 
         Gst.GLib.GException refusal = new(
-            GESGlobal.ErrorQuark(),
-            (int)GES.Error.NotEnoughInternalContent,
+            CoreErrorExtensions.Quark(),
+            (int)CoreError.Failed,
             "the probe throws the reason instead of answering it");
         source.ThrowRefusalWith = refusal;
 
