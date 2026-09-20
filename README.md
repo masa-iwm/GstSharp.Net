@@ -381,8 +381,9 @@ reason in
 The gaps worth naming here:
 
 * **Subclassing is limited to an allowlist of base classes.** A C# type can
-  derive from one of twenty eight classes — `Gst.Element`, `Gst.Bin`,
-  `Gst.Pad`, the `GstBase` sources, sinks, transforms, parsers and aggregators
+  derive from one of twenty nine classes — `Gst.Element`, `Gst.Bin`,
+  `Gst.Pad`, `Gst.DeviceProvider`, the `GstBase` sources, sinks, transforms,
+  parsers and aggregators
   including `AggregatorPad`, the `GstAudio` sinks, sources, filters and codecs,
   the `GstVideo` sinks, filters and codecs, and the timeline elements, sources
   and clips of the editing services — override the vfuncs of the class and be
