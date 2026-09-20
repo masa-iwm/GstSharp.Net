@@ -193,12 +193,20 @@ public unsafe partial class DeviceProvider
     /// with no NULL check when klass-&gt;start is NULL (gstdeviceprovider.c:476-481), and a
     /// managed provider never installs probe, which is introspectable=0 and carries no managed
     /// surface, so a provider without this slot would end a Start call in a call through a NULL
-    /// function pointer. Declaring it is what the registration turns that crash into a refusal
-    /// for. No class in the chain installs a start of its own - gstdeviceprovider.h:169-184
+    /// function pointer. The registration refuses a provider without it instead of letting it
+    /// crash. No class in the chain installs a start of its own - gstdeviceprovider.h:169-184
     /// declares the slot and the base class leaves it NULL - so a chain-up reaches nothing and
     /// answers true, meaning nothing below the override refuses to start, and a provider with
     /// no work to do may leave OnStart alone. Answer false to refuse to start; there is no
-    /// error channel, the C slot is a plain gboolean.</para>
+    /// error channel, the C slot is a plain gboolean. Withdraw what was already announced
+    /// before answering false, and before letting an exception out, which the trampoline
+    /// reports and turns into false: the base class leaves those devices parented to the
+    /// provider until it is disposed, and it calls no stop for a provider that never started
+    /// (gstdeviceprovider.c:497-500, 536-543). The slot runs with the start lock of the
+    /// provider held (gstdeviceprovider.c:466-506): calling IsStarted, GetDevices, Start or
+    /// Stop on the same provider from inside the override deadlocks on that non recursive
+    /// mutex. DeviceAdd, DeviceRemove, DeviceChanged, HideProvider and GetBus are safe, because
+    /// they take the object lock or no lock at all.</para>
     /// </remarks>
     /// <returns>%TRUE if the device providering could be started</returns>
     protected virtual bool OnStart() =>
@@ -214,7 +222,15 @@ public unsafe partial class DeviceProvider
     /// this one alone is refused, because leaving klass-&gt;start NULL would send
     /// gst_device_provider_start into its unguarded klass-&gt;probe call
     /// (gstdeviceprovider.c:476-481). The dispatch of this one is guarded
-    /// (gstdeviceprovider.c:522-536), so a provider that declares start alone is fine.</para>
+    /// (gstdeviceprovider.c:522-536), so a provider that declares start alone is fine. The bus
+    /// is set flushing before the slot runs (gstdeviceprovider.c:532), so a DEVICE_REMOVED
+    /// message posted by a DeviceRemove call from here reaches no listener - only the removed
+    /// signal of the device fires - and the base class unparents every device that is still on
+    /// the list once the slot returns (gstdeviceprovider.c:536-539). The slot runs with the
+    /// start lock of the provider held (gstdeviceprovider.c:530-547): calling IsStarted,
+    /// GetDevices, Start or Stop on the same provider from inside the override deadlocks on
+    /// that non recursive mutex. DeviceAdd, DeviceRemove, DeviceChanged, HideProvider and
+    /// GetBus are safe, because they take the object lock or no lock at all.</para>
     /// </remarks>
     protected virtual void OnStop() =>
         ChainUpStop();
@@ -226,12 +242,20 @@ public unsafe partial class DeviceProvider
     /// with no NULL check when klass-&gt;start is NULL (gstdeviceprovider.c:476-481), and a
     /// managed provider never installs probe, which is introspectable=0 and carries no managed
     /// surface, so a provider without this slot would end a Start call in a call through a NULL
-    /// function pointer. Declaring it is what the registration turns that crash into a refusal
-    /// for. No class in the chain installs a start of its own - gstdeviceprovider.h:169-184
+    /// function pointer. The registration refuses a provider without it instead of letting it
+    /// crash. No class in the chain installs a start of its own - gstdeviceprovider.h:169-184
     /// declares the slot and the base class leaves it NULL - so a chain-up reaches nothing and
     /// answers true, meaning nothing below the override refuses to start, and a provider with
     /// no work to do may leave OnStart alone. Answer false to refuse to start; there is no
-    /// error channel, the C slot is a plain gboolean.</para>
+    /// error channel, the C slot is a plain gboolean. Withdraw what was already announced
+    /// before answering false, and before letting an exception out, which the trampoline
+    /// reports and turns into false: the base class leaves those devices parented to the
+    /// provider until it is disposed, and it calls no stop for a provider that never started
+    /// (gstdeviceprovider.c:497-500, 536-543). The slot runs with the start lock of the
+    /// provider held (gstdeviceprovider.c:466-506): calling IsStarted, GetDevices, Start or
+    /// Stop on the same provider from inside the override deadlocks on that non recursive
+    /// mutex. DeviceAdd, DeviceRemove, DeviceChanged, HideProvider and GetBus are safe, because
+    /// they take the object lock or no lock at all.</para>
     /// </remarks>
     /// <returns>%TRUE if the device providering could be started</returns>
     protected bool ChainUpStart()
@@ -247,7 +271,15 @@ public unsafe partial class DeviceProvider
     /// this one alone is refused, because leaving klass-&gt;start NULL would send
     /// gst_device_provider_start into its unguarded klass-&gt;probe call
     /// (gstdeviceprovider.c:476-481). The dispatch of this one is guarded
-    /// (gstdeviceprovider.c:522-536), so a provider that declares start alone is fine.</para>
+    /// (gstdeviceprovider.c:522-536), so a provider that declares start alone is fine. The bus
+    /// is set flushing before the slot runs (gstdeviceprovider.c:532), so a DEVICE_REMOVED
+    /// message posted by a DeviceRemove call from here reaches no listener - only the removed
+    /// signal of the device fires - and the base class unparents every device that is still on
+    /// the list once the slot returns (gstdeviceprovider.c:536-539). The slot runs with the
+    /// start lock of the provider held (gstdeviceprovider.c:530-547): calling IsStarted,
+    /// GetDevices, Start or Stop on the same provider from inside the override deadlocks on
+    /// that non recursive mutex. DeviceAdd, DeviceRemove, DeviceChanged, HideProvider and
+    /// GetBus are safe, because they take the object lock or no lock at all.</para>
     /// </remarks>
     protected void ChainUpStop()
     {

@@ -393,7 +393,9 @@ The gaps worth naming here:
   properties, define signals and implement `GstURIHandler`, so
   `gst_element_make_from_uri` finds it. What is not there yet: construct
   properties, interfaces other than `GstURIHandler`, and defining a new
-  interface from managed code. See
+  interface from managed code. `Gst.DeviceProvider` carries one limit of its
+  own: `Gst.Device` is abstract and not subclassable, so a managed provider can
+  announce devices it obtained elsewhere but cannot mint one. See
   [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a

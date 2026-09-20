@@ -1708,12 +1708,26 @@ start", and a subclass with no work to do can leave `OnStart` alone.
 own `probe` call and answers an empty list for a provider that has not been
 started (`gstdeviceprovider.c:402-433`).
 
+Both slots run with the provider's **start lock held**
+(`gstdeviceprovider.c:466-506` and `:530-547`), and that `GMutex` is not
+recursive: `IsStarted()`, `GetDevices()`, `Start()` and `Stop()` take the same
+lock (`:874`, `:413`), so calling any of the four on the same provider from
+inside `OnStart` or `OnStop` hangs the thread for ever — no exception, no log.
+`DeviceAdd()`, `DeviceRemove()`, `DeviceChanged()` and `HideProvider()` take
+the object lock, which is not held across the slot, and `GetBus()` takes no
+lock at all: those five are what an override announces with.
+
 ### The limits
 
 * **`AudioBaseSink` and `AudioBaseSrc` cannot be subclassed directly from
   managed code yet.** Their required `create_ringbuffer` slot has to answer a
   `GstAudioRingBuffer` subclass, and `AudioRingBuffer` is not subclassable;
   derive from `AudioSink` / `AudioSrc`, which bring their own ring buffer.
+* **A managed `DeviceProvider` cannot mint devices of its own yet.**
+  `Gst.Device` is abstract, has no managed constructor and is not on the
+  subclassable list, so `DeviceAdd()` can only announce a device that came from
+  somewhere else — another provider, a device monitor. `probe` is unbound as
+  well, so a managed provider lists nothing at all until it is started.
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
   and a managed parent's slot would be the same trampoline (§4.4). The surface
