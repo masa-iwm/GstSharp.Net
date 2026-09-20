@@ -21,6 +21,18 @@ namespace Gst.Video;
 /// and the three setters here are how its fields are filled in after the fact.
 /// </para>
 /// <para>
+/// The three setters enforce that difference rather than document it:
+/// <see cref="New(string, int, int)"/> marks the instance it makes, and a
+/// channel without that mark — every channel an element listed — answers a
+/// write with an <see cref="InvalidOperationException"/>. Writing one would
+/// break the element that owns it: elements find their own channel by the
+/// content of its label, <c>playsink</c> asserts that the search found one
+/// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> on the video path and
+/// <c>:5548</c> on the audio one) and aborts the process when it did not, and
+/// the write frees the previous string while the element may be reading it on
+/// another thread.
+/// </para>
+/// <para>
 /// There is no lock on either side: the fields are plain struct fields, and the
 /// channel derives from <c>GObject</c> rather than from <c>GstObject</c>, so it
 /// carries no object lock. Write a channel of one's own before handing it to
@@ -29,6 +41,12 @@ namespace Gst.Video;
 /// </remarks>
 public unsafe partial class ColorBalanceChannel
 {
+    /// <summary>
+    /// The quark of the mark a channel this binding made carries, or zero while
+    /// it has not been resolved yet.
+    /// </summary>
+    private static uint _ownChannelQuark;
+
     /// <summary>Creates a color balance channel of one's own.</summary>
     /// <param name="label">
     /// The descriptive name of the channel. See the remarks: a channel meant
@@ -57,6 +75,15 @@ public unsafe partial class ColorBalanceChannel
     /// that, so a channel handed to <c>playsink</c> has to carry a label that
     /// contains the name it looks for.
     /// </para>
+    /// <para>
+    /// The instance is marked as one of this binding's own, which is what the
+    /// three setters check: they refuse a channel that carries no mark, since
+    /// writing a channel an element listed breaks that element's own lookup by
+    /// label, races its readers and aborts under <c>playsink</c>. The mark goes
+    /// on the object rather than on the wrapper, because a GObject wrapper is
+    /// replaced whenever the last one was disposed and the object is wrapped
+    /// again.
+    /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="label"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException">
@@ -82,6 +109,11 @@ public unsafe partial class ColorBalanceChannel
         raw->MinValue = minValue;
         raw->MaxValue = maxValue;
 
+        // The mark is written before the wrapper exists too, so no channel of
+        // one's own is ever observed unmarked, and only this factory writes it:
+        // the absence of the mark is what every other provenance answers.
+        Gst.Interop.GObjectNative.ObjectSetQdata(handle, OwnChannelQuark(), 1);
+
         return Gst.GObject.Object.FromNative<ColorBalanceChannel>(handle, Gst.Interop.Transfer.Full)
             ?? throw new InvalidOperationException("g_object_new_with_properties returned no color balance channel.");
     }
@@ -92,6 +124,65 @@ public unsafe partial class ColorBalanceChannel
         System.Span<byte> buffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope scope = Gst.Interop.GMarshal.StackUtf8(text, buffer);
         return Gst.Interop.GLibNative.StrDup(scope.Pointer);
+    }
+
+    /// <summary>
+    /// Answers the quark of the mark a channel of one's own carries, resolving
+    /// it once.
+    /// </summary>
+    /// <returns>The quark of <c>gstsharp-color-balance-channel-of-ones-own</c>.</returns>
+    /// <remarks>
+    /// Resolving it twice answers the same quark, which is why the race between
+    /// two threads that both find the field unset is not worth a lock.
+    /// </remarks>
+    private static uint OwnChannelQuark()
+    {
+        uint quark = _ownChannelQuark;
+        if (quark != 0)
+        {
+            return quark;
+        }
+
+        quark = Gst.GLib.Quark.FromString("gstsharp-color-balance-channel-of-ones-own").Value;
+        _ownChannelQuark = quark;
+        return quark;
+    }
+
+    /// <summary>
+    /// Refuses a write to a channel that was not made by
+    /// <see cref="New(string, int, int)"/>.
+    /// </summary>
+    /// <param name="member">The member being written, which the message names.</param>
+    /// <exception cref="InvalidOperationException">
+    /// The channel was listed by an element rather than made here.
+    /// </exception>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    /// <remarks>
+    /// The C refuses nothing: the fields are public and unguarded. What makes a
+    /// write to a borrowed channel worse than a wrong value is that the element
+    /// that owns the channel finds it again by the content of its label, so a
+    /// rewritten label silently disables the element's own <c>set_value</c> and
+    /// <c>get_value</c>, aborts the process under <c>playsink</c>
+    /// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> and <c>:5548</c>),
+    /// and frees the previous string under a reader on another thread, there
+    /// being no lock on either side.
+    /// </remarks>
+    private void ThrowIfNotOnesOwn(string member)
+    {
+        nint handle = Handle;
+        bool marked = Gst.Interop.GObjectNative.ObjectGetQdata(handle, OwnChannelQuark()) != nint.Zero;
+
+        // Reading Handle is the last use of this wrapper, so without this the
+        // collector may finalize it while the lookup is still running.
+        System.GC.KeepAlive(this);
+
+        if (!marked)
+        {
+            throw new InvalidOperationException(
+                $"{member} can only be written on a channel from ColorBalanceChannel.New. This channel was " +
+                "listed by an element, which finds it again by the content of its label and reads it without " +
+                "a lock.");
+        }
     }
 
     /// <summary>A string containing a descriptive name for this channel.</summary>
@@ -112,7 +203,11 @@ public unsafe partial class ColorBalanceChannel
     /// so the three fields stay readable for as long as the wrapper lives; the
     /// channel only means something to the element that listed it, and it is
     /// neither the caller's to dispose nor the caller's to write to. The setter
-    /// is for a channel of one's own, from <see cref="New(string, int, int)"/>.
+    /// is for a channel of one's own, from <see cref="New(string, int, int)"/>,
+    /// and refuses every other channel: the element that listed one finds it
+    /// again by the content of this very field, so a rewritten label disables
+    /// the element's own lookup, aborts under <c>playsink</c> and frees the
+    /// string the element may be reading on another thread.
     /// </para>
     /// <para>
     /// Writing the label frees whatever was there — the C dispose frees the
@@ -138,6 +233,10 @@ public unsafe partial class ColorBalanceChannel
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentNullException">The value written is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// The channel was listed by an element rather than made by
+    /// <see cref="New(string, int, int)"/>.
+    /// </exception>
     /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
     public string? Label
     {
@@ -153,10 +252,12 @@ public unsafe partial class ColorBalanceChannel
         set
         {
             ArgumentNullException.ThrowIfNull(value);
+            ThrowIfNotOnesOwn("Label");
 
-            // The handle is taken first, so a disposed wrapper throws before
-            // anything is allocated, and the copy before the write, so the
-            // field holds the old, still valid string until it succeeds.
+            // The provenance is checked first, so a disposed wrapper and a
+            // borrowed channel both throw before anything is allocated, and the
+            // copy is made before the write, so the field holds the old, still
+            // valid string until it succeeds.
             ColorBalanceChannelRaw* raw = (ColorBalanceChannelRaw*)Handle;
             nint copy = StrDupNative(value);
             nint previous = raw->Label;
@@ -175,7 +276,9 @@ public unsafe partial class ColorBalanceChannel
     /// the field stays readable for as long as the wrapper lives; the channel
     /// only means something to the element that listed it, and it is neither
     /// the caller's to dispose nor the caller's to write to. The setter is for
-    /// a channel of one's own, from <see cref="New(string, int, int)"/>.
+    /// a channel of one's own, from <see cref="New(string, int, int)"/>, and
+    /// refuses a channel an element listed, whose fields that element reads
+    /// without a lock.
     /// <para>
     /// The two bounds are not checked against each other on the way in, only in
     /// <see cref="New(string, int, int)"/>: a channel starts out at 0/0, so a
@@ -184,6 +287,10 @@ public unsafe partial class ColorBalanceChannel
     /// caller's to avoid.
     /// </para>
     /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// The channel was listed by an element rather than made by
+    /// <see cref="New(string, int, int)"/>.
+    /// </exception>
     /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
     public int MinValue
     {
@@ -196,6 +303,7 @@ public unsafe partial class ColorBalanceChannel
 
         set
         {
+            ThrowIfNotOnesOwn("MinValue");
             ((ColorBalanceChannelRaw*)Handle)->MinValue = value;
             System.GC.KeepAlive(this);
         }
@@ -210,10 +318,14 @@ public unsafe partial class ColorBalanceChannel
     /// the field stays readable for as long as the wrapper lives; the channel
     /// only means something to the element that listed it, and it is neither
     /// the caller's to dispose nor the caller's to write to. The setter is for
-    /// a channel of one's own, from <see cref="New(string, int, int)"/>, and
-    /// checks the bound against <see cref="MinValue"/> no more than that one
-    /// does.
+    /// a channel of one's own, from <see cref="New(string, int, int)"/>, refuses
+    /// a channel an element listed the way the other two setters do, and checks
+    /// the bound against <see cref="MinValue"/> no more than that one does.
     /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// The channel was listed by an element rather than made by
+    /// <see cref="New(string, int, int)"/>.
+    /// </exception>
     /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
     public int MaxValue
     {
@@ -226,6 +338,7 @@ public unsafe partial class ColorBalanceChannel
 
         set
         {
+            ThrowIfNotOnesOwn("MaxValue");
             ((ColorBalanceChannelRaw*)Handle)->MaxValue = value;
             System.GC.KeepAlive(this);
         }

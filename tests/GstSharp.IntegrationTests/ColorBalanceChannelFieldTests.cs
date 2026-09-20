@@ -165,6 +165,38 @@ public sealed class ColorBalanceChannelFieldTests
     }
 
     /// <summary>
+    /// A channel an element listed refuses all three setters, while a channel
+    /// of one's own takes them
+    /// (<see cref="AChannelOfOnesOwnCarriesWhatItWasMadeWith"/>).
+    /// </summary>
+    /// <remarks>
+    /// The element finds its own channel again by the content of the label, so
+    /// a write there would disable its <c>set_value</c> and <c>get_value</c>,
+    /// abort the process under <c>playsink</c> and free a string the element
+    /// may be reading on another thread. The three fields are read back to show
+    /// that the refusal happened before anything was written.
+    /// </remarks>
+    [RequiresElementFact("videobalance")]
+    public void AChannelOfAnElementRefusesEverySetter()
+    {
+        using Element balance = ElementFactory.Make("videobalance", null)
+            ?? throw new InvalidOperationException("videobalance is part of the good plugins.");
+
+        IColorBalance colorBalance = balance.As<IColorBalance>()
+            ?? throw new InvalidOperationException("videobalance implements GstColorBalance.");
+
+        ColorBalanceChannel listed = colorBalance.ListChannels()[0];
+
+        Assert.Throws<InvalidOperationException>(() => listed.Label = "BRIGHTNESS");
+        Assert.Throws<InvalidOperationException>(() => listed.MinValue = 0);
+        Assert.Throws<InvalidOperationException>(() => listed.MaxValue = 0);
+
+        Assert.Equal("HUE", listed.Label);
+        Assert.Equal(-1000, listed.MinValue);
+        Assert.Equal(1000, listed.MaxValue);
+    }
+
+    /// <summary>
     /// The hand written factory and setter refuse what they cannot write
     /// rather than leaving a channel that aborts <c>playsink</c> later.
     /// </summary>
