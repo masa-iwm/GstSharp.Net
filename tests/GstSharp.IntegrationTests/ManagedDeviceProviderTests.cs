@@ -104,6 +104,27 @@ public sealed class ManagedDeviceProviderTests
         Assert.False(provider.IsStarted());
     }
 
+    /// <summary>
+    /// A registration that takes over <c>stop</c> alone is refused before it
+    /// takes the type name: it would leave <c>klass-&gt;start</c> NULL, and the
+    /// fallback the C takes for that is an unguarded <c>klass-&gt;probe</c>
+    /// call a managed provider has nothing to answer with.
+    /// </summary>
+    [Fact]
+    public void AProviderThatDeclaresStopAloneIsRefused()
+    {
+        ArgumentException error = Assert.Throws<ArgumentException>(
+            () => DeviceProvider.DefineSubclass(
+                "GstSharpTestStopOnlyDeviceProvider",
+                null,
+                DeviceProvider.StopOverride));
+
+        _output.WriteLine($"refused: {error.Message}");
+
+        Assert.Contains("StartOverride", error.Message, StringComparison.Ordinal);
+        Assert.False(Gst.GObject.GType.FromName("GstSharpTestStopOnlyDeviceProvider").IsValid);
+    }
+
     private static Device? BorrowDevice()
     {
         IReadOnlyList<DeviceProviderFactory> factories =

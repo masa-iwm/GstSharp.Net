@@ -10,11 +10,12 @@ namespace GstSharp.Generator.Tests;
 /// surface, or the registration cannot check a subclass declares it.
 /// </summary>
 /// <remarks>
-/// The table of required slots is keyed by the qualified name of the class, and
-/// every key in it names a class of <c>GstBase</c>, <c>GstAudio</c> or
-/// <c>GstVideo</c>. A fixture therefore has to declare the module the key names
-/// rather than <c>Gst</c>; <c>GstBase.Aggregator</c> is the smallest of them,
-/// with a single required <c>aggregate</c>.
+/// The table of required slots is keyed by the qualified name of the class:
+/// <c>Gst.DeviceProvider</c> and classes of <c>GstBase</c>, <c>GstAudio</c> and
+/// <c>GstVideo</c>. A fixture therefore has to declare the module the key names;
+/// <c>GstBase.Aggregator</c> is the smallest of them with a pad template beside
+/// it, and it is the one this gate is written against, with a single required
+/// <c>aggregate</c>.
 /// </remarks>
 public sealed class RequiredSlotDiagnosticTests
 {

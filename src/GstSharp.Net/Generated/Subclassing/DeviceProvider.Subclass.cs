@@ -147,6 +147,25 @@ public unsafe partial class DeviceProvider
         Func<Gst.GObject.SubclassCtorArgs, Gst.GObject.Object>? wrapFactory,
         Gst.GObject.SubclassOptions? options)
     {
+        ArgumentNullException.ThrowIfNull(overrides);
+
+        bool declaredStart = false;
+        foreach (Gst.GObject.VfuncOverride candidate in overrides)
+        {
+            if (candidate.Function == StartOverride.Function)
+            {
+                declaredStart = true;
+                break;
+            }
+        }
+
+        if (!declaredStart)
+        {
+            throw new ArgumentException(
+                "A managed GstDeviceProvider has to declare StartOverride: gst_device_provider_start calls klass->probe with no NULL check when the start slot is unset (gstdeviceprovider.c:476-481), and probe carries no managed surface, so a provider without it crashes the process when it is started.",
+                nameof(overrides));
+        }
+
         Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
             new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options);
         return type;
@@ -169,16 +188,17 @@ public unsafe partial class DeviceProvider
     /// return the same objects that have been received from the
     /// #GST_MESSAGE_DEVICE_ADDED messages and will no longer probe.
     /// </para>
-    /// <para>Declare this slot on every managed device provider, even one that has nothing to start.
-    /// No class in the chain installs a start of its own - gstdeviceprovider.h:169-184 declares
-    /// the slot and the base class leaves it NULL - so a chain-up reaches nothing and answers
-    /// true, meaning nothing below refuses to start. The slot is also what keeps the provider
-    /// safe: gst_device_provider_start calls klass-&gt;probe with no NULL check when
-    /// klass-&gt;start is NULL (gstdeviceprovider.c:476-481), and a managed provider never
-    /// installs probe, which is introspectable=0 and carries no managed surface, so a provider
-    /// that declares stop alone ends a Start call in a call through a NULL function pointer
-    /// rather than in an exception. Answer false to refuse to start; there is no error channel,
-    /// the C slot is a plain gboolean.</para>
+    /// <para>Every managed device provider has to declare this slot, even one that has nothing to
+    /// start, which DefineSubclass checks for: gst_device_provider_start calls klass-&gt;probe
+    /// with no NULL check when klass-&gt;start is NULL (gstdeviceprovider.c:476-481), and a
+    /// managed provider never installs probe, which is introspectable=0 and carries no managed
+    /// surface, so a provider without this slot would end a Start call in a call through a NULL
+    /// function pointer. Declaring it is what the registration turns that crash into a refusal
+    /// for. No class in the chain installs a start of its own - gstdeviceprovider.h:169-184
+    /// declares the slot and the base class leaves it NULL - so a chain-up reaches nothing and
+    /// answers true, meaning nothing below the override refuses to start, and a provider with
+    /// no work to do may leave OnStart alone. Answer false to refuse to start; there is no
+    /// error channel, the C slot is a plain gboolean.</para>
     /// </remarks>
     /// <returns>%TRUE if the device providering could be started</returns>
     protected virtual bool OnStart() =>
@@ -190,27 +210,28 @@ public unsafe partial class DeviceProvider
     /// called the same number of times that gst_device_provider_start() was called.
     /// </summary>
     /// <remarks>
-    /// <para>Declaring this slot alone is unsafe: it leaves start NULL, which sends
+    /// <para>This slot is optional and the start slot beside it is not: a registration that declares
+    /// this one alone is refused, because leaving klass-&gt;start NULL would send
     /// gst_device_provider_start into its unguarded klass-&gt;probe call
-    /// (gstdeviceprovider.c:476-481) and crashes the process. Declare the start slot beside it.
-    /// The dispatch of this one is guarded (gstdeviceprovider.c:522-536), so a provider that
-    /// declares start alone is fine.</para>
+    /// (gstdeviceprovider.c:476-481). The dispatch of this one is guarded
+    /// (gstdeviceprovider.c:522-536), so a provider that declares start alone is fine.</para>
     /// </remarks>
     protected virtual void OnStop() =>
         ChainUpStop();
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
     /// <remarks>
-    /// <para>Declare this slot on every managed device provider, even one that has nothing to start.
-    /// No class in the chain installs a start of its own - gstdeviceprovider.h:169-184 declares
-    /// the slot and the base class leaves it NULL - so a chain-up reaches nothing and answers
-    /// true, meaning nothing below refuses to start. The slot is also what keeps the provider
-    /// safe: gst_device_provider_start calls klass-&gt;probe with no NULL check when
-    /// klass-&gt;start is NULL (gstdeviceprovider.c:476-481), and a managed provider never
-    /// installs probe, which is introspectable=0 and carries no managed surface, so a provider
-    /// that declares stop alone ends a Start call in a call through a NULL function pointer
-    /// rather than in an exception. Answer false to refuse to start; there is no error channel,
-    /// the C slot is a plain gboolean.</para>
+    /// <para>Every managed device provider has to declare this slot, even one that has nothing to
+    /// start, which DefineSubclass checks for: gst_device_provider_start calls klass-&gt;probe
+    /// with no NULL check when klass-&gt;start is NULL (gstdeviceprovider.c:476-481), and a
+    /// managed provider never installs probe, which is introspectable=0 and carries no managed
+    /// surface, so a provider without this slot would end a Start call in a call through a NULL
+    /// function pointer. Declaring it is what the registration turns that crash into a refusal
+    /// for. No class in the chain installs a start of its own - gstdeviceprovider.h:169-184
+    /// declares the slot and the base class leaves it NULL - so a chain-up reaches nothing and
+    /// answers true, meaning nothing below the override refuses to start, and a provider with
+    /// no work to do may leave OnStart alone. Answer false to refuse to start; there is no
+    /// error channel, the C slot is a plain gboolean.</para>
     /// </remarks>
     /// <returns>%TRUE if the device providering could be started</returns>
     protected bool ChainUpStart()
@@ -222,11 +243,11 @@ public unsafe partial class DeviceProvider
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
     /// <remarks>
-    /// <para>Declaring this slot alone is unsafe: it leaves start NULL, which sends
+    /// <para>This slot is optional and the start slot beside it is not: a registration that declares
+    /// this one alone is refused, because leaving klass-&gt;start NULL would send
     /// gst_device_provider_start into its unguarded klass-&gt;probe call
-    /// (gstdeviceprovider.c:476-481) and crashes the process. Declare the start slot beside it.
-    /// The dispatch of this one is guarded (gstdeviceprovider.c:522-536), so a provider that
-    /// declares start alone is fine.</para>
+    /// (gstdeviceprovider.c:476-481). The dispatch of this one is guarded
+    /// (gstdeviceprovider.c:522-536), so a provider that declares start alone is fine.</para>
     /// </remarks>
     protected void ChainUpStop()
     {

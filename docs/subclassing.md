@@ -1674,11 +1674,12 @@ no longer, which is the boxed-borrow rule above.
 ### Slots a subclass has to declare
 
 Most slots have an answer for a NULL parent that the element survives, and
-`DefineSubclass` accepts a registration without them. Fourteen slots on ten
+`DefineSubclass` accepts a registration without them. Fifteen slots on eleven
 classes do not, and the registration says so before it takes the type name:
 
 | Class | Slot | Why |
 | --- | --- | --- |
+| `Gst.DeviceProvider` | `start` | `gst_device_provider_start` falls back to `klass->probe` with no NULL check, and `probe` carries no managed surface |
 | `Aggregator` | `aggregate` | the base class calls it unguarded |
 | `AudioBaseSink`, `AudioBaseSrc` | `create_ringbuffer` | without a ring buffer the element cannot leave the NULL state |
 | `AudioSink`, `AudioSrc` | `prepare`, `unprepare` | acquiring and releasing the ring buffer start out with a failure that only the slot turns into a success |
@@ -1686,24 +1687,21 @@ classes do not, and the registration says so before it takes the type name:
 | `AudioSrc` | `read` | the same |
 | `BaseParse`, `AudioDecoder`, `AudioEncoder`, `VideoDecoder`, `VideoEncoder` | `handle_frame` | the base class calls it for every frame, and for the drain at the end of the stream, unguarded |
 
-### A device provider has to declare `start`
+### Why `DeviceProvider::start` is on that table
 
-**This one the registration does not check for, and getting it wrong crashes
-the process rather than throwing.** A managed `Gst.DeviceProvider` takes over
-`start`, `stop` or both. `gst_device_provider_start` calls `klass->probe`
-**without a NULL check** when `klass->start` is NULL
-(`gstdeviceprovider.c:476-481`), and `probe` answers a `GList` the reverse
-planner has no bucket for — it is `introspectable="0"`, it is in the virtual
-ledger, and no managed provider ever installs it. A provider that declares
-`StopOverride` alone therefore leaves both slots that matter NULL, and the
-first `Start()` call on it is a call through a NULL function pointer.
+`gst_device_provider_start` calls `klass->probe` **without a NULL check** when
+`klass->start` is NULL (`gstdeviceprovider.c:476-481`), and `probe` answers a
+`GList` the reverse planner has no bucket for — it is `introspectable="0"`, it
+is in the virtual ledger, and no managed provider ever installs it. Only
+declared slots are patched into the class (§4.2), so a provider that declares
+`StopOverride` alone would leave both slots that matter NULL, and the first
+`Start()` call on it would be a call through a NULL function pointer rather
+than an exception. `DefineSubclass` refuses that registration instead: declare
+`StartOverride` on every managed provider, even one with nothing to start.
 
-Declare `StartOverride` on every managed provider, even one with nothing to
-start: only declared slots are patched into the class (§4.2), so the
-declaration is what puts a non-NULL `start` there. Nothing below it implements
-`start` — no class in the chain does — so `ChainUpStart()` answers `true`,
-"nothing below refuses to start", and a subclass with no work to do can leave
-`OnStart` alone.
+Nothing below the slot implements `start` — no class in the chain does — so
+`ChainUpStart()` answers `true`, "nothing below the override refuses to
+start", and a subclass with no work to do can leave `OnStart` alone.
 
 `stop` has no equivalent hazard: its dispatch is guarded
 (`gstdeviceprovider.c:522-536`). Neither has `GetDevices()`, which guards its

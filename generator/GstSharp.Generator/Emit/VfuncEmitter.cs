@@ -33,6 +33,15 @@ internal sealed class VfuncEmitter
     private static readonly Dictionary<string, SubclassBaseRule> BaseRules =
         new(StringComparer.Ordinal)
         {
+            ["Gst.DeviceProvider"] = new(
+                [],
+                [
+                    new(
+                        "start",
+                        "gst_device_provider_start calls klass->probe with no NULL check when the start "
+                        + "slot is unset (gstdeviceprovider.c:476-481), and probe carries no managed "
+                        + "surface, so a provider without it crashes the process when it is started"),
+                ]),
             ["GstBase.BaseSrc"] = new(["src"], []),
             ["GstBase.PushSrc"] = new(["src"], []),
             ["GstBase.BaseSink"] = new(["sink"], []),
