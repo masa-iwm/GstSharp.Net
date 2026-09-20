@@ -767,9 +767,13 @@ public sealed class ClassEmitterTests
         // wrapper the generator never asks for accessors, and a record whose
         // mirror collapsed and has no storage to read one out of. The second
         // half is empty since the two GstParamSpec shells were skipped: their
-        // fields were the only ones the generator had no layout for.
-        Assert.DoesNotContain("\u2014 Other\n", report, StringComparison.Ordinal);
-        Assert.DoesNotContain("\u2014 NoLayout\n", report, StringComparison.Ordinal);
+        // fields were the only ones the generator had no layout for. The
+        // catch all is read on this ledger alone, because the one below
+        // refines nothing and answers for the shapes no rule of the layout
+        // ever looked at.
+        string ledger = FieldLedger(report);
+        Assert.DoesNotContain("\u2014 Other\n", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("\u2014 NoLayout\n", ledger, StringComparison.Ordinal);
         Assert.Contains("- `MiniObject.type` \u2014 HandWritten\n", report, StringComparison.Ordinal);
 
         // An enumeration another generated module declares is handed out typed,
@@ -810,8 +814,8 @@ public sealed class ClassEmitterTests
         // C accessor already answers.
         string report = Generated.SkipReport;
 
-        Assert.Equal(20, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (20)\n", report, StringComparison.Ordinal);
+        Assert.Equal(23, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (23)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### Gst (7)\n\n- `CustomMeta.structure` — GetStructure\n"
             + "- `Message.src` — hand written\n"
@@ -843,9 +847,94 @@ public sealed class ClassEmitterTests
             StringComparison.Ordinal);
         Assert.DoesNotContain("- `PadProbeInfo.flow_ret` — Other", report, StringComparison.Ordinal);
 
+        // An instance field of a class is answered the same way, and the three
+        // that are come from the one wrapper that mirrors an instance head by
+        // hand: the label and the range of a colour balance channel.
+        Assert.Contains(
+            "- `ColorBalanceChannel.label` — hand written\n"
+            + "- `ColorBalanceChannel.max_value` — hand written\n"
+            + "- `ColorBalanceChannel.min_value` — hand written\n",
+            report,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("- `ColorBalanceChannel.", ClassFieldLedger(report), StringComparison.Ordinal);
+
         // The accessor is not emitted either, which is what lets an entry
         // answer a name a hand written member already carries.
         Assert.DoesNotContain("public Gst.FlowReturn FlowRet", Source("PadProbeInfo.cs"), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Gst", 69)]
+    [InlineData("GstBase", 42)]
+    [InlineData("GstAudio", 40)]
+    [InlineData("GstVideo", 8)]
+    [InlineData("GstSdp", 0)]
+    [InlineData("GstWebRTC", 11)]
+    [InlineData("GstNet", 0)]
+    [InlineData("GstRtsp", 0)]
+    [InlineData("GstRtp", 10)]
+    [InlineData("GstRtspServer", 2)]
+    [InlineData("GstAllocators", 0)]
+    [InlineData("GstTag", 0)]
+    [InlineData("GstTranscoder", 0)]
+    [InlineData("GstPlay", 0)]
+    [InlineData("GES", 24)]
+    [InlineData("GstApp", 0)]
+    [InlineData("GstPbutils", 3)]
+    public void TheClassFieldLedgerIsStable(string module, int fields)
+    {
+        // The public instance fields of the emitted classes. A wrapper holds a
+        // native instance and mirrors no part of the structure, so every one of
+        // them is unprojected and the ledger counts the whole of them rather
+        // than what a rule dropped. The modules at zero declare classes that
+        // are opaque to the gir, carry nothing but padding, or declare no
+        // class at all.
+        Assert.Equal(fields, Generated.Census.ClassFieldCount(module));
+    }
+
+    [Fact]
+    public void TheSkipReportCarriesTheClassFieldLedger()
+    {
+        string report = Generated.SkipReport;
+        string ledger = ClassFieldLedger(report);
+
+        Assert.Equal(209, Generated.Census.ClassFieldCount());
+        Assert.Contains("## Class fields (209)\n", report, StringComparison.Ordinal);
+        Assert.Contains("### Gst (69)\n", ledger, StringComparison.Ordinal);
+
+        // One line per shape the ledger measures. The shapes are what says how
+        // much an exposure would have to marshal: a plain value, a machine
+        // address, a structure laid into the instance, a function pointer slot
+        // the class carries itself, and a union the C structure grew by.
+        Assert.Contains("- `AudioRingBuffer.acquired` — Scalar\n", ledger, StringComparison.Ordinal);
+        Assert.Contains("- `Object.name` — Pointer\n", ledger, StringComparison.Ordinal);
+        Assert.Contains("- `AudioRingBuffer.spec` — EmbeddedStruct\n", ledger, StringComparison.Ordinal);
+        Assert.Contains("- `Allocator.mem_map` — Callback\n", ledger, StringComparison.Ordinal);
+        Assert.Contains("- `Pad.ABI` — Union\n", ledger, StringComparison.Ordinal);
+
+        // A lock a class embeds sits in the instance the way any structure laid
+        // into it does, whether GLib spells it a union (GMutex) or a record
+        // (GRecMutex), and the ledger reads the two the same. Nothing is left
+        // for the catch all: every field of the section names a shape.
+        Assert.Contains("- `Object.lock` — EmbeddedStruct\n", ledger, StringComparison.Ordinal);
+        Assert.Contains("- `Element.state_lock` — EmbeddedStruct\n", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("— Other\n", ledger, StringComparison.Ordinal);
+
+        // What the hand written mirror of an instance head reads internally
+        // stays on the ledger: the ring buffer checks its own acquired flag and
+        // the channel count of its spec, and neither is a member of the binding.
+        Assert.DoesNotContain("- `AudioRingBuffer.acquired` —", FieldLedger(report), StringComparison.Ordinal);
+
+        // The instance structure of the base class is the inheritance chain and
+        // not a member, whatever the gir names it, and padding and the fields
+        // the gir keeps to the C implementation carry no API in C either.
+        Assert.DoesNotContain("- `Element.object`", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `Bin.element`", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `TimelineElement.parent_instance`", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `NtpClock.clock`", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("_gst_reserved", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `Pad.stream_rec_lock`", ledger, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `Bin.priv`", ledger, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -867,7 +956,7 @@ public sealed class ClassEmitterTests
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
-        // field of an emitted record (GEN0025), a field annotation that
+        // field of an emitted record or class (GEN0025), a field annotation that
         // corrected no field (GEN0026), a documentation note on no rendered
         // callable (GEN0042) or on no rendered signal (GEN0048), and a
         // precondition on no rendered callable (GEN0049), and a hand over
@@ -1089,6 +1178,40 @@ public sealed class ClassEmitterTests
             "public static Gst.RtspServer.RTSPThread New(",
             SourceOf("GstSharp.Net.RtspServer/Generated/RTSPThread.cs"),
             StringComparison.Ordinal);
+    }
+
+    /// <summary>The section of the report that lists the record fields.</summary>
+    /// <param name="report">The whole report.</param>
+    /// <returns>The text of the section.</returns>
+    private static string FieldLedger(string report) =>
+        Section(report, "## Fields (", "## Fields exposed elsewhere (");
+
+    /// <summary>The section of the report that lists the instance fields of the classes.</summary>
+    /// <param name="report">The whole report.</param>
+    /// <returns>The text of the section, to the end of the report.</returns>
+    private static string ClassFieldLedger(string report) => Section(report, "## Class fields (", null);
+
+    /// <summary>
+    /// One section of the report, so that an assertion about what a section
+    /// does not carry reads the section and not the whole document.
+    /// </summary>
+    /// <param name="report">The whole report.</param>
+    /// <param name="heading">The heading the section starts at.</param>
+    /// <param name="next">The heading that ends it, or <see langword="null"/> for the last one.</param>
+    /// <returns>The text of the section.</returns>
+    private static string Section(string report, string heading, string? next)
+    {
+        int start = report.IndexOf(heading, StringComparison.Ordinal);
+        Assert.True(start >= 0, "The report carries no '" + heading + "' section.");
+
+        if (next is null)
+        {
+            return report[start..];
+        }
+
+        int end = report.IndexOf(next, start, StringComparison.Ordinal);
+        Assert.True(end >= 0, "The report carries no '" + next + "' section.");
+        return report[start..end];
     }
 
     private static string SourceOf(string path)

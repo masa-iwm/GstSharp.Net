@@ -74,6 +74,8 @@ internal sealed class RecordEmitter
     private readonly EmissionCensus _census;
     private readonly List<RegistryEntry> _registry;
 
+    private readonly FieldShapes _shapes;
+
     /// <summary>The records whose layout is being measured, which guards the recursion.</summary>
     private readonly HashSet<string> _completeLayouts = new(StringComparer.Ordinal);
 
@@ -110,6 +112,7 @@ internal sealed class RecordEmitter
         _surfaces = surfaces;
         _census = census;
         _registry = registry;
+        _shapes = new FieldShapes(repository, types);
     }
 
     /// <summary>Emits every generated record of one module.</summary>
@@ -1375,7 +1378,7 @@ internal sealed class RecordEmitter
             // in the mirror and on the ledger.
             if (!field.IsPrivate && field.InlineArray is { } inline)
             {
-                if (!IsAboveFloor(field) && IsValueElement(ns, field.Field.Type))
+                if (!IsAboveFloor(field) && _shapes.IsValueElement(ns, field.Field.Type))
                 {
                     accessors.Add(new Accessor(
                         field.Field,
@@ -2165,13 +2168,8 @@ internal sealed class RecordEmitter
     /// <param name="record">The declaring record.</param>
     /// <param name="field">The field to name.</param>
     /// <returns>The <c>c:type</c> of the record and the gir name of the field.</returns>
-    /// <remarks>
-    /// A field of a reserved ABI union is addressed by the record it grows and
-    /// the field itself, with the union and its structure transparent, which is
-    /// the same shape the accessor of one is named after.
-    /// </remarks>
     private static string FieldSkipKey(GirRecord record, GirField field) =>
-        CTypeOf(record) + "." + field.Name;
+        FieldShapes.SkipKey(record, field);
 
     /// <summary>
     /// Reports the fields of a record that carry API in C and none in C#.
@@ -2327,7 +2325,7 @@ internal sealed class RecordEmitter
     /// It is the one <see cref="Refine"/> reads, because it is the only one
     /// that names no shape and therefore measures nothing.
     /// </summary>
-    private const string OtherReason = "Other";
+    private const string OtherReason = FieldShapes.OtherReason;
 
     /// <summary>
     /// Names why a field that no shape accounts for went unbound, so that the
@@ -2391,14 +2389,8 @@ internal sealed class RecordEmitter
     /// <param name="field">The field being reported.</param>
     /// <param name="reason">What the ledger reports it under.</param>
     /// <returns>The reason, with the version when there is one to state.</returns>
-    /// <remarks>
-    /// The shape alone would read as a gap the binding could close, and this
-    /// one it cannot: an accessor of a field the library on an older machine
-    /// does not have reads past the end of the structure. The line says which
-    /// version put it there, so a reader of the ledger can tell the two apart.
-    /// </remarks>
     private static string WithSince(GirField field, string reason) =>
-        Availability.SinceVersion(field) is { } version ? reason + ", since " + version : reason;
+        FieldShapes.WithSince(field, reason);
 
     /// <summary>
     /// Names the shape that kept a field out of the generated surface.
@@ -2409,103 +2401,8 @@ internal sealed class RecordEmitter
     /// <returns>
     /// The reason, or <see langword="null"/> when the field is bound after all.
     /// </returns>
-    private string? DroppedFieldReason(GirNamespace ns, GirField field, IReadOnlySet<string> bound)
-    {
-        if (bound.Contains(field.Name))
-        {
-            return null;
-        }
-
-        if (field.Callback is not null)
-        {
-            return "Callback";
-        }
-
-        if (field.Type is not { } type)
-        {
-            return OtherReason;
-        }
-
-        if (type is GirArrayRef { FixedSize: not null } array)
-        {
-            if (array.ElementType is not { } element)
-            {
-                return OtherReason;
-            }
-
-            if (element.IsPointer || _types.Map(element, ns).Kind == MarshalKind.Pointer)
-            {
-                return "InlineArray(pointer element)";
-            }
-
-            return IsValueElement(ns, type) ? OtherReason : "InlineArray(struct element)";
-        }
-
-        // An array without a fixed size decays to a pointer in the C structure,
-        // which is what it is reported as: the length is nowhere in the layout.
-        if (type.IsPointer || type is GirArrayRef)
-        {
-            return "Pointer";
-        }
-
-        if (_repository.Resolve(type, ns) is { } reference)
-        {
-            // A field the gir spells without a star and that names a type is
-            // either a function pointer slot or a structure laid into the
-            // declaring one; a class only ever appears by value as the
-            // instance structure of the base type.
-            switch (_repository.ResolveAlias(reference))
-            {
-                case { Kind: GirSymbolKind.Callback }:
-                    return "Callback";
-
-                case { Kind: GirSymbolKind.Record or GirSymbolKind.Class or GirSymbolKind.Interface }:
-                    return "EmbeddedStruct";
-
-                default:
-                    break;
-            }
-        }
-
-        if (_types.Map(type, ns).Kind == MarshalKind.Pointer)
-        {
-            return "Pointer";
-        }
-
-        return OtherReason;
-    }
-
-    /// <summary>
-    /// Tests whether the elements of a fixed size field are values a wrapper
-    /// can hand out, that is scalars or an enumeration this module generates.
-    /// </summary>
-    /// <param name="ns">The gir namespace of the record.</param>
-    /// <param name="type">The type of the field.</param>
-    /// <returns><see langword="true"/> when the storage carries API.</returns>
-    /// <remarks>
-    /// An array of pointers or of embedded structures is left out: the
-    /// elements would be bare addresses or mirrors that only the interop layer
-    /// can read, which is the same line the scalar accessors draw. The three
-    /// fields that fall here are <c>GstVideoFormatInfo.tile_info</c> and the
-    /// <c>data</c> and <c>map</c> of <c>GstVideoFrame</c>, whose wrapper is
-    /// hand written and answers them already.
-    /// </remarks>
-    private bool IsValueElement(GirNamespace ns, GirTypeRef? type)
-    {
-        if (type is not GirArrayRef { ElementType: { } element } || element.IsPointer)
-        {
-            return false;
-        }
-
-        MappedType mapped = _types.Map(element, ns);
-        return mapped.Kind switch
-        {
-            MarshalKind.Blittable or MarshalKind.Boolean or MarshalKind.GType or MarshalKind.Quark => true,
-            MarshalKind.Enum or MarshalKind.Flags => mapped.Symbol is { } symbol
-                && string.Equals(symbol.Namespace.Name, ns.Name, StringComparison.Ordinal),
-            _ => false,
-        };
-    }
+    private string? DroppedFieldReason(GirNamespace ns, GirField field, IReadOnlySet<string> bound) =>
+        _shapes.Reason(ns, field, bound);
 
     /// <summary>
     /// Projects the fields of a record onto C#, in gir order.

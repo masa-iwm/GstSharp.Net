@@ -35,6 +35,10 @@ internal sealed class EmissionCensus
     private readonly SortedDictionary<string, SortedDictionary<string, string>> _exposedFields =
         new(StringComparer.Ordinal);
 
+    /// <summary>The instance fields of the emitted classes, by module and field.</summary>
+    private readonly SortedDictionary<string, SortedDictionary<string, string>> _classFields =
+        new(StringComparer.Ordinal);
+
     private readonly SortedSet<string> _fieldSkips = new(StringComparer.Ordinal);
 
     private readonly SortedSet<string> _fieldAnnotations = new(StringComparer.Ordinal);
@@ -275,7 +279,10 @@ internal sealed class EmissionCensus
     /// out.
     /// </summary>
     /// <param name="module">The gir namespace of the module.</param>
-    /// <param name="field">The field, spelled <c>Record.field</c> in gir names.</param>
+    /// <param name="field">
+    /// The field, spelled <c>Record.field</c> or <c>Class.field</c> in gir
+    /// names.
+    /// </param>
     /// <param name="key">The overlay key that matched, for the stale report.</param>
     /// <param name="reason">The member that answers it, or that it is hand written.</param>
     internal void ExposedField(string module, string field, string key, string reason)
@@ -290,7 +297,7 @@ internal sealed class EmissionCensus
         fields[field] = reason;
     }
 
-    /// <summary>Reads back the number of record fields another member answers.</summary>
+    /// <summary>Reads back the number of record or class fields another member answers.</summary>
     /// <returns>The count over the whole run.</returns>
     internal int ExposedFieldCount()
     {
@@ -320,6 +327,57 @@ internal sealed class EmissionCensus
         }
 
         return _droppedFields.TryGetValue(module, out SortedDictionary<string, string>? entries)
+            ? entries.Count
+            : 0;
+    }
+
+    /// <summary>Counts one instance field of an emitted class.</summary>
+    /// <param name="module">The gir namespace of the module.</param>
+    /// <param name="field">
+    /// What was left out, spelled <c>Class.field</c> in the gir names of both.
+    /// </param>
+    /// <param name="reason">
+    /// The shape of the field: <c>Scalar</c>, <c>Pointer</c>,
+    /// <c>EmbeddedStruct</c>, <c>Callback</c>, <c>Union</c>,
+    /// <c>InlineArray(pointer element)</c>, <c>InlineArray(struct element)</c>
+    /// or <c>Other</c>.
+    /// </param>
+    /// <remarks>
+    /// The wrappers of the classes carry no mirror of the instance structure, so
+    /// none of their fields is projected and the shape is the only thing the
+    /// ledger has to say about one. It is a second ledger rather than a part of
+    /// the one above, because what is measured differs: a record field is a
+    /// field of a structure the generator lays out, and a class field is one it
+    /// never looks at.
+    /// </remarks>
+    internal void ClassField(string module, string field, string reason)
+    {
+        if (!_classFields.TryGetValue(module, out SortedDictionary<string, string>? fields))
+        {
+            fields = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            _classFields.Add(module, fields);
+        }
+
+        fields[field] = reason;
+    }
+
+    /// <summary>Reads back the number of instance fields of the emitted classes.</summary>
+    /// <param name="module">The gir namespace of the module, or <see langword="null"/> for the whole run.</param>
+    /// <returns>The count.</returns>
+    internal int ClassFieldCount(string? module = null)
+    {
+        if (module is null)
+        {
+            int total = 0;
+            foreach (SortedDictionary<string, string> fields in _classFields.Values)
+            {
+                total += fields.Count;
+            }
+
+            return total;
+        }
+
+        return _classFields.TryGetValue(module, out SortedDictionary<string, string>? entries)
             ? entries.Count
             : 0;
     }
@@ -487,16 +545,17 @@ internal sealed class EmissionCensus
         }
 
         WriteExposedFields(writer);
+        WriteClassFields(writer);
     }
 
     /// <summary>
-    /// Writes the record fields that carry API in C and are answered by
-    /// something other than an accessor of their own.
+    /// Writes the fields of a record or of a class that carry API in C and are
+    /// answered by something other than an accessor of their own.
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <remarks>
     /// These are the entries of <c>fieldSkips</c> in the overlays. They are kept
-    /// out of the ledger above, because a field a member of the same wrapper
+    /// out of the ledgers around them, because a field a member of the same wrapper
     /// hands out is not a gap; they are listed all the same, with what answers
     /// them, so that the claim is a line a review can check rather than a
     /// silence.
@@ -508,12 +567,55 @@ internal sealed class EmissionCensus
             CultureInfo.InvariantCulture,
             $"## Fields exposed elsewhere ({ExposedFieldCount()})"));
         writer.WriteLine();
-        writer.WriteLine("Public record fields that another member of the binding answers, with the");
-        writer.WriteLine("member that answers them. They are declared in `girs/overlays/fixups.json`");
-        writer.WriteLine("under `fieldSkips` and are left out of the ledger above: what is measured");
-        writer.WriteLine("there is what the bindings do not cover, and these are covered.");
+        writer.WriteLine("Public fields of a record or of a class that another member of the binding");
+        writer.WriteLine("answers, with the member that answers them. They are declared in");
+        writer.WriteLine("`girs/overlays/fixups.json` under `fieldSkips` and are left out of the ledgers");
+        writer.WriteLine("around this section: what is measured there is what the bindings do not");
+        writer.WriteLine("cover, and these are covered.");
 
         foreach ((string module, SortedDictionary<string, string> fields) in _exposedFields)
+        {
+            writer.WriteLine();
+            writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"### {module} ({fields.Count})"));
+            writer.WriteLine();
+            foreach ((string field, string reason) in fields)
+            {
+                writer.WriteLine("- `" + field + "` — " + reason);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes the instance fields of the emitted classes, grouped by module.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <remarks>
+    /// The ledgers above measure the fields of the structures the generator
+    /// lays out. This one measures the fields it never looks at: the instance
+    /// structure of a class is not mirrored at all, so every public field of
+    /// one is unprojected by construction and the section counts the whole of
+    /// them rather than the ones a rule dropped.
+    /// </remarks>
+    private void WriteClassFields(CodeWriter writer)
+    {
+        writer.WriteLine();
+        writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"## Class fields ({ClassFieldCount()})"));
+        writer.WriteLine();
+        writer.WriteLine("Public instance fields of the GObject classes, with the shape of each. The");
+        writer.WriteLine("generated wrapper of a class holds a native instance and nothing else: there is");
+        writer.WriteLine("no mirror of the instance structure, so nothing of what a class declares is");
+        writer.WriteLine("projected and the reason is the same one for every line. What the shapes are");
+        writer.WriteLine("for is the distribution: they say what an exposure would have to marshal. A");
+        writer.WriteLine("reader that needs one of these today writes it by hand, against the mirror of");
+        writer.WriteLine("the instance head that checklist item 9 of `docs/modules.md` describes; what");
+        writer.WriteLine("shape a generated exposure should take is an open design question. Padding, the");
+        writer.WriteLine("fields the gir marks `private` or `readable=\"0\"` and the instance structure of");
+        writer.WriteLine("the base class are left out: the first two carry no API in C either, and the");
+        writer.WriteLine("third is the inheritance chain rather than a member. A field the overlays");
+        writer.WriteLine("register under `fieldSkips` moves into the section above, the same way a record");
+        writer.WriteLine("field does.");
+
+        foreach ((string module, SortedDictionary<string, string> fields) in _classFields)
         {
             writer.WriteLine();
             writer.WriteLine(string.Create(CultureInfo.InvariantCulture, $"### {module} ({fields.Count})"));

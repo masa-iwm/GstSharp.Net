@@ -401,10 +401,11 @@ internal static class GenerationPipeline
         }
 
         // A field skip the run never matched names a field that no longer
-        // exists, one of a record that is not emitted, or a misspelling; an
+        // exists, one of a record or a class that is not emitted, one the
+        // ledgers never counted, or a misspelling; an
         // entry that states neither an exposing member nor that the field is
         // hand written says nothing about it at all, and one that states both
-        // says two different things about who answers it. Any of the three
+        // says two different things about who answers it. Any of these
         // would leave the ledger quiet about a field on the strength of a claim
         // nothing checks, which is what the report exists to prevent.
         List<string> staleFields = [];
@@ -421,7 +422,7 @@ internal static class GenerationPipeline
         {
             diagnostics.Warn(
                 "GEN0025",
-                $"The field skip '{key}' matched no field of an emitted record, or states neither "
+                $"The field skip '{key}' matched no field of an emitted record or class, or states neither "
                 + "'exposedBy' nor 'handBound', or states both; the entry is stale.");
         }
 
@@ -615,6 +616,7 @@ internal static class GenerationPipeline
             shared.Repository,
             shared.Classifier,
             shared.Names,
+            shared.Types,
             surfaces,
             shared.Overlays,
             shared.Census,

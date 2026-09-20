@@ -210,8 +210,8 @@ internal sealed class Precondition
 }
 
 /// <summary>
-/// A record field the ledger must not count as a missing binding, because
-/// something else already hands the same value out.
+/// A record or class field the ledger must not count as a missing binding,
+/// because something else already hands the same value out.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -222,10 +222,12 @@ internal sealed class Precondition
 /// section of its own instead of leaving it among the ones nothing reads.
 /// </para>
 /// <para>
-/// It also keeps the generator from emitting an accessor for the field, which
-/// is what makes it the answer to a name a hand written member already carries:
-/// two declarations of one name in a partial class do not compile, and the hand
-/// written one is the one that shipped.
+/// On a record it also keeps the generator from emitting an accessor for the
+/// field, which is what makes it the answer to a name a hand written member
+/// already carries: two declarations of one name in a partial class do not
+/// compile, and the hand written one is the one that shipped. A class has no
+/// mirror and no accessor of a field is ever emitted for one, so there an entry
+/// says only who answers it.
 /// </para>
 /// <para>
 /// Exactly one of the two has to be stated, and the check is exclusive: an
@@ -654,7 +656,7 @@ internal sealed class Overlays
 
     /// <summary>
     /// Gets the keys of every declared field skip, so that a run can report the
-    /// ones no field of an emitted record matched.
+    /// ones no field of an emitted record or class matched.
     /// </summary>
     internal IReadOnlyCollection<string> FieldSkipKeys => _fieldSkips.Keys;
 

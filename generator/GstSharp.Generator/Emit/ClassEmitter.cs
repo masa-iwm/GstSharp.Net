@@ -36,6 +36,12 @@ internal sealed class ClassEmitter
     /// <summary>The suffix of the holder of the functions an enumeration declares.</summary>
     internal const string EnumHolderSuffix = "Extensions";
 
+    /// <summary>
+    /// The bound field names of a class, which are none: a wrapper mirrors no
+    /// part of the instance structure.
+    /// </summary>
+    private static readonly IReadOnlySet<string> EmptyBound = new HashSet<string>(StringComparer.Ordinal);
+
     private readonly Repository _repository;
     private readonly Classifier _classifier;
     private readonly NameMapper _names;
@@ -45,11 +51,13 @@ internal sealed class ClassEmitter
     private readonly DiagnosticBag _diagnostics;
     private readonly List<RegistryEntry> _registry;
     private readonly Dictionary<string, List<string>> _inherited;
+    private readonly FieldShapes _shapes;
 
     /// <summary>Initializes a new instance of the <see cref="ClassEmitter"/> class.</summary>
     /// <param name="repository">The loaded gir repository.</param>
     /// <param name="classifier">The type classifier.</param>
     /// <param name="names">The name mapper.</param>
+    /// <param name="types">The type map, read for the shapes of the instance fields.</param>
     /// <param name="surfaces">The member builder.</param>
     /// <param name="overlays">The overlay configuration.</param>
     /// <param name="census">The census of the run.</param>
@@ -64,6 +72,7 @@ internal sealed class ClassEmitter
         Repository repository,
         Classifier classifier,
         NameMapper names,
+        TypeMap types,
         SurfaceBuilder surfaces,
         Overlays overlays,
         EmissionCensus census,
@@ -80,6 +89,7 @@ internal sealed class ClassEmitter
         _diagnostics = diagnostics;
         _registry = registry;
         _inherited = inherited;
+        _shapes = new FieldShapes(repository, types);
     }
 
     /// <summary>Emits every generated class of one module.</summary>
@@ -913,8 +923,95 @@ internal sealed class ClassEmitter
             _registry.Add(new RegistryEntry(module.ClrNamespace + "." + typeName, declaration.IsDeprecated));
         }
 
+        ReportInstanceFields(module, ns, declaration);
         _census.Emitted(module.GirNamespace, "class");
         return new GeneratedFile(module.ProjectDirectory + "/Generated/" + typeName + ".cs", writer.ToSource());
+    }
+
+    /// <summary>
+    /// Reports the instance fields of a class that carry API in C and none in
+    /// C#.
+    /// </summary>
+    /// <param name="module">The module being emitted.</param>
+    /// <param name="ns">The gir namespace of the class.</param>
+    /// <param name="declaration">The class being emitted.</param>
+    /// <remarks>
+    /// <para>
+    /// A wrapper holds a native instance and declares no storage of its own, so
+    /// the generator never lays the instance structure out and no field of a
+    /// class is ever projected. Nothing that measures the binding gap would say
+    /// so: a field has no <c>c:identifier</c> and no skip reason, and a class
+    /// whose methods, properties and signals are all bound reads as fully bound
+    /// however much of its structure is out of reach. The ledger this feeds is
+    /// the section that says otherwise, and the shape of each field is what
+    /// says how much an exposure would have to marshal.
+    /// </para>
+    /// <para>
+    /// Padding and what the gir marks <c>private</c> or <c>readable="0"</c> are
+    /// left out, the same convention the record ledger follows, and so is the
+    /// instance structure of the base class: it is the inheritance chain, which
+    /// the wrapper hierarchy already carries. The overlays are asked behind
+    /// all three, so that an entry naming a field the ledger never counted is
+    /// reported as stale rather than claiming a binding for reserved space.
+    /// </para>
+    /// </remarks>
+    private void ReportInstanceFields(ModuleInfo module, GirNamespace ns, GirClass declaration)
+    {
+        foreach (GirField field in declaration.Fields)
+        {
+            if (field.IsPrivate || !field.IsReadable || field.Name.StartsWith('_'))
+            {
+                continue;
+            }
+
+            if (_shapes.IsBaseInstance(ns, field))
+            {
+                continue;
+            }
+
+            string key = FieldShapes.SkipKey(declaration, field);
+            if (_overlays.GetFieldSkip(key) is { IsStated: true } skip)
+            {
+                _census.ExposedField(module.GirNamespace, declaration.Name + "." + field.Name, key, skip.Reason);
+                continue;
+            }
+
+            // Nothing of the class is bound, so the shape is read against an
+            // empty set of bound names. What the shapes have no account of is
+            // read once more, so that the catch all keeps only the fields this
+            // rule really cannot name: a plain value - an integer, a boolean,
+            // an enumeration - is a scalar, and a union laid into the instance
+            // by value is an embedded structure, the same as a record laid in
+            // the same way. GLib spells GMutex a union and GRecMutex a record;
+            // two locks in one instance would otherwise read differently.
+            string reason = _shapes.Reason(ns, field, EmptyBound) ?? FieldShapes.OtherReason;
+            if (string.Equals(reason, FieldShapes.OtherReason, StringComparison.Ordinal))
+            {
+                if (_shapes.IsScalar(ns, field))
+                {
+                    reason = "Scalar";
+                }
+                else if (_shapes.IsEmbeddedUnion(ns, field))
+                {
+                    reason = "EmbeddedStruct";
+                }
+            }
+
+            _census.ClassField(
+                module.GirNamespace,
+                declaration.Name + "." + field.Name,
+                FieldShapes.WithSince(field, reason));
+        }
+
+        // A union of a class is listed once under its own name: the mirror that
+        // would have to choose between its members does not exist either.
+        foreach (GirUnion union in declaration.Unions)
+        {
+            _census.ClassField(
+                module.GirNamespace,
+                declaration.Name + "." + (union.Name is { Length: > 0 } name ? name : "(union)"),
+                "Union");
+        }
     }
 
     /// <summary>Writes the import of the <c>glib:get-type</c> function of a type.</summary>

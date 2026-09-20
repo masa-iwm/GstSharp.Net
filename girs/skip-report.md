@@ -1428,12 +1428,13 @@ it unbound, and this ledger is where that is counted.
 - `VideoSEIUserDataUnregisteredMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 
-## Fields exposed elsewhere (20)
+## Fields exposed elsewhere (23)
 
-Public record fields that another member of the binding answers, with the
-member that answers them. They are declared in `girs/overlays/fixups.json`
-under `fieldSkips` and are left out of the ledger above: what is measured
-there is what the bindings do not cover, and these are covered.
+Public fields of a record or of a class that another member of the binding
+answers, with the member that answers them. They are declared in
+`girs/overlays/fixups.json` under `fieldSkips` and are left out of the ledgers
+around this section: what is measured there is what the bindings do not
+cover, and these are covered.
 
 ### Gst (7)
 
@@ -1464,8 +1465,11 @@ there is what the bindings do not cover, and these are covered.
 
 - `RTSPAuthCredential.params` — hand written
 
-### GstVideo (5)
+### GstVideo (8)
 
+- `ColorBalanceChannel.label` — hand written
+- `ColorBalanceChannel.max_value` — hand written
+- `ColorBalanceChannel.min_value` — hand written
 - `VideoFrame.buffer` — hand written
 - `VideoFrame.info` — hand written
 - `VideoInfo.finfo` — hand written
@@ -1475,3 +1479,255 @@ there is what the bindings do not cover, and these are covered.
 ### GstWebRTC (1)
 
 - `WebRTCSessionDescription.sdp` — hand written
+
+## Class fields (209)
+
+Public instance fields of the GObject classes, with the shape of each. The
+generated wrapper of a class holds a native instance and nothing else: there is
+no mirror of the instance structure, so nothing of what a class declares is
+projected and the reason is the same one for every line. What the shapes are
+for is the distribution: they say what an exposure would have to marshal. A
+reader that needs one of these today writes it by hand, against the mirror of
+the instance head that checklist item 9 of `docs/modules.md` describes; what
+shape a generated exposure should take is an open design question. Padding, the
+fields the gir marks `private` or `readable="0"` and the instance structure of
+the base class are left out: the first two carry no API in C either, and the
+third is the inheritance chain rather than a member. A field the overlays
+register under `fieldSkips` moves into the section above, the same way a record
+field does.
+
+### GES (24)
+
+- `CommandLineFormatter.priv` — Pointer
+- `Container.children` — Pointer
+- `Container.children_control_mode` — Scalar
+- `Container.height` — Scalar
+- `Container.initiated_move` — Pointer
+- `EffectAsset.priv` — Pointer
+- `Layer.max_nle_priority` — Scalar
+- `Layer.min_nle_priority` — Scalar
+- `Layer.priv` — Pointer
+- `Layer.timeline` — Pointer
+- `Timeline.layers` — Pointer
+- `Timeline.tracks` — Pointer
+- `TimelineElement.asset` — Pointer
+- `TimelineElement.duration` — Scalar
+- `TimelineElement.inpoint` — Scalar
+- `TimelineElement.maxduration` — Scalar
+- `TimelineElement.name` — Pointer
+- `TimelineElement.parent` — Pointer
+- `TimelineElement.priority` — Scalar
+- `TimelineElement.start` — Scalar
+- `TimelineElement.timeline` — Pointer
+- `Track.type` — Scalar
+- `TransitionClip.vtype` — Scalar
+- `XmlFormatter.priv` — Pointer
+
+### Gst (69)
+
+- `Allocator.mem_copy` — Callback
+- `Allocator.mem_is_span` — Callback
+- `Allocator.mem_map` — Callback
+- `Allocator.mem_map_full` — Callback
+- `Allocator.mem_share` — Callback
+- `Allocator.mem_type` — Pointer
+- `Allocator.mem_unmap` — Callback
+- `Allocator.mem_unmap_full` — Callback
+- `Bin.child_bus` — Pointer
+- `Bin.children` — Pointer
+- `Bin.children_cookie` — Scalar
+- `Bin.clock_dirty` — Scalar
+- `Bin.clock_provider` — Pointer
+- `Bin.messages` — Pointer
+- `Bin.numchildren` — Scalar
+- `Bin.polling` — Scalar
+- `Bin.provided_clock` — Pointer
+- `Bin.state_dirty` — Scalar
+- `BufferPool.flushing` — Scalar
+- `ControlBinding.ABI` — Union
+- `ControlBinding.name` — Pointer
+- `ControlBinding.pspec` — Pointer
+- `ControlSource.get_value` — Callback
+- `ControlSource.get_value_array` — Callback
+- `DeviceProvider.devices` — Pointer
+- `Element.base_time` — Scalar
+- `Element.bus` — Pointer
+- `Element.clock` — Pointer
+- `Element.contexts` — Pointer
+- `Element.current_state` — Scalar
+- `Element.last_return` — Scalar
+- `Element.next_state` — Scalar
+- `Element.numpads` — Scalar
+- `Element.numsinkpads` — Scalar
+- `Element.numsrcpads` — Scalar
+- `Element.pads` — Pointer
+- `Element.pads_cookie` — Scalar
+- `Element.pending_state` — Scalar
+- `Element.sinkpads` — Pointer
+- `Element.srcpads` — Pointer
+- `Element.start_time` — Scalar
+- `Element.state_cond` — EmbeddedStruct
+- `Element.state_cookie` — Scalar
+- `Element.state_lock` — EmbeddedStruct
+- `Element.target_state` — Scalar
+- `Object.flags` — Scalar
+- `Object.lock` — EmbeddedStruct
+- `Object.name` — Pointer
+- `Object.parent` — Pointer
+- `Pad.ABI` — Union
+- `Pad.direction` — Scalar
+- `Pad.element_private` — Pointer
+- `Pad.padtemplate` — Pointer
+- `PadTemplate.ABI` — Union
+- `PadTemplate.caps` — Pointer
+- `PadTemplate.direction` — Scalar
+- `PadTemplate.name_template` — Pointer
+- `PadTemplate.presence` — Scalar
+- `Pipeline.delay` — Scalar
+- `Pipeline.fixed_clock` — Pointer
+- `Pipeline.stream_time` — Scalar
+- `Stream.stream_id` — Pointer
+- `Task.cond` — EmbeddedStruct
+- `Task.func` — Callback
+- `Task.lock` — Pointer
+- `Task.notify` — Callback
+- `Task.running` — Scalar
+- `Task.state` — Scalar
+- `Task.user_data` — Pointer
+
+### GstAudio (40)
+
+- `AudioAggregator.current_caps` — Pointer
+- `AudioAggregatorPad.info` — EmbeddedStruct
+- `AudioBaseSink.buffer_time` — Scalar
+- `AudioBaseSink.eos_rendering` — Scalar
+- `AudioBaseSink.latency_time` — Scalar
+- `AudioBaseSink.next_sample` — Scalar
+- `AudioBaseSink.provided_clock` — Pointer
+- `AudioBaseSink.ringbuffer` — Pointer
+- `AudioBaseSrc.buffer_time` — Scalar
+- `AudioBaseSrc.clock` — Pointer
+- `AudioBaseSrc.latency_time` — Scalar
+- `AudioBaseSrc.next_sample` — Scalar
+- `AudioBaseSrc.ringbuffer` — Pointer
+- `AudioCdSrc.tags` — Pointer
+- `AudioClock.destroy_notify` — Callback
+- `AudioClock.func` — Callback
+- `AudioClock.user_data` — Pointer
+- `AudioDecoder.input_segment` — EmbeddedStruct
+- `AudioDecoder.output_segment` — EmbeddedStruct
+- `AudioDecoder.sinkpad` — Pointer
+- `AudioDecoder.srcpad` — Pointer
+- `AudioDecoder.stream_lock` — EmbeddedStruct
+- `AudioEncoder.input_segment` — EmbeddedStruct
+- `AudioEncoder.output_segment` — EmbeddedStruct
+- `AudioEncoder.sinkpad` — Pointer
+- `AudioEncoder.srcpad` — Pointer
+- `AudioEncoder.stream_lock` — EmbeddedStruct
+- `AudioFilter.info` — EmbeddedStruct
+- `AudioRingBuffer.acquired` — Scalar
+- `AudioRingBuffer.cond` — EmbeddedStruct
+- `AudioRingBuffer.empty_seg` — Pointer
+- `AudioRingBuffer.memory` — Pointer
+- `AudioRingBuffer.open` — Scalar
+- `AudioRingBuffer.samples_per_seg` — Scalar
+- `AudioRingBuffer.segbase` — Scalar
+- `AudioRingBuffer.segdone` — Scalar
+- `AudioRingBuffer.size` — Scalar
+- `AudioRingBuffer.spec` — EmbeddedStruct
+- `AudioRingBuffer.state` — Scalar
+- `AudioRingBuffer.waiting` — Scalar
+
+### GstBase (42)
+
+- `Aggregator.srcpad` — Pointer
+- `AggregatorPad.segment` — EmbeddedStruct
+- `BaseParse.flags` — Scalar
+- `BaseParse.segment` — EmbeddedStruct
+- `BaseParse.sinkpad` — Pointer
+- `BaseParse.srcpad` — Pointer
+- `BaseSink.can_activate_pull` — Scalar
+- `BaseSink.can_activate_push` — Scalar
+- `BaseSink.eos` — Scalar
+- `BaseSink.have_newsegment` — Scalar
+- `BaseSink.have_preroll` — Scalar
+- `BaseSink.need_preroll` — Scalar
+- `BaseSink.offset` — Scalar
+- `BaseSink.pad_mode` — Scalar
+- `BaseSink.playing_async` — Scalar
+- `BaseSink.preroll_cond` — EmbeddedStruct
+- `BaseSink.preroll_lock` — EmbeddedStruct
+- `BaseSink.segment` — EmbeddedStruct
+- `BaseSink.sinkpad` — Pointer
+- `BaseSrc.blocksize` — Scalar
+- `BaseSrc.can_activate_push` — Scalar
+- `BaseSrc.clock_id` — Pointer
+- `BaseSrc.is_live` — Scalar
+- `BaseSrc.live_cond` — EmbeddedStruct
+- `BaseSrc.live_lock` — EmbeddedStruct
+- `BaseSrc.live_running` — Scalar
+- `BaseSrc.need_newsegment` — Scalar
+- `BaseSrc.num_buffers` — Scalar
+- `BaseSrc.num_buffers_left` — Scalar
+- `BaseSrc.pending_seek` — Pointer
+- `BaseSrc.priv` — Pointer
+- `BaseSrc.random_access` — Scalar
+- `BaseSrc.running` — Scalar
+- `BaseSrc.segment` — EmbeddedStruct
+- `BaseSrc.srcpad` — Pointer
+- `BaseSrc.typefind` — Scalar
+- `BaseTransform.have_segment` — Scalar
+- `BaseTransform.queued_buf` — Pointer
+- `BaseTransform.segment` — EmbeddedStruct
+- `BaseTransform.sinkpad` — Pointer
+- `BaseTransform.srcpad` — Pointer
+- `CollectPads.data` — Pointer
+
+### GstPbutils (3)
+
+- `AudioVisualizer.ainfo` — EmbeddedStruct
+- `AudioVisualizer.req_spf` — Scalar
+- `AudioVisualizer.vinfo` — EmbeddedStruct
+
+### GstRtp (10)
+
+- `RTPBaseAudioPayload.base_ts` — Scalar
+- `RTPBaseAudioPayload.frame_duration` — Scalar
+- `RTPBaseAudioPayload.frame_size` — Scalar
+- `RTPBaseAudioPayload.priv` — Pointer
+- `RTPBaseAudioPayload.sample_size` — Scalar
+- `RTPBaseDepayload.clock_rate` — Scalar
+- `RTPBaseDepayload.need_newsegment` — Scalar
+- `RTPBaseDepayload.segment` — EmbeddedStruct
+- `RTPBaseDepayload.sinkpad` — Pointer
+- `RTPBaseDepayload.srcpad` — Pointer
+
+### GstRtspServer (2)
+
+- `RTSPOnvifMedia.priv` — Pointer
+- `RTSPOnvifMediaFactory.priv` — Pointer
+
+### GstVideo (8)
+
+- `VideoAggregator.info` — EmbeddedStruct
+- `VideoAggregatorPad.info` — EmbeddedStruct
+- `VideoBufferPool.priv` — Pointer
+- `VideoFilter.in_info` — EmbeddedStruct
+- `VideoFilter.negotiated` — Scalar
+- `VideoFilter.out_info` — EmbeddedStruct
+- `VideoSink.height` — Scalar
+- `VideoSink.width` — Scalar
+
+### GstWebRTC (11)
+
+- `WebRTCICE.ice_connection_state` — Scalar
+- `WebRTCICE.ice_gathering_state` — Scalar
+- `WebRTCICE.max_rtp_port` — Scalar
+- `WebRTCICE.min_rtp_port` — Scalar
+- `WebRTCICEStream.stream_id` — Scalar
+- `WebRTCICETransport.component` — Scalar
+- `WebRTCICETransport.gathering_state` — Scalar
+- `WebRTCICETransport.role` — Scalar
+- `WebRTCICETransport.sink` — Pointer
+- `WebRTCICETransport.src` — Pointer
+- `WebRTCICETransport.state` — Scalar

@@ -612,6 +612,20 @@ behind `GstSharp.NativeVersion.IsAtLeast(1, 28)` and which throws
 `EntryPointNotFoundException` below that, the same exception the same library
 answers a member that arrived after the floor with.
 
+The instance fields of the GObject classes are a third section of the same
+report, `## Class fields`. A wrapper of a class holds a native instance and
+mirrors no part of the structure, so none of what a class declares is projected
+and the reason is the same one for every line; what the lines carry is the
+shape, which says what an exposure would have to marshal. Padding, the fields
+the gir marks `private` or `readable="0"` and the instance structure of the
+base class are left out — the last of the three is the inheritance chain the
+wrapper hierarchy already carries — and a field registered under `fieldSkips`
+moves to `## Fields exposed elsewhere` the way a record field does. Reading one
+today means writing the read by hand, against the mirror of the instance head
+that checklist item 9 of `docs/modules.md` describes; the three fields of
+`ColorBalanceChannel` are the model and are listed as answered elsewhere for
+that reason.
+
 ## Fields the library rewrites
 
 A field accessor reads at the moment of the call, which is the same raw read a
