@@ -244,6 +244,26 @@ public sealed class ColorBalanceChannelFieldTests
     }
 
     /// <summary>
+    /// A disposed channel refuses a range it could otherwise write, which is
+    /// what pins the order of the two guards.
+    /// </summary>
+    /// <remarks>
+    /// The arguments are checked before the wrapper is, so the refusal a caller
+    /// meets depends on which of the two is wrong: a pair the wrong way round is
+    /// an <c>ArgumentException</c> whatever state the wrapper is in, and only a
+    /// valid pair reaches the state check. The order is permanent once released,
+    /// so the half of it that is observable is written down here.
+    /// </remarks>
+    [Fact]
+    public void ADisposedChannelRefusesARangeWrittenAtOnce()
+    {
+        ColorBalanceChannel channel = ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000);
+        channel.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => channel.SetRange(0, 1));
+    }
+
+    /// <summary>
     /// A channel an element listed refuses
     /// <see cref="ColorBalanceChannel.SetRange(int, int)"/> the way it refuses
     /// the single setters.
