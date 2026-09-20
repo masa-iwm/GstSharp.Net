@@ -66,9 +66,8 @@ this design's stage 3a landed is instantiate a *managed* element by type name
   `protected virtual void Dispose(bool disposing)` (`Gst.GObject.Object`,
   already there, no runtime change needed) for the owner-initiated teardown of
   an instance the caller knows nothing else drives — an override there acts
-  only when `disposing` is `true`, the finalizer running it with `false` on a
-  thread where no other managed object may be touched, and chains up to
-  `base.Dispose(disposing)` — which is the same scope
+  only when `disposing` is `true`, since the finalizer runs it with `false`,
+  and chains up to `base.Dispose(disposing)` — which is the same scope
   the dispose doctrine of §8 draws ("Dispose doctrine extends unchanged":
   disposing an instance native code still drives is a documented misuse). No
   hook on the `dispose` / `finalize` *slots* is offered at all: as §8's
