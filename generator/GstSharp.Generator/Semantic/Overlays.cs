@@ -263,6 +263,69 @@ internal sealed class FieldSkip
 }
 
 /// <summary>
+/// An instance field of a GObject class that the generator exposes through an
+/// accessor of its own.
+/// </summary>
+/// <remarks>
+/// <para>
+/// A wrapper holds a native instance and mirrors no part of it, so every field
+/// of a class is out of reach by default and the ledger counts the whole of
+/// them. An entry here is the exception: it says that one field carries an
+/// accessor, and it carries the three facts the accessor cannot be written
+/// without. <c>lock</c> is the lock the library rewrites the field under, which
+/// managed code cannot take; <c>overrides</c> names the streaming thread slots
+/// inside which a read is consistent anyway, because the pad holds that lock
+/// around the call; the <c>$comment</c> names the header file and line both
+/// claims were read from.
+/// </para>
+/// <para>
+/// All three are required. A field whose lock nobody stated is one whose
+/// accessor would document nothing, and an <c>overrides</c> list that is empty
+/// would say there is no window at all - which is a refusal, not an entry.
+/// </para>
+/// </remarks>
+internal sealed class InstanceField
+{
+    /// <summary>
+    /// Gets or sets the lock the library rewrites the field under, as free text
+    /// the generated remark prints, for example <c>STREAM_LOCK</c>.
+    /// </summary>
+    public string? Lock { get; set; }
+
+    /// <summary>
+    /// Gets or sets the gir names of the virtual methods the base class calls on
+    /// the streaming thread, which is the window a read of the field is
+    /// consistent in.
+    /// </summary>
+    public List<string>? Overrides { get; set; }
+
+    /// <summary>Gets or sets the header file and line the entry rests on.</summary>
+    [JsonPropertyName("$comment")]
+    public string? Comment { get; set; }
+
+    /// <summary>
+    /// Gets or sets the stem the accessor is named after, in place of the one
+    /// the name of the field derives.
+    /// </summary>
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Gets what is wrong with the shape of the entry, read off the entry alone
+    /// and without asking what this run made of it.
+    /// </summary>
+    internal string? ShapeFault =>
+        Lock is not { Length: > 0 }
+            ? "states no 'lock'"
+            : Overrides is not { Count: > 0 }
+                ? "states no 'overrides'"
+                : Comment is not { Length: > 0 }
+                    ? "states no '$comment'"
+                    : Name is { Length: 0 }
+                        ? "states an empty 'name'"
+                        : null;
+}
+
+/// <summary>
 /// A correction of a record field that no gir annotation carries.
 /// </summary>
 /// <remarks>
@@ -442,6 +505,16 @@ internal sealed class PlatformSupport
 /// two, which may be stated together; an entry that states nothing, that
 /// states the default, that spells an empty name or one the field derives
 /// anyway is reported as stale.</description></item>
+/// <item><description><c>instanceFields</c>: keyed like <c>fieldSkips</c> and
+/// naming an instance field of a GObject class that the generator exposes
+/// through an accessor of its own — the one ledger section whose entries a
+/// wrapper can answer at all. Each entry states the <c>lock</c> the library
+/// rewrites the field under, the gir names of the streaming thread
+/// <c>overrides</c> that form the window in which a read is consistent, and a
+/// <c>$comment</c> with the header file and line the claim rests on; an optional
+/// <c>name</c> renames the accessor the way <c>fieldAnnotations</c> does. The
+/// shapes the allowlist admits are closed, and an entry is an error rather than
+/// a warning: the accessor is public surface.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>
@@ -519,6 +592,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _returnTypes;
     private readonly Dictionary<string, FieldSkip> _fieldSkips;
     private readonly Dictionary<string, FieldAnnotation> _fieldAnnotations;
+    private readonly Dictionary<string, InstanceField> _instanceFields;
     private readonly HashSet<string> _subclassable;
     private readonly Dictionary<string, string> _skipVirtuals;
     private readonly Dictionary<string, string> _vfuncDefaults;
@@ -548,6 +622,7 @@ internal sealed class Overlays
         Dictionary<string, string> returnTypes,
         Dictionary<string, FieldSkip> fieldSkips,
         Dictionary<string, FieldAnnotation> fieldAnnotations,
+        Dictionary<string, InstanceField> instanceFields,
         HashSet<string> subclassable,
         Dictionary<string, string> skipVirtuals,
         Dictionary<string, string> vfuncDefaults,
@@ -576,6 +651,7 @@ internal sealed class Overlays
         _returnTypes = returnTypes;
         _fieldSkips = fieldSkips;
         _fieldAnnotations = fieldAnnotations;
+        _instanceFields = instanceFields;
         _subclassable = subclassable;
         _skipVirtuals = skipVirtuals;
         _vfuncDefaults = vfuncDefaults;
@@ -607,6 +683,7 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, FieldSkip>(StringComparer.Ordinal),
         new Dictionary<string, FieldAnnotation>(StringComparer.Ordinal),
+        new Dictionary<string, InstanceField>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
@@ -669,6 +746,9 @@ internal sealed class Overlays
     /// report the ones no field of an emitted record matched.
     /// </summary>
     internal IReadOnlyCollection<string> FieldAnnotationKeys => _fieldAnnotations.Keys;
+
+    /// <summary>Gets the keys of the instance field allowlist, for the stale entry report.</summary>
+    internal IReadOnlyCollection<string> InstanceFieldKeys => _instanceFields.Keys;
 
     /// <summary>
     /// Gets the qualified gir names of the classes a managed subclass may
@@ -804,6 +884,12 @@ internal sealed class Overlays
         foreach (KeyValuePair<string, FieldSkip> entry in fixups.FieldSkips ?? [])
         {
             fieldSkips[entry.Key] = entry.Value;
+        }
+
+        Dictionary<string, InstanceField> instanceFields = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, InstanceField> entry in fixups.InstanceFields ?? [])
+        {
+            instanceFields[entry.Key] = entry.Value;
         }
 
         Dictionary<string, FieldAnnotation> fieldAnnotations = new(StringComparer.Ordinal);
@@ -978,6 +1064,7 @@ internal sealed class Overlays
             returnTypes,
             fieldSkips,
             fieldAnnotations,
+            instanceFields,
             subclassable,
             skipVirtuals,
             vfuncDefaults,
@@ -1065,6 +1152,12 @@ internal sealed class Overlays
     /// <returns>The entry, or <see langword="null"/> when there is none.</returns>
     internal FieldAnnotation? GetFieldAnnotation(string key) =>
         _fieldAnnotations.TryGetValue(key, out FieldAnnotation? value) ? value : null;
+
+    /// <summary>Returns the allowlist entry of one instance field, if there is one.</summary>
+    /// <param name="key">The <c>c:type</c> of the class and the gir name of the field.</param>
+    /// <returns>The entry, or <see langword="null"/> when the field is not allowlisted.</returns>
+    internal InstanceField? GetInstanceField(string key) =>
+        _instanceFields.TryGetValue(key, out InstanceField? value) ? value : null;
 
     /// <summary>
     /// Tests whether a class may be derived from by a managed subclass, which
@@ -1321,6 +1414,8 @@ internal sealed class Overlays
         public Dictionary<string, FieldSkip>? FieldSkips { get; set; }
 
         public Dictionary<string, FieldAnnotation>? FieldAnnotations { get; set; }
+
+        public Dictionary<string, InstanceField>? InstanceFields { get; set; }
 
         public List<string>? Subclassable { get; set; }
 

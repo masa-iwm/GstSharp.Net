@@ -52,6 +52,9 @@ internal sealed class ClassEmitter
     private readonly List<RegistryEntry> _registry;
     private readonly Dictionary<string, List<string>> _inherited;
     private readonly FieldShapes _shapes;
+    private readonly InstanceFieldEmitter _instanceFields;
+    private readonly List<GeneratedFile> _mirrors = [];
+    private readonly HashSet<string> _exposedFields = new(StringComparer.Ordinal);
 
     /// <summary>Initializes a new instance of the <see cref="ClassEmitter"/> class.</summary>
     /// <param name="repository">The loaded gir repository.</param>
@@ -68,6 +71,10 @@ internal sealed class ClassEmitter
     /// qualified gir name. The table is shared by every module, because a class
     /// of one module derives from a class of another one.
     /// </param>
+    /// <param name="emittedVirtuals">
+    /// The managed override names every subclassable class emitted, which is what
+    /// the <c>overrides</c> of an instance field entry are checked against.
+    /// </param>
     internal ClassEmitter(
         Repository repository,
         Classifier classifier,
@@ -78,7 +85,8 @@ internal sealed class ClassEmitter
         EmissionCensus census,
         DiagnosticBag diagnostics,
         List<RegistryEntry> registry,
-        Dictionary<string, List<string>> inherited)
+        Dictionary<string, List<string>> inherited,
+        Dictionary<string, HashSet<string>> emittedVirtuals)
     {
         _repository = repository;
         _classifier = classifier;
@@ -90,6 +98,13 @@ internal sealed class ClassEmitter
         _registry = registry;
         _inherited = inherited;
         _shapes = new FieldShapes(repository, types);
+        _instanceFields = new InstanceFieldEmitter(
+            repository,
+            overlays,
+            census,
+            diagnostics,
+            _shapes,
+            emittedVirtuals);
     }
 
     /// <summary>Emits every generated class of one module.</summary>
@@ -114,6 +129,13 @@ internal sealed class ClassEmitter
             {
                 files.Add(file);
             }
+        }
+
+        files.AddRange(_mirrors);
+        _mirrors.Clear();
+        if (_instanceFields.EmitRegistry(module, ns) is { } registryFile)
+        {
+            files.Add(registryFile);
         }
 
         files.Sort(static (left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
@@ -903,6 +925,18 @@ internal sealed class ClassEmitter
 
         WriteMembers(writer, surface, module, first: false, CTypeOf(declaration));
 
+        // The allowlist is read after the surface is built, so that an accessor
+        // whose name a method, a property or an inherited member already carries
+        // is refused rather than declared twice.
+        List<string> taken = [.. reserved, .. members];
+        IReadOnlyList<InstanceFieldPlan> exposed = _instanceFields.Plan(ns, declaration, taken);
+        _instanceFields.WriteAccessors(writer, ns, declaration, typeName, exposed);
+        foreach (InstanceFieldPlan plan in exposed)
+        {
+            members.Add(plan.Member);
+            _ = _exposedFields.Add(plan.Key);
+        }
+
         bool hidesBase = baseType.InModule is not null;
         writer.WriteLine();
         WriteTypeFunction(writer, module, declaration.GlibGetType, CTypeOf(declaration), hidesBase);
@@ -921,6 +955,17 @@ internal sealed class ClassEmitter
         if (declaration.GlibGetType is { Length: > 0 })
         {
             _registry.Add(new RegistryEntry(module.ClrNamespace + "." + typeName, declaration.IsDeprecated));
+        }
+
+        if (exposed.Count > 0)
+        {
+            _mirrors.Add(_instanceFields.EmitMirror(
+                module,
+                ns,
+                declaration,
+                typeName,
+                baseType.Name,
+                exposed));
         }
 
         ReportInstanceFields(module, ns, declaration);
@@ -970,6 +1015,15 @@ internal sealed class ClassEmitter
             }
 
             string key = FieldShapes.SkipKey(declaration, field);
+
+            // A field the allowlist exposes carries a generated accessor, so it
+            // leaves the ledger the way a record field with one does: it is not
+            // a gap any more, and it is not answered by something else either.
+            if (_exposedFields.Contains(key))
+            {
+                continue;
+            }
+
             if (_overlays.GetFieldSkip(key) is { IsStated: true } skip)
             {
                 _census.ExposedField(module.GirNamespace, declaration.Name + "." + field.Name, key, skip.Reason);

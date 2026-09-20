@@ -417,6 +417,28 @@ internal static class GenerationPipeline
             }
         }
 
+        // An instance field entry the run never matched names a field that no
+        // longer exists, one of a class that is not emitted, or a misspelling,
+        // and it is an error rather than a warning: the entry is the only reason
+        // a public accessor of that field exists, so one nothing matched leaves
+        // the overlays claiming a piece of surface the run did not produce.
+        List<string> staleInstanceFields = [];
+        foreach (string key in overlays.InstanceFieldKeys)
+        {
+            if (!census.InstanceFieldKeys.Contains(key))
+            {
+                staleInstanceFields.Add(key);
+            }
+        }
+
+        staleInstanceFields.Sort(StringComparer.Ordinal);
+        foreach (string key in staleInstanceFields)
+        {
+            diagnostics.Error(
+                "GEN0060",
+                $"The instance field '{key}' matched no field of an emitted class; the entry is stale.");
+        }
+
         staleFields.Sort(StringComparer.Ordinal);
         foreach (string key in staleFields)
         {
@@ -622,7 +644,8 @@ internal static class GenerationPipeline
             shared.Census,
             shared.Diagnostics,
             registry,
-            shared.Inherited);
+            shared.Inherited,
+            shared.EmittedVirtuals);
 
         List<InterfaceRegistryEntry> interfaceRegistry = [];
         InterfaceEmitter interfaceEmitter = new(

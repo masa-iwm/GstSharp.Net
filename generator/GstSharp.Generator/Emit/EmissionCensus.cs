@@ -40,6 +40,7 @@ internal sealed class EmissionCensus
         new(StringComparer.Ordinal);
 
     private readonly SortedSet<string> _fieldSkips = new(StringComparer.Ordinal);
+    private readonly SortedSet<string> _instanceFields = new(StringComparer.Ordinal);
 
     private readonly SortedSet<string> _fieldAnnotations = new(StringComparer.Ordinal);
 
@@ -80,6 +81,16 @@ internal sealed class EmissionCensus
     /// record, so that the ones it never matched can be reported as stale.
     /// </summary>
     internal IReadOnlySet<string> FieldSkipKeys => _fieldSkips;
+
+    /// <summary>
+    /// Gets the instance field keys the run matched against a field of an emitted
+    /// class, so that the ones it never matched can be reported as stale.
+    /// </summary>
+    internal IReadOnlySet<string> InstanceFieldKeys => _instanceFields;
+
+    /// <summary>Records one instance field key the run matched.</summary>
+    /// <param name="key">The field, as <c>GstBaseSink.segment</c>.</param>
+    internal void InstanceFieldKey(string key) => _instanceFields.Add(key);
 
     /// <summary>
     /// Gets the field annotation keys the run applied to a field of an emitted
