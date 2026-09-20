@@ -298,10 +298,12 @@ public unsafe partial class ColorBalanceChannel
     /// without a lock.
     /// <para>
     /// The two bounds are not checked against each other on the way in, only in
-    /// <see cref="New(string, int, int)"/>: a channel starts out at 0/0, so a
+    /// <see cref="New(string, int, int)"/> and
+    /// <see cref="SetRange(int, int)"/>: a channel starts out at 0/0, so a
     /// pair written one field at a time would have to be written in the order
     /// the checker happens to accept. A range the wrong way round is the
-    /// caller's to avoid.
+    /// caller's to avoid, or to rule out by writing both ends at once with
+    /// <see cref="SetRange(int, int)"/>.
     /// </para>
     /// </remarks>
     /// <exception cref="InvalidOperationException">
@@ -359,6 +361,60 @@ public unsafe partial class ColorBalanceChannel
             ((ColorBalanceChannelRaw*)Handle)->MaxValue = value;
             System.GC.KeepAlive(this);
         }
+    }
+
+    /// <summary>Writes both bounds of this channel at once, as a range.</summary>
+    /// <param name="minValue">The minimum valid value for the channel.</param>
+    /// <param name="maxValue">The maximum valid value for the channel.</param>
+    /// <remarks>
+    /// <para>
+    /// This is the one write that sees both ends of the range, so it is the one
+    /// that can refuse a range the wrong way round: the single setters do not
+    /// cross-validate; use this to replace both ends at once. The single setters
+    /// keep the behaviour of the C, where the two fields are plain and
+    /// unguarded, and a channel starts out at 0/0, so a pair written one field
+    /// at a time would have to be written in the order a cross-check happens to
+    /// accept.
+    /// </para>
+    /// <para>
+    /// The argument is checked before anything is read or written, so a range
+    /// the wrong way round leaves both fields as they were. Like the single
+    /// setters, this is for a channel of one's own, from
+    /// <see cref="New(string, int, int)"/>, and refuses a channel an element
+    /// listed, whose fields that element reads without a lock. It adds no lock
+    /// of its own either: the two fields are written one after the other, so a
+    /// reader on another thread can still see the new minimum beside the old
+    /// maximum. Write a channel of one's own before handing it to anything else.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="minValue"/> is greater than <paramref name="maxValue"/>.
+    /// An equal pair is accepted, the way <see cref="New(string, int, int)"/>
+    /// accepts one.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// The channel was listed by an element rather than made by
+    /// <see cref="New(string, int, int)"/>.
+    /// </exception>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    public void SetRange(int minValue, int maxValue)
+    {
+        // The argument check comes first because it needs no native state: a
+        // range the wrong way round is refused on a disposed wrapper and on a
+        // borrowed channel alike, before either is touched.
+        if (minValue > maxValue)
+        {
+            throw new ArgumentException(
+                "The minimum valid value of a color balance channel cannot be greater than the maximum one.",
+                nameof(minValue));
+        }
+
+        ThrowIfNotOnesOwn("SetRange");
+
+        ColorBalanceChannelRaw* raw = (ColorBalanceChannelRaw*)Handle;
+        raw->MinValue = minValue;
+        raw->MaxValue = maxValue;
+        System.GC.KeepAlive(this);
     }
 }
 

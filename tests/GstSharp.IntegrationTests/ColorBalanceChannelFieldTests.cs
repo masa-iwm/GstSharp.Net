@@ -197,6 +197,80 @@ public sealed class ColorBalanceChannelFieldTests
     }
 
     /// <summary>
+    /// <see cref="ColorBalanceChannel.SetRange(int, int)"/> replaces both bounds
+    /// of a channel of one's own, and takes a pair whose ends are equal.
+    /// </summary>
+    /// <remarks>
+    /// An equal pair is a channel with a single valid value, which the factory
+    /// accepts too; it is the only pair a cross-check could plausibly refuse by
+    /// accident.
+    /// </remarks>
+    [Fact]
+    public void ARangeWrittenAtOnceReplacesBothBoundsOfAChannelOfOnesOwn()
+    {
+        using ColorBalanceChannel channel = ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000);
+
+        channel.SetRange(-100, 100);
+
+        Assert.Equal(-100, channel.MinValue);
+        Assert.Equal(100, channel.MaxValue);
+
+        channel.SetRange(7, 7);
+
+        Assert.Equal(7, channel.MinValue);
+        Assert.Equal(7, channel.MaxValue);
+    }
+
+    /// <summary>
+    /// <see cref="ColorBalanceChannel.SetRange(int, int)"/> refuses a range the
+    /// wrong way round before it writes either field.
+    /// </summary>
+    /// <remarks>
+    /// The two bounds are read back to show that the refusal happened before
+    /// anything was written: the write is what the single setters keep doing
+    /// without a cross-check, so a half written pair here would be worse than
+    /// either setter on its own.
+    /// </remarks>
+    [Fact]
+    public void ARangeTheWrongWayRoundLeavesBothBoundsAsTheyWere()
+    {
+        using ColorBalanceChannel channel = ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000);
+
+        ArgumentException failure = Assert.Throws<ArgumentException>(() => channel.SetRange(1, 0));
+
+        Assert.Equal("minValue", failure.ParamName);
+        Assert.Equal(-1000, channel.MinValue);
+        Assert.Equal(1000, channel.MaxValue);
+    }
+
+    /// <summary>
+    /// A channel an element listed refuses
+    /// <see cref="ColorBalanceChannel.SetRange(int, int)"/> the way it refuses
+    /// the single setters.
+    /// </summary>
+    /// <remarks>
+    /// The range handed over is a valid one, so the provenance is what the
+    /// refusal is about; the two bounds are read back to show that nothing was
+    /// written.
+    /// </remarks>
+    [RequiresElementFact("videobalance")]
+    public void AChannelOfAnElementRefusesARangeWrittenAtOnce()
+    {
+        using Element balance = ElementFactory.Make("videobalance", null)
+            ?? throw new InvalidOperationException("videobalance is part of the good plugins.");
+
+        IColorBalance colorBalance = balance.As<IColorBalance>()
+            ?? throw new InvalidOperationException("videobalance implements GstColorBalance.");
+
+        ColorBalanceChannel listed = colorBalance.ListChannels()[0];
+
+        Assert.Throws<InvalidOperationException>(() => listed.SetRange(0, 1));
+
+        Assert.Equal(-1000, listed.MinValue);
+        Assert.Equal(1000, listed.MaxValue);
+    }
+
+    /// <summary>
     /// The hand written factory and setter refuse what they cannot write
     /// rather than leaving a channel that aborts <c>playsink</c> later.
     /// </summary>
