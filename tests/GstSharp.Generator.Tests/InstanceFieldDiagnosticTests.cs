@@ -93,6 +93,32 @@ public sealed class InstanceFieldDiagnosticTests
               </method>
         """;
 
+    /// <summary>
+    /// A class below the one whose field is exposed, declaring a member of the
+    /// name the accessor takes.
+    /// </summary>
+    private const string Descendant =
+        """
+            <class name="Grip" c:type="GstGrip" parent="Gadget" glib:type-name="GstGrip" glib:get-type="gst_grip_get_type">
+              <field name="head">
+                <type name="Gadget" c:type="GstGadget"/>
+              </field>
+              <method name="get_segment" c:identifier="gst_grip_get_segment">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="self" transfer-ownership="none">
+                    <type name="Grip" c:type="GstGrip*"/>
+                  </instance-parameter>
+                  <parameter name="index" transfer-ownership="none">
+                    <type name="guint" c:type="guint"/>
+                  </parameter>
+                </parameters>
+              </method>
+            </class>
+        """;
+
     /// <summary>The types a field of the fixture names, in the modules that declare them.</summary>
     private const string ExtraNamespaces =
         """
@@ -220,6 +246,25 @@ public sealed class InstanceFieldDiagnosticTests
     }
 
     /// <summary>
+    /// A member of a descendant collides too: the accessor is inherited surface
+    /// that the C# hiding rules would let a later class take over quietly.
+    /// </summary>
+    [Fact]
+    public void AMemberOfADescendantThatWouldHideTheAccessorIsRefused()
+    {
+        FixtureRun run = Run(
+            Entries + "{ \"GstGadget.segment\": { " + Window + " } } }",
+            descendant: true);
+
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0063");
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains(
+            "The member 'GetSegment' of 'GstBase.Grip' collides with the accessor a base class of it exposes",
+            error.Message,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The accepted path of the same fixture, so that a refusal above is a
     /// refusal of what the entry says and not of the gir it is read against.
     /// </summary>
@@ -292,8 +337,16 @@ public sealed class InstanceFieldDiagnosticTests
     /// <see langword="false"/> for the one case whose subject is an entry the
     /// allowlist accepts.
     /// </param>
+    /// <param name="descendant">
+    /// <see langword="true"/> to declare a class below <c>Gadget</c> carrying a
+    /// member of the name its accessor takes.
+    /// </param>
     /// <returns>The run.</returns>
-    private static FixtureRun Run(string entries, string? subclassable = null, bool allowErrors = true)
+    private static FixtureRun Run(
+        string entries,
+        string? subclassable = null,
+        bool allowErrors = true,
+        bool descendant = false)
     {
         // Widget carries every shape a refusal is read off; the other classes
         // carry one layout fault each, so that the entry of a case is the only
@@ -330,6 +383,11 @@ public sealed class InstanceFieldDiagnosticTests
                         </field>
                       </union>
                 """);
+
+        if (descendant)
+        {
+            body += "\n" + Descendant;
+        }
 
         string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
         Directory.CreateDirectory(directory);

@@ -37,6 +37,18 @@ internal sealed class ClassEmitter
     internal const string EnumHolderSuffix = "Extensions";
 
     /// <summary>
+    /// The prefix the inherited table remembers the accessor of an instance field
+    /// under, beside the member key of it.
+    /// </summary>
+    /// <remarks>
+    /// The hiding rules read the <c>M:</c> and <c>P:</c> keys and ignore every
+    /// other one, so a marker of its own carries a fact none of them has to know:
+    /// that the member came out of the allowlist rather than out of a plan, and
+    /// that a descendant hiding it is an error.
+    /// </remarks>
+    private const string InstanceFieldMarker = "I:";
+
+    /// <summary>
     /// The bound field names of a class, which are none: a wrapper mirrors no
     /// part of the instance structure.
     /// </summary>
@@ -893,6 +905,32 @@ internal sealed class ClassEmitter
         members.AddRange(surface.MemberKeys);
         _inherited[qualifiedName] = members;
 
+        // The accessor of an instance field is added beside the planned surface,
+        // so a member of a descendant would hide it under the 'new' rule and say
+        // nothing. The accessor shipped first, so the collision is reported here,
+        // at the class that would hide it, and the field answers it with a
+        // 'name'.
+        foreach (string key in inherited)
+        {
+            if (!key.StartsWith(InstanceFieldMarker, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string accessor = key[InstanceFieldMarker.Length..];
+            foreach (string own in surface.MemberKeys)
+            {
+                if (SurfaceBuilder.KeyNames(own, accessor))
+                {
+                    _diagnostics.Error(
+                        "GEN0063",
+                        $"The member '{accessor}' of '{qualifiedName}' collides with the accessor a base class of "
+                        + "it exposes an instance field through; the accessor shipped first, so the field takes a "
+                        + "'name'.");
+                }
+            }
+        }
+
         List<string> interfaces = [];
         foreach (string implemented in declaration.Implements)
         {
@@ -935,8 +973,10 @@ internal sealed class ClassEmitter
         {
             // The accessor joins the inherited table as a method of no
             // parameters, which is what a descendant that declares one of the
-            // same name has to hide.
+            // same name has to hide, and under a marker of its own, which is what
+            // makes that descendant an error rather than a silent 'new'.
             members.Add(SurfaceBuilder.ParameterlessMethodKey(plan.Member));
+            members.Add(InstanceFieldMarker + plan.Member);
             _ = _exposedFields.Add(plan.Key);
         }
 
