@@ -850,6 +850,7 @@
     "GES.TrackElement",
     "GES.VideoSource",
     "Gst.Bin",
+    "Gst.Device",
     "Gst.DeviceProvider",
     "Gst.Element",
     "Gst.Pad",
@@ -890,6 +891,8 @@
   "vfuncDefaults": {
     "GES.Clip::create_track_element": "nint.Zero",
     "GES.TimelineElement::lookup_child": "false",
+    "Gst.Device::create_element": "nint.Zero",
+    "Gst.Device::reconfigure_element": "false",
     "Gst.DeviceProvider::start": "true",
     "Gst.Element::provide_clock": "nint.Zero",
     "Gst.Element::request_new_pad": "nint.Zero",
@@ -1014,6 +1017,10 @@
   "$comment-vfunc-spans": "The blocks a slot only reads, which the projection cannot tell from the ones it writes: the gir counts both by the parameter beside them and spells both as a gpointer, and a gpointer carries no constness. A block listed here becomes a ReadOnlySpan and every other one a Span. gst_audio_sink_ring_buffer_thread reads the samples out of the block it hands to write (gstaudiosink.c:247), while gst_audio_src_ring_buffer_thread expects read to fill the one it hands over (gstaudiosrc.c:223).",
   "vfuncSpans": [
     "GstAudio.AudioSink::write#data"
+  ],
+  "$comment-vfunc-floating-returns": "The slots whose caller owns the floating reference of the answer. No gir transfer kind spells that - the annotation of such a slot is transfer none, which reads as a borrow - and the difference is a use-after-free rather than a nuance. gst_device_create_element hands the answer of its slot on exactly as it came (gstdevice.c:225) and raises a g_critical when it is not floating, which is what a wrapped answer always is because the wrapper sank the reference it holds when it was built (gstdevice.c:217-223, and the doc annotation at :201 says transfer floating). The caller is the owner from there on: gst-device-monitor.c:200,205 drops the answer with a bare gst_object_unref and never sinks it, while d3d11screencapturesrc.cpp:194 hands it to gst_bin_add_many, which does. A borrowed answer would leave the first caller unreferencing an object nobody handed it a reference of, and an owned one would leak the second reference on the path where the caller sinks; the trampoline of a listed slot therefore mints one reference and forces the floating flag back on, which touches no other reference count (gobject.c:4269-4276). What the override owes in return is in the generated documentation of the slot: answer a new, unparented instance on every call and keep no reference to it.",
+  "vfuncFloatingReturns": [
+    "Gst.Device::create_element"
   ],
   "$comment-vfunc-sibling-arguments": "The parameters that hand a slot a second instance of the type the slot itself runs for, which the base class has just created and still holds. Nothing in the gir says so - the parameter is an ordinary transfer-none GObject - and the difference is one of ownership: such an instance may still be floating, and settling that reference into a wrapper takes the one the caller means to drop. A parameter listed here is resolved the way the instance of the slot is, through TryGetOrFabricate, which interns or fabricates a wrapper and sinks nothing. GESTimelineElementClass::deep_copy is the one slot of the corpus with that shape. ges_timeline_element_copy extracts the copy from the asset of self, so it has the GType of self and is a fresh instance of the same managed subclass; GESTimelineElement derives from GInitiallyUnowned and nothing sinks the copy on the way, so it reaches the slot floating with a refcount of one. The floating reference is later dropped without ever being sunk: GESContainer::_deep_copy plain-stores the pointer (ges-container.c:332) and gst_object_unrefs it in _free_mapping (:129), and an application unrefs its own copy after pasting it. A wrapper that had sunk that reference would lose it to a free path that never knew about the wrapper.",
   "vfuncSiblingArguments": [

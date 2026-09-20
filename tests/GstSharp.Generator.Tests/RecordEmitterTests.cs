@@ -1369,7 +1369,7 @@ public sealed class RecordEmitterTests
     }
 
     [Theory]
-    [InlineData("GstSharp.Net", 124)]
+    [InlineData("GstSharp.Net", 126)]
     [InlineData("GstSharp.Net.Base", 34)]
     [InlineData("GstSharp.Net.App", 8)]
     [InlineData("GstSharp.Net.Audio", 52)]
@@ -1419,11 +1419,11 @@ public sealed class RecordEmitterTests
         // global functions, the callbacks, the holder of the connected signal
         // handlers and the type table. GstVecDeque is introspectable="0" and
         // twenty records are the private state shell of a class, which is why
-        // 54 opaque records emit 33 files. Ten more since the subclassing
-        // surface landed: five class struct mirrors, their registry, and the
-        // four `*.Subclass.cs` partials of Gst.Element, Gst.Bin, Gst.Pad and
-        // Gst.DeviceProvider.
-        Assert.Equal(124, files.Count);
+        // 54 opaque records emit 33 files. Twelve more since the subclassing
+        // surface landed: six class struct mirrors, their registry, and the
+        // five `*.Subclass.cs` partials of Gst.Element, Gst.Bin, Gst.Pad,
+        // Gst.DeviceProvider and Gst.Device.
+        Assert.Equal(126, files.Count);
         Assert.Equal(11, Count(files, " : Gst.MiniObject\n"));
         Assert.Equal(12, Count(files, " : Gst.GObject.Boxed\n"));
 
