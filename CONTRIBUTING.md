@@ -291,6 +291,13 @@ gets mirrors as well. The other eight address a single slot, keyed
 * `vfuncSpans` — a counted block of elements the slot only reads, which makes
   the parameter a `ReadOnlySpan` instead of a `Span`; the gir counts the block
   by the parameter beside it either way.
+* `vfuncFloatingReturns` — a slot whose caller owns the *floating* reference
+  of the answer, which no gir transfer kind spells: such a slot is annotated
+  `transfer none`, and reading that as a borrow leaves the caller with a
+  pointer it owns no reference of. The trampoline of a listed slot references
+  the answer once more and forces the floating flag back on. It is only legal
+  on a slot that answers a class instance; anything else is `GEN0059`, an
+  error, and an entry that names no slot of a subclassable class is `GEN0058`.
 * `vfuncFailureValues` — what a trampoline answers when the exception trap
   caught an override, for a slot whose caller reads something other than a
   failure into the zero of the return type.
@@ -389,15 +396,18 @@ The remaining keys address a callback type and a member rather than a slot:
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter
 of the emitted surface is reported as `GEN0029` through `GEN0031`, `GEN0036`
-through `GEN0039`, `GEN0044` and `GEN0046`. A slot whose managed member would
-hide an inherited one of the same name and the same parameters while answering
-another type is `GEN0040`, an error: C# accepts such a pair and the override
-that runs then depends on the static type the caller holds, so the slot needs a
-`skipVirtuals` entry or a managed name of its own. A slot that answers a handle
-nobody references on the way out and carries no `vfuncDocNotes` entry is
-`GEN0047`, an error as well: the note the generator writes for it says the base
-class takes a reference of its own, and only that entry says which call site
-does that and what the override owes it.
+through `GEN0039`, `GEN0044`, `GEN0046` and `GEN0058`. A slot whose managed
+member would hide an inherited one of the same name and the same parameters
+while answering another type is `GEN0040`, an error: C# accepts such a pair and
+the override that runs then depends on the static type the caller holds, so the
+slot needs a `skipVirtuals` entry or a managed name of its own. A slot that
+answers a handle nobody references on the way out and carries no
+`vfuncDocNotes` entry is `GEN0047`, an error as well: the note the generator
+writes for it says the base class takes a reference of its own, and only that
+entry says which call site does that and what the override owes it. A
+`vfuncFloatingReturns` entry on a slot that answers anything but a class
+instance is `GEN0059`, an error too: the mode mints a reference and sets a flag
+on the handle, and neither means anything for another shape of answer.
 
 Never bump a number you cannot account for. Census drift that nobody asked for
 is a bug in the change — typically an accidental skip: an overlay entry that

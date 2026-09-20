@@ -526,6 +526,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _vfuncNonNullReturns;
     private readonly Dictionary<string, string> _vfuncDocNotes;
     private readonly HashSet<string> _vfuncSpans;
+    private readonly HashSet<string> _vfuncFloatingReturns;
     private readonly HashSet<string> _vfuncSiblingArguments;
     private readonly HashSet<string> _lentOpaqueRecords;
     private readonly Dictionary<string, string> _vfuncFailureValues;
@@ -554,6 +555,7 @@ internal sealed class Overlays
         Dictionary<string, string> vfuncNonNullReturns,
         Dictionary<string, string> vfuncDocNotes,
         HashSet<string> vfuncSpans,
+        HashSet<string> vfuncFloatingReturns,
         HashSet<string> vfuncSiblingArguments,
         HashSet<string> lentOpaqueRecords,
         Dictionary<string, string> vfuncFailureValues,
@@ -581,6 +583,7 @@ internal sealed class Overlays
         _vfuncNonNullReturns = vfuncNonNullReturns;
         _vfuncDocNotes = vfuncDocNotes;
         _vfuncSpans = vfuncSpans;
+        _vfuncFloatingReturns = vfuncFloatingReturns;
         _vfuncSiblingArguments = vfuncSiblingArguments;
         _lentOpaqueRecords = lentOpaqueRecords;
         _vfuncFailureValues = vfuncFailureValues;
@@ -610,6 +613,7 @@ internal sealed class Overlays
         new HashSet<string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
+        new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
         new HashSet<string>(StringComparer.Ordinal),
@@ -698,6 +702,9 @@ internal sealed class Overlays
 
     /// <summary>Gets the block parameters the slot behind them only reads.</summary>
     internal IReadOnlyCollection<string> VfuncSpanKeys => _vfuncSpans;
+
+    /// <summary>Gets the slots whose answer is handed out floating.</summary>
+    internal IReadOnlyCollection<string> VfuncFloatingReturnKeys => _vfuncFloatingReturns;
 
     /// <summary>
     /// Gets the parameters that hand a slot an instance of the type the slot's
@@ -841,6 +848,12 @@ internal sealed class Overlays
             vfuncSpans.Add(key);
         }
 
+        HashSet<string> vfuncFloatingReturns = new(StringComparer.Ordinal);
+        foreach (string key in fixups.VfuncFloatingReturns ?? [])
+        {
+            vfuncFloatingReturns.Add(key);
+        }
+
         HashSet<string> vfuncSiblingArguments = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncSiblingArguments ?? [])
         {
@@ -972,6 +985,7 @@ internal sealed class Overlays
             vfuncNonNullReturns,
             vfuncDocNotes,
             vfuncSpans,
+            vfuncFloatingReturns,
             vfuncSiblingArguments,
             lentOpaqueRecords,
             vfuncFailureValues,
@@ -1128,6 +1142,21 @@ internal sealed class Overlays
     /// which way the data travels - which a <c>gpointer</c> does not say.
     /// </remarks>
     internal bool IsReadOnlySpan(string key) => _vfuncSpans.Contains(key);
+
+    /// <summary>
+    /// Tests whether the answer of a slot leaves the trampoline as one new
+    /// floating reference the caller of the slot owns.
+    /// </summary>
+    /// <param name="key">The slot, as <c>Gst.Device::create_element</c>.</param>
+    /// <returns><see langword="true"/> when the slot is listed.</returns>
+    /// <remarks>
+    /// No gir transfer kind spells "floating", and the one the corpus uses for
+    /// such a slot is <c>none</c>, which reads as a borrow. The difference is a
+    /// use-after-free rather than a nuance: the caller of
+    /// gst_device_create_element owns the reference the slot produced and drops
+    /// it with a bare unref (gstdevice.c:206-226).
+    /// </remarks>
+    internal bool IsFloatingReturn(string key) => _vfuncFloatingReturns.Contains(key);
 
     /// <summary>
     /// Tests whether a parameter hands the slot an instance of the type the
@@ -1306,6 +1335,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? VfuncDocNotes { get; set; }
 
         public List<string>? VfuncSpans { get; set; }
+
+        public List<string>? VfuncFloatingReturns { get; set; }
 
         public List<string>? VfuncSiblingArguments { get; set; }
 

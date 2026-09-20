@@ -5826,7 +5826,7 @@ internal sealed class MarshalPlanner
             arguments.Add(argument);
         }
 
-        if (PlanVirtualMethodReturn(method, context) is not { } planned)
+        if (PlanVirtualMethodReturn(method, overlayKey, context) is not { } planned)
         {
             return null;
         }
@@ -6278,17 +6278,25 @@ internal sealed class MarshalPlanner
 
     /// <summary>Plans the value a virtual method answers.</summary>
     /// <param name="method">The slot being planned.</param>
+    /// <param name="overlayKey">The key the overlays address the slot by.</param>
     /// <param name="context">The module that is being emitted.</param>
     /// <returns>The plan, or <see langword="null"/> when the value is not supported.</returns>
     private (ReturnPlan Return, VfuncReturnBucket Bucket)? PlanVirtualMethodReturn(
         GirVirtualMethod method,
+        string overlayKey,
         PlanningContext context)
     {
         GirReturnValue value = method.ReturnValue;
         MappedType mapped = _types.Map(value.Type, context.Namespace);
+
+        // The floating hand out is the one return mode no transfer kind spells,
+        // so it is read here and every way out of the method is checked against
+        // it: a key consumed by a slot the mode cannot apply to would leave the
+        // stale key report silent about an overlay entry that does nothing.
+        bool floating = _overlays.IsFloatingReturn(overlayKey);
         if (mapped.Kind == MarshalKind.Void)
         {
-            return (
+            return Checked(
                 new ReturnPlan
                 {
                     Kind = ArgumentKind.Void,
@@ -6314,7 +6322,7 @@ internal sealed class MarshalPlanner
             && _types.Map(answered, context.Namespace).ElementType is
                 { Kind: MarshalKind.Fundamental, Symbol.QualifiedName: ParamSpecType })
         {
-            return (
+            return Checked(
                 new ReturnPlan
                 {
                     Kind = ArgumentKind.ParamSpecArray,
@@ -6348,6 +6356,12 @@ internal sealed class MarshalPlanner
             ArgumentKind.Value or ArgumentKind.Boolean or ArgumentKind.Enumeration
                 or ArgumentKind.Wrapper or ArgumentKind.Pointer => VfuncReturnBucket.Cast,
 
+            // The overlay names the one mode the transfer cannot: the caller
+            // takes over a reference the trampoline mints and floats, whichever
+            // way the gir spells the transfer of the answer.
+            ArgumentKind.Handle when floating && mapped.Kind == MarshalKind.GObject =>
+                VfuncReturnBucket.FloatingGObject,
+
             // The wrapper the override answered keeps its own reference, so an
             // owned answer is referenced once more on the way out and a
             // borrowed one is handed over as it is.
@@ -6366,7 +6380,7 @@ internal sealed class MarshalPlanner
             return null;
         }
 
-        return (
+        return Checked(
             new ReturnPlan
             {
                 Kind = scalar.Kind,
@@ -6378,5 +6392,25 @@ internal sealed class MarshalPlanner
                 Doc = ReturnDoc(value, transfer),
             },
             kind);
+
+        // The mode mints a reference and sets the floating flag on the handle
+        // it hands back, both of which only mean anything for a GObject. Every
+        // other answer - void, a block of specifications, a mini object, a
+        // scalar - is reported rather than planned as if the entry were not
+        // there, because the entry is a statement about the C contract of the
+        // slot and a slot that cannot carry it is a mistake in the overlay.
+        (ReturnPlan Return, VfuncReturnBucket Bucket)? Checked(ReturnPlan plan, VfuncReturnBucket bucket)
+        {
+            if (floating && bucket != VfuncReturnBucket.FloatingGObject)
+            {
+                _diagnostics.Error(
+                    "GEN0059",
+                    $"The floating return '{overlayKey}' names a slot that answers "
+                    + $"'{plan.PublicType}'. Only a slot that answers a class instance can hand out a "
+                    + "floating reference.");
+            }
+
+            return (plan, bucket);
+        }
     }
 }

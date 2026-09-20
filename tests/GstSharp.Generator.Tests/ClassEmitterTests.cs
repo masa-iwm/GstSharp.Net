@@ -952,7 +952,7 @@ public sealed class ClassEmitterTests
     [Fact]
     public void TheCommittedOverlaysCarryNoStaleEntry()
     {
-        // Thirteen of the sixteen name an overlay entry that matched nothing: an
+        // Fourteen of the seventeen name an overlay entry that matched nothing: an
         // array correction on no array (GEN0020), a hand bound ledger entry
         // the run never saw skipped (GEN0023), an annotation override on no
         // callable, parameter or signal argument (GEN0024), a field skip on no
@@ -965,13 +965,20 @@ public sealed class ClassEmitterTests
         // a signal that matched no signal of an emitted type (GEN0055), a skip
         // entry of any other shape - the c:identifier of a callable, a
         // qualified type name, a property - that matched nothing either
-        // (GEN0056), and a rename the run never looked up (GEN0057). Every one
+        // (GEN0056), a rename the run never looked up (GEN0057), and a floating
+        // return on no slot of a subclassable class (GEN0058). Every one
         // of them
         // describes a gir that has moved on, and every one of them is a
         // warning, which the verbs do not fail on - so this is what holds the
         // committed overlays to them.
         //
-        // The sixteenth is not stale but illegal: a 'borrow' on a key that is
+        // GEN0058 is the one vfunc key of its family asserted here, because it
+        // is the one whose loss is silent in a new way: the slot keeps its
+        // member and its census row, and what disappears is the reference the
+        // trampoline mints, which turns a floating hand out back into a borrow
+        // the caller of the slot owns nothing of.
+        //
+        // The seventeenth is not stale but illegal: a 'borrow' on a key that is
         // no argument of a signal at all - a parameter of a method or of a
         // callback, an argument of a virtual method, a return - or on a signal
         // argument the planner does not project onto a mini object or a boxed
@@ -1022,6 +1029,7 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0055", diagnostic.Code);
             Assert.NotEqual("GEN0056", diagnostic.Code);
             Assert.NotEqual("GEN0057", diagnostic.Code);
+            Assert.NotEqual("GEN0058", diagnostic.Code);
         }
     }
 

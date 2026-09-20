@@ -193,6 +193,45 @@ public sealed class VirtualOverlayDiagnosticTests
             </record>
         """;
 
+    /// <summary>
+    /// A slot that answers an instance of a class the gir spells
+    /// <c>transfer-ownership="none"</c>, which is the shape a floating hand out
+    /// arrives in: no gir transfer kind says "floating", so the annotation of
+    /// <c>GstDeviceClass::create_element</c> reads as a borrow.
+    /// </summary>
+    private const string BodyWithAnObjectReturn =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type" glib:type-struct="WidgetClass">
+              <virtual-method name="mint">
+                <return-value transfer-ownership="none" nullable="1">
+                  <type name="Widget" c:type="GstWidget*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="WidgetClass" c:type="GstWidgetClass" glib:is-gtype-struct-for="Widget">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="mint">
+                <callback name="mint">
+                  <return-value transfer-ownership="none" nullable="1">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="widget" transfer-ownership="none">
+                      <type name="Widget" c:type="GstWidget*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+        """;
+
     private const string Allowlist = "\"subclassable\": [\"Gst.Widget\"]";
 
     [Fact]
@@ -278,6 +317,90 @@ public sealed class VirtualOverlayDiagnosticTests
 
         Diagnostic stale = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0036");
         Assert.Contains("Gst.Widget::polish", stale.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFloatingReturnThatNamesNoSlotIsReported()
+    {
+        FixtureRun run = Run(
+            Body,
+            """{ "subclassable": ["Gst.Widget"], "vfuncFloatingReturns": ["Gst.Widget::polish"] }""");
+
+        Diagnostic stale = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0058");
+        Assert.Contains("Gst.Widget::polish", stale.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFloatingReturnMintsTheReferenceAndFloatsIt()
+    {
+        // The overlay is the only thing that selects the mode: the gir of the
+        // slot is a plain transfer-none object return, which every other slot of
+        // that shape is emitted as a borrow.
+        FixtureRun run = Run(
+            BodyWithAnObjectReturn,
+            """{ "subclassable": ["Gst.Widget"], "vfuncFloatingReturns": ["Gst.Widget::mint"] }""");
+
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code != "GEN0005");
+
+        string source = run.File("Subclassing/Widget.Subclass.cs");
+
+        // The three steps, in order: mint, float, and a barrier before the
+        // handle leaves the trampoline.
+        Assert.Contains(
+            "nint resultHandle = Gst.Interop.GObjectNative.ObjectRef(result.Handle);",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Gst.Interop.GObjectNative.ObjectForceFloating(resultHandle);",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("GC.KeepAlive(result);", source, StringComparison.Ordinal);
+        Assert.Contains("return resultHandle;", source, StringComparison.Ordinal);
+
+        // A null answer crosses untouched, and the chain-up settles the floating
+        // reference the parent slot handed over rather than claiming a second
+        // one.
+        Assert.Contains("return nint.Zero;", source, StringComparison.Ordinal);
+        Assert.Contains(
+            "Gst.GObject.Object.FromNative<Gst.Widget>(resultNative, Gst.Interop.Transfer.None)",
+            source,
+            StringComparison.Ordinal);
+
+        // The contract of the mode is on the managed member, which is what the
+        // borrowed handle the same gir would otherwise select needs a
+        // vfuncDocNotes entry for.
+        Assert.Contains("may drop it without ever", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnObjectReturnWithoutTheFloatingKeyStaysAnUndocumentedBorrow()
+    {
+        // The same gir without the overlay entry: the slot is a borrow, and a
+        // borrow with no note about who references the answer stops the run.
+        // This is the error the new mode is exempt from - it says who owns the
+        // reference itself.
+        FixtureRun run = Run(BodyWithAnObjectReturn, "{ " + Allowlist + " }", allowErrors: true);
+
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0047");
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains("Gst.Widget::mint", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFloatingReturnOnASlotThatAnswersNoObjectStopsTheRun()
+    {
+        // The mode mints a reference and sets a flag on the handle, neither of
+        // which a gboolean carries. An entry on such a slot is a mistake in the
+        // overlay rather than a mode the emitter can fall back from.
+        FixtureRun run = Run(
+            Body,
+            """{ "subclassable": ["Gst.Widget"], "vfuncFloatingReturns": ["Gst.Widget::prepare"] }""",
+            allowErrors: true);
+
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0059");
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains("Gst.Widget::prepare", error.Message, StringComparison.Ordinal);
+        Assert.Contains("bool", error.Message, StringComparison.Ordinal);
     }
 
     [Fact]

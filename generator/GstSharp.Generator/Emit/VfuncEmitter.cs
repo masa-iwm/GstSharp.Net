@@ -1746,7 +1746,7 @@ internal sealed class VfuncEmitter
 
         if (!plan.Return.IsVoid)
         {
-            writer.WriteLine("return " + ToNativeReturn(plan, "result") + ";");
+            WriteReturnStatement(writer, plan, "result");
         }
 
         writer.CloseBlock();
@@ -1844,7 +1844,7 @@ internal sealed class VfuncEmitter
             writer.WriteLine();
         }
 
-        writer.WriteLine("return " + ToNativeReturn(plan, local) + ";");
+        WriteReturnStatement(writer, plan, local);
     }
 
     /// <summary>
@@ -2123,6 +2123,19 @@ internal sealed class VfuncEmitter
                 note.Add("No reference is added on the way out: the base class takes one of its own");
                 note.Add("from the answer, which the remarks describe. Keep no extra reference to it.");
                 break;
+
+            // The caller of such a slot owns the floating reference the
+            // trampoline mints and may drop it with a bare unref, which leaves
+            // the flag set on an object the wrapper still owns: an element that
+            // was handed out once and is added to a bin later would lose its
+            // only reference to that sink. The contract that rules it out is the
+            // whole of what the override owes the caller, so the bucket writes
+            // it itself rather than leaving it to an overlay note.
+            case VfuncReturnBucket.FloatingGObject:
+                note.Add("Answer a new, unparented element on every call and keep no reference to it:");
+                note.Add("the caller receives a floating reference and may drop it without ever");
+                note.Add("sinking it.");
+                break;
             case VfuncReturnBucket.ParamSpecArray:
                 note.Add("The array is consumed: one reference per element is handed to the caller and");
                 note.Add("every wrapper is disposed right after, because a ParamSpec wrapper has no");
@@ -2297,7 +2310,7 @@ internal sealed class VfuncEmitter
     /// <returns>Whether the answer is a handle.</returns>
     private static bool AnswersHandle(VirtualMethodPlan plan) =>
         plan.ReturnBucket is VfuncReturnBucket.OwnedGObject or VfuncReturnBucket.OwnedMiniObject
-            or VfuncReturnBucket.BorrowedHandle;
+            or VfuncReturnBucket.BorrowedHandle or VfuncReturnBucket.FloatingGObject;
 
     /// <summary>
     /// Whether the value a slot answers is a counted block of parameter
@@ -2425,7 +2438,8 @@ internal sealed class VfuncEmitter
             ArgumentKind.Wrapper => "new " + Bare(plan.Return.PublicType) + "(" + call + ")",
             _ => call,
         },
-        VfuncReturnBucket.BorrowedHandle => AdoptExpressionBorrowed(plan, call),
+        VfuncReturnBucket.BorrowedHandle or VfuncReturnBucket.FloatingGObject =>
+            AdoptExpressionBorrowed(plan, call),
         _ => AdoptReturn(plan, call),
     };
 
@@ -2433,8 +2447,15 @@ internal sealed class VfuncEmitter
     /// <param name="plan">The slot being written.</param>
     /// <param name="handle">The raw handle the parent slot answered.</param>
     /// <returns>The expression.</returns>
+    /// <remarks>
+    /// A floating answer is wrapped the same way a borrowed one is, which is
+    /// what settles it: the interning of a handle the caller owns runs through
+    /// the same path the forward member of the slot takes, where a floating
+    /// reference is sunk and given back once, so the managed side ends with one
+    /// owned wrapper and the flag cleared.
+    /// </remarks>
     private static string WrapReturn(VirtualMethodPlan plan, string handle) =>
-        plan.ReturnBucket == VfuncReturnBucket.BorrowedHandle
+        plan.ReturnBucket is VfuncReturnBucket.BorrowedHandle or VfuncReturnBucket.FloatingGObject
             ? AdoptExpressionBorrowed(plan, handle)
             : AdoptReturn(plan, handle);
 
@@ -2454,6 +2475,42 @@ internal sealed class VfuncEmitter
             : type + ".FromNative(" + call + ", Gst.Interop.Transfer.Full)";
     }
 
+    /// <summary>
+    /// Writes the statement that hands the answer of the managed override to the
+    /// caller of the slot.
+    /// </summary>
+    /// <param name="writer">The target writer.</param>
+    /// <param name="plan">The slot being written.</param>
+    /// <param name="source">The local the managed answer stands in.</param>
+    /// <remarks>
+    /// Every bucket but one is a single expression. The floating hand out is
+    /// three steps: a reference is minted, the floating flag is forced back on -
+    /// a wrapper sank the one it holds when it was built, so a managed answer is
+    /// never floating and the caller of the slot would raise a g_critical
+    /// (gstdevice.c:217-223) - and the handle is answered. The barrier comes
+    /// after the mint, so the wrapper cannot be finalised between the read of
+    /// its handle and the reference that keeps the object alive.
+    /// </remarks>
+    private static void WriteReturnStatement(CodeWriter writer, VirtualMethodPlan plan, string source)
+    {
+        if (plan.ReturnBucket != VfuncReturnBucket.FloatingGObject)
+        {
+            writer.WriteLine("return " + ToNativeReturn(plan, source) + ";");
+            return;
+        }
+
+        writer.WriteLine("if (" + source + " is null)");
+        writer.OpenBlock();
+        writer.WriteLine("return nint.Zero;");
+        writer.CloseBlock();
+        writer.WriteLine();
+        writer.WriteLine(
+            "nint resultHandle = Gst.Interop.GObjectNative.ObjectRef(" + source + ".Handle);");
+        writer.WriteLine("Gst.Interop.GObjectNative.ObjectForceFloating(resultHandle);");
+        writer.WriteLine("GC.KeepAlive(" + source + ");");
+        writer.WriteLine("return resultHandle;");
+    }
+
     private static string ToNativeReturn(VirtualMethodPlan plan, string source) => plan.ReturnBucket switch
     {
         VfuncReturnBucket.Cast => plan.Return.Kind switch
@@ -2465,6 +2522,13 @@ internal sealed class VfuncEmitter
         },
         VfuncReturnBucket.BorrowedHandle =>
             source + " is null ? nint.Zero : " + source + ".Handle",
+
+        // The floating hand out takes three statements and cannot be spelled as
+        // one expression; WriteReturnStatement writes it. Reaching this arm
+        // would emit the borrow, which is the use-after-free the bucket exists
+        // to avoid, so it throws instead.
+        VfuncReturnBucket.FloatingGObject => throw new InvalidOperationException(
+            "A floating answer is written by WriteReturnStatement, not as an expression."),
         VfuncReturnBucket.OwnedGObject =>
             source + " is null ? nint.Zero : Gst.Interop.GObjectNative.ObjectRef(" + source + ".Handle)",
         // A mini object is handed over rather than referenced a second time:
@@ -2537,7 +2601,7 @@ internal sealed class VfuncEmitter
         }
 
         if (plan.ReturnBucket is VfuncReturnBucket.BorrowedHandle or VfuncReturnBucket.OwnedGObject
-            or VfuncReturnBucket.OwnedMiniObject)
+            or VfuncReturnBucket.OwnedMiniObject or VfuncReturnBucket.FloatingGObject)
         {
             return "nint.Zero";
         }

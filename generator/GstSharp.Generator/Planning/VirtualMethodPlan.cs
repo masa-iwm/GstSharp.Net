@@ -147,6 +147,25 @@ internal enum VfuncReturnBucket
     BorrowedHandle,
 
     /// <summary>
+    /// A GObject the caller receives one new <em>floating</em> reference of:
+    /// the trampoline references the handle once more and forces the floating
+    /// flag back on, so the wrapper keeps the reference it owns and the caller
+    /// owns the one it was handed. It may sink that reference - a bin does - or
+    /// drop it with a bare unref, which is what gst-device-monitor.c:200,205
+    /// does, and neither touches the wrapper.
+    /// </summary>
+    /// <remarks>
+    /// No gir transfer kind spells this, so the bucket is chosen by the overlay
+    /// key <c>vfuncFloatingReturns</c> alone. gst_device_create_element hands
+    /// the answer of its slot on exactly as it came and raises a g_critical
+    /// when it is not floating (gstdevice.c:206-226), so neither of the two
+    /// buckets the transfer would select is right: a borrow leaves the caller
+    /// with a pointer it owns no reference of, and an owned answer leaks the
+    /// second reference on the path where the caller sinks.
+    /// </remarks>
+    FloatingGObject,
+
+    /// <summary>
     /// A counted block of parameter specifications the caller takes over: the
     /// trampoline allocates the block, references every element into it and
     /// writes the count beside it. The wrappers the override answered are

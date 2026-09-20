@@ -26,6 +26,15 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_object_ref_sink")]
     internal static partial nint ObjectRefSink(nint instance);
 
+    /// <summary>
+    /// Sets the floating flag on an object that already carries a reference,
+    /// which is how a slot whose caller owns the floating reference of the
+    /// answer is served: the reference is minted first and floated afterwards.
+    /// It touches no reference count and needs no sole owner.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_object_force_floating")]
+    internal static partial void ObjectForceFloating(nint instance);
+
     [LibraryImport("GObject", EntryPoint = "g_object_is_floating")]
     internal static partial int ObjectIsFloating(nint instance);
 

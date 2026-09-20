@@ -948,14 +948,16 @@ Generator specifics for stage 2:
   shapes — the same reality that produced the `skip` list for methods);
   the overlay grows a `skipVirtuals` list keyed
   `"Gst.Element::set_bus"`-style if needed. What landed is that list plus
-  six more keys, all documented in
+  seven more keys, all documented in
   [`CONTRIBUTING.md`](../CONTRIBUTING.md): `vfuncDefaults` (what a chain-up
   answers for a NULL parent slot), `vfuncIdentityBuffers` (a buffer that may
   be handed back unchanged), `vfuncNonNullReturns` (a slot whose caller
   dereferences the answer), `vfuncDocNotes` (the part of a contract only the
   C implementation states), `vfuncSpans` (a counted block the slot only
-  reads) and `vfuncFailureValues` (what a trapped exception answers when the
-  zero of the return type means something else).
+  reads), `vfuncFailureValues` (what a trapped exception answers when the
+  zero of the return type means something else) and `vfuncFloatingReturns`
+  (a slot whose caller owns the floating reference of the answer, which no
+  gir transfer kind spells).
 * **Census**: new emission categories (class-struct mirrors, vfunc
   trampolines, subclass bases) get fixed counts in `EmissionCensus` /
   `CensusTests` — the existing gate against silent scope drift.
