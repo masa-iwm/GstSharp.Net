@@ -1169,8 +1169,8 @@ compiling and keep their old behaviour. `SubclassType.NewInstance` gained the
 construction-property overload a `GstPad` needs, because `direction` is
 construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5);
 `Gst.Pad` and `GstBase.AggregatorPad` joined the allowlist, which is what
-un-skipped `Aggregator::create_new_pad`. Twenty nine classes are
-subclassable, with thirty one class struct mirrors and 247 slots.
+un-skipped `Aggregator::create_new_pad`. Thirty classes are
+subclassable, with thirty two class struct mirrors and 249 slots.
 
 **Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
 construction (twenty `New` factories for the GObject kinds, plus the
@@ -1236,9 +1236,9 @@ whenever a clip is copied, split or pasted.
 
 ## 11. Using it
 
-What ships is a **generated surface for an allowlist of twenty nine base
-classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.DeviceProvider`,
-`Gst.Base.BaseSrc`, `PushSrc`,
+What ships is a **generated surface for an allowlist of thirty base
+classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.Device`,
+`Gst.DeviceProvider`, `Gst.Base.BaseSrc`, `PushSrc`,
 `BaseSink`, `BaseTransform`, `BaseParse`, `Aggregator`, `AggregatorPad`,
 `Gst.Audio.AudioBaseSink`, `AudioBaseSrc`, `AudioSink`, `AudioSrc`,
 `AudioFilter`, `AudioDecoder`, `AudioEncoder`, `Gst.Video.VideoSink`,
@@ -1719,17 +1719,45 @@ inside `OnStart` or `OnStop` hangs the thread for ever — no exception, no log.
 the object lock, which is not held across the slot, and `GetBus()` takes no
 lock at all: those five are what an override announces with.
 
+### Devices
+
+The device a provider announces can be one of your own. All four properties of
+a `GstDevice` — `display-name`, `device-class`, `caps` and `properties` — are
+`CONSTRUCT_ONLY` (`gstdevice.c:89-104`), so they are given while the instance
+is being built and nothing can write them afterwards: pass them to the
+dictionary overload of `NewInstance` (§11, "A managed pad type"), the same way a
+`GstPad` takes its `direction`. Neither slot is required. `gst_device_create_element` answers NULL
+and `gst_device_reconfigure_element` answers `false` when the class leaves the
+slot empty (`gstdevice.c:210-215`, `:338-341`), and `ChainUpCreateElement()` /
+`ChainUpReconfigureElement()` answer the same.
+
+`OnCreateElement` has a contract the generated documentation states and this is
+the reason for it: **answer a new, unparented element on every call and keep no
+reference to it — the caller receives a floating reference and may drop it
+without ever sinking it.** `gst_device_create_element` hands the answer of the
+slot on exactly as it came, and it is the *caller* that owns the floating
+reference (`gstdevice.c:206-226`; the doc annotation is `transfer floating`).
+`gst-device-monitor` drops an answer it decided against with a bare
+`gst_object_unref` and never sinks it (`gst-device-monitor.c:200,205`), while a
+caller that adds the element to a bin sinks it there. The binding serves both:
+the trampoline references the element once more and forces the floating flag
+back on, so the wrapper keeps the reference it owns whichever way the caller
+goes — and the base class does not log `The created element should be floating`
+for an answer a wrapper had already sunk. What an override must not do is cache
+that element: after a caller has bare-unreffed it, the flag is still set on an
+object the wrapper owns at one reference, and adding *that* element to a bin
+later would hand the bin the wrapper's only reference and free the element
+under it.
+
 ### The limits
 
 * **`AudioBaseSink` and `AudioBaseSrc` cannot be subclassed directly from
   managed code yet.** Their required `create_ringbuffer` slot has to answer a
   `GstAudioRingBuffer` subclass, and `AudioRingBuffer` is not subclassable;
   derive from `AudioSink` / `AudioSrc`, which bring their own ring buffer.
-* **A managed `DeviceProvider` cannot mint devices of its own yet.**
-  `Gst.Device` is abstract, has no managed constructor and is not on the
-  subclassable list, so `DeviceAdd()` can only announce a device that came from
-  somewhere else — another provider, a device monitor. `probe` is unbound as
-  well, so a managed provider lists nothing at all until it is started.
+* **A managed `DeviceProvider` lists nothing until it is started.** `probe` is
+  unbound — its `GList` return has no managed shape — so the devices a provider
+  offers are the ones its `OnStart` override announced with `DeviceAdd()`.
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
   and a managed parent's slot would be the same trampoline (§4.4). The surface

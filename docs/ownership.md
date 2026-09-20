@@ -90,6 +90,18 @@ travel in:
   and element and wrapper co-own the object, which is the "returned GObject"
   case below. Answer an object that has no parent yet, keep no extra reference
   to it, and read it back from the element instead.
+* **An element the caller owns the floating reference of.**
+  `Device.OnCreateElement` is the one slot whose caller takes over the answer
+  *floating*: `gst_device_create_element` hands it on exactly as it came and
+  logs a critical for one that is not floating (`gstdevice.c:206-226`), and its
+  callers either sink it into a bin or drop it with a bare `gst_object_unref`
+  (`gst-device-monitor.c:200,205`). A managed answer is never floating — the
+  wrapper sank it when it was built — so the trampoline references the element
+  once more and forces the floating flag back on: the caller owns exactly one
+  reference and the wrapper keeps its own whichever way the caller goes.
+  Answer a new, unparented element on every call and keep no reference to it; a
+  cached element whose floating answer a caller bare-unreffed would lose its
+  only reference to the `ref_sink` of a later `bin.Add`.
 * **A mini object the slot answers.** The buffer of `Aggregator.OnClip`, the
   caps of `BaseTransform.OnTransformCaps`, the buffer of
   `AudioBaseSink.OnPayload`: the wrapper you return is *handed over*, not

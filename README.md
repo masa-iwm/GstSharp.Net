@@ -381,9 +381,9 @@ reason in
 The gaps worth naming here:
 
 * **Subclassing is limited to an allowlist of base classes.** A C# type can
-  derive from one of twenty nine classes — `Gst.Element`, `Gst.Bin`,
-  `Gst.Pad`, `Gst.DeviceProvider`, the `GstBase` sources, sinks, transforms,
-  parsers and aggregators
+  derive from one of thirty classes — `Gst.Element`, `Gst.Bin`,
+  `Gst.Pad`, `Gst.Device`, `Gst.DeviceProvider`, the `GstBase` sources, sinks,
+  transforms, parsers and aggregators
   including `AggregatorPad`, the `GstAudio` sinks, sources, filters and codecs,
   the `GstVideo` sinks, filters and codecs, and the timeline elements, sources
   and clips of the editing services — override the vfuncs of the class and be
@@ -394,8 +394,9 @@ The gaps worth naming here:
   `gst_element_make_from_uri` finds it. What is not there yet: construct
   properties, interfaces other than `GstURIHandler`, and defining a new
   interface from managed code. `Gst.DeviceProvider` carries one limit of its
-  own: `Gst.Device` is abstract and not subclassable, so a managed provider can
-  announce devices it obtained elsewhere but cannot mint one. See
+  own: `probe` is unbound, so a managed provider lists nothing until its
+  `OnStart` override has announced what it offers — devices of its own
+  included, now that `Gst.Device` is subclassable. See
   [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a
