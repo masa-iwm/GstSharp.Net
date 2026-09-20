@@ -185,6 +185,14 @@ public sealed unsafe class InstanceFieldProbeTests
     /// A row of the registry with no witness would leave a public accessor whose
     /// only proof is that the mirror agrees with itself.
     /// </summary>
+    /// <remarks>
+    /// It counts the attributes of the witnesses and not their executions, so
+    /// none of them is gated on an element being installed: a witness that
+    /// skipped would satisfy this test without proving anything. The three
+    /// elements they use - <c>fakesrc</c>, <c>fakesink</c> and <c>identity</c> -
+    /// are <c>coreelements</c>, which ships inside libgstreamer itself, and the
+    /// fourth witness mints its parser in the test for the same reason.
+    /// </remarks>
     [Fact]
     public void EveryExposedFieldHasABehaviouralWitness()
     {
@@ -219,7 +227,7 @@ public sealed unsafe class InstanceFieldProbeTests
     /// <c>gst_base_src_set_format</c> demands a state of READY or below.
     /// </remarks>
     [InstanceFieldWitness("GstBaseSrc.segment")]
-    [RequiresElementFact("fakesrc")]
+    [Fact]
     public void TheSourceAccessorReadsWhatNewSegmentWrote()
     {
         using Element element = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesrc", "witness-src"));
@@ -239,7 +247,7 @@ public sealed unsafe class InstanceFieldProbeTests
     /// field, so the library writes it and the accessor reads it back.
     /// </summary>
     [InstanceFieldWitness("GstBaseSink.segment")]
-    [RequiresElementFact("fakesink")]
+    [Fact]
     public void TheSinkAccessorReadsWhatASegmentEventWrote()
     {
         using Element element = Assert.IsAssignableFrom<Element>(ElementFactory.Make("fakesink", "witness-sink"));
@@ -256,7 +264,7 @@ public sealed unsafe class InstanceFieldProbeTests
     /// before it forwards it, so an unlinked source pad does not matter.
     /// </summary>
     [InstanceFieldWitness("GstBaseTransform.segment")]
-    [RequiresElementFact("identity")]
+    [Fact]
     public void TheTransformAccessorReadsWhatASegmentEventWrote()
     {
         using Element element = Assert.IsAssignableFrom<Element>(
