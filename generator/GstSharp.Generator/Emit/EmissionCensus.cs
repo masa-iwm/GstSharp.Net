@@ -618,8 +618,9 @@ internal sealed class EmissionCensus
         writer.WriteLine("projected and the reason is the same one for every line. What the shapes are");
         writer.WriteLine("for is the distribution: they say what an exposure would have to marshal. A");
         writer.WriteLine("reader that needs one of these today writes it by hand, against the mirror of");
-        writer.WriteLine("the instance head that checklist item 9 of `docs/modules.md` describes; what");
-        writer.WriteLine("shape a generated exposure should take is an open design question. Padding, the");
+        writer.WriteLine("the instance head that checklist item 9 of `docs/modules.md` describes. A field the");
+        writer.WriteLine("overlays register under `instanceFields` is generated after all and leaves this");
+        writer.WriteLine("section: it is the one exception, and what it costs is in that key. Padding, the");
         writer.WriteLine("fields the gir marks `private` or `readable=\"0\"` and the instance structure of");
         writer.WriteLine("the base class are left out: the first two carry no API in C either, and the");
         writer.WriteLine("third is the inheritance chain rather than a member. A field the overlays");

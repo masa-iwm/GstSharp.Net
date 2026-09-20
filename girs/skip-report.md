@@ -1481,7 +1481,7 @@ cover, and these are covered.
 
 - `WebRTCSessionDescription.sdp` — hand written
 
-## Class fields (209)
+## Class fields (205)
 
 Public instance fields of the GObject classes, with the shape of each. The
 generated wrapper of a class holds a native instance and nothing else: there is
@@ -1489,8 +1489,9 @@ no mirror of the instance structure, so nothing of what a class declares is
 projected and the reason is the same one for every line. What the shapes are
 for is the distribution: they say what an exposure would have to marshal. A
 reader that needs one of these today writes it by hand, against the mirror of
-the instance head that checklist item 9 of `docs/modules.md` describes; what
-shape a generated exposure should take is an open design question. Padding, the
+the instance head that checklist item 9 of `docs/modules.md` describes. A field the
+overlays register under `instanceFields` is generated after all and leaves this
+section: it is the one exception, and what it costs is in that key. Padding, the
 fields the gir marks `private` or `readable="0"` and the instance structure of
 the base class are left out: the first two carry no API in C either, and the
 third is the inheritance chain rather than a member. A field the overlays
@@ -1639,12 +1640,11 @@ field does.
 - `AudioRingBuffer.state` — Scalar
 - `AudioRingBuffer.waiting` — Scalar
 
-### GstBase (42)
+### GstBase (38)
 
 - `Aggregator.srcpad` — Pointer
 - `AggregatorPad.segment` — EmbeddedStruct
 - `BaseParse.flags` — Scalar
-- `BaseParse.segment` — EmbeddedStruct
 - `BaseParse.sinkpad` — Pointer
 - `BaseParse.srcpad` — Pointer
 - `BaseSink.can_activate_pull` — Scalar
@@ -1658,7 +1658,6 @@ field does.
 - `BaseSink.playing_async` — Scalar
 - `BaseSink.preroll_cond` — EmbeddedStruct
 - `BaseSink.preroll_lock` — EmbeddedStruct
-- `BaseSink.segment` — EmbeddedStruct
 - `BaseSink.sinkpad` — Pointer
 - `BaseSrc.blocksize` — Scalar
 - `BaseSrc.can_activate_push` — Scalar
@@ -1674,12 +1673,10 @@ field does.
 - `BaseSrc.priv` — Pointer
 - `BaseSrc.random_access` — Scalar
 - `BaseSrc.running` — Scalar
-- `BaseSrc.segment` — EmbeddedStruct
 - `BaseSrc.srcpad` — Pointer
 - `BaseSrc.typefind` — Scalar
 - `BaseTransform.have_segment` — Scalar
 - `BaseTransform.queued_buf` — Pointer
-- `BaseTransform.segment` — EmbeddedStruct
 - `BaseTransform.sinkpad` — Pointer
 - `BaseTransform.srcpad` — Pointer
 - `CollectPads.data` — Pointer

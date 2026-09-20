@@ -674,6 +674,34 @@ public abstract unsafe partial class BaseParse : Gst.Element
     [LibraryImport("GstBase", EntryPoint = "gst_base_parse_set_ts_at_offset")]
     private static partial void GstBaseParseSetTsAtOffset(nint parse, nuint offset);
 
+    /// <summary>Answers a copy of the <c>segment</c> field of <c>GstBaseParse</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the instance this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good after
+    /// the instance is gone, and writing into it changes nothing native.
+    /// </para>
+    /// <para>
+    /// The library rewrites the field under STREAM_LOCK, which managed code cannot
+    /// take, so the copy is only guaranteed consistent when it is read on the
+    /// streaming thread, inside
+    /// <see cref="OnHandleFrame"/>.
+    /// A read from any other thread may mix the fields of two segments; it is never
+    /// unsafe, because the structure is flat and owns no pointer.
+    /// </para>
+    /// </remarks>
+    /// <returns>A copy of the <c>segment</c> field.</returns>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Segment GetSegment()
+    {
+        Gst.Segment value = Gst.Segment.FromNative(
+            Handle + Gst.Base.BaseParseOwnFieldsRaw.OwnOffset + Gst.Base.BaseParseOwnFieldsRaw.SegmentOffset,
+            Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'segment' field of GstBaseParse is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBaseParse</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstBase", EntryPoint = "gst_base_parse_get_type")]

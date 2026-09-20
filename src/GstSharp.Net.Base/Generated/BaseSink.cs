@@ -959,6 +959,34 @@ public abstract unsafe partial class BaseSink : Gst.Element
     [LibraryImport("GstBase", EntryPoint = "gst_base_sink_wait_preroll")]
     private static partial int GstBaseSinkWaitPreroll(nint sink);
 
+    /// <summary>Answers a copy of the <c>segment</c> field of <c>GstBaseSink</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the instance this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good after
+    /// the instance is gone, and writing into it changes nothing native.
+    /// </para>
+    /// <para>
+    /// The library rewrites the field under STREAM_LOCK, which managed code cannot
+    /// take, so the copy is only guaranteed consistent when it is read on the
+    /// streaming thread, inside
+    /// <see cref="OnRender"/> or <see cref="OnPreroll"/>.
+    /// A read from any other thread may mix the fields of two segments; it is never
+    /// unsafe, because the structure is flat and owns no pointer.
+    /// </para>
+    /// </remarks>
+    /// <returns>A copy of the <c>segment</c> field.</returns>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Segment GetSegment()
+    {
+        Gst.Segment value = Gst.Segment.FromNative(
+            Handle + Gst.Base.BaseSinkOwnFieldsRaw.OwnOffset + Gst.Base.BaseSinkOwnFieldsRaw.SegmentOffset,
+            Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'segment' field of GstBaseSink is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBaseSink</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstBase", EntryPoint = "gst_base_sink_get_type")]

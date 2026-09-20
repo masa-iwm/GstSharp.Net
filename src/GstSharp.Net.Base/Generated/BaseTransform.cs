@@ -505,6 +505,34 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
     private static partial nint GstAllocationParamsNew();
 
+    /// <summary>Answers a copy of the <c>segment</c> field of <c>GstBaseTransform</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the instance this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good after
+    /// the instance is gone, and writing into it changes nothing native.
+    /// </para>
+    /// <para>
+    /// The library rewrites the field under STREAM_LOCK, which managed code cannot
+    /// take, so the copy is only guaranteed consistent when it is read on the
+    /// streaming thread, inside
+    /// <see cref="OnTransform"/> or <see cref="OnTransformIp"/>.
+    /// A read from any other thread may mix the fields of two segments; it is never
+    /// unsafe, because the structure is flat and owns no pointer.
+    /// </para>
+    /// </remarks>
+    /// <returns>A copy of the <c>segment</c> field.</returns>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Segment GetSegment()
+    {
+        Gst.Segment value = Gst.Segment.FromNative(
+            Handle + Gst.Base.BaseTransformOwnFieldsRaw.OwnOffset + Gst.Base.BaseTransformOwnFieldsRaw.SegmentOffset,
+            Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'segment' field of GstBaseTransform is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstBaseTransform</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstBase", EntryPoint = "gst_base_transform_get_type")]

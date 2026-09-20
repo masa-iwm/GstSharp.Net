@@ -243,9 +243,10 @@ internal sealed class InstanceFieldEmitter
             writer.WriteLine(
                 "/// The library rewrites the field under " + plan.Entry.Lock + ", which managed code cannot");
             writer.WriteLine("/// take, so the copy is only guaranteed consistent when it is read on the");
-            writer.WriteLine("/// streaming thread, inside " + Links(plan.Overrides) + ". A read from any other");
-            writer.WriteLine("/// thread may mix the fields of two segments; it is never unsafe, because the");
-            writer.WriteLine("/// structure is flat and owns no pointer.");
+            writer.WriteLine("/// streaming thread, inside");
+            writer.WriteLine("/// " + Links(plan.Overrides) + ".");
+            writer.WriteLine("/// A read from any other thread may mix the fields of two segments; it is never");
+            writer.WriteLine("/// unsafe, because the structure is flat and owns no pointer.");
             writer.WriteLine("/// </para>");
             writer.WriteLine("/// </remarks>");
             writer.WriteLine("/// <returns>A copy of the <c>" + plan.Field.Name + "</c> field.</returns>");
@@ -304,9 +305,11 @@ internal sealed class InstanceFieldEmitter
         writer.WriteLine("/// <para>");
         writer.WriteLine("/// The instance structure of the base class is not laid out here: a C instance");
         writer.WriteLine("/// embeds it by value and first, and its size is what the library registered as");
-        writer.WriteLine("/// the instance size of <c>" + (declaration.Parent ?? "the parent class") + "</c>, so");
-        writer.WriteLine("/// <see cref=\"OwnOffset\"/> reads it from the running library rather than mirroring");
-        writer.WriteLine("/// it. That is the term of the arithmetic that differs between ABIs.");
+        writer.WriteLine(
+            "/// the instance size of <c>" + (declaration.Parent ?? "the parent class")
+            + "</c>. <see cref=\"OwnOffset\"/> reads");
+        writer.WriteLine("/// that from the running library rather than mirroring it: it is the term of the");
+        writer.WriteLine("/// arithmetic that differs between ABIs.");
         writer.WriteLine("/// </para>");
         writer.WriteLine("/// <para>");
         writer.WriteLine("/// Every field the gir declares after the parent instance is laid out, the private");
