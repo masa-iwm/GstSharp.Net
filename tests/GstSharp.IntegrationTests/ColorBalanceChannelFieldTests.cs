@@ -131,6 +131,55 @@ public sealed class ColorBalanceChannelFieldTests
         Assert.Equal(250, colorBalance.GetValue(contrast));
     }
 
+    /// <summary>
+    /// A channel made through <see cref="ColorBalanceChannel.New(string, int, int)"/>
+    /// carries what it was made with, and the three setters write it again.
+    /// </summary>
+    /// <remarks>
+    /// The label is written twice on purpose: the second write is the one that
+    /// has to free the copy the first one made, and a mismatch between the
+    /// allocator of the write and the <c>g_free</c> of the C dispose aborts the
+    /// process here rather than failing an assertion. The leak of a write that
+    /// forgot to free is not observable from managed code; only the pairing is.
+    /// </remarks>
+    [Fact]
+    public void AChannelOfOnesOwnCarriesWhatItWasMadeWith()
+    {
+        using ColorBalanceChannel channel = ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000);
+
+        Assert.Equal("BRIGHTNESS", channel.Label);
+        Assert.Equal(-1000, channel.MinValue);
+        Assert.Equal(1000, channel.MaxValue);
+
+        channel.Label = "CONTRAST";
+        Assert.Equal("CONTRAST", channel.Label);
+
+        channel.Label = "SATURATION";
+        Assert.Equal("SATURATION", channel.Label);
+
+        channel.MinValue = -100;
+        channel.MaxValue = 100;
+
+        Assert.Equal(-100, channel.MinValue);
+        Assert.Equal(100, channel.MaxValue);
+    }
+
+    /// <summary>
+    /// The hand written factory and setter refuse what they cannot write
+    /// rather than leaving a channel that aborts <c>playsink</c> later.
+    /// </summary>
+    [Fact]
+    public void AChannelRefusesALabelThatIsNothingAndARangeTheWrongWayRound()
+    {
+        Assert.Throws<ArgumentNullException>(() => ColorBalanceChannel.New(null!, 0, 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ColorBalanceChannel.New("HUE", 1, 0));
+
+        using ColorBalanceChannel channel = ColorBalanceChannel.New("HUE", 0, 0);
+
+        Assert.Throws<ArgumentNullException>(() => channel.Label = null);
+        Assert.Equal("HUE", channel.Label);
+    }
+
     /// <summary>Reads the label of every channel of a list.</summary>
     /// <param name="channels">The channels to read.</param>
     /// <returns>The labels, in the order the channels were listed in.</returns>
