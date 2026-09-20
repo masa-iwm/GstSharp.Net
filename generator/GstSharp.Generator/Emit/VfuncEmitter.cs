@@ -689,7 +689,7 @@ internal sealed class VfuncEmitter
             Remarks(plan, hides));
 
         WriteParameterDocs(writer, plan);
-        WriteReturnDoc(writer, plan);
+        WriteReturnDoc(writer, plan, forOverride: true);
         writer.WriteLine(
             "protected " + (hides ? "new " : string.Empty) + "virtual " + ReturnType(plan) + " On" + plan.Name
             + "(" + PublicParameters(plan) + ") =>");
@@ -902,7 +902,7 @@ internal sealed class VfuncEmitter
             Remarks(plan, hides));
 
         WriteParameterDocs(writer, plan);
-        WriteReturnDoc(writer, plan);
+        WriteReturnDoc(writer, plan, forOverride: false);
         writer.WriteLine(
             "protected " + (hides ? "new " : string.Empty) + ReturnType(plan) + " ChainUp" + plan.Name
             + "(" + PublicParameters(plan) + ")");
@@ -2134,7 +2134,13 @@ internal sealed class VfuncEmitter
     /// </summary>
     /// <param name="writer">The target writer.</param>
     /// <param name="plan">The slot being written.</param>
-    private static void WriteReturnDoc(CodeWriter writer, VirtualMethodPlan plan)
+    /// <param name="forOverride">
+    /// <see langword="true"/> for the <c>On</c> member, which is what an
+    /// override answers through, and <see langword="false"/> for the chain-up.
+    /// A sentence that instructs an override has nothing to say on the
+    /// chain-up: nobody answers anything there.
+    /// </param>
+    private static void WriteReturnDoc(CodeWriter writer, VirtualMethodPlan plan, bool forOverride)
     {
         if (plan.Return.IsVoid)
         {
@@ -2164,11 +2170,16 @@ internal sealed class VfuncEmitter
             // was handed out once and is added to a bin later would lose its
             // only reference to that sink. The contract that rules it out is the
             // whole of what the override owes the caller, so the bucket writes
-            // it itself rather than leaving it to an overlay note.
-            case VfuncReturnBucket.FloatingGObject:
+            // it itself rather than leaving it to an overlay note. It is an
+            // instruction to an override and goes on the On member alone, in a
+            // paragraph of its own: the gir sentence above it is prose about the
+            // value, and run together the two read as one sentence.
+            case VfuncReturnBucket.FloatingGObject when forOverride:
+                note.Add("<para>");
                 note.Add("Answer a new, unparented element on every call and keep no reference to it:");
                 note.Add("the caller receives a floating reference and may drop it without ever");
                 note.Add("sinking it.");
+                note.Add("</para>");
                 break;
             case VfuncReturnBucket.ParamSpecArray:
                 note.Add("The array is consumed: one reference per element is handed to the caller and");

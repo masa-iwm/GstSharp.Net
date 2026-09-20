@@ -160,9 +160,11 @@ public unsafe partial class Device
     /// <returns>
     /// a new #GstElement configured to use
     /// this device
+    /// <para>
     /// Answer a new, unparented element on every call and keep no reference to it:
     /// the caller receives a floating reference and may drop it without ever
     /// sinking it.
+    /// </para>
     /// </returns>
     protected virtual Gst.Element? OnCreateElement(string? name) =>
         ChainUpCreateElement(name);
@@ -195,9 +197,6 @@ public unsafe partial class Device
     /// <returns>
     /// a new #GstElement configured to use
     /// this device
-    /// Answer a new, unparented element on every call and keep no reference to it:
-    /// the caller receives a floating reference and may drop it without ever
-    /// sinking it.
     /// </returns>
     protected Gst.Element? ChainUpCreateElement(string? name)
     {
