@@ -232,6 +232,45 @@ public sealed class VirtualOverlayDiagnosticTests
             </record>
         """;
 
+    /// <summary>
+    /// The same slot answering a <c>GList</c>, which is the shape the planner
+    /// refuses outright — <c>GstDeviceProvider::probe</c> is the one in the
+    /// corpus. No bucket is chosen at all, and the slot leaves the surface as
+    /// <c>UnsupportedSignature</c>.
+    /// </summary>
+    private const string BodyWithAnUnprojectableReturn =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type" glib:type-struct="WidgetClass">
+              <virtual-method name="mint">
+                <return-value transfer-ownership="none" nullable="1">
+                  <type name="GLib.List" c:type="GList*"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="WidgetClass" c:type="GstWidgetClass" glib:is-gtype-struct-for="Widget">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="mint">
+                <callback name="mint">
+                  <return-value transfer-ownership="none" nullable="1">
+                    <type name="GLib.List" c:type="GList*"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="widget" transfer-ownership="none">
+                      <type name="Widget" c:type="GstWidget*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+        """;
+
     private const string Allowlist = "\"subclassable\": [\"Gst.Widget\"]";
 
     [Fact]
@@ -401,6 +440,28 @@ public sealed class VirtualOverlayDiagnosticTests
         Assert.Equal(DiagnosticSeverity.Error, error.Severity);
         Assert.Contains("Gst.Widget::prepare", error.Message, StringComparison.Ordinal);
         Assert.Contains("bool", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFloatingReturnOnASlotTheBindingDoesNotProjectStopsTheRun()
+    {
+        // The other way the key can be consumed in silence: the planner refuses
+        // the answer outright, so no bucket is chosen and nothing checks the
+        // entry against one - and the key names a real field of a real class
+        // struct, so the stale report does not catch it either.
+        FixtureRun run = Run(
+            BodyWithAnUnprojectableReturn,
+            """{ "subclassable": ["Gst.Widget"], "vfuncFloatingReturns": ["Gst.Widget::mint"] }""",
+            allowErrors: true);
+
+        Diagnostic error = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0059");
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains("Gst.Widget::mint", error.Message, StringComparison.Ordinal);
+
+        // And the slot really is off the surface, which is what makes the
+        // refusal the only report there is.
+        Assert.Equal(0, run.Result.Census.EmittedCount("Gst", "vfunc"));
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0058");
     }
 
     [Fact]

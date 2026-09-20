@@ -6348,6 +6348,7 @@ internal sealed class MarshalPlanner
 
         if (scalar is null)
         {
+            Refuse();
             return null;
         }
 
@@ -6377,6 +6378,7 @@ internal sealed class MarshalPlanner
 
         if (bucket is not { } kind)
         {
+            Refuse();
             return null;
         }
 
@@ -6411,6 +6413,26 @@ internal sealed class MarshalPlanner
             }
 
             return (plan, bucket);
+        }
+
+        // The two exits that plan nothing at all take the slot out of the
+        // surface as UnsupportedSignature, and the key of such a slot names a
+        // real field of a real class struct, so no stale report catches it: it
+        // would be consumed in silence. The refusal is reported here for the
+        // same reason as above - an entry that states the C contract of a slot
+        // the binding does not project is a mistake in the overlay.
+        void Refuse()
+        {
+            if (!floating)
+            {
+                return;
+            }
+
+            _diagnostics.Error(
+                "GEN0059",
+                $"The floating return '{overlayKey}' names a slot whose answer the binding does not "
+                + "project at all. Only a slot that answers a class instance can hand out a floating "
+                + "reference.");
         }
     }
 }
