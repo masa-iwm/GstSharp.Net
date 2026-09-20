@@ -86,8 +86,13 @@ public sealed unsafe partial class ManagedDeviceTests
         finally
         {
             // What gst-device-monitor.c:200 does with an answer it decided not
-            // to use.
-            ObjectUnref(answer);
+            // to use. Guarded, because a failure of the first assertion would
+            // otherwise unref nothing and add a critical of its own to the
+            // noise the failure is read through.
+            if (answer != nint.Zero)
+            {
+                ObjectUnref(answer);
+            }
         }
     }
 
