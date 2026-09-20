@@ -322,7 +322,38 @@ internal sealed class InstanceField
                     ? "states no '$comment'"
                     : Name is { Length: 0 }
                         ? "states an empty 'name'"
-                        : null;
+                        : Name is { } stem && !IsIdentifier(stem)
+                            ? $"states the 'name' '{stem}', which is no C# identifier"
+                            : null;
+
+    /// <summary>
+    /// Tests whether a stem can be pasted into the name of a generated member.
+    /// </summary>
+    /// <param name="value">The stem the entry states.</param>
+    /// <returns><see langword="true"/> when the stem is an identifier.</returns>
+    /// <remarks>
+    /// The stem is written straight into the declaration of the accessor, so a
+    /// value with a space or a punctuation mark in it would be a compile error in
+    /// a generated file rather than something the reader of the overlay could act
+    /// on.
+    /// </remarks>
+    private static bool IsIdentifier(string value)
+    {
+        if (!char.IsLetter(value[0]) && value[0] != '_')
+        {
+            return false;
+        }
+
+        foreach (char character in value)
+        {
+            if (!char.IsLetterOrDigit(character) && character != '_')
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 /// <summary>

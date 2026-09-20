@@ -57,12 +57,24 @@ internal sealed class InstanceFieldEmitter
     /// <summary>The suffix every mirror carries.</summary>
     internal const string MirrorSuffix = "OwnFieldsRaw";
 
+    /// <summary>The member of a mirror that answers where the own fields begin.</summary>
+    private const string OwnOffsetMember = "OwnOffset";
+
     /// <summary>
     /// The one embedded structure wave 1 of the allowlist admits. Whether the
     /// copy of an embedded value is a flat duplication of its storage is a
     /// decision per type, so the admitted ones are named rather than derived.
     /// </summary>
     private const string AdmittedStruct = "GstSegment";
+
+    /// <summary>
+    /// The C# type the accessor of the one admitted structure answers. It stands
+    /// beside <see cref="AdmittedStruct"/> because the prose of the accessor is
+    /// written for that structure as well - two segments, flat storage, no
+    /// pointer of its own - so a second admitted structure moves this, the
+    /// remark, and the mapping in <see cref="ScalarOf"/> together.
+    /// </summary>
+    private const string AdmittedType = "Gst.Segment";
 
     private readonly Repository _repository;
     private readonly Overlays _overlays;
@@ -115,10 +127,21 @@ internal sealed class InstanceFieldEmitter
     /// <param name="taken">The member names the surface of the class already carries.</param>
     /// <returns>One plan per exposed field, in gir order.</returns>
     /// <remarks>
+    /// <para>
     /// The allowlist is read in front of every filter the ledger applies, so that
     /// a key naming a field the gir marks private, or the instance structure of
     /// the base class, is refused for what it names rather than going quietly
     /// stale.
+    /// </para>
+    /// <para>
+    /// The support floor is checked against the exposed field alone and not
+    /// against the fields in front of it in the mirror. Upstream only ever takes
+    /// an instance member out of the reserved tail, which cannot move a field that
+    /// shipped already without breaking the ABI, so a field of a later version in
+    /// front of the exposed one would be an upstream break rather than an
+    /// oversight here - and the size probe of the integration tests would report
+    /// it on the older leg.
+    /// </para>
     /// </remarks>
     internal IReadOnlyList<InstanceFieldPlan> Plan(
         GirNamespace ns,
@@ -257,10 +280,10 @@ internal sealed class InstanceFieldEmitter
             writer.WriteLine("/// </remarks>");
             writer.WriteLine("/// <returns>A copy of the <c>" + plan.Field.Name + "</c> field.</returns>");
             writer.WriteLine("/// <exception cref=\"System.ObjectDisposedException\">The wrapper was disposed.</exception>");
-            writer.WriteLine("public Gst.Segment " + plan.Member + "()");
+            writer.WriteLine("public " + AdmittedType + " " + plan.Member + "()");
             writer.OpenBlock();
             writer.WriteLine(
-                "Gst.Segment value = Gst.Segment.FromNative(");
+                AdmittedType + " value = " + AdmittedType + ".FromNative(");
             writer.WriteLine(
                 "    Handle + " + mirror + ".OwnOffset + " + mirror + "." + plan.Mirror + "Offset,");
             writer.WriteLine("    Gst.Interop.Transfer.None)");
@@ -340,6 +363,7 @@ internal sealed class InstanceFieldEmitter
         writer.OpenBlock();
 
         List<(string Name, int Length, string Element)> inlineArrays = [];
+        List<string> laid = [];
         bool first = true;
         foreach (GirField field in declaration.Fields)
         {
@@ -349,6 +373,7 @@ internal sealed class InstanceFieldEmitter
             }
 
             string name = NameMapper.ToPascalCase(field.Name.TrimStart('_'));
+            laid.Add(name);
             if (!first)
             {
                 writer.WriteLine();
@@ -367,6 +392,32 @@ internal sealed class InstanceFieldEmitter
 
             writer.WriteLine("/// <summary>The <c>" + field.Name + "</c> field.</summary>");
             writer.WriteLine("internal " + TypeOf(ns, field) + " " + name + ";");
+        }
+
+        // The mirror carries statics beside its fields, and a field whose name is
+        // one of theirs would be a compile error in a generated file rather than
+        // something the reader of it could act on.
+        foreach (string name in laid)
+        {
+            if (string.Equals(name, OwnOffsetMember, StringComparison.Ordinal))
+            {
+                _diagnostics.Error(
+                    "GEN0062",
+                    $"The instance field '{name}' of '{cName}' is laid out under the name the own fields mirror "
+                    + "gives the offset of the first own field; the field needs a mirror of another shape.");
+            }
+        }
+
+        foreach (InstanceFieldPlan plan in plans)
+        {
+            if (laid.Contains(plan.Mirror + "Offset", StringComparer.Ordinal))
+            {
+                _diagnostics.Error(
+                    "GEN0062",
+                    $"The instance field '{plan.Field.Name}' of '{cName}' measures its offset into a member named "
+                    + $"'{plan.Mirror}Offset', which is the name of another field of the class; the mirror cannot "
+                    + "carry both.");
+            }
         }
 
         writer.WriteLine();
@@ -525,10 +576,20 @@ internal sealed class InstanceFieldEmitter
             ?? FieldShapes.OtherReason;
         if (!string.Equals(reason, "EmbeddedStruct", StringComparison.Ordinal))
         {
-            return string.Equals(reason, FieldShapes.OtherReason, StringComparison.Ordinal)
-                && _shapes.IsScalar(ns, field)
-                    ? "Scalar"
-                    : reason;
+            if (!string.Equals(reason, FieldShapes.OtherReason, StringComparison.Ordinal))
+            {
+                return reason;
+            }
+
+            // The catch all of the ledger is no answer to the reader of a
+            // refusal, so the two shapes that reach it here are named: a scalar,
+            // and a structure the ledger has no account of - a GLib lock, which
+            // the gir spells as a union laid into the instance by value.
+            return _shapes.IsScalar(ns, field)
+                ? "Scalar"
+                : CTypeOf(ns, field) is { Length: > 0 } other
+                    ? "Embedded " + other
+                    : FieldShapes.OtherReason;
         }
 
         return string.Equals(CTypeOf(ns, field), AdmittedStruct, StringComparison.Ordinal)
@@ -557,8 +618,8 @@ internal sealed class InstanceFieldEmitter
     /// <param name="key">The key of the entry, for the diagnostic.</param>
     /// <param name="entry">The allowlist entry.</param>
     /// <returns>
-    /// The member names, or <see langword="null"/> when one of them names no
-    /// emitted override.
+    /// The member names, or <see langword="null"/> when the class emits no
+    /// override at all or when one of them names no emitted override.
     /// </returns>
     /// <remarks>
     /// The name is not spelled by hand: it is the one the subclassing surface
@@ -572,7 +633,20 @@ internal sealed class InstanceFieldEmitter
         string key,
         InstanceField entry)
     {
-        _ = _emittedVirtuals.TryGetValue(ns.Name + "." + declaration.Name, out HashSet<string>? emitted);
+        if (!_emittedVirtuals.TryGetValue(ns.Name + "." + declaration.Name, out HashSet<string>? emitted))
+        {
+            // A class with no subclassing surface has no override to read the
+            // field inside, so the window an entry states cannot exist. It is
+            // the class and not the slot that is the fault, which the message of
+            // the loop below would put the other way round.
+            _diagnostics.Error(
+                "GEN0060",
+                $"The instance field '{key}' states a window of overrides, but '{ns.Name}.{declaration.Name}' is "
+                + "not on 'subclassable' and emits no override at all; the field has to wait for the class to be "
+                + "subclassable.");
+            return null;
+        }
+
         List<string> members = [];
         foreach (string slot in entry.Overrides ?? [])
         {
@@ -586,7 +660,7 @@ internal sealed class InstanceFieldEmitter
                 }
             }
 
-            if (method is null || emitted is null || !emitted.Contains(NameMapper.ToPascalCase(method.Name)))
+            if (method is null || !emitted.Contains(NameMapper.ToPascalCase(method.Name)))
             {
                 _diagnostics.Error(
                     "GEN0060",

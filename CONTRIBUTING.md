@@ -273,23 +273,37 @@ type plus the offset that mirror measured, so no offset is ever written down. It
 states three things and all three are required: `lock`, the lock the library
 rewrites the field under, which the generated remark prints; `overrides`, the gir
 virtual methods the base class calls on the streaming thread, which is the window
-a read is consistent in, because managed code can take neither `STREAM_LOCK` nor
-`OBJECT_LOCK`; and a `$comment` with the header file and line. An optional `name`
-renames the accessor.
+a read is consistent in, because managed code can take none of the locks a writer
+of such a field holds; and a `$comment` with the header file and line. An
+optional `name` renames the accessor. The class has to be on `subclassable`:
+without a subclassing surface there is no override to read the field inside, so
+there is no window to state.
 
 The refusals are errors rather than warnings, because an entry is the only reason
 a piece of public surface exists. `GEN0060` reports an entry that matched no
-field of an emitted class, that states too little, that names the base instance,
-that a `fieldSkips` entry already claims, or whose `overrides` name a member the
-subclassing surface does not emit. `GEN0061` reports a shape this wave refuses —
-a pointer, a callback, a union, a scalar, an embedded structure other than
-`GstSegment`, a field above the support floor, a field the gir marks private.
-`GEN0062` reports a field the mirror has no storage for, which is an error rather
-than a truncation: a short mirror would still measure the right offset and would
-break the size probe instead. `GEN0063` reports an accessor whose name the class
-already carries, which the field answers with a `name`. Every entry also joins
-the three probe layers of `InstanceFieldProbeTests`, and the meta test there
-fails for a field with no behavioural witness.
+field of an emitted class — a key naming a nested `<union>` is one of those,
+because a gir keeps a union out of the field list — that states too little, that
+spells a `name` which is no identifier, that names the base instance, that a
+`fieldSkips` entry already claims, that names a class which is not subclassable,
+or whose `overrides` name a member the subclassing surface does not emit.
+`GEN0061` reports a shape this wave refuses — a pointer, a callback, a scalar, an
+embedded structure other than `GstSegment`, a field above the support floor, a
+field the gir marks private. `GEN0062` reports a mirror the closed table cannot
+lay out: a field it has no storage for, a field that occupies a part of a word
+rather than the whole of it, a class that grew a nested `<union>`, or a field
+whose name is one the mirror gives a static of its own. All four are errors
+rather than truncations: a short mirror would still measure the right offset and
+would break the size probe instead. `GEN0063` reports an accessor whose name the
+class or a descendant of it already carries, which the field answers with a
+`name`. Every entry also joins the three probe layers of
+`InstanceFieldProbeTests`, and the meta test there fails for a field with no
+behavioural witness.
+
+One rule of the allowlist is held by review and not by the generator: a field a
+header puts behind an `#if` is a field whose offset differs between builds of the
+library, and a gir records neither the macro nor the condition. The reviewer of
+an entry therefore reads the header around and in front of the field, and says in
+the `$comment` that it did — the generator cannot.
 
 ## The overlay keys of the subclassing surface
 
