@@ -60,10 +60,10 @@ public sealed class ManagedDeviceProviderTests
     /// <remarks>
     /// <para>
     /// The device is one the test project mints itself, so the fact runs on a
-    /// machine with no hardware at all. <c>GstDevice</c> has no managed
-    /// subclassing surface — that limit is in <c>docs/subclassing.md</c> — so
-    /// <see cref="ProbeDevice"/> registers its type through the internal
-    /// <c>SubclassType.Define</c>.
+    /// machine with no hardware at all: <see cref="ProbeDevice"/> is a managed
+    /// <c>Gst.Device</c> subclass built through the generated
+    /// <c>DefineSubclass</c>, which is what lets a provider announce a device
+    /// that describes nothing.
     /// </para>
     /// <para>
     /// The withdrawal is asserted through the <c>removed</c> signal of the
@@ -78,7 +78,7 @@ public sealed class ManagedDeviceProviderTests
     [Fact]
     public void AManagedProviderAnnouncesTheDevicesOfItsStartOverride()
     {
-        using ProbeDevice device = new("Probe device");
+        using ProbeDevice device = ProbeDevice.New("Probe device");
         using ProbeDeviceProvider provider = new();
         provider.Announce.Add(device);
 
