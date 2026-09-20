@@ -701,8 +701,8 @@ rewrite can produce is a value that mixes the fields of two segments. That is
 the whole cost of the accessor taking no lock, which it cannot: every one of
 these locks is a C macro with no exported function, `OBJECT_LOCK` is a non
 recursive `GMutex` that item 8 of `docs/modules.md` forbids a member to take, and
-`STREAM_LOCK` and `PREROLL_LOCK` live inside `GstPad` and `GstBaseSink`, whose
-layouts differ between ABIs.
+`STREAM_LOCK` lives inside `GstPad`, whose layout differs between ABIs, while
+`PREROLL_LOCK` is a `GstBaseSink` field that no member of the binding takes.
 
 * `BaseSink.GetSegment()`, `BaseSrc.GetSegment()`,
   `BaseTransform.GetSegment()` and `BaseParse.GetSegment()` — a copy, good for
