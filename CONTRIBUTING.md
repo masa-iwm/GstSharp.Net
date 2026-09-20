@@ -263,6 +263,34 @@ file and line its claim rests on in the same `$comment`. A key that matches no
 field an accessor would be emitted for, an entry that states neither correction
 or only the default, and one that states both are reported as `GEN0026`.
 
+An instance field of a GObject class is a third ledger, `## Class fields`, and a
+third key. A wrapper holds a native instance and mirrors no part of it, so every
+field of a class is listed there by construction; the one statement that takes
+one off is the `instanceFields` object of the same file, keyed the same way
+(`GstBaseSink.segment`). An entry emits a mirror of the fields the class declares
+itself and an accessor that reads the field at the instance size of the parent
+type plus the offset that mirror measured, so no offset is ever written down. It
+states three things and all three are required: `lock`, the lock the library
+rewrites the field under, which the generated remark prints; `overrides`, the gir
+virtual methods the base class calls on the streaming thread, which is the window
+a read is consistent in, because managed code can take neither `STREAM_LOCK` nor
+`OBJECT_LOCK`; and a `$comment` with the header file and line. An optional `name`
+renames the accessor.
+
+The refusals are errors rather than warnings, because an entry is the only reason
+a piece of public surface exists. `GEN0060` reports an entry that matched no
+field of an emitted class, that states too little, that names the base instance,
+that a `fieldSkips` entry already claims, or whose `overrides` name a member the
+subclassing surface does not emit. `GEN0061` reports a shape this wave refuses —
+a pointer, a callback, a union, a scalar, an embedded structure other than
+`GstSegment`, a field above the support floor, a field the gir marks private.
+`GEN0062` reports a field the mirror has no storage for, which is an error rather
+than a truncation: a short mirror would still measure the right offset and would
+break the size probe instead. `GEN0063` reports an accessor whose name the class
+already carries, which the field answers with a `name`. Every entry also joins
+the three probe layers of `InstanceFieldProbeTests`, and the meta test there
+fails for a field with no behavioural witness.
+
 ## The overlay keys of the subclassing surface
 
 `girs/overlays/fixups.json` steers what a subclassable class emits through

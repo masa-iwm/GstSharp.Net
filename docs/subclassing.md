@@ -963,6 +963,23 @@ Generator specifics for stage 2:
   `CensusTests` — the existing gate against silent scope drift.
 * Determinism/LF and double-generation byte-identity apply unchanged.
 
+**Reading the base class's own state from inside an override.** A few of the
+base classes keep a field an override legitimately wants to read, and the
+generator exposes one of them today: the `GstSegment` of `BaseSink`, `BaseSrc`,
+`BaseTransform` and `BaseParse`, as `GetSegment()`. The method answers a copy
+the caller disposes and takes no lock, which is what makes *where* it is called
+the whole contract. The library rewrites that field on the streaming thread, and
+the pad holds `STREAM_LOCK` around a chain, a getrange and a serialized event,
+so the read is consistent inside an override the base class calls on that
+thread: `OnRender` or `OnPreroll`, `OnCreate` or `OnFill`, `OnTransform` or
+`OnTransformIp`, `OnHandleFrame`. Called from anywhere else — a property setter,
+a bus handler, a thread of the subclass's own — it still answers a segment and
+is still memory safe, but the segment may mix the fields of two: `GstSegment` is
+flat and owns no pointer, so a racing rewrite tears the value and nothing else.
+An override must not reach for a lock instead; see item 8 of
+[`docs/modules.md`](modules.md) and `## Fields the library rewrites` in
+[`docs/ownership.md`](ownership.md).
+
 ---
 
 ## 8. Lifecycle: interaction with toggle refs and the finalizer queue

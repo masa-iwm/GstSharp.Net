@@ -640,10 +640,26 @@ the gir marks `private` or `readable="0"` and the instance structure of the
 base class are left out — the last of the three is the inheritance chain the
 wrapper hierarchy already carries — and a field registered under `fieldSkips`
 moves to `## Fields exposed elsewhere` the way a record field does. Reading one
-today means writing the read by hand, against the mirror of the instance head
-that checklist item 9 of `docs/modules.md` describes; the three fields of
+by hand means writing the read against the mirror of the instance head that
+checklist item 9 of `docs/modules.md` describes; the three fields of
 `ColorBalanceChannel` are the model and are listed as answered elsewhere for
 that reason.
+
+One field of a class can also be exposed by the generator itself, and a field
+registered under the `instanceFields` key of `girs/overlays/fixups.json` leaves
+the section altogether: it carries an accessor of its own, so it is neither a
+gap nor a value something else answers. The offset is not written down
+anywhere. It is the instance size the running library registered for the parent
+type plus the offset of the field inside a generated mirror of the fields the
+class declares itself, measured from that mirror at run time, and the first of
+the two terms is what makes the arithmetic right on an ABI where a C `long` is
+64 bits wide. The entry states the lock the library rewrites the field under
+and the virtual methods that form the window a read of it is consistent in,
+because managed code can take neither `STREAM_LOCK` nor `OBJECT_LOCK`; see
+`## Fields the library rewrites` below and §7 of `docs/subclassing.md`. The
+allowlist admits one shape today, an embedded `GstSegment`, and the four fields
+on it are the segments of `BaseSink`, `BaseSrc`, `BaseTransform` and
+`BaseParse`.
 
 ## Fields the library rewrites
 
@@ -664,8 +680,29 @@ exception — the base class assigns the input buffer before it hands the frame
 to `handle_frame` (`gstvideodecoder.c:3436-3447` called from `:2500`,
 `gstvideoencoder.c:1532`), so inside that call it is never `null`. It answers
 `null` only on a frame the assignment has not reached yet, or one a subclass
-has taken the buffer out of itself.
+has taken the buffer out of itself. The four `GetSegment()` methods of the
+GstBase classes are the other exception, and a different one: they are not
+nullable at all, because what they read is storage the instance is made of
+rather than a pointer the library fills in. They are also the only members of
+this section that read a field of a class rather than of a structure a call
+handed over, so the window is not a call the caller is inside of but an override
+the base class calls on the streaming thread — `OnRender` or `OnPreroll` for
+`BaseSink`, `OnCreate` or `OnFill` for `BaseSrc`, `OnTransform` or
+`OnTransformIp` for `BaseTransform`, `OnHandleFrame` for `BaseParse` — where the
+pad holds `STREAM_LOCK` around the call (`gstpad.c:4554`, `:5072`, `:6053`).
+Outside it the read is still memory safe and still answers a segment: a
+`GstSegment` is 120 flat bytes and owns no pointer, so the worst a racing
+rewrite can produce is a value that mixes the fields of two segments. That is
+the whole cost of the accessor taking no lock, which it cannot: both locks are C
+macros with no exported function, `OBJECT_LOCK` is a non recursive `GMutex` that
+item 8 of `docs/modules.md` forbids a member to take, and `STREAM_LOCK` lives
+inside `GstPad`, whose layout differs between ABIs.
 
+* `BaseSink.GetSegment()`, `BaseSrc.GetSegment()`,
+  `BaseTransform.GetSegment()` and `BaseParse.GetSegment()` — a copy, good for
+  as long as the caller keeps it; consistent when it was taken inside one of the
+  overrides above (`gstbasesink.h:104-106`, `gstbasesrc.h:96-97`,
+  `gstbasetransform.h:91-93`, `gstbaseparse.h:171-172`).
 * `Buffer.Pool` — as long as the buffer reference lives: the field holds a
   strong reference (`gstbufferpool.c:1285`), and the only thing that clears it
   is the compare and exchange in `gst_buffer_pool_release_buffer`
