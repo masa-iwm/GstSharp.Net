@@ -546,13 +546,47 @@ internal sealed class SurfaceBuilder
             parameters.Add(prefix + (type.EndsWith('?') ? type[..^1] : type));
         }
 
-        return "M:" + plan.Name + "(" + string.Join(",", parameters) + ")";
+        return MethodPrefix + plan.Name + "(" + string.Join(",", parameters) + ")";
     }
+
+    /// <summary>The prefix of the key a method is remembered under.</summary>
+    private const string MethodPrefix = "M:";
+
+    /// <summary>The prefix of the key a property, an event or its types is remembered under.</summary>
+    private const string PropertyPrefix = "P:";
 
     /// <summary>Returns the key a property is remembered under.</summary>
     /// <param name="name">The C# name of the property.</param>
     /// <returns>The key.</returns>
-    internal static string PropertyKey(string name) => "P:" + name;
+    internal static string PropertyKey(string name) => PropertyPrefix + name;
+
+    /// <summary>
+    /// Returns the key a member of no parameters that no plan produced is
+    /// remembered under, for an accessor an emitter adds beside the surface.
+    /// </summary>
+    /// <param name="name">The C# name of the member.</param>
+    /// <returns>The key.</returns>
+    internal static string ParameterlessMethodKey(string name) => MethodPrefix + name + "()";
+
+    /// <summary>
+    /// Tests whether one member key names a member of a given name, whatever
+    /// signature it carries.
+    /// </summary>
+    /// <param name="key">The key, as <see cref="TypeSurface.MemberKeys"/> spells it.</param>
+    /// <param name="name">The C# name to look for.</param>
+    /// <returns><see langword="true"/> when the key names that member.</returns>
+    /// <remarks>
+    /// The keys distinguish a method from a property because a method only hides
+    /// an inherited method of the same signature. A member that is not planned
+    /// at all - one this emitter adds beside the surface - has no signature to
+    /// compare, so it collides with any member of its name, which is what this
+    /// answers. A bare name is accepted as well, because the reserved names of a
+    /// wrapper are spelled that way.
+    /// </remarks>
+    internal static bool KeyNames(string key, string name) =>
+        string.Equals(key, name, StringComparison.Ordinal)
+        || string.Equals(key, PropertyPrefix + name, StringComparison.Ordinal)
+        || key.StartsWith(MethodPrefix + name + "(", StringComparison.Ordinal);
 
     /// <summary>Counts the parameters a member shows on the public surface.</summary>
     /// <param name="plan">The plan to inspect.</param>

@@ -933,7 +933,10 @@ internal sealed class ClassEmitter
         _instanceFields.WriteAccessors(writer, module, ns, declaration, typeName, exposed);
         foreach (InstanceFieldPlan plan in exposed)
         {
-            members.Add(plan.Member);
+            // The accessor joins the inherited table as a method of no
+            // parameters, which is what a descendant that declares one of the
+            // same name has to hide.
+            members.Add(SurfaceBuilder.ParameterlessMethodKey(plan.Member));
             _ = _exposedFields.Add(plan.Key);
         }
 

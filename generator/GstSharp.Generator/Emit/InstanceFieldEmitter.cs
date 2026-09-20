@@ -185,7 +185,7 @@ internal sealed class InstanceFieldEmitter
 
             string member = "Get"
                 + (entry.Name is { Length: > 0 } renamed ? renamed : NameMapper.ToPascalCase(field.Name));
-            if (taken.Contains(member))
+            if (IsTaken(member, taken))
             {
                 _diagnostics.Error(
                     "GEN0063",
@@ -585,6 +585,31 @@ internal sealed class InstanceFieldEmitter
         }
 
         return members;
+    }
+
+    /// <summary>
+    /// Tests whether the surface of the class already carries a member of the
+    /// name an accessor would take.
+    /// </summary>
+    /// <param name="member">The name of the accessor.</param>
+    /// <param name="taken">The reserved names and the member keys of the class.</param>
+    /// <returns><see langword="true"/> when the name is taken.</returns>
+    /// <remarks>
+    /// The accessor is added beside the planned surface rather than through it,
+    /// so it has no signature the <c>new</c> rule could compare: a member of its
+    /// name collides whatever shape it has, which is what the key test answers.
+    /// </remarks>
+    private static bool IsTaken(string member, IReadOnlyCollection<string> taken)
+    {
+        foreach (string key in taken)
+        {
+            if (SurfaceBuilder.KeyNames(key, member))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Spells the <c>see cref</c> list of the override window.</summary>

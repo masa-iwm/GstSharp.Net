@@ -146,6 +146,34 @@ public sealed class InstanceFieldTests
         Assert.Equal(0, Generated.Census.EmittedCount("Gst", "instance field mirror"));
     }
 
+    /// <summary>
+    /// The name collision check reads the member keys of the class, which spell a
+    /// method with its signature and a property with a prefix, so a bare name
+    /// would match neither and the check would never fire.
+    /// </summary>
+    [Theory]
+    [InlineData("GetSegment", true)]
+    [InlineData("M:GetSegment()", true)]
+    [InlineData("M:GetSegment(Gst.Format)", true)]
+    [InlineData("P:GetSegment", true)]
+    [InlineData("M:GetSegmentDone()", false)]
+    [InlineData("P:Segment", false)]
+    public void ACollisionIsReadOutOfTheMemberKeysAndNotOutOfABareName(string key, bool collides)
+    {
+        Assert.Equal(collides, SurfaceBuilder.KeyNames(key, "GetSegment"));
+    }
+
+    /// <summary>
+    /// The accessor joins the inherited table as a method rather than as a bare
+    /// name, so a descendant that declares one of the same name hides it.
+    /// </summary>
+    [Fact]
+    public void TheAccessorJoinsTheInheritedTableAsAMethod()
+    {
+        Assert.Equal("M:GetSegment()", SurfaceBuilder.ParameterlessMethodKey("GetSegment"));
+        Assert.True(SurfaceBuilder.KeyNames(SurfaceBuilder.ParameterlessMethodKey("GetSegment"), "GetSegment"));
+    }
+
     private static string Source(string fileName, string project = "GstSharp.Net.Base")
     {
         string path = project + "/Generated/" + fileName;
