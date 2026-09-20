@@ -61,8 +61,16 @@ this design's stage 3a landed is instantiate a *managed* element by type name
 * **Overriding `GObjectClass.dispose` / `finalize`.** Those vfuncs run when
   the managed wrapper may already be collected or mid-release; the
   interaction with the toggle-ref lifecycle is not resolvable in general.
-  Subclasses that need teardown use the `change_state` NULL transition or a
-  future explicit hook.
+  Subclasses that need teardown use the `change_state` NULL transition for the
+  native-driven teardown of a live element, and the wrapper's own
+  `protected virtual void Dispose(bool disposing)` (`Gst.GObject.Object`,
+  already there, no runtime change needed) for the owner-initiated teardown of
+  an instance the caller knows nothing else drives — which is the same scope
+  the dispose doctrine of §8 draws ("Dispose doctrine extends unchanged":
+  disposing an instance native code still drives is a documented misuse). No
+  hook on the `dispose` / `finalize` *slots* is offered at all: as §8's
+  "Finalization of an unreferenced subclass instance" spells out, the managed
+  wrapper is provably gone before either of them runs.
 * **Defining new GObject interfaces** from managed code. (Implementing an
   existing one landed in stage 3b, see §5.7.)
 * **Dynamic types** (`g_type_register_dynamic`, `GTypeModule`) and full
