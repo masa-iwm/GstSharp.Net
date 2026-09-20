@@ -144,6 +144,18 @@ internal static unsafe partial class GLibNative
     [LibraryImport("GLib", EntryPoint = "g_byte_array_new")]
     internal static partial nint ByteArrayNew();
 
+    /// <summary>Grows or shrinks a byte array to a length.</summary>
+    /// <param name="array">The array to resize.</param>
+    /// <param name="length">The length the array is to have.</param>
+    /// <returns>The array, which is the one that was passed in.</returns>
+    /// <remarks>
+    /// Growing may move the bytes, so the <c>data</c> field has to be read
+    /// again afterwards, and the bytes that appear are not zeroed: an array of
+    /// <see cref="ByteArrayNew"/> is made without the clear flag.
+    /// </remarks>
+    [LibraryImport("GLib", EntryPoint = "g_byte_array_set_size")]
+    internal static partial nint ByteArraySetSize(nint array, uint length);
+
     /// <summary>Releases a byte array.</summary>
     /// <param name="array">The array to release.</param>
     /// <param name="freeSegment">

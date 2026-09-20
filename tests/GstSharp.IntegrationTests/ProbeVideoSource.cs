@@ -69,6 +69,7 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
         ListChildrenPropertiesOverride,
         LookupChildOverride,
         SetChildPropertyOverride,
+        SetChildPropertyFullOverride,
         SetPropertyOverride,
         GetPropertyOverride);
 
@@ -82,6 +83,8 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
     private bool _lastParentWasNull;
 
     private readonly List<string> _childPropertyWrites = [];
+
+    private int _childPropertyFullCalls;
 
     private string? _tag;
 
@@ -153,6 +156,37 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
             }
         }
     }
+
+    /// <summary>Gets how often <c>set_child_property_full</c> reached this wrapper.</summary>
+    internal int ChildPropertyFullCalls => Volatile.Read(ref _childPropertyFullCalls);
+
+    /// <summary>
+    /// Gets or sets the reason the <c>set_child_property_full</c> override
+    /// refuses a write with, or <see langword="null"/> to let the write through.
+    /// </summary>
+    /// <remarks>
+    /// Every hook here is per instance: each test makes a source of its own, so
+    /// nothing a test sets is seen by the source of another one.
+    /// </remarks>
+    internal Gst.GLib.GException? RefuseWith { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the override refuses a write
+    /// without saying why, which is an answer GES itself gives.
+    /// </summary>
+    internal bool RefuseWithoutReason { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the override throws instead of
+    /// answering.
+    /// </summary>
+    internal bool ThrowOnChildPropertyFull { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error the override throws instead of answering with,
+    /// which is the spelling a caller of the forward binding is used to.
+    /// </summary>
+    internal Gst.GLib.GException? ThrowRefusalWith { get; set; }
 
     /// <summary>Builds an instance no asset describes, for the negative case.</summary>
     /// <returns>The new source, which has no asset.</returns>
@@ -255,6 +289,43 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
         }
 
         ChainUpSetChildProperty(child, pspec, value);
+    }
+
+    /// <inheritdoc/>
+    protected override bool OnSetChildPropertyFull(
+        Gst.GObject.Object child,
+        ParamSpec pspec,
+        ValueView value,
+        out Gst.GLib.GException? error)
+    {
+        _ = Interlocked.Increment(ref _childPropertyFullCalls);
+
+        if (ThrowOnChildPropertyFull)
+        {
+            throw new InvalidOperationException($"The element refuses to write {pspec.Name}.");
+        }
+
+        if (ThrowRefusalWith is { } thrown)
+        {
+            throw thrown;
+        }
+
+        if (RefuseWithoutReason)
+        {
+            error = null;
+            return false;
+        }
+
+        if (RefuseWith is { } refusal)
+        {
+            error = refusal;
+            return false;
+        }
+
+        // Chaining up is what keeps the set_child_property slot reachable: the
+        // default implementation of this one, which GES installs on every
+        // class, is its only caller.
+        return ChainUpSetChildPropertyFull(child, pspec, value, out error);
     }
 
     /// <inheritdoc/>

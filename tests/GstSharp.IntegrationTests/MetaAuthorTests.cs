@@ -283,6 +283,143 @@ public sealed class MetaAuthorTests
     }
 
     /// <summary>
+    /// The byte array the binding builds is a sink several serialisations can
+    /// be written into, and what comes out of it is the two of them one after
+    /// the other.
+    /// </summary>
+    [Fact]
+    public void TwoSerialisationsAccumulateInOneByteArray()
+    {
+        Registration registration = Register("GstSharpTestMetaM", serialize: true);
+
+        using Buffer buffer = Assert.IsType<Buffer>(Buffer.NewAllocate(null, 16, null));
+        Meta item = Assert.IsType<Meta>(buffer.AddMeta(registration.Info, 0));
+        item.Payload<Pair>().First = 11;
+        item.Payload<Pair>().Second = -3;
+
+        byte[] single = Assert.IsType<byte[]>(item.Serialize());
+
+        using ByteArrayInterface sink = new();
+        Assert.Equal(0UL, (ulong)sink.Len);
+
+        Assert.True(item.Serialize(sink));
+        Assert.Equal((ulong)single.Length, (ulong)sink.Len);
+
+        Assert.True(item.Serialize(sink));
+        Assert.Equal((ulong)(single.Length * 2), (ulong)sink.Len);
+
+        // The length of the record and the span over it are the same thing read
+        // twice, and the bytes are the single serialisation written twice.
+        Assert.Equal((ulong)sink.Len, (ulong)sink.AsSpan().Length);
+        Assert.Equal([.. single, .. single], sink.ToArray());
+    }
+
+    /// <summary>
+    /// The array grows past whatever it was first given, and the bytes that were
+    /// already in it are still readable afterwards.
+    /// </summary>
+    [Fact]
+    public void TheByteArrayGrowsWithoutLosingWhatIsInIt()
+    {
+        const int Blocks = 40;
+        const int BlockSize = 256;
+
+        using ByteArrayInterface array = new();
+
+        byte[] block = new byte[BlockSize];
+        for (int index = 0; index < Blocks; index++)
+        {
+            for (int offset = 0; offset < BlockSize; offset++)
+            {
+                block[offset] = (byte)((index * 7) + offset);
+            }
+
+            Assert.True(array.AppendData(block));
+        }
+
+        // Well past the page a fresh GByteArray is given, so the bytes have
+        // moved at least once; nothing here reads a pointer to prove it, the
+        // content is the proof.
+        Assert.Equal((ulong)(Blocks * BlockSize), (ulong)array.Len);
+
+        byte[] written = array.ToArray();
+        for (int index = 0; index < Blocks; index++)
+        {
+            for (int offset = 0; offset < BlockSize; offset++)
+            {
+                Assert.Equal((byte)((index * 7) + offset), written[(index * BlockSize) + offset]);
+            }
+        }
+    }
+
+    /// <summary>
+    /// A serialisation that fails after it appended leaves the array the length
+    /// it had, which is the shrink the library asks the resize function for.
+    /// </summary>
+    [Fact]
+    public void ARefusedSerialisationPutsTheArrayBackWhereItWas()
+    {
+        Registration registration = Register("GstSharpTestMetaN", serialize: true);
+
+        using Buffer buffer = Assert.IsType<Buffer>(Buffer.NewAllocate(null, 16, null));
+        Meta item = Assert.IsType<Meta>(buffer.AddMeta(registration.Info, 0));
+        item.Payload<Pair>().First = 2;
+        item.Payload<Pair>().Second = 4;
+
+        using ByteArrayInterface sink = new();
+        Assert.True(item.Serialize(sink));
+
+        nuint accepted = sink.Len;
+        byte[] before = sink.ToArray();
+
+        registration.Probe.RefuseSerializeAfterAppend = true;
+        Assert.False(item.Serialize(sink));
+
+        // gst_meta_serialize sets the size back to what it was when the
+        // implementation refused the item, so the array carries the accepted
+        // serialisation and nothing of the refused one.
+        Assert.Equal((ulong)accepted, (ulong)sink.Len);
+        Assert.Equal(before, sink.ToArray());
+    }
+
+    /// <summary>
+    /// Disposing the array releases both of its allocations once, and the
+    /// wrapper a serialisation is lent owns nothing to release.
+    /// </summary>
+    [Fact]
+    public void DisposingTheByteArrayReleasesItOnceAndALentOneNeverDoesIt()
+    {
+        Registration registration = Register("GstSharpTestMetaO", serialize: true);
+        registration.Probe.DisposeTheSink = true;
+
+        using Buffer buffer = Assert.IsType<Buffer>(Buffer.NewAllocate(null, 16, null));
+        Meta item = Assert.IsType<Meta>(buffer.AddMeta(registration.Info, 0));
+        item.Payload<Pair>().First = 9;
+        item.Payload<Pair>().Second = 9;
+
+        // The wrapper inside the callback is lent: the record belongs to the
+        // caller of the serialisation, so the Dispose the delegate calls is a
+        // no-op and the append after it still writes.
+        byte[] bytes = Assert.IsType<byte[]>(item.Serialize());
+        Assert.NotEmpty(bytes);
+
+        ByteArrayInterface array = new();
+        Assert.True(array.AppendData([1, 2, 3]));
+
+        array.Dispose();
+
+        // The record a disposed array points at is a dead one rather than freed
+        // memory, so the generated length reads zero and the append refuses.
+        Assert.Equal(0UL, (ulong)array.Len);
+        Assert.False(array.AppendData([4, 5]));
+        Assert.Throws<ObjectDisposedException>(() => array.AsSpan().Length);
+        Assert.Throws<ObjectDisposedException>(array.ToArray);
+
+        array.Dispose();
+        Assert.Equal(0UL, (ulong)array.Len);
+    }
+
+    /// <summary>
     /// A delegate that throws is caught on the boundary: the copy that was
     /// running completes, the item is not carried, and the trap saw the
     /// exception.
@@ -588,6 +725,12 @@ public sealed class MetaAuthorTests
         /// <summary>Whether the transformation throws instead of working.</summary>
         internal bool ThrowOnTransform;
 
+        /// <summary>Whether the serialisation refuses the item after it appended.</summary>
+        internal bool RefuseSerializeAfterAppend;
+
+        /// <summary>Whether the serialisation disposes the sink it was lent.</summary>
+        internal bool DisposeTheSink;
+
         /// <summary>Forgets what a previous run of the same test recorded.</summary>
         internal void Reset()
         {
@@ -602,6 +745,8 @@ public sealed class MetaAuthorTests
             LastVersion = 0;
             RefuseInit = false;
             ThrowOnTransform = false;
+            RefuseSerializeAfterAppend = false;
+            DisposeTheSink = false;
         }
 
         /// <summary>The initialisation delegate.</summary>
@@ -666,11 +811,20 @@ public sealed class MetaAuthorTests
         internal bool Serialize(Meta meta, ByteArrayInterface data, ref byte version)
         {
             version = Version;
+
+            if (DisposeTheSink)
+            {
+                // The sink is lent for the length of this call, so this
+                // releases nothing and the append below still writes.
+                data.Dispose();
+            }
+
             Pair payload = meta.Payload<Pair>();
             Span<byte> bytes = stackalloc byte[8];
             BitConverter.TryWriteBytes(bytes, payload.First);
             BitConverter.TryWriteBytes(bytes[4..], payload.Second);
-            return data.AppendData(bytes);
+            bool appended = data.AppendData(bytes);
+            return appended && !RefuseSerializeAfterAppend;
         }
 
         /// <summary>The deserialisation delegate.</summary>

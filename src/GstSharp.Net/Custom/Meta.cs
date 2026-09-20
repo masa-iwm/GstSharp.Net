@@ -60,9 +60,11 @@ public sealed unsafe partial class Meta
     /// releases before it returns.
     /// </para>
     /// <para>
-    /// This supersedes the generated <c>Serialize(ByteArrayInterface)</c>,
-    /// which managed code cannot call because
-    /// <see cref="Gst.ByteArrayInterface"/> has no public constructor.
+    /// This is the whole serialisation of one item, taken as a
+    /// <c>byte[]</c>. The generated <c>Serialize(ByteArrayInterface)</c> beside
+    /// it appends to an array the caller keeps, which is how several items go
+    /// into one block — <see cref="Gst.ByteArrayInterface()"/> builds such an
+    /// array.
     /// </para>
     /// </remarks>
     /// <exception cref="ObjectDisposedException">The item was removed from its buffer.</exception>

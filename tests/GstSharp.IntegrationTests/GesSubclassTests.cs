@@ -556,6 +556,214 @@ public sealed partial class GesSubclassTests
     }
 
     /// <summary>
+    /// The refusal of the <c>set_child_property_full</c> override reaches the
+    /// caller as the error it was built with, domain, code and message.
+    /// </summary>
+    [Fact]
+    public void ARefusedChildPropertyWriteCarriesTheReasonOfTheOverride()
+    {
+        GstGES.Initialize();
+
+        using ProbeVideoSource source = ProbeVideoSource.New();
+
+        Gst.GLib.GException refusal = new(
+            GESGlobal.ErrorQuark(),
+            (int)GES.Error.NotEnoughInternalContent,
+            "the probe has nothing to write the tag onto");
+        source.RefuseWith = refusal;
+
+        using Value written = Value.New(GType.String);
+        written.SetString("refused");
+
+        Gst.GLib.GException thrown = Assert.Throws<Gst.GLib.GException>(
+            () => source.SetChildPropertyFull(ProbeVideoSource.TagName, written));
+
+        Assert.Equal(refusal.Domain, thrown.Domain);
+        Assert.Equal(refusal.Code, thrown.Code);
+        Assert.Equal(refusal.Message, thrown.Message);
+
+        // The refusal never reached the property, so neither the slot below nor
+        // the value behind it moved.
+        Assert.Equal(1, source.ChildPropertyFullCalls);
+        Assert.Empty(source.ChildPropertyWrites);
+        Assert.Null(source.Tag);
+    }
+
+    /// <summary>
+    /// A refusal that says nothing is the answer GES itself gives on several of
+    /// its own paths: the call answers false and throws nothing.
+    /// </summary>
+    [Fact]
+    public void AChildPropertyWriteRefusedWithoutAReasonAnswersFalse()
+    {
+        GstGES.Initialize();
+
+        using ProbeVideoSource source = ProbeVideoSource.New();
+        source.RefuseWithoutReason = true;
+
+        using Value written = Value.New(GType.String);
+        written.SetString("refused");
+
+        Assert.False(source.SetChildPropertyFull(ProbeVideoSource.TagName, written));
+        Assert.Equal(1, source.ChildPropertyFullCalls);
+        Assert.Null(source.Tag);
+    }
+
+    /// <summary>
+    /// Chaining up out of the <c>set_child_property_full</c> override reaches
+    /// the <c>set_child_property</c> slot below it and writes the value.
+    /// </summary>
+    [Fact]
+    public void ChainingUpOutOfTheFullSlotStillReachesTheChildPropertySlot()
+    {
+        GstGES.Initialize();
+
+        using ProbeVideoSource source = ProbeVideoSource.New();
+
+        using Value written = Value.New(GType.String);
+        written.SetString("through the full slot");
+
+        Assert.True(source.SetChildPropertyFull(ProbeVideoSource.TagName, written));
+
+        Assert.Equal(1, source.ChildPropertyFullCalls);
+        Assert.Contains(ProbeVideoSource.TagName, source.ChildPropertyWrites);
+        Assert.Equal("through the full slot", source.Tag);
+
+        using Value read = source.GetChildProperty(ProbeVideoSource.TagName);
+        Assert.Equal("through the full slot", read.GetString());
+    }
+
+    /// <summary>
+    /// An exception out of the override is caught on the boundary: the write
+    /// fails, the process lives, and the trap saw what happened.
+    /// </summary>
+    [Fact]
+    public void AnExceptionOutOfTheFullSlotIsTrappedAndTheWriteFails()
+    {
+        GstGES.Initialize();
+
+        using ProbeVideoSource source = ProbeVideoSource.New();
+        source.ThrowOnChildPropertyFull = true;
+
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
+        {
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        Gst.Interop.ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            using Value written = Value.New(GType.String);
+            written.SetString("never written");
+
+            // Nothing is written through the error either: the trampoline
+            // leaves the pointer of the caller alone, which the slot documents
+            // as a legal refusal, so the call answers false rather than throwing.
+            Assert.False(source.SetChildPropertyFull(ProbeVideoSource.TagName, written));
+        }
+        finally
+        {
+            Gst.Interop.ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        Assert.Null(source.Tag);
+
+        lock (failures)
+        {
+            Exception trapped = Assert.Single(failures);
+            InvalidOperationException refusal = Assert.IsType<InvalidOperationException>(trapped);
+            Assert.Contains(ProbeVideoSource.TagName, refusal.Message, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// An override that throws its refusal instead of answering with it is
+    /// still a bug the trap sees, but the reason it carries reaches the caller
+    /// all the same.
+    /// </summary>
+    [Fact]
+    public void AThrownRefusalIsBothReportedAndForwarded()
+    {
+        GstGES.Initialize();
+
+        using ProbeVideoSource source = ProbeVideoSource.New();
+
+        Gst.GLib.GException refusal = new(
+            GESGlobal.ErrorQuark(),
+            (int)GES.Error.NotEnoughInternalContent,
+            "the probe throws the reason instead of answering it");
+        source.ThrowRefusalWith = refusal;
+
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
+        {
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        Gst.Interop.ExceptionTrap.UnhandledException += OnFailure;
+
+        Gst.GLib.GException thrown;
+        try
+        {
+            using Value written = Value.New(GType.String);
+            written.SetString("never written");
+
+            thrown = Assert.Throws<Gst.GLib.GException>(
+                () => source.SetChildPropertyFull(ProbeVideoSource.TagName, written));
+        }
+        finally
+        {
+            Gst.Interop.ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        // The forward binding rebuilds the error the trampoline wrote, so what
+        // arrives is a copy of the reason and not the instance that was thrown.
+        Assert.Equal(refusal.Domain, thrown.Domain);
+        Assert.Equal(refusal.Code, thrown.Code);
+        Assert.Equal(refusal.Message, thrown.Message);
+
+        Assert.Null(source.Tag);
+        Assert.Empty(source.ChildPropertyWrites);
+
+        lock (failures)
+        {
+            Exception trapped = Assert.Single(failures);
+            Gst.GLib.GException reported = Assert.IsType<Gst.GLib.GException>(trapped);
+            Assert.Equal(refusal.Domain, reported.Domain);
+            Assert.Equal(refusal.Code, reported.Code);
+        }
+    }
+
+    /// <summary>
+    /// A subclass that takes <c>set_child_property</c> over and leaves the
+    /// slot above it alone is reached through the implementation the editing
+    /// services install on every class.
+    /// </summary>
+    [Fact]
+    public void ThePlainChildPropertySlotIsReachedThroughTheDefaultFullSlot()
+    {
+        GstGES.Initialize();
+
+        using PlainChildPropertyVideoSource source = PlainChildPropertyVideoSource.New();
+
+        using Value written = Value.New(GType.String);
+        written.SetString("through the default");
+
+        Assert.True(source.SetChildPropertyFull(PlainChildPropertyVideoSource.TagName, written));
+
+        Assert.Contains(PlainChildPropertyVideoSource.TagName, source.ChildPropertyWrites);
+        Assert.Equal("through the default", source.Tag);
+    }
+
+    /// <summary>
     /// Makes a clip a video-only clip of a known length, so that
     /// <c>create_track_element</c> is asked for the video track alone.
     /// </summary>

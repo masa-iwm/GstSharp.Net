@@ -1565,7 +1565,7 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Video.VideoFilter` | `set_info`, `transform_frame`, `transform_frame_ip` |
 | `Gst.Video.VideoDecoder` | `open`, `close`, `start`, `stop`, `parse`, `set_format`, `reset`, `finish`, `handle_frame`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `getcaps`, `drain`, `transform_meta`, `handle_missing_data` |
 | `Gst.Video.VideoEncoder` | `open`, `close`, `start`, `stop`, `set_format`, `handle_frame`, `reset`, `finish`, `pre_push`, `getcaps`, `sink_event`, `src_event`, `negotiate`, `decide_allocation`, `propose_allocation`, `flush`, `sink_query`, `src_query`, `transform_meta` |
-| `GES.TimelineElement` | `set_parent`, `set_start`, `set_inpoint`, `set_duration`, `set_max_duration`, `set_priority`, `ripple`, `ripple_end`, `roll_start`, `roll_end`, `trim`, `deep_copy`, `paste`, `list_children_properties`, `lookup_child`, `get_track_types`, `set_child_property`, `get_layer_priority`, `get_natural_framerate` |
+| `GES.TimelineElement` | `set_parent`, `set_start`, `set_inpoint`, `set_duration`, `set_max_duration`, `set_priority`, `ripple`, `ripple_end`, `roll_start`, `roll_end`, `trim`, `deep_copy`, `paste`, `list_children_properties`, `lookup_child`, `get_track_types`, `set_child_property`, `set_child_property_full`, `get_layer_priority`, `get_natural_framerate` |
 | `GES.TrackElement` | `create_gnl_object`, `create_element`, `active_changed`, `changed` |
 | `GES.Source` | `select_pad`, `create_source` |
 | `GES.Clip` | `create_track_element` |
@@ -1574,11 +1574,30 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 type is answered from. Seven slots of the GStreamer classes above carry no
 `OnX` member, and all seven are the signal class closures of `Element` and
 `Bin`, which the base library never calls through the class pointer —
-subscribing to the signal is the same hook. Four slots of the editing services
-classes above are left out as well: the throwing `set_child_property_full`, the two dead
-`TrackElement` twins of the child property slots, and
-`Clip::create_track_elements`. `girs/skip-report.md` lists all of them with
-their reason.
+subscribing to the signal is the same hook. Three slots of the editing
+services classes above are left out as well: the two dead `TrackElement` twins
+of the child property slots and `Clip::create_track_elements`.
+`girs/skip-report.md` lists all of them with their reason.
+
+`TimelineElement::set_child_property_full` is the one slot of the table whose
+three members are written by hand, in
+`src/GstSharp.Net.GES/Custom/TimelineElement.cs`: it carries a `GError**`,
+which the generator refuses, so `OnSetChildPropertyFull` reports a refusal
+through an `out GException?` the way `SetUri` does, and the trampoline writes
+that error only where GLib allows one to be written — the pointer may be
+`NULL`, and the loop that walks the children shares one across them, so an
+error that is already there is left alone. **Installing it takes over every
+child property write**: GES only reaches `set_child_property` through the
+default implementation of this slot, so an override that does not chain up
+stops `OnSetChildProperty` from running. The base implementation chains up.
+
+The shape is the one of `SetUri`, the policy is not: nothing is synthesised
+here, so a refusal that carries no reason stays one, a thrown `GException` is
+reported through the exception trap and forwarded as the reason of the refusal
+under the same write rule, and any other exception is reported and leaves the
+error of the caller untouched. That is legal because callers in the editing
+services guard the pointer before they read it, where
+`gst_element_make_from_uri` dereferences it unconditionally.
 
 `AudioSink::stop` is the one slot whose managed name is not the one its gir
 name derives. It shares that name with the `stop` of `BaseSink` and answers

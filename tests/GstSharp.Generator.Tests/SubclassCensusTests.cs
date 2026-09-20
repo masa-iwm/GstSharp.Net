@@ -119,10 +119,14 @@ public sealed class SubclassCensusTests
             + "behaves the way this slot would make it behave";
         const string ThrowingSlot =
             "the slot is throws=\"1\" and PlanVirtualMethod refuses every throwing slot outright "
-            + "(MarshalPlanner.cs:4941-4945): carrying a GError back out of a managed override is a "
-            + "contract of its own that no slot of the corpus has yet, and the base class falls back to "
-            + "set_child_property when the slot is NULL (ges-timeline-element.c:828-836), so "
-            + "OnSetChildProperty is reached from every public setter in the meantime";
+            + "(MarshalPlanner.cs:5765): carrying a GError back out of a managed override is a contract "
+            + "no generated slot expresses, so the slot is hand bound in "
+            + "src/GstSharp.Net.GES/Custom/TimelineElement.cs, where OnSetChildPropertyFull answers the "
+            + "refusal through an out GException, chains up by default - GES installs this slot on every "
+            + "class (ges-timeline-element.c:654) and dispatches every child property write through it "
+            + "(ges-timeline-element.c:828-829), so its default implementation is the only caller of "
+            + "set_child_property and the managed override is the hand bound entry into it - and is "
+            + "taken over with SetChildPropertyFullOverride";
         const string DeadListSlot =
             "the deprecated slot (Deprecated: 1.14) is dead: nothing in the 1.28 tree assigns it and "
             + "nothing calls through it (the only list_children_properties slot ges reads is the "

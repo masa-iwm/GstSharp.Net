@@ -9,10 +9,11 @@ namespace Gst;
 /// <remarks>
 /// <para>
 /// <c>gst_meta_serialize_simple</c> writes into a <c>GByteArray</c> the caller
-/// owns. The generated sibling of it, <c>Meta.Serialize(ByteArrayInterface)</c>,
-/// is unreachable surface because <see cref="Gst.ByteArrayInterface"/> has no
-/// public constructor, so <see cref="Gst.Meta.Serialize()"/> owns a byte array
-/// for the length of the call and answers a <c>byte[]</c> instead. See the
+/// owns, and <see cref="Gst.Meta.Serialize()"/> owns one for the length of the
+/// call and answers a <c>byte[]</c>. Its generated sibling,
+/// <c>Meta.Serialize(ByteArrayInterface)</c>, appends to an array the caller
+/// keeps instead, which could not be built outside a serialize callback until
+/// <see cref="Gst.ByteArrayInterface"/> got a public constructor. See the
 /// <c>skip</c> list of <c>girs/overlays/fixups.json</c> for the ledger entry.
 /// </para>
 /// <para>

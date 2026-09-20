@@ -412,11 +412,18 @@ when the pointer it was given is borrowed (`g_param_spec_ref_sink`) and gives
 it up in `Dispose` and nowhere else, so what `Lookup` or `LookupChild` — or a
 signal — handed out stays readable after the object or the child it describes
 is gone: a `GParamSpec` lives by its own reference count, not by that of any
-instance. The wrapper has no finalizer, which makes its leak the one silent
-one in the runtime: an instance that is never disposed holds that reference
-until the process exits. Little is lost when that happens, since an installed
-specification belongs to a class and lives as long as the process anyway, but
-dispose it as you would any other wrapper.
+instance. The wrapper has no finalizer, which makes its leak one of the two
+silent ones in the runtime: an instance that is never disposed holds that
+reference until the process exits. Little is lost when that happens, since an
+installed specification belongs to a class and lives as long as the process
+anyway, but dispose it as you would any other wrapper.
+
+`Gst.ByteArrayInterface()` is the other one. An instance the public
+constructor built owns the record it points at and the `GByteArray` behind it,
+`Dispose` releases both, and there is no finalizer to do it later — so a
+serialisation sink that is dropped without being disposed leaks the bytes it
+collected. A wrapper handed to a `MetaSerializeFunction` is lent instead: it
+owns nothing and disposing it does nothing.
 
 `ListChildrenProperties` is the plural of that row: it answers a
 `ParamSpec[]`, never `null` — an element with no child properties answers the

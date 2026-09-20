@@ -159,6 +159,227 @@ public abstract unsafe partial class TimelineElement
         }
     }
 
+    /// <summary>
+    /// Gets the declaration of <c>GESTimelineElement.set_child_property_full</c>, for a
+    /// subclass that overrides <see cref="OnSetChildPropertyFull"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The slot carries a <c>GError**</c>, which is a shape the generator does
+    /// not project, so the override, its chain-up and its trampoline are written
+    /// by hand here and are otherwise the generated ones of every other slot of
+    /// this class.
+    /// </para>
+    /// <para>
+    /// <b>Installing it takes over every child property write.</b> GES calls
+    /// this slot whenever one is asked for and only reaches
+    /// <c>set_child_property</c> through the implementation below it
+    /// (ges-timeline-element.c:828-829), so an override that does not chain up
+    /// stops <see cref="OnSetChildProperty"/> from running at all.
+    /// </para>
+    /// </remarks>
+    public static Gst.GObject.VfuncOverride SetChildPropertyFullOverride { get; } = new(
+        &GetGType,
+        GES.TimelineElementClassRaw.SetChildPropertyFullOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, Gst.GObject.GValueNative*, nint*, int>)&SetChildPropertyFullTrampoline);
+
+    /// <summary>
+    /// Writes a property of one of the children of this element, with a reason
+    /// when the write is refused.
+    /// </summary>
+    /// <param name="child">
+    /// The <c>child</c> argument.
+    /// The element lends this for the duration of the call. Keeping the wrapper is
+    /// safe: a GObject wrapper is interned and its reference outlives the call.
+    /// </param>
+    /// <param name="pspec">
+    /// The <c>pspec</c> argument.
+    /// The caller lends this for the duration of the call: the wrapper takes a
+    /// reference of its own and gives it back when the override returns, so keep
+    /// nothing beyond the call — re-wrap it with ParamSpec.FromNative(pspec.Handle,
+    /// Transfer.None) to hold one afterwards.
+    /// </param>
+    /// <param name="value">
+    /// The <c>value</c> argument.
+    /// The view points at storage the caller of the slot owns and is only valid
+    /// while the call runs; ToValue() copies what it holds. The value may arrive as
+    /// a string for a specification of another type — the by name setters go
+    /// through gst_util_set_object_arg — so read its Type before a typed getter, or
+    /// chain up, which handles that case.
+    /// </param>
+    /// <param name="error">
+    /// Receives the reason a refusal carries, or <see langword="null"/> when the
+    /// refusal has none. A refusal without a reason is what GES itself answers
+    /// on several of its own paths, so it is a legal answer rather than an
+    /// omission; a reason that is to reach the caller needs a domain, which only
+    /// the <c>GException(Quark, int, string)</c> constructor gives it.
+    /// </param>
+    /// <returns>Whether the property was written.</returns>
+    /// <remarks>
+    /// <para>
+    /// The implementation here chains up, which is what keeps
+    /// <see cref="OnSetChildProperty"/> reachable: the default implementation of
+    /// this slot in GES is the call to that one.
+    /// </para>
+    /// <para>
+    /// An exception that leaves this override is reported through the exception
+    /// trap and the write is refused, the way every other slot of the binding
+    /// answers a managed exception. A <see cref="Gst.GLib.GException"/> is
+    /// forwarded as the reason of that refusal on top of being reported, under
+    /// the same rule a returned one is written under; any other exception
+    /// leaves the error of the caller untouched. Nothing is synthesised in its
+    /// place: the slot documents its error as optionally set, and every caller
+    /// in the editing services tolerates a refusal that carries none.
+    /// </para>
+    /// </remarks>
+    protected virtual bool OnSetChildPropertyFull(
+        Gst.GObject.Object child,
+        Gst.GObject.ParamSpec pspec,
+        Gst.GObject.ValueView value,
+        out Gst.GLib.GException? error) =>
+        ChainUpSetChildPropertyFull(child, pspec, value, out error);
+
+    /// <summary>Runs the implementation of <c>set_child_property_full</c> below the managed override.</summary>
+    /// <param name="child">The child that carries the property.</param>
+    /// <param name="pspec">The specification of the property.</param>
+    /// <param name="value">The value to write.</param>
+    /// <param name="error">Receives the reason of a refusal, or <see langword="null"/>.</param>
+    /// <returns>Whether the property was written.</returns>
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    protected bool ChainUpSetChildPropertyFull(
+        Gst.GObject.Object child,
+        Gst.GObject.ParamSpec pspec,
+        Gst.GObject.ValueView value,
+        out Gst.GLib.GException? error)
+    {
+        ArgumentNullException.ThrowIfNull(child);
+        ArgumentNullException.ThrowIfNull(pspec);
+        using Gst.GObject.Value valueCopy = value.ToValue();
+        Gst.GObject.GValueNative* valueNative = &valueCopy.NativeValue;
+        nint errorNative = nint.Zero;
+        bool result = ChainUpSetChildPropertyFull(Handle, child.Handle, pspec.Handle, valueNative, &errorNative);
+        GC.KeepAlive(this);
+        GC.KeepAlive(child);
+        GC.KeepAlive(pspec);
+
+        // The error of the implementation below belongs to this call: it is read
+        // into a value of its own and released here, so that what the override
+        // above gives back outlives the frame the pointer lived in.
+        error = Gst.GLib.GException.FromBorrowed(errorNative);
+        if (errorNative != nint.Zero)
+        {
+            GLibNative.ErrorFree(errorNative);
+        }
+
+        return result;
+    }
+
+    private static bool ChainUpSetChildPropertyFull(
+        nint self,
+        nint child,
+        nint pspec,
+        Gst.GObject.GValueNative* value,
+        nint* error)
+    {
+        delegate* unmanaged[Cdecl]<nint, nint, nint, Gst.GObject.GValueNative*, nint*, int> slot =
+            (delegate* unmanaged[Cdecl]<nint, nint, nint, Gst.GObject.GValueNative*, nint*, int>)
+                ParentClassOf(self)->SetChildPropertyFull;
+
+        if (slot is null)
+        {
+            throw new InvalidOperationException(
+                "TimelineElement.set_child_property_full has no parent implementation; override OnSetChildPropertyFull.");
+        }
+
+        return slot(self, child, pspec, value, error) != 0;
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static int SetChildPropertyFullTrampoline(
+        nint self,
+        nint child,
+        nint pspec,
+        Gst.GObject.GValueNative* value,
+        nint* error)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(self) is not TimelineElement managed)
+            {
+                return (ChainUpSetChildPropertyFull(self, child, pspec, value, error)) ? 1 : 0;
+            }
+
+            Gst.GObject.Object? childValue = Gst.GObject.Object.FromNative<Gst.GObject.Object>(child, Transfer.None);
+            using Gst.GObject.ParamSpec? pspecValue = pspec == nint.Zero ? null : Gst.GObject.ParamSpec.FromNative(pspec, Transfer.None);
+            Gst.GObject.ValueView valueValue = value != null
+                ? new Gst.GObject.ValueView(ref *value)
+                : throw new InvalidOperationException("set_child_property_full passed no value.");
+
+            if (managed.OnSetChildPropertyFull(childValue!, pspecValue!, valueValue, out Gst.GLib.GException? failure))
+            {
+                return 1;
+            }
+
+            WriteRefusal(error, failure);
+            return 0;
+        }
+        catch (Gst.GLib.GException refusal)
+        {
+            // A throw is still a bug in the override — the slot answers a
+            // refusal, it does not raise one — so it is reported the way any
+            // other escaping exception is. The error it carries is a reason
+            // the caller can read, though, so it is forwarded under the same
+            // rule a returned one is written under rather than dropped.
+            ExceptionTrap.Report(refusal);
+            WriteRefusal(error, refusal);
+            return 0;
+        }
+        catch (Exception exception)
+        {
+            ExceptionTrap.Report(exception);
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Writes the reason of a refusal, unless there is no room for one.
+    /// </summary>
+    /// <param name="error">The <c>GError**</c> the caller passed, which may be null.</param>
+    /// <param name="failure">What the override reported, or null.</param>
+    /// <remarks>
+    /// The pointer is shared across the children a write walks
+    /// (ges-timeline-element.c:855), so an error that is already there is left
+    /// alone: g_set_error warns and drops the second one, and the first refusal
+    /// is the one that describes the write. An error GLib would refuse — no
+    /// domain, no message, or a message with an embedded null — is dropped as
+    /// well, since a refusal that carries nothing is a legal answer of this slot
+    /// and a null error is not.
+    /// </remarks>
+    private static void WriteRefusal(nint* error, Gst.GLib.GException? failure)
+    {
+        if (error is null || *error != nint.Zero || failure is null)
+        {
+            return;
+        }
+
+        if (failure.Domain.Value == 0
+            || string.IsNullOrEmpty(failure.Message)
+            || failure.Message.Contains('\0', StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        nint text = GMarshal.StringToUtf8Ptr(failure.Message);
+        try
+        {
+            *error = GLibNative.ErrorNewLiteral(failure.Domain.Value, failure.Code, (byte*)text);
+        }
+        finally
+        {
+            GMarshal.Free(text);
+        }
+    }
+
     /// <summary>The <c>ges_timeline_element_get_child_property</c> entry point.</summary>
     /// <remarks>
     /// The value travels as a pointer rather than as a <c>ref</c>. A
