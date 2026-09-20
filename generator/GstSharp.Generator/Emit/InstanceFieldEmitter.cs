@@ -622,10 +622,12 @@ internal sealed class InstanceFieldEmitter
     /// override at all or when one of them names no emitted override.
     /// </returns>
     /// <remarks>
-    /// The name is not spelled by hand: it is the one the subclassing surface
-    /// emitted, read out of the same table the <c>new</c> rule of an override is
-    /// decided from, so a renamed slot cannot leave the remark pointing at a
-    /// member that does not exist.
+    /// The name is not spelled by hand: it is derived from the gir name of the
+    /// slot and then looked up in the table of what the subclassing surface of
+    /// the class actually emitted, so a slot an overlay renamed fails the lookup
+    /// and is reported rather than leaving the remark pointing at a member that
+    /// does not exist. The first entry on a renamed slot is what will have to read
+    /// the name out of that table instead of deriving it.
     /// </remarks>
     private IReadOnlyList<string>? Overrides(
         GirNamespace ns,
@@ -763,10 +765,18 @@ internal sealed class InstanceFieldEmitter
     /// <param name="type">The type to map.</param>
     /// <returns>The C# type name.</returns>
     /// <remarks>
+    /// <para>
     /// The table is closed on purpose. A mirror that guessed at a type it does
     /// not know would shift every field behind the one it guessed at, and the
     /// accessors read through it, so a type this does not name is an error rather
     /// than a pointer sized assumption.
+    /// </para>
+    /// <para>
+    /// An alias is followed to an enumeration and to a callback only, so a field
+    /// spelled <c>Gst.ClockTime</c> rather than <c>guint64</c> is an error until
+    /// the table names it. That is the first thing a wave on the codec classes has
+    /// to answer, and it is a line of this table rather than a rule.
+    /// </para>
     /// </remarks>
     private string ScalarOf(GirNamespace ns, GirField field, GirTypeRef type)
     {
