@@ -114,17 +114,15 @@ micro and ignores the nano version. CI runs the whole suite against four
 installations: Ubuntu 24.04 (1.24, the floor, on x64 and arm64), the official
 Windows MSVC build (1.28.6), MSYS2's MinGW build, and Homebrew on macOS.
 
-**Which members those are.** The documentation of every generated member that
-GStreamer added after the floor says so, in the words `Available since
-GStreamer 1.28.` (or 1.26) — the `Since:` tag of the upstream documentation,
-carried through into the XML documentation and therefore into IntelliSense.
-Reading one of those lines is what tells you the member needs a library newer
-than the floor; calling it against an older one is the
-`EntryPointNotFoundException` above. The repository's own tests take the same
-route for coverage: a test that exercises such a member asks a helper
-(`NativeAvailability`, with `Has126` / `Has128` and the behavior flags beside
-them) what the loaded library has, so the suite passes on 1.24 and on 1.28
-alike without conditional compilation.
+**Which members those are.** A generated member whose documentation reads
+`Available since GStreamer 1.26.` or `Available since GStreamer 1.28.` — the
+`Since:` tag of the upstream documentation, carried into the XML
+documentation and therefore into IntelliSense — needs a library at least that
+new, and answers an older one with the `EntryPointNotFoundException` above.
+The repository's own tests take the same route: a test that exercises such a
+member asks a helper (`NativeAvailability`, with `Has126` / `Has128` and the
+behavior flags beside them) what the loaded library has, so the suite passes
+on 1.24 and on 1.28 alike without conditional compilation.
 
 ## Getting started
 
