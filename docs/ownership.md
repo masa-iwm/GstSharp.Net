@@ -740,7 +740,18 @@ more than a lock on four of them.
   same contract, a copy the caller keeps, consistent when it was taken inside
   `OnHandleFrame`, or inside `OnParse` on a decoder
   (`gstaudiodecoder.h:161-173`, `gstaudioencoder.h:99-119`,
-  `gstvideodecoder.h:177-188`, `gstvideoencoder.h:140-151`). The two video
+  `gstvideodecoder.h:177-188`, `gstvideoencoder.h:140-151`). The output segment
+  lags the input one: it is written only when the base class pushes the queued
+  segment event downstream (`gstaudioencoder.c:611`, `gstaudiodecoder.c:641`,
+  `gstvideoencoder.c:1062`, `gstvideodecoder.c:1107`, each inside that class's
+  `push_event`), so inside the first `OnHandleFrame` after a new segment
+  `GetOutputSegment()` still answers the previous value — the default
+  `gst_segment_init` left, on a fresh stream. The input segment has a gap of its
+  own: the audio encoder ignores a segment event whose format is not TIME
+  (`gstaudioencoder.c:1605-1613`) and the audio decoder ignores one it cannot
+  convert to TIME from bytes (`gstaudiodecoder.c:2403-2434`, the refusal at
+  `:2428-2433`), so `GetInputSegment()` keeps the value the previous segment
+  left. The two video
   headers mark the segments `/*< protected >*/` behind a `/*< private >*/` the
   scanner never leaves, which is why their overlay entries state the header line
   the gir contradicts.

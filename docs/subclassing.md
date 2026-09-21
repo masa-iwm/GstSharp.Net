@@ -979,8 +979,13 @@ to rewrite the segment from the thread that sent the event
 their own, a `GRecMutex` the class carries, around the frame slots for the same
 reason. So the read is consistent inside one of those
 overrides: `OnRender` or `OnPreroll`, `OnCreate` or `OnFill`, `OnTransform` or
-`OnTransformIp`, `OnHandleFrame`, and `OnParse` on the two decoders. Called from anywhere else — a property setter,
-a bus handler, a thread of the subclass's own — it still answers a segment and
+`OnTransformIp`, `OnHandleFrame`, and `OnParse` on the two decoders. Consistent
+is not the same as current for the output segment of a codec class: the base
+class writes it only as it pushes the queued segment event downstream, so the
+first `OnHandleFrame` after a new segment reads the previous value.
+[`docs/ownership.md`](ownership.md) cites the four writers, and the two places a
+segment event leaves the input segment untouched as well. Called from anywhere
+else — a property setter, a bus handler, a thread of the subclass's own — it still answers a segment and
 is still memory safe, but the segment may mix the fields of two: `GstSegment` is
 flat and owns no pointer, so a racing rewrite tears the value and nothing else.
 An override must not reach for a lock instead; see item 8 of
