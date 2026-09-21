@@ -295,7 +295,12 @@ whose name is one the mirror gives a static of its own. All four are errors
 rather than truncations: a short mirror would still measure the right offset and
 would break the size probe instead. `GEN0063` reports an accessor whose name the
 class or a descendant of it already carries, which the field answers with a
-`name`. Every entry also joins the three probe layers of
+`name`. `GEN0064` reports a `typeDocReplace` entry that replaced nothing: an
+`old` standing nowhere or more than once in the documentation of the class, a
+class carrying no documentation at all, or a key naming no class this run
+rendered. It is an error, because the entry exists to keep a documented grammar
+that does not work out of the generated text. Every entry also joins the three
+probe layers of
 `InstanceFieldProbeTests`, and the meta test there fails for a field with no
 behavioural witness.
 
@@ -437,6 +442,17 @@ The remaining keys address a callback type and a member rather than a slot:
   nowhere or twice — and an entry whose callable carries no documentation at
   all — is reported as `GEN0052`, and an entry that names no rendered callable
   is `GEN0053`.
+* `typeDocReplace` — exact substrings of the raw gir documentation of a *class*
+  and the text written in their place, keyed by qualified gir name
+  (`GES.EffectClip`) with an `old`/`new` pair per replacement. It is the
+  counterpart of `docStrip` one level up, for the upstream sentence that
+  documents a string grammar the library itself does not write — a note beside
+  it would leave the reader two grammars and no way to choose. Replacements are
+  applied in order, each to the text the one before left behind. Every failure
+  is `GEN0064` and an error: an `old` that stands nowhere or more than once, a
+  class with no documentation at all, and an entry that names no rendered
+  class. Only classes are covered — records and interfaces obtain their type
+  documentation on emitter paths of their own.
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter

@@ -989,6 +989,14 @@ public sealed class ClassEmitterTests
         // trampoline mints, which turns a floating hand out back into a borrow
         // the caller of the slot owns nothing of.
         //
+        // GEN0064 is the other error of the family, and it covers both halves at
+        // once: a type documentation replacement whose 'old' no longer stands in
+        // the documentation of the class exactly once, and one that names no
+        // class this run rendered. Either way the generated type carries the
+        // upstream sentence the entry exists to rewrite - a documented string
+        // grammar the library does not write that way - so the run fails rather
+        // than publishing it.
+        //
         // The seventeenth is not stale but illegal: a 'borrow' on a key that is
         // no argument of a signal at all - a parameter of a method or of a
         // callback, an argument of a virtual method, a return - or on a signal
@@ -1042,6 +1050,7 @@ public sealed class ClassEmitterTests
             Assert.NotEqual("GEN0057", diagnostic.Code);
             Assert.NotEqual("GEN0058", diagnostic.Code);
             Assert.NotEqual("GEN0060", diagnostic.Code);
+            Assert.NotEqual("GEN0064", diagnostic.Code);
         }
     }
 

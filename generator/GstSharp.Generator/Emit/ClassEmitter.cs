@@ -65,6 +65,7 @@ internal sealed class ClassEmitter
     private readonly Dictionary<string, List<string>> _inherited;
     private readonly FieldShapes _shapes;
     private readonly InstanceFieldEmitter _instanceFields;
+    private readonly HashSet<string> _consumedTypeDocReplacements;
     private readonly List<GeneratedFile> _mirrors = [];
     private readonly HashSet<string> _exposedFields = new(StringComparer.Ordinal);
 
@@ -87,6 +88,10 @@ internal sealed class ClassEmitter
     /// The managed override names every subclassable class emitted, which is what
     /// the <c>overrides</c> of an instance field entry are checked against.
     /// </param>
+    /// <param name="consumedTypeDocReplacements">
+    /// Receives the keys of the <c>typeDocReplace</c> entries this emitter read,
+    /// so that the run can report the ones that named no rendered class.
+    /// </param>
     internal ClassEmitter(
         Repository repository,
         Classifier classifier,
@@ -98,8 +103,10 @@ internal sealed class ClassEmitter
         DiagnosticBag diagnostics,
         List<RegistryEntry> registry,
         Dictionary<string, List<string>> inherited,
-        Dictionary<string, HashSet<string>> emittedVirtuals)
+        Dictionary<string, HashSet<string>> emittedVirtuals,
+        HashSet<string> consumedTypeDocReplacements)
     {
+        _consumedTypeDocReplacements = consumedTypeDocReplacements;
         _repository = repository;
         _classifier = classifier;
         _names = names;
@@ -799,7 +806,7 @@ internal sealed class ClassEmitter
         writer.WriteLine();
         XmlDocWriter.Write(
             writer,
-            declaration.Doc,
+            TypeDocOf(ns, declaration),
             "The functions the gir declares inside <c>" + CTypeOf(declaration) + "</c>.",
             declaration,
             FundamentalRemarks(ns, declaration));
@@ -811,6 +818,78 @@ internal sealed class ClassEmitter
 
         _census.Emitted(module.GirNamespace, "value container");
         return new GeneratedFile(module.ProjectDirectory + "/Generated/" + typeName + ".cs", writer.ToSource());
+    }
+
+    /// <summary>
+    /// Returns the gir documentation of a class as it is rendered, with the
+    /// parts the overlays write differently written differently.
+    /// </summary>
+    /// <param name="ns">The gir namespace the class is declared in.</param>
+    /// <param name="declaration">The class.</param>
+    /// <returns>
+    /// The documentation to render, which is the gir text itself when no entry
+    /// names the class.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This is the <c>typeDocReplace</c> overlay, and it is the only correction
+    /// that reaches the documentation of a type rather than of a member. It
+    /// exists for the upstream sentence that states a grammar the library does
+    /// not write that way, which neither a removal nor a note beside it can
+    /// mend: a note would leave the reader two grammars and nothing to choose
+    /// between them.
+    /// </para>
+    /// <para>
+    /// The replacements are applied in the order they are written, each to the
+    /// text the one before it left behind, and each <c>old</c> has to stand
+    /// there exactly once. Anything else - no occurrence, more than one, or a
+    /// class that carries no documentation at all - is an error rather than a
+    /// silent pass, so that the gir refresh which corrects the sentence
+    /// upstream stops the run instead of leaving the entry to rot.
+    /// </para>
+    /// </remarks>
+    private string? TypeDocOf(GirNamespace ns, GirClass declaration)
+    {
+        string qualifiedName = ns.Name + "." + declaration.Name;
+        if (!_overlays.TryGetTypeDocReplacements(
+            qualifiedName,
+            out IReadOnlyList<DocReplacement>? replacements))
+        {
+            return declaration.Doc;
+        }
+
+        _consumedTypeDocReplacements.Add(qualifiedName);
+        if (declaration.Doc is not { } doc)
+        {
+            _diagnostics.Error(
+                "GEN0064",
+                $"The type documentation replacement entry '{qualifiedName}' names a class that "
+                + "carries no documentation at all.");
+            return null;
+        }
+
+        foreach (DocReplacement replacement in replacements)
+        {
+            int first = doc.IndexOf(replacement.Old, StringComparison.Ordinal);
+            int last = first < 0 ? -1 : doc.LastIndexOf(replacement.Old, StringComparison.Ordinal);
+            if (first < 0 || first != last)
+            {
+                _diagnostics.Error(
+                    "GEN0064",
+                    $"The type documentation replacement entry '{qualifiedName}' replaces a "
+                    + "substring that stands "
+                    + (first < 0 ? "nowhere" : "more than once")
+                    + " in the documentation of the class; it has to stand there exactly once.");
+                continue;
+            }
+
+            doc = string.Concat(
+                doc.AsSpan(0, first),
+                replacement.New,
+                doc.AsSpan(first + replacement.Old.Length));
+        }
+
+        return doc;
     }
 
     /// <summary>
@@ -950,7 +1029,11 @@ internal sealed class ClassEmitter
         CodeWriter writer = new();
         WriteHeader(writer, module, ns, surface.ParameterArrays.Count > 0);
         writer.WriteLine();
-        XmlDocWriter.Write(writer, declaration.Doc, "The <c>" + CTypeOf(declaration) + "</c> class.", declaration);
+        XmlDocWriter.Write(
+            writer,
+            TypeDocOf(ns, declaration),
+            "The <c>" + CTypeOf(declaration) + "</c> class.",
+            declaration);
         XmlDocWriter.WriteObsolete(writer, declaration);
 
         string modifiers = declaration.IsAbstract ? "public abstract " : "public ";

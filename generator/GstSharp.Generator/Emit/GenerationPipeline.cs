@@ -108,6 +108,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedPreconditions = new(StringComparer.Ordinal);
         HashSet<string> consumedHandOverRefusals = new(StringComparer.Ordinal);
         HashSet<string> consumedDocStrips = new(StringComparer.Ordinal);
+        HashSet<string> consumedTypeDocReplacements = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
         HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
 
@@ -158,7 +159,8 @@ internal static class GenerationPipeline
                     lentOpaqueRecords,
                     consumedSkips,
                     subclasses,
-                    emittedVirtuals),
+                    emittedVirtuals,
+                    consumedTypeDocReplacements),
                 module,
                 ns));
         }
@@ -331,6 +333,31 @@ internal static class GenerationPipeline
                 "GEN0053",
                 $"The documentation strip entry '{key}' names a callable that was not rendered by "
                 + "this run; the entry is stale.");
+        }
+
+        // A type documentation replacement that was read nowhere is the same
+        // loss one level up, and it is an error rather than a warning: the
+        // entry exists because the upstream sentence states a grammar that does
+        // not work, and a key nothing read means the generated type carries
+        // that sentence again. A gir refresh that corrected the sentence
+        // upstream is the expected way for this to fire, and it has to stop the
+        // run rather than scroll past.
+        List<string> staleTypeDocReplacements = [];
+        foreach (string key in overlays.TypeDocReplaceKeys)
+        {
+            if (!consumedTypeDocReplacements.Contains(key))
+            {
+                staleTypeDocReplacements.Add(key);
+            }
+        }
+
+        staleTypeDocReplacements.Sort(StringComparer.Ordinal);
+        foreach (string key in staleTypeDocReplacements)
+        {
+            diagnostics.Error(
+                "GEN0064",
+                $"The type documentation replacement entry '{key}' names no class that was rendered "
+                + "by this run; the entry is stale.");
         }
 
         // A sibling argument entry is only consumed where it named the shape it
@@ -645,7 +672,8 @@ internal static class GenerationPipeline
             shared.Diagnostics,
             registry,
             shared.Inherited,
-            shared.EmittedVirtuals);
+            shared.EmittedVirtuals,
+            shared.ConsumedTypeDocReplacements);
 
         List<InterfaceRegistryEntry> interfaceRegistry = [];
         InterfaceEmitter interfaceEmitter = new(
@@ -771,6 +799,10 @@ internal static class GenerationPipeline
     /// The skip entries the planner of a module matched against a type it was
     /// asked to project, shared for the same reason.
     /// </param>
+    /// <param name="ConsumedTypeDocReplacements">
+    /// The keys of the type documentation replacements the run has read, shared
+    /// for the same reason.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -794,7 +826,8 @@ internal static class GenerationPipeline
         HashSet<string> LentOpaqueRecords,
         HashSet<string> ConsumedSkips,
         SubclassModel Subclasses,
-        Dictionary<string, HashSet<string>> EmittedVirtuals);
+        Dictionary<string, HashSet<string>> EmittedVirtuals,
+        HashSet<string> ConsumedTypeDocReplacements);
 
     /// <summary>
     /// Reports the overlay entries about virtual methods that name no slot of

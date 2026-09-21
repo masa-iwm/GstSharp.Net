@@ -210,6 +210,42 @@ internal sealed class Precondition
 }
 
 /// <summary>
+/// One exact substring of the gir documentation of a type, and the text that
+/// stands in its place in the generated documentation.
+/// </summary>
+/// <remarks>
+/// It is the replacing counterpart of <c>docStrip</c>, for the upstream
+/// sentence that is not wrong enough to remove and not right enough to render:
+/// a documented string grammar the library itself does not write that way. The
+/// substring has to stand in the gir documentation exactly once, so that the
+/// gir refresh which reworded - or corrected - the sentence reports the entry
+/// rather than leaving the generated text as upstream wrote it.
+/// </remarks>
+internal sealed class DocReplacement
+{
+    /// <summary>
+    /// Gets or sets the substring of the gir documentation that is replaced. It
+    /// may not be blank, and it has to stand in the documentation exactly once.
+    /// </summary>
+    /// <remarks>
+    /// It is not nullable, because an entry that omits it is refused while the
+    /// overlays load: the blank default is what the refusal reads.
+    /// </remarks>
+    public string Old { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the text written in its place. It may not be the same text
+    /// as <see cref="Old"/>, which would replace nothing.
+    /// </summary>
+    /// <remarks>
+    /// An entry that omits it writes the empty string, which is a removal; that
+    /// is legal here, but <c>docStrip</c> is the key written for a removal of a
+    /// whole sentence.
+    /// </remarks>
+    public string New { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// A record or class field the ledger must not count as a missing binding,
 /// because something else already hands the same value out.
 /// </summary>
@@ -602,6 +638,18 @@ internal sealed class PlatformSupport
 /// substring has to occur exactly once in the raw documentation, so that a gir
 /// refresh which reworded the sentence is reported rather than silently
 /// stripping nothing.</description></item>
+/// <item><description><c>typeDocReplace</c>: the qualified gir name of a class
+/// (<c>GES.EffectClip</c>) mapped onto the exact substrings of its type
+/// documentation that are written differently, each as an <c>old</c> and a
+/// <c>new</c>. It is the replacing counterpart of <c>docStrip</c>, applied to
+/// the documentation of the type itself rather than of a member, for the
+/// upstream sentence that states a grammar the library does not write that way
+/// - the asset id of an effect clip. Each <c>old</c> has to stand in the raw
+/// documentation exactly once, and a key that named no class the run rendered
+/// is reported, so that a gir refresh which corrected the sentence upstream
+/// fails the run rather than replacing nothing. Only classes are covered: every
+/// other emitter obtains its type documentation on a path of its
+/// own.</description></item>
 /// </list>
 /// </remarks>
 internal sealed class Overlays
@@ -641,6 +689,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, IReadOnlyList<string>> _preconditions;
     private readonly Dictionary<string, string> _handOverRefusals;
     private readonly Dictionary<string, IReadOnlyList<string>> _docStrips;
+    private readonly Dictionary<string, IReadOnlyList<DocReplacement>> _typeDocReplacements;
 
     private Overlays(
         HashSet<string> skip,
@@ -670,7 +719,8 @@ internal sealed class Overlays
         Dictionary<string, string> signalDocNotes,
         Dictionary<string, IReadOnlyList<string>> preconditions,
         Dictionary<string, string> handOverRefusals,
-        Dictionary<string, IReadOnlyList<string>> docStrips)
+        Dictionary<string, IReadOnlyList<string>> docStrips,
+        Dictionary<string, IReadOnlyList<DocReplacement>> typeDocReplacements)
     {
         _skip = skip;
         _handBound = handBound;
@@ -700,6 +750,7 @@ internal sealed class Overlays
         _preconditions = preconditions;
         _handOverRefusals = handOverRefusals;
         _docStrips = docStrips;
+        _typeDocReplacements = typeDocReplacements;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -731,7 +782,8 @@ internal sealed class Overlays
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
-        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
+        new Dictionary<string, IReadOnlyList<DocReplacement>>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -849,6 +901,9 @@ internal sealed class Overlays
 
     /// <summary>Gets the callables whose gir documentation is shortened before it is rendered.</summary>
     internal IReadOnlyCollection<string> DocStripKeys => _docStrips.Keys;
+
+    /// <summary>Gets the types part of whose gir documentation is written differently.</summary>
+    internal IReadOnlyCollection<string> TypeDocReplaceKeys => _typeDocReplacements.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -1078,6 +1133,44 @@ internal sealed class Overlays
             docStrips[entry.Key] = [.. substrings];
         }
 
+        Dictionary<string, IReadOnlyList<DocReplacement>> typeDocReplacements =
+            new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, List<DocReplacement>> entry in fixups.TypeDocReplace ?? [])
+        {
+            // The same three silences a documentation strip has, in the shape a
+            // replacement takes them: an entry that names no replacement, one
+            // whose 'old' stands in every documentation there is, and one that
+            // writes back what it read. None of the three is caught by the stale
+            // key report, because the key is consumed by the very type it leaves
+            // unchanged.
+            if (entry.Value is not { Count: > 0 } replacements)
+            {
+                throw new InvalidDataException(
+                    $"The type documentation replacement entry '{entry.Key}' names no replacement; "
+                    + "an entry that replaces nothing changes nothing.");
+            }
+
+            foreach (DocReplacement replacement in replacements)
+            {
+                if (string.IsNullOrWhiteSpace(replacement.Old))
+                {
+                    throw new InvalidDataException(
+                        $"The type documentation replacement entry '{entry.Key}' replaces a blank "
+                        + "substring; an entry that replaces nothing changes nothing.");
+                }
+
+                if (string.Equals(replacement.Old, replacement.New, StringComparison.Ordinal))
+                {
+                    throw new InvalidDataException(
+                        $"The type documentation replacement entry '{entry.Key}' writes '"
+                        + replacement.Old + "' back over itself; an entry that replaces nothing "
+                        + "changes nothing.");
+                }
+            }
+
+            typeDocReplacements[entry.Key] = [.. replacements];
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -1112,7 +1205,8 @@ internal sealed class Overlays
             signalDocNotes,
             preconditions,
             handOverRefusals,
-            docStrips);
+            docStrips,
+            typeDocReplacements);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -1408,6 +1502,18 @@ internal sealed class Overlays
         [NotNullWhen(true)] out IReadOnlyList<string>? substrings) =>
         _docStrips.TryGetValue(cIdentifier, out substrings);
 
+    /// <summary>
+    /// Looks up the parts of the gir documentation of a type that are written
+    /// differently in the generated documentation.
+    /// </summary>
+    /// <param name="qualifiedName">The qualified gir name of the type.</param>
+    /// <param name="replacements">Receives the replacements, in the order they are written.</param>
+    /// <returns>Whether the documentation of the type is rewritten.</returns>
+    internal bool TryGetTypeDocReplacements(
+        string qualifiedName,
+        [NotNullWhen(true)] out IReadOnlyList<DocReplacement>? replacements) =>
+        _typeDocReplacements.TryGetValue(qualifiedName, out replacements);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -1481,6 +1587,8 @@ internal sealed class Overlays
         public Dictionary<string, string>? HandOverRefusals { get; set; }
 
         public Dictionary<string, List<string>>? DocStrip { get; set; }
+
+        public Dictionary<string, List<DocReplacement>>? TypeDocReplace { get; set; }
     }
 
     private sealed class PlatformSymbolsFile
