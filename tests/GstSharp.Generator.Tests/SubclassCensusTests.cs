@@ -92,6 +92,12 @@ public sealed class SubclassCensusTests
         const string ClassClosure =
             "signal class closure: read by g_signal at emission time, never called through the class "
             + "pointer by the base class; managed code subscribes to the signal instead";
+        const string HandBoundProbe =
+            "the slot answers a GList the caller consumes, which the reverse planner has no bucket "
+            + "for, so it is hand bound in src/GstSharp.Net/Custom/DeviceProvider.cs: OnProbe answers "
+            + "the devices, the trampoline hands the caller a new list and one added reference per "
+            + "device (gstdeviceprovider.c:421-428, :479-493), and the slot is taken over with "
+            + "ProbeOverride";
         Assert.Equal(
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
@@ -99,7 +105,7 @@ public sealed class SubclassCensusTests
                 ["Gst.Bin::deep_element_removed"] = ClassClosure,
                 ["Gst.Bin::element_added"] = ClassClosure,
                 ["Gst.Bin::element_removed"] = ClassClosure,
-                ["Gst.DeviceProvider::probe"] = "UnsupportedSignature",
+                ["Gst.DeviceProvider::probe"] = HandBoundProbe,
                 ["Gst.Element::no_more_pads"] = ClassClosure,
                 ["Gst.Element::pad_added"] = ClassClosure,
                 ["Gst.Element::pad_removed"] = ClassClosure,
@@ -137,6 +143,13 @@ public sealed class SubclassCensusTests
             + "timeline-element slot (ges-track-element.c:137-143, :497), and no code in ges calls "
             + "through it; an OnLookupChild on the track element mirror would also hide the live "
             + "inherited one, which is the steering hazard the deprecated method twin is skipped for";
+        const string HandBoundUngroup =
+            "the class is a chain-only mirror, and this one slot is hand bound in "
+            + "src/GstSharp.Net.GES/Custom/Container.cs for the managed clips below it: OnUngroup "
+            + "answers the containers, the trampoline hands the caller a new list and one added "
+            + "reference per container, and ChainUpUngroup adopts what GESClip::ungroup answers, a "
+            + "childless clip handed back without a reference included (ges-clip.c:2150-2152); it is "
+            + "taken over with Container.UngroupOverride";
         const string Opaque = "OpaqueSlot";
         Assert.Equal(
             new Dictionary<string, string>(StringComparer.Ordinal)
@@ -149,7 +162,7 @@ public sealed class SubclassCensusTests
                 ["GES.Container::edit"] = ChainOnly,
                 ["GES.Container::group"] = Opaque,
                 ["GES.Container::remove_child"] = ChainOnly,
-                ["GES.Container::ungroup"] = ChainOnly,
+                ["GES.Container::ungroup"] = HandBoundUngroup,
                 ["GES.TimelineElement::set_child_property_full"] = ThrowingSlot,
                 ["GES.TrackElement::list_children_properties"] = DeadListSlot,
                 ["GES.TrackElement::lookup_child"] = DeadLookupSlot,

@@ -111,16 +111,18 @@ internal sealed class SubclassModel
 
         HashSet<string> slotKeys = new(StringComparer.Ordinal);
         HashSet<string> parameterKeys = new(StringComparer.Ordinal);
+        HashSet<string> mirroredKeys = new(StringComparer.Ordinal);
         foreach (ClassStructModel model in classStructs)
         {
-            if (!model.IsSubclassable)
-            {
-                continue;
-            }
-
             foreach (ClassStructMember slot in model.Slots)
             {
                 string key = model.KeyOf(slot.Method!.Name);
+                _ = mirroredKeys.Add(key);
+                if (!model.IsSubclassable)
+                {
+                    continue;
+                }
+
                 _ = slotKeys.Add(key);
                 foreach (GirParameter parameter in slot.Method.Parameters)
                 {
@@ -131,6 +133,7 @@ internal sealed class SubclassModel
 
         VirtualMethodKeys = slotKeys;
         VirtualMethodParameterKeys = parameterKeys;
+        MirroredSlotKeys = mirroredKeys;
     }
 
     /// <summary>Gets an empty model, for a run with no allowlist.</summary>
@@ -152,6 +155,18 @@ internal sealed class SubclassModel
     /// <c>Ns.Class::vfunc#parameter</c> spelling.
     /// </summary>
     internal IReadOnlySet<string> VirtualMethodParameterKeys { get; }
+
+    /// <summary>
+    /// Gets the keys of every slot a mirrored class struct lays out, whether the
+    /// class is subclassable or not.
+    /// </summary>
+    /// <remarks>
+    /// This is the set the skip ledger addresses. A slot of a chain-only mirror
+    /// gets no managed surface, so an entry naming one usually states nothing
+    /// about the run - except when the slot is bound by hand for the classes
+    /// below it, which is the one reason the ledger carries such a key.
+    /// </remarks>
+    internal IReadOnlySet<string> MirroredSlotKeys { get; }
 
     /// <summary>
     /// Gets every mirrored class struct, parents before the classes that embed

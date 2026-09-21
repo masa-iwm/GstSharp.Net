@@ -664,7 +664,11 @@ internal static class GenerationPipeline
             files.Add(enumFile);
         }
 
-        ClassStructEmitter classStructEmitter = new(shared.Repository, shared.Census, shared.Diagnostics);
+        ClassStructEmitter classStructEmitter = new(
+            shared.Repository,
+            shared.Census,
+            shared.Diagnostics,
+            shared.Overlays);
         files.AddRange(classStructEmitter.Emit(module, ns, shared.Subclasses));
 
         VfuncEmitter vfuncEmitter = new(
@@ -810,10 +814,13 @@ internal static class GenerationPipeline
         Overlays overlays,
         DiagnosticBag diagnostics)
     {
+        // A skip may also name one slot of a chain-only mirror, which is how a
+        // slot that is bound by hand for the classes below it states its reason;
+        // the mirrored set is the subclassable one plus those.
         Report(
             "GEN0029",
             overlays.SkippedVirtualKeys,
-            subclasses.VirtualMethodKeys,
+            subclasses.MirroredSlotKeys,
             "The skipped virtual method '{0}' names no slot of a subclassable class; the entry is stale.");
         Report(
             "GEN0030",

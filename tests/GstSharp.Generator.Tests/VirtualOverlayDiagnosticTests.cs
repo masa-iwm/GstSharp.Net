@@ -72,6 +72,73 @@ public sealed class VirtualOverlayDiagnosticTests
         """;
 
     /// <summary>
+    /// A subclassable class whose parent is mirrored without being
+    /// subclassable: the parent is a chain-only mirror, which lays its slots out
+    /// and gives none of them a managed surface.
+    /// </summary>
+    private const string ChainOnlyBody =
+        """
+            <class name="Widget" c:type="GstWidget" parent="GObject.Object" glib:type-name="GstWidget" glib:get-type="gst_widget_get_type" glib:type-struct="WidgetClass">
+              <virtual-method name="polish">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="widget" transfer-ownership="none">
+                    <type name="Widget" c:type="GstWidget*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="WidgetClass" c:type="GstWidgetClass" glib:is-gtype-struct-for="Widget">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="polish">
+                <callback name="polish">
+                  <return-value transfer-ownership="none">
+                    <type name="gboolean" c:type="gboolean"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="widget" transfer-ownership="none">
+                      <type name="Widget" c:type="GstWidget*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+            <class name="Gadget" c:type="GstGadget" parent="Widget" glib:type-name="GstGadget" glib:get-type="gst_gadget_get_type" glib:type-struct="GadgetClass">
+              <virtual-method name="wind">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="gadget" transfer-ownership="none">
+                    <type name="Gadget" c:type="GstGadget*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="GadgetClass" c:type="GstGadgetClass" glib:is-gtype-struct-for="Gadget">
+              <field name="parent_class">
+                <type name="WidgetClass" c:type="GstWidgetClass"/>
+              </field>
+              <field name="wind">
+                <callback name="wind">
+                  <return-value transfer-ownership="none">
+                    <type name="gboolean" c:type="gboolean"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="gadget" transfer-ownership="none">
+                      <type name="Gadget" c:type="GstGadget*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+        """;
+
+    /// <summary>
     /// The same class with no <c>glib:type-struct</c>, which is what a
     /// misspelled allowlist entry or a gir that moved on looks like.
     /// </summary>
@@ -359,6 +426,30 @@ public sealed class VirtualOverlayDiagnosticTests
         // keeps the slot the entry claimed off it.
         Assert.Equal(1, run.Result.Census.EmittedCount("Gst", "vfunc"));
         Assert.Equal(0, run.Result.Census.SkippedVirtualCount("Gst"));
+    }
+
+    [Fact]
+    public void AChainOnlySlotWithALedgerEntryRecordsTheReasonItStates()
+    {
+        FixtureRun run = Run(
+            ChainOnlyBody,
+            """{ "subclassable": ["Gst.Gadget"], "skipVirtuals": { "Gst.Widget::polish": "hand bound for the classes below it" } }""");
+
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0029");
+        Assert.Equal(
+            "hand bound for the classes below it",
+            run.Result.Census.SkippedVirtuals("Gst")["Gst.Widget::polish"]);
+    }
+
+    [Fact]
+    public void AChainOnlySlotWithoutALedgerEntryRecordsTheFixedReason()
+    {
+        FixtureRun run = Run(ChainOnlyBody, """{ "subclassable": ["Gst.Gadget"] }""");
+
+        Assert.Contains(
+            "NotSubclassable",
+            run.Result.Census.SkippedVirtuals("Gst")["Gst.Widget::polish"],
+            StringComparison.Ordinal);
     }
 
     [Fact]

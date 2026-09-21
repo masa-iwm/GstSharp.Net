@@ -51,16 +51,26 @@ internal sealed class ClassStructEmitter
     private readonly Repository _repository;
     private readonly EmissionCensus _census;
     private readonly DiagnosticBag _diagnostics;
+    private readonly Overlays _overlays;
 
     /// <summary>Initialises the emitter.</summary>
     /// <param name="repository">The loaded girs, for resolving field types.</param>
     /// <param name="census">The census of the run.</param>
     /// <param name="diagnostics">Where a field of an unmappable type is reported.</param>
-    internal ClassStructEmitter(Repository repository, EmissionCensus census, DiagnosticBag diagnostics)
+    /// <param name="overlays">
+    /// The corrections, for the reason a hand-bound slot of a chain-only mirror
+    /// is recorded with.
+    /// </param>
+    internal ClassStructEmitter(
+        Repository repository,
+        EmissionCensus census,
+        DiagnosticBag diagnostics,
+        Overlays overlays)
     {
         _repository = repository;
         _census = census;
         _diagnostics = diagnostics;
+        _overlays = overlays;
     }
 
     /// <summary>
@@ -282,10 +292,15 @@ internal sealed class ClassStructEmitter
                 // section the whole list of C slots without an OnX member.
                 if (!model.IsSubclassable)
                 {
+                    // A slot of such a mirror that is bound by hand for the
+                    // classes below it says so through the ledger overlay
+                    // instead of printing the fixed reason, which would claim
+                    // the slot is reachable through chain-up alone.
+                    string key = model.KeyOf(field.Name);
                     _census.SkippedVirtual(
                         module.GirNamespace,
-                        model.KeyOf(field.Name),
-                        NotSubclassableReason);
+                        key,
+                        _overlays.IsVirtualSkipped(key) ? _overlays.VirtualSkipReason(key) : NotSubclassableReason);
                 }
 
                 slots.Add(name);
