@@ -750,8 +750,8 @@ more than a lock on four of them.
   `gst_segment_init` left, on a fresh stream. The input segment has a gap of its
   own: the audio encoder ignores a segment event whose format is not TIME
   (`gstaudioencoder.c:1605-1613`) and the audio decoder ignores one it cannot
-  convert to TIME from bytes (`gstaudiodecoder.c:2403-2434`, the refusal at
-  `:2428-2433`), so `GetInputSegment()` keeps the value the previous segment
+  convert to TIME from bytes (`gstaudiodecoder.c:2404-2435`, the refusal at
+  `:2429-2434`), so `GetInputSegment()` keeps the value the previous segment
   left. The two video
   headers mark the segments `/*< protected >*/` behind a `/*< private >*/` the
   scanner never leaves, which is why their overlay entries state the header line
