@@ -1717,16 +1717,24 @@ their own because they declare no slot: they are bases a managed type may stand
 on, and what one of them overrides is declared through `GES.TimelineElement`,
 `GES.TrackElement`, `GES.Clip` or `Container.UngroupOverride`.
 
-`set_parent` is the one slot of that table with no native implementation to
-chain up into anywhere but the video source family
-(`ges-video-source.c:261` is the single assignment in the library), and it is
-still safe to chain up: `ges_timeline_element_set_parent` guards an empty slot,
+`set_parent` has no native implementation to chain up into anywhere but the video
+source family (`ges-video-source.c:261` is the single assignment in the
+library), and is still safe to chain up because the fallback of the C is a plain
+value: `ges_timeline_element_set_parent` guards an empty slot,
 adopts the parent and answers `TRUE` (`ges-timeline-element.c:995-1000`), so
 `ChainUpSetParent` answers `true` below every other class — a managed effect,
 clip, source clip or audio source — which is the library's own answer rather
 than an invented one. An override that refuses instead is not a rollback: the
 container ignores the refusal when a child is removed (`ges-container.c:127-130`)
 and the element keeps a parent pointer it no longer has a parent for.
+
+The five edit slots — `ripple`, `ripple_end`, `roll_start`, `roll_end` and
+`trim` — are empty on every class of the editing services as well, but an empty
+one of those is a dispatch rather than a value: the caller falls through to
+`ges_timeline_element_edit` instead of answering something
+(`ges-timeline-element.c:1514-1518`). There is nothing for a chain-up to answer
+there, so `ChainUpRipple` and its four siblings keep throwing, and an override of
+one of those slots does the editing itself.
 
 `Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
 type is answered from. Seven slots of the GStreamer classes above carry no
