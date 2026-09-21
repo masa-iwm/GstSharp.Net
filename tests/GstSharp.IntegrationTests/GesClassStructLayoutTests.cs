@@ -43,10 +43,16 @@ public sealed class GesClassStructLayoutTests
         Assert.Equal(632, Unsafe.SizeOf<GES.ContainerClassRaw>());
         Assert.Equal(808, Unsafe.SizeOf<GES.ClipClassRaw>());
         Assert.Equal(840, Unsafe.SizeOf<GES.SourceClipClassRaw>());
+        Assert.Equal(840, Unsafe.SizeOf<GES.OperationClipClassRaw>());
+        Assert.Equal(872, Unsafe.SizeOf<GES.BaseEffectClipClassRaw>());
+        Assert.Equal(904, Unsafe.SizeOf<GES.EffectClipClassRaw>());
         Assert.Equal(624, Unsafe.SizeOf<GES.TrackElementClassRaw>());
         Assert.Equal(656, Unsafe.SizeOf<GES.SourceClassRaw>());
         Assert.Equal(696, Unsafe.SizeOf<GES.VideoSourceClassRaw>());
         Assert.Equal(696, Unsafe.SizeOf<GES.AudioSourceClassRaw>());
+        Assert.Equal(656, Unsafe.SizeOf<GES.OperationClassRaw>());
+        Assert.Equal(688, Unsafe.SizeOf<GES.BaseEffectClassRaw>());
+        Assert.Equal(728, Unsafe.SizeOf<GES.EffectClassRaw>());
     }
 
     /// <summary>
@@ -70,14 +76,18 @@ public sealed class GesClassStructLayoutTests
 
     /// <summary>
     /// The members the GES unions hold, which the mirror lays out for their
-    /// width and gives no managed surface.
+    /// width and gives no managed surface, and the plain data fields beside
+    /// them that carry no slot either.
     /// </summary>
     /// <remarks>
     /// The <c>create_source</c> of <c>GESVideoSourceClass</c> and of
     /// <c>GESAudioSourceClass</c> is a second field of that name, in front of
     /// the union and behind the one <c>GESSourceClass</c> declares; nothing
     /// calls it, and it is here because the union behind it would move if it
-    /// were dropped.
+    /// were dropped. The <c>rate_properties</c> of <c>GESEffectClass</c> is the
+    /// list a rate property registration appends to, which this binding does not
+    /// call; it is measured because the reserved tail behind it would move if
+    /// the mirror dropped it.
     /// </remarks>
     [Fact]
     public void EveryUnionMemberSitsWhereTheCompilerPutIt()
@@ -98,6 +108,9 @@ public sealed class GesClassStructLayoutTests
 
         GES.AudioSourceClassRaw audioSource = default;
         Assert.Equal(656, OffsetOf(ref audioSource, ref audioSource.CreateSource));
+
+        GES.EffectClassRaw effect = default;
+        Assert.Equal(688, OffsetOf(ref effect, ref effect.RateProperties));
     }
 
     /// <summary>Measures where one member of a mirror sits.</summary>
