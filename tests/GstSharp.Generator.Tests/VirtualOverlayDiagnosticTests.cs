@@ -442,6 +442,25 @@ public sealed class VirtualOverlayDiagnosticTests
     }
 
     [Fact]
+    public void AChainOnlySlotWithALedgerEntryEmitsWhatItEmittedWithoutIt()
+    {
+        // The entry states a reason and nothing else: the slot of a chain-only
+        // mirror has no managed surface to take away, so the mirror and the
+        // subclassing surface below it come out byte for byte the same.
+        FixtureRun without = Run(ChainOnlyBody, """{ "subclassable": ["Gst.Gadget"] }""");
+        FixtureRun with = Run(
+            ChainOnlyBody,
+            """{ "subclassable": ["Gst.Gadget"], "skipVirtuals": { "Gst.Widget::polish": "hand bound for the classes below it" } }""");
+
+        Assert.Equal(
+            without.File("ClassStructs/WidgetClassRaw.cs"),
+            with.File("ClassStructs/WidgetClassRaw.cs"));
+        Assert.Equal(
+            without.File("Subclassing/Gadget.Subclass.cs"),
+            with.File("Subclassing/Gadget.Subclass.cs"));
+    }
+
+    [Fact]
     public void AChainOnlySlotWithoutALedgerEntryRecordsTheFixedReason()
     {
         FixtureRun run = Run(ChainOnlyBody, """{ "subclassable": ["Gst.Gadget"] }""");

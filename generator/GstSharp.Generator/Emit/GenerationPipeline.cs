@@ -821,7 +821,7 @@ internal static class GenerationPipeline
             "GEN0029",
             overlays.SkippedVirtualKeys,
             subclasses.MirroredSlotKeys,
-            "The skipped virtual method '{0}' names no slot of a subclassable class; the entry is stale.");
+            "The skipped virtual method '{0}' names no virtual method slot of a mirrored class struct (subclassable or chain-only); the entry is stale.");
         Report(
             "GEN0030",
             overlays.VfuncDefaultKeys,
