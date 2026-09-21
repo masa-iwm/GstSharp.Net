@@ -67,6 +67,18 @@ internal static unsafe class ClassStructRegistry
             [
             ]),
         new Gst.GObject.ClassStructProbe(
+            "GESOperationClass",
+            &GES.Operation.GetGType,
+            Unsafe.SizeOf<GES.OperationClassRaw>(),
+            [
+            ]),
+        new Gst.GObject.ClassStructProbe(
+            "GESBaseEffectClass",
+            &GES.BaseEffect.GetGType,
+            Unsafe.SizeOf<GES.BaseEffectClassRaw>(),
+            [
+            ]),
+        new Gst.GObject.ClassStructProbe(
             "GESContainerClass",
             &GES.Container.GetGType,
             Unsafe.SizeOf<GES.ContainerClassRaw>(),
@@ -85,6 +97,30 @@ internal static unsafe class ClassStructRegistry
             [
                 new Gst.GObject.ClassSlotProbe("create_track_element", GES.ClipClassRaw.CreateTrackElementOffset),
                 new Gst.GObject.ClassSlotProbe("create_track_elements", GES.ClipClassRaw.CreateTrackElementsOffset),
+            ]),
+        new Gst.GObject.ClassStructProbe(
+            "GESOperationClipClass",
+            &GES.OperationClip.GetGType,
+            Unsafe.SizeOf<GES.OperationClipClassRaw>(),
+            [
+            ]),
+        new Gst.GObject.ClassStructProbe(
+            "GESBaseEffectClipClass",
+            &GES.BaseEffectClip.GetGType,
+            Unsafe.SizeOf<GES.BaseEffectClipClassRaw>(),
+            [
+            ]),
+        new Gst.GObject.ClassStructProbe(
+            "GESEffectClass",
+            &GES.Effect.GetGType,
+            Unsafe.SizeOf<GES.EffectClassRaw>(),
+            [
+            ]),
+        new Gst.GObject.ClassStructProbe(
+            "GESEffectClipClass",
+            &GES.EffectClip.GetGType,
+            Unsafe.SizeOf<GES.EffectClipClassRaw>(),
+            [
             ]),
         new Gst.GObject.ClassStructProbe(
             "GESSourceClipClass",
