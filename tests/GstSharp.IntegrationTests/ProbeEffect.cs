@@ -19,10 +19,11 @@ namespace GstSharp.IntegrationTests;
 /// appears here.
 /// </para>
 /// <para>
-/// The <c>set_parent</c> override answers <see langword="true"/> without chaining
-/// up, which is not a choice: the slot has no implementation anywhere between
-/// <c>GESTimelineElement</c> and <c>GESEffect</c>, so <c>ChainUpSetParent</c>
-/// throws — and a refusal there costs the clip its add.
+/// The <c>set_parent</c> override chains up, which is what a managed type of the
+/// editing services does with this slot: no class implements it except the video
+/// source family (<c>ges-video-source.c:261</c>), and <c>ChainUpSetParent</c>
+/// answers <see langword="true"/> for that empty slot, the way the caller of the
+/// slot treats one itself (<c>ges-timeline-element.c:995-1000</c>).
 /// </para>
 /// <para>
 /// The wrapper counter is what a native copy is observed through: the library
@@ -94,12 +95,10 @@ internal sealed class ProbeEffect : GES.Effect, IManagedSubclass<ProbeEffect>
         _ = Interlocked.Increment(ref _setParentCalls);
         Volatile.Write(ref _lastParentWasNull, newParent is null ? 1 : 0);
 
-        // No class between GESTimelineElement and GESEffect implements
-        // set_parent, so there is nothing to chain up into:
-        // ChainUpSetParent throws here, the trap turns that into a refusal, and
-        // the refusal costs the clip its add. Answering true is what the
-        // exception of the chain-up itself asks for, and is the documented shape
-        // for a slot whose default implementation is NULL.
-        return true;
+        // The slot is empty below GESEffect, and a chain-up answers the true
+        // the library answers for an empty slot, so the same override keeps
+        // working once this wrapper is disposed and the static chain-up is all
+        // that is left.
+        return ChainUpSetParent(newParent);
     }
 }

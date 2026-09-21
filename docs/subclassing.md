@@ -1556,16 +1556,14 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   id may be `null`, because it parses nothing. An override that wants the
   properties of its element reachable as child properties calls
   `AddChildrenProps` itself: the inherited slot is what would otherwise do it
-  (`ges-effect.c:338`). `set_parent` is the same shape one class family over: no
-  class between `GESTimelineElement` and `GESEffect` implements it, so a
-  `SetParentOverride` answers `true` instead of chaining up — `ChainUpSetParent`
-  throws there, the trap turns the throw into a refusal, and a refusal costs the
-  clip its add.
+  (`ges-effect.c:338`).
 * **Ownership after `AddTopEffect`.** `Extract<T>()` sinks the floating instance
   into the wrapper, and `ges_container_add` takes a reference of its own
   (`ges-container.c:733`), so the wrapper and the clip hold one each. Disposing
   the wrapper leaves the effect in the clip with its slots chaining up from then
-  on. The same holds for an effect answered from `OnCreateTrackElement`, which is
+  on — `set_parent` included, whose chain-up is the answer the library gives
+  itself (see *The vfuncs that are bound* below), so the effect can still be
+  removed afterwards. The same holds for an effect answered from `OnCreateTrackElement`, which is
   a *core* child rather than a top effect because the clip stamps it with its own
   asset (`ges-clip.c:2785-2789`, `:1697-1700`).
 * **`SetPropertyOverride` cannot shadow `bin-description`.** GObject dispatches a
@@ -1714,6 +1712,17 @@ The six effect classes of the editing services — `GES.Operation`, `BaseEffect`
 their own because they declare no slot: they are bases a managed type may stand
 on, and what one of them overrides is declared through `GES.TimelineElement`,
 `GES.TrackElement`, `GES.Clip` or `Container.UngroupOverride`.
+
+`set_parent` is the one slot of that table with no native implementation to
+chain up into anywhere but the video source family
+(`ges-video-source.c:261` is the single assignment in the library), and it is
+still safe to chain up: `ges_timeline_element_set_parent` guards an empty slot,
+adopts the parent and answers `TRUE` (`ges-timeline-element.c:995-1000`), so
+`ChainUpSetParent` answers `true` below every other class — a managed effect,
+clip, source clip or audio source — which is the library's own answer rather
+than an invented one. An override that refuses instead is not a rollback: the
+container ignores the refusal when a child is removed (`ges-container.c:127-130`)
+and the element keeps a parent pointer it no longer has a parent for.
 
 `Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
 type is answered from. Seven slots of the GStreamer classes above carry no
