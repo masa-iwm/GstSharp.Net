@@ -297,6 +297,23 @@ internal sealed class PlayerWindow : Window, IDisposable
     }
 
     /// <summary>
+    /// Gets the kind of handle the video sinks of this platform can be given,
+    /// under the name the toolkit reports it by.
+    /// </summary>
+    private static string ExpectedHandleDescriptor
+    {
+        get
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                return "HWND";
+            }
+
+            return OperatingSystem.IsMacOS() ? "NSView" : "XID";
+        }
+    }
+
+    /// <summary>
     /// Takes the window handle of the video area, and starts the pipeline the
     /// first time one arrives.
     /// </summary>
@@ -309,18 +326,41 @@ internal sealed class PlayerWindow : Window, IDisposable
             return;
         }
 
-        Volatile.Write(ref _windowHandle, (nuint)(nint)handle.Handle);
-
         Console.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
             $"handle:      {handle.HandleDescriptor ?? "?"} 0x{handle.Handle:x}"));
+
+        // GstVideoOverlay takes a bare integer and every sink reads it as the
+        // one kind of handle its platform has: an HWND, an X11 XID or an
+        // NSView. A pointer of any other kind — a toolkit backend this sample
+        // does not know, an embedded host — would be read as that kind anyway
+        // and crash inside the sink, so only the expected kind is accepted.
+        // Refusing it leaves the handle zero, which is what the sync handler
+        // treats as "nothing to answer with": the sink then opens a window of
+        // its own, which is visibly wrong rather than fatal.
+        if (handle.HandleDescriptor != ExpectedHandleDescriptor)
+        {
+            Console.Error.WriteLine(
+                $"BasicTutorial05: the video area reports a {handle.HandleDescriptor ?? "nameless"} handle where this platform needs a {ExpectedHandleDescriptor}, so no window handle is given to the sink.");
+            Volatile.Write(ref _windowHandle, 0);
+        }
+        else
+        {
+            Volatile.Write(ref _windowHandle, (nuint)(nint)handle.Handle);
+        }
 
         if (_started)
         {
             // The control was re-attached, so the sink is holding a window that
             // no longer exists and has to be told about the new one. There is
             // no prepare-window-handle message this time: the sink asks once.
-            _playbin.As<IVideoOverlay>()?.SetWindowHandle(Volatile.Read(ref _windowHandle));
+            nuint accepted = Volatile.Read(ref _windowHandle);
+
+            if (accepted != 0)
+            {
+                _playbin.As<IVideoOverlay>()?.SetWindowHandle(accepted);
+            }
+
             return;
         }
 
