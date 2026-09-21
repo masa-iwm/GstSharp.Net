@@ -349,7 +349,7 @@ public sealed unsafe class InstanceFieldProbeTests
             "sink",
             written,
             decoder.GetOutputSegment,
-            after: [Event.NewEos()]);
+            after: () => [Event.NewEos()]);
 
         AssertSame(written, read);
     }
@@ -388,7 +388,7 @@ public sealed unsafe class InstanceFieldProbeTests
             "sink",
             written,
             encoder.GetOutputSegment,
-            after: [Event.NewEos()]);
+            after: () => [Event.NewEos()]);
 
         AssertSame(written, read);
     }
@@ -436,8 +436,9 @@ public sealed unsafe class InstanceFieldProbeTests
             "sink",
             written,
             decoder.GetOutputSegment,
-            before: [Event.NewCaps(caps)],
-            after: [Event.NewGap(ClockTime.FromNanoseconds(13_000_000_000), ClockTime.FromNanoseconds(1_000_000_000))]);
+            before: () => [Event.NewCaps(caps)],
+            after: () =>
+                [Event.NewGap(ClockTime.FromNanoseconds(13_000_000_000), ClockTime.FromNanoseconds(1_000_000_000))]);
 
         AssertSame(written, read);
     }
@@ -476,7 +477,7 @@ public sealed unsafe class InstanceFieldProbeTests
             "sink",
             written,
             encoder.GetOutputSegment,
-            after: [Event.NewEos()]);
+            after: () => [Event.NewEos()]);
 
         AssertSame(written, read);
     }
@@ -489,8 +490,16 @@ public sealed unsafe class InstanceFieldProbeTests
     /// <param name="padName">The pad the events are sent to.</param>
     /// <param name="segment">The segment the event carries.</param>
     /// <param name="read">The accessor under test.</param>
-    /// <param name="before">Events to send between the stream start and the segment.</param>
-    /// <param name="after">Events to send after the segment, to make a base class act on it.</param>
+    /// <param name="before">
+    /// A factory for the events to send between the stream start and the segment,
+    /// invoked once the element is in PAUSED and the asserts before the send have
+    /// passed, so that an event is never minted for a run that throws before it
+    /// could be sent - a minted event nothing consumes is a leak.
+    /// </param>
+    /// <param name="after">
+    /// A factory for the events to send after the segment, to make a base class
+    /// act on it, invoked on the same terms as <paramref name="before"/>.
+    /// </param>
     /// <returns>What the accessor answered while the element was still in PAUSED.</returns>
     /// <remarks>
     /// <para>
@@ -516,8 +525,8 @@ public sealed unsafe class InstanceFieldProbeTests
         string padName,
         Segment segment,
         Func<Segment> read,
-        Event[]? before = null,
-        Event[]? after = null)
+        Func<Event[]>? before = null,
+        Func<Event[]>? after = null)
     {
         StateChangeReturn changed = element.SetState(State.Paused);
         _output.WriteLine(FormattableString.Invariant($"{element.Name}: set_state(PAUSED) = {changed}"));
@@ -543,10 +552,10 @@ public sealed unsafe class InstanceFieldProbeTests
 
     /// <summary>Sends events at a pad and writes down what each of them answered.</summary>
     /// <param name="pad">The pad the events are sent to.</param>
-    /// <param name="events">The events, or <see langword="null"/> for none.</param>
-    private void Send(Pad pad, Event[]? events)
+    /// <param name="events">A factory for the events, or <see langword="null"/> for none.</param>
+    private void Send(Pad pad, Func<Event[]>? events)
     {
-        foreach (Event sent in events ?? [])
+        foreach (Event sent in events?.Invoke() ?? [])
         {
             EventType type = sent.Type;
             bool answered = pad.SendEvent(sent);
