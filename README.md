@@ -381,12 +381,13 @@ reason in
 The gaps worth naming here:
 
 * **Subclassing is limited to an allowlist of base classes.** A C# type can
-  derive from one of thirty classes — `Gst.Element`, `Gst.Bin`,
+  derive from one of thirty six classes — `Gst.Element`, `Gst.Bin`,
   `Gst.Pad`, `Gst.Device`, `Gst.DeviceProvider`, the `GstBase` sources, sinks,
   transforms, parsers and aggregators
   including `AggregatorPad`, the `GstAudio` sinks, sources, filters and codecs,
-  the `GstVideo` sinks, filters and codecs, and the timeline elements, sources
-  and clips of the editing services — override the vfuncs of the class and be
+  the `GstVideo` sinks, filters and codecs, and the timeline elements, sources,
+  clips, effects and effect clips of the editing services — override the vfuncs
+  of the class and be
   called back through the native vtable. A type that also states how its wrapper
   is built can be registered with `gst_element_register` and made by
   `gst_element_factory_make` or named in a pipeline description. It can install

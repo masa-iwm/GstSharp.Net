@@ -1189,8 +1189,8 @@ compiling and keep their old behaviour. `SubclassType.NewInstance` gained the
 construction-property overload a `GstPad` needs, because `direction` is
 construct only; `ObjectClassConfig` arrived as the base of `ClassConfig` (§5.5);
 `Gst.Pad` and `GstBase.AggregatorPad` joined the allowlist, which is what
-un-skipped `Aggregator::create_new_pad`. Thirty classes are
-subclassable, with thirty two class struct mirrors and 249 slots.
+un-skipped `Aggregator::create_new_pad`. Thirty six classes are
+subclassable, with thirty eight class struct mirrors and 249 slots.
 
 **Stage 3b — properties, signals and interfaces (landed).** `g_param_spec_*`
 construction (twenty `New` factories for the GObject kinds, plus the
@@ -1252,11 +1252,27 @@ hand-written addition, because a managed track element may only be built
 through an asset. It rests on stage 3a: GES constructs a managed type natively
 whenever a clip is copied, split or pasted.
 
+**Stage 3d — GES effects (landed).** Six more classes of the editing services
+joined the allowlist — `GES.Operation`, `BaseEffect`, `Effect`, `OperationClip`,
+`BaseEffectClip` and `EffectClip` — which brings the allowlist to thirty six
+classes, thirty eight mirrors and 249 slots. Not one of those six declares a
+slot of its own, so the stage is six mirrors and six registrations and no `OnX`
+member at all: an override of a managed effect is declared through
+`GES.TimelineElement`, `GES.TrackElement` or `GES.Clip`. That is also why the
+stage is an overlay change and nothing else. `GESEffect`'s asset machinery keys
+on the requested `GType` from end to end — `ges_asset_request` looks the type up
+and builds the asset class for it (`ges-asset.c:363-389`), and
+`ges_extractable_type_set_asset_type` walks up to the nearest ancestor that
+declares one (`ges-extractable.c:282-298`) — so a managed effect type gets a
+`GESEffectAsset` without asking for one. The transition classes stay out, and
+will: the library only ever builds the native transition types
+(`ges-transition-clip.c:359, 372`).
+
 ---
 
 ## 11. Using it
 
-What ships is a **generated surface for an allowlist of thirty base
+What ships is a **generated surface for an allowlist of thirty six base
 classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.Device`,
 `Gst.DeviceProvider`, `Gst.Base.BaseSrc`, `PushSrc`,
 `BaseSink`, `BaseTransform`, `BaseParse`, `Aggregator`, `AggregatorPad`,
@@ -1264,7 +1280,8 @@ classes**: `Gst.Element`, `Gst.Bin`, `Gst.Pad`, `Gst.Device`,
 `AudioFilter`, `AudioDecoder`, `AudioEncoder`, `Gst.Video.VideoSink`,
 `VideoFilter`, `VideoDecoder`, `VideoEncoder`, and, of the editing services,
 `GES.TimelineElement`, `TrackElement`, `Source`, `VideoSource`, `AudioSource`,
-`Clip` and `SourceClip`. Each one carries four things — a
+`Clip`, `SourceClip`, `Operation`, `BaseEffect`, `Effect`, `OperationClip`,
+`BaseEffectClip` and `EffectClip`. Each one carries four things — a
 `DefineSubclass` that registers a managed type, a `DefineSubclass<TSelf>` that
 also states how the wrapper of an instance native code created is built, a
 `protected` constructor, and, per bound vfunc, an `OnX` virtual with a matching
@@ -1423,8 +1440,11 @@ A managed `GES.VideoSource` answers the element behind it from
 `OnCreateSource`, and a managed `GES.SourceClip` builds that source from
 `OnCreateTrackElement`. Six rules are particular to the editing services.
 
-* **A child is built through an asset, never with `new`.** The one supported
-  spelling is `GES.Asset.Request(type.GType, null)!.Extract<T>()`. What
+* **A child is built through an asset, never with `new`.** For a source or a
+  clip the one supported spelling is
+  `GES.Asset.Request(type.GType, null)!.Extract<T>()`; an effect type takes its
+  bin description as the id instead, and for it a `null` id is fatal rather than
+  merely wrong — see *An effect for the editing services* below. What
   `ges_asset_extract` adds over `g_object_new` is
   `ges_extractable_set_asset`, and that call is what gives a track element the
   `nleobject` behind it (`ges-asset.c:1588-1606`). A child built any other way
@@ -1491,6 +1511,91 @@ A managed `GES.VideoSource` answers the element behind it from
   `create_filters` have no virtual method in the gir and stay opaque, so a
   managed `GES.VideoSource` gets the natural size of no source at all, which
   is what the library does when the slot is `NULL`.
+
+### An effect for the editing services
+
+A managed effect is a subclass of `GES.Effect`, of `GES.BaseEffect` or of
+`GES.Operation`, and the clip that carries one is a subclass of
+`GES.BaseEffectClip`, of `GES.EffectClip` or of `GES.OperationClip`. None of the
+six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
+`GES.TimelineElement` or — for a clip — to `GES.Clip` and
+`GES.Container.UngroupOverride`. Nine rules are particular to them.
+
+* **Built through an asset whose id is the description.** The spelling is
+  `GES.Asset.Request(type.GType, "video <description>")!.Extract<T>()`. The id is
+  never `null`: `GESEffectAsset` reads it with no check at all and the process
+  dies on the dereference (`ges-effect-asset.c:390-391`). Always give it the
+  `audio ` or `video ` prefix, because without one the track type is guessed from
+  the elements named and falls back to video (`:419-437`). And the description
+  has to parse with installed elements even when `OnCreateElement` builds
+  something else entirely, because `check_id` instantiates it on every request
+  (`:405`, `ges-asset.c:1263`). `Effect.New` and `EffectClip.New` are no route to
+  a managed type: both hardcode the native one (`ges-effect.c:382-403`,
+  `ges-effect-clip.c:267-285`).
+* **Never `new`.** An assetless `GES.Effect` subtype added to a clip as a top
+  effect takes the process down: the add path reads the bin description of the
+  asset that is not there (`ges-clip.c:1786-1790`). The remove path guards
+  against it; the add path does not.
+* **`IManagedSubclass<TSelf>` and the generic `DefineSubclass<TSelf>`.** The
+  library copies an effect natively when a clip is added to more than one track,
+  split or pasted (`ges-clip.c:2385-2407`), so the wrapper of a copy is
+  fabricated rather than asked for, and a managed effect defined without the
+  wrapper factory loses its overrides on every copy.
+* **`OnCreateElement` is optional on `GES.Effect` and needed below it.**
+  `GESEffect` implements the slot and builds the description
+  (`ges-effect.c:310-365`), so a subclass that wants that element declares
+  nothing. A direct `GES.BaseEffect` or `GES.Operation` subclass has no
+  implementation anywhere below it: `ChainUpCreateElement` throws there, and a
+  subclass that declares nothing at all is not a crash but an `nleoperation` with
+  nothing inside it — the library guards the `NULL` slot
+  (`ges-track-element.c:1024`) and the result passes no data. Such a subclass
+  also has no description to take a track type from, so it sets one, preferably
+  once on the asset — `((GES.TrackElementAsset)asset).SetTrackType(...)`, which
+  `set_asset` copies into every instance whose own is still unknown, the copies
+  native code extracts included (`ges-track-element.c:286-290`) — and its asset
+  id may be `null`, because it parses nothing. An override that wants the
+  properties of its element reachable as child properties calls
+  `AddChildrenProps` itself: the inherited slot is what would otherwise do it
+  (`ges-effect.c:338`). `set_parent` is the same shape one class family over: no
+  class between `GESTimelineElement` and `GESEffect` implements it, so a
+  `SetParentOverride` answers `true` instead of chaining up — `ChainUpSetParent`
+  throws there, the trap turns the throw into a refusal, and a refusal costs the
+  clip its add.
+* **Ownership after `AddTopEffect`.** `Extract<T>()` sinks the floating instance
+  into the wrapper, and `ges_container_add` takes a reference of its own
+  (`ges-container.c:733`), so the wrapper and the clip hold one each. Disposing
+  the wrapper leaves the effect in the clip with its slots chaining up from then
+  on. The same holds for an effect answered from `OnCreateTrackElement`, which is
+  a *core* child rather than a top effect because the clip stamps it with its own
+  asset (`ges-clip.c:2785-2789`, `:1697-1700`).
+* **`SetPropertyOverride` cannot shadow `bin-description`.** GObject dispatches a
+  property to the class that owns it (glib `gobject.c:2188-2191`), so a managed
+  class sees writes of the properties it installed and of nothing else. Child
+  property writes still pass the veto the clip puts on them
+  (`ges-base-effect.c:112-131`), as long as an `OnSetChildPropertyFull` override
+  chains up.
+* **Threads.** Every slot runs synchronously on the thread that owns the
+  timeline, the extraction of an effect included. The element an override answers
+  runs on streaming threads like any other element.
+* **Clips.** A managed `GES.BaseEffectClip` answers its effects from
+  `OnCreateTrackElement` and refuses a time effect as a child
+  (`ges-base-effect-clip.c:57-79`). A direct `GES.OperationClip` subclass cannot
+  take top effects at all: `can_add_effects` is a class data field and nothing
+  configures it. A `GES.EffectClip` subtype is requested with the id
+  `"audio <description> || video <description>"`, either half of which may be
+  absent (`ges-effect-clip.c:68-105`); it keeps the native `GESEffect` child
+  unless it overrides `OnCreateTrackElement`, accepts `""` as "no description, no
+  child", and — like every `GESEffect` subtype — takes the process down on a
+  `null` id, this time in the hash of the asset key (`ges-asset.c:752-766`).
+* **Limits.** There is no rate-property registration:
+  `ges_effect_class_register_rate_property` is unbound. Time effects are the
+  native path only — a description naming `pitch`, `videorate` or `scaletempo`
+  works through the inherited slot, while custom time translation needs
+  `ges_base_effect_set_time_translation_funcs`, which is unbound. The transition
+  classes — `Transition`, `VideoTransition`, `AudioTransition`,
+  `BaseTransitionClip` and `TransitionClip` — are not subclassable and will not
+  be: the library only ever builds the native transition types
+  (`ges-transition-clip.c:359, 372`).
 
 ### The rules the surface enforces
 
@@ -1603,6 +1708,12 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `GES.TrackElement` | `create_gnl_object`, `create_element`, `active_changed`, `changed` |
 | `GES.Source` | `select_pad`, `create_source` |
 | `GES.Clip` | `create_track_element` |
+
+The six effect classes of the editing services — `GES.Operation`, `BaseEffect`,
+`Effect`, `OperationClip`, `BaseEffectClip` and `EffectClip` — have no row of
+their own because they declare no slot: they are bases a managed type may stand
+on, and what one of them overrides is declared through `GES.TimelineElement`,
+`GES.TrackElement`, `GES.Clip` or `Container.UngroupOverride`.
 
 `Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
 type is answered from. Seven slots of the GStreamer classes above carry no
@@ -1723,6 +1834,12 @@ classes do not, and the registration says so before it takes the type name:
 | `AudioSrc` | `read` | the same |
 | `BaseParse`, `AudioDecoder`, `AudioEncoder`, `VideoDecoder`, `VideoEncoder` | `handle_frame` | the base class calls it for every frame, and for the drain at the end of the stream, unguarded |
 
+A direct `GES.BaseEffect` or `GES.Operation` subclass gets no row of its own: the
+library guards its NULL `create_element` (`ges-track-element.c:1024`), so a
+subclass that declares nothing is registered and is merely useless — an
+`nleoperation` with nothing inside it. The rule is in *An effect for the editing
+services* above instead.
+
 ### Why `DeviceProvider::start` or `probe` is on that table
 
 `gst_device_provider_start` calls `klass->probe` **without a NULL check** when
@@ -1809,6 +1926,14 @@ under it.
   (`ges-container.c:1026-1033`), and `group` can carry no managed surface, so
   `GES.Container` stays off the allowlist. `Container.UngroupOverride` is
   declared from a clip base instead.
+* **The GES transition classes are not subclassable, and no rate or time effect
+  is configurable from managed code.** `Transition`, `VideoTransition`,
+  `AudioTransition`, `BaseTransitionClip` and `TransitionClip` stay off the
+  allowlist because the library only ever builds the native transition types
+  (`ges-transition-clip.c:359, 372`). Beside them,
+  `ges_effect_class_register_rate_property` and
+  `ges_base_effect_set_time_translation_funcs` are unbound, so a managed effect
+  is a time effect only through a description the inherited slot builds.
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
   and a managed parent's slot would be the same trampoline (§4.4). The surface
