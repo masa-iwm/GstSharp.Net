@@ -1577,6 +1577,19 @@ wrapper that only borrows its object has a reference minted for the library
 instead — and the old object is released. Disposing the wrapper, or passing it
 to a member that consumes it, without clearing the slot is the same answer as
 clearing it: the entry is removed, because the wrapper owns nothing any more.
+
+A removal is only allowed while the list itself is writable, and offering one
+on a list that is not is worse than a no-op: `gst_buffer_list_foreach` advances
+its index only for an entry the function left behind
+(`gstbufferlist.c:318-320`), so the refused removal brings the same buffer back
+under the same index, again and again. The refusal writes one GLib CRITICAL and
+then silences itself (`gstbufferlist.c:284-292`), which leaves a walk that never
+returns and says nothing about why. The binding cannot guard it — the library
+goes on presenting the entry — so a function that removes has to know the list
+is writable: ask `MiniObject.IsWritable`, or call `BufferList.MakeWritable()`
+before the walk. A list a callback is lent is borrowed, so neither is available
+there and every entry has to be kept.
+
 The buffer of a writable list is writable inside the function, so
 `MakeWritable()` in place is a legal replace. A sticky event can never be edited
 in place, because the pad keeps a second reference to it: `MakeWritable()` on it

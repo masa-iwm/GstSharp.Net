@@ -43,6 +43,19 @@ namespace Gst;
 /// the wrapper - is a change like any other and is refused the same way.
 /// </para>
 /// <para>
+/// <b>A removal the library refuses does not end: the walk never leaves the
+/// entry.</b> The index is advanced only for an entry the function left behind
+/// (<c>gstbufferlist.c:318-320</c>), so a refused removal shows the same buffer
+/// under the same index again, and the CRITICAL is written once and then
+/// silenced - the walk spins with nothing said. Nothing in the binding can stop
+/// it, because the library goes on presenting the entry: a function that
+/// removes must know the list is writable. Ask
+/// <see cref="Gst.MiniObject.IsWritable"/> on the list before the walk, or call
+/// <see cref="Gst.BufferList.MakeWritable"/> on it first - and note that a list
+/// handed to a callback of the binding is usually borrowed, so making it
+/// writable there is not possible and the function must keep every entry.
+/// </para>
+/// <para>
 /// The function must not touch the list itself while it runs: reading it,
 /// inserting into it or removing from it under the walk shows entries the walk
 /// is in the middle of settling, and the entry of a writable list is held by
@@ -88,6 +101,17 @@ public sealed unsafe partial class BufferList
     /// <para>
     /// The function is called on the calling thread and every call it gets has
     /// happened before this method returns; nothing is kept of it afterwards.
+    /// </para>
+    /// <para>
+    /// <b>Do not remove entries from a list that is not writable.</b> The
+    /// library refuses the removal, keeps the entry and does not advance the
+    /// index (<c>gstbufferlist.c:284-292</c>, <c>:318-320</c>), so the same
+    /// buffer is shown again under the same index for as long as the function
+    /// goes on clearing its slot - and after the first refusal the CRITICAL is
+    /// silenced, which leaves a walk that never returns and says nothing. Ask
+    /// <see cref="Gst.MiniObject.IsWritable"/> first, or call
+    /// <see cref="MakeWritable"/> before the walk; a borrowed list can be
+    /// neither, and a function walking one has to keep every entry.
     /// </para>
     /// <para>
     /// An exception thrown by the function is reported through

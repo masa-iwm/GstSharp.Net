@@ -317,7 +317,7 @@ public sealed unsafe partial class BufferListForeachTests
     /// A list that is not writable refuses every change a walk makes: the
     /// library keeps the entry it had, releases whatever the function left
     /// behind and says so once with a GLib critical
-    /// (<c>gstbufferlist.c:283-290</c>).
+    /// (<c>gstbufferlist.c:284-292</c>).
     /// </summary>
     /// <remarks>
     /// <para>
@@ -331,7 +331,7 @@ public sealed unsafe partial class BufferListForeachTests
     /// <para>
     /// The clearing happens once, and the test would hang if it did not: the
     /// walk advances only when the function left a buffer behind
-    /// (<c>gstbufferlist.c:318-319</c>), and on a list that refused the removal
+    /// (<c>gstbufferlist.c:318-320</c>), and on a list that refused the removal
     /// the same entry comes back under the same index for as long as the
     /// function keeps clearing it. The critical is written once as well
     /// (<c>first_warning</c>), so a spinning walk would be silent.
