@@ -483,6 +483,124 @@ public sealed class GesAsyncTests
     }
 
     /// <summary>
+    /// A managed <c>GESSourceClip</c> subclass is served its own type name
+    /// rather than refused, and the asynchronous request answers the
+    /// synchronous asset for it too.
+    /// </summary>
+    /// <remarks>
+    /// This is the boundary the exact-<c>GType</c> test in
+    /// <c>ThrowIfIdIsRequired</c> draws. <c>GESSourceClip</c> refuses every
+    /// identifier but <c>time-overlay</c> only when the requested type
+    /// <em>is</em> <c>GES_TYPE_SOURCE_CLIP</c> and chains to the parent
+    /// interface otherwise (<c>ges-source-clip.c:59-69</c>), so a managed
+    /// subclass reaches the default <c>check_id</c> and is answered
+    /// <c>g_type_name</c> of the type that was asked for
+    /// (<c>ges-extractable.c:59-63</c>) — which for a managed type is the name
+    /// it was registered under. The identifier the binding substitutes is that
+    /// same name, so both halves land on one cache entry.
+    /// </remarks>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task AManagedSubclassIsAnsweredTheSameAssetByBothHalves()
+    {
+        GstGES.Initialize();
+
+        GType managed = ProbeSourceClip.Registration.GType;
+
+        // The synchronous request is the reference answer, and it is also what
+        // guarantees the type has an entries table before the first
+        // asynchronous request runs.
+        string expectedId;
+        using (Asset expected = Assert.IsAssignableFrom<Asset>(Asset.Request(managed, null)))
+        {
+            expectedId = expected.Id;
+        }
+
+        Assert.Equal(ProbeSourceClip.GTypeName, expectedId);
+
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            Task<Asset> request = Asset.RequestAsync(managed, null);
+
+            await Settled(request);
+
+            using Asset asset = await request;
+
+            Assert.Equal(managed, asset.ExtractableType);
+            Assert.Equal(expectedId, asset.Id);
+        }
+    }
+
+    /// <summary>
+    /// The synchronous request and the reload request refuse the same
+    /// identifier-carrying types the asynchronous one does, and the process
+    /// survives every one of them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Each type below answers something the library cannot use from its
+    /// <c>check_id</c>: <c>GESEffect</c> dereferences the <see langword="null"/>
+    /// in <c>check_id</c> itself (<c>ges-effect-asset.c:390-391</c>), and the
+    /// other seven answer <c>NULL</c>, which sends the call to
+    /// <c>_ensure_asset_for_wrong_id</c> with the identifier as it was given
+    /// (<c>ges-asset.c:1264-1268</c>) and on to <c>ges_asset_cache_put</c>,
+    /// where the <see langword="null"/> becomes the key of a
+    /// <c>g_str_hash</c> table (<c>:745-766</c>). So this test, like its
+    /// asynchronous twin, can only prove the guard by surviving.
+    /// </para>
+    /// <para>
+    /// <c>GESFormatter</c> and <c>GESTimeline</c> are deliberately absent: the
+    /// synchronous request is how the library builds those itself, and only the
+    /// unnormalised second lookup of <c>ges_asset_request_async</c> refuses
+    /// them.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void TheSynchronousRequestRefusesTheTypesThatNeedAnIdentifier()
+    {
+        GstGES.Initialize();
+
+        // Asking each class for its GType is also what registers it, which
+        // GType.FromName would depend on someone else having done.
+#pragma warning disable CS0618 // GESMultiFileSource is deprecated upstream and still requestable.
+        GType multiFileSource = new GType(MultiFileSource.GetGType());
+#pragma warning restore CS0618
+
+        GType[] refused =
+        [
+            new GType(SourceClip.GetGType()),
+            new GType(UriClip.GetGType()),
+            new GType(AudioUriSource.GetGType()),
+            new GType(VideoUriSource.GetGType()),
+            multiFileSource,
+            new GType(TransitionClip.GetGType()),
+            new GType(Effect.GetGType()),
+            new GType(EffectClip.GetGType()),
+        ];
+
+        foreach (GType type in refused)
+        {
+            ArgumentException request = Assert.Throws<ArgumentException>(
+                () => { _ = Asset.Request(type, null); });
+            Assert.Equal("id", request.ParamName);
+            Assert.Contains(type.Name, request.Message, StringComparison.Ordinal);
+
+            ArgumentException reload = Assert.Throws<ArgumentException>(
+                () => { _ = Asset.NeedsReload(type, null); });
+            Assert.Equal("id", reload.ParamName);
+            Assert.Contains(type.Name, reload.Message, StringComparison.Ordinal);
+        }
+
+        // The negative boundary, as in the asynchronous test: GESTitleClip is a
+        // GESSourceClip subclass and chains to the default check_id, so it is
+        // answered rather than refused.
+        using Asset allowed = Assert.IsAssignableFrom<Asset>(
+            Asset.Request(new GType(TitleClip.GetGType()), null));
+
+        Assert.Equal("GESTitleClip", allowed.Id);
+    }
+
+    /// <summary>
     /// Waits for a request to reach any terminal state, and fails the test
     /// instead of hanging it when it reaches none.
     /// </summary>
