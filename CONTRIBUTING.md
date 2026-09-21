@@ -443,10 +443,13 @@ The remaining keys address a callback type and a member rather than a slot:
   counterpart of `docStrip` one level up, for the upstream sentence that
   documents a string grammar the library itself does not write — a note beside
   it would leave the reader two grammars and no way to choose. Replacements are
-  applied in order, each to the text the one before left behind. Every failure
-  is `GEN0064` and an error: an `old` that stands nowhere or more than once, a
-  class with no documentation at all, and an entry that names no rendered
-  class. Only classes are covered — records and interfaces obtain their type
+  applied in order, each to the text the one before left behind. Both members
+  have to be written: an entry that names no `new` — which is also how a
+  misspelled key reads, since an unknown member is tolerated so that `$comment`
+  can sit inside the entry — is refused while the overlays load, and a removal
+  is written out as `"new": ""`. Every failure of a loaded entry is `GEN0064`
+  and an error: an `old` that stands nowhere or more than once, a class with no
+  documentation at all, and an entry that names no rendered class. Only classes are covered — records and interfaces obtain their type
   documentation on emitter paths of their own.
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in

@@ -238,11 +238,14 @@ internal sealed class DocReplacement
     /// as <see cref="Old"/>, which would replace nothing.
     /// </summary>
     /// <remarks>
-    /// An entry that omits it writes the empty string, which is a removal; that
-    /// is legal here, but <c>docStrip</c> is the key written for a removal of a
-    /// whole sentence.
+    /// It is nullable so that an entry which omits the key - or misspells it,
+    /// which reads the same way, because an unknown member of the entry is
+    /// tolerated - is refused while the overlays load rather than silently
+    /// deleting the substring. An explicit empty string is a removal and stays
+    /// legal, but <c>docStrip</c> is the key written for a removal of a whole
+    /// sentence.
     /// </remarks>
-    public string New { get; set; } = string.Empty;
+    public string? New { get; set; }
 }
 
 /// <summary>
@@ -1140,8 +1143,12 @@ internal sealed class Overlays
             // The same three silences a documentation strip has, in the shape a
             // replacement takes them: an entry that names no replacement, one
             // whose 'old' stands in every documentation there is, and one that
-            // writes back what it read. None of the three is caught by the stale
-            // key report, because the key is consumed by the very type it leaves
+            // writes back what it read. A fourth is the replacement's own: an
+            // entry that names no 'new' at all, which a misspelled key reads as
+            // too, because an unknown member of the entry is tolerated - that
+            // is what lets '$comment' sit inside it - and which would delete the
+            // substring instead. None of the four is caught by the stale key
+            // report, because the key is consumed by the very type it leaves
             // unchanged.
             if (entry.Value is not { Count: > 0 } replacements)
             {
@@ -1157,6 +1164,13 @@ internal sealed class Overlays
                     throw new InvalidDataException(
                         $"The type documentation replacement entry '{entry.Key}' replaces a blank "
                         + "substring; an entry that replaces nothing changes nothing.");
+                }
+
+                if (replacement.New is null)
+                {
+                    throw new InvalidDataException(
+                        $"The type documentation replacement entry '{entry.Key}' names no 'new'; "
+                        + "write \"\" to remove the substring.");
                 }
 
                 if (string.Equals(replacement.Old, replacement.New, StringComparison.Ordinal))

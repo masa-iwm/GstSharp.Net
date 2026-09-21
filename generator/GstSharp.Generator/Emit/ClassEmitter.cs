@@ -883,9 +883,11 @@ internal sealed class ClassEmitter
                 continue;
             }
 
+            // The load refuses an entry that names no 'new', so the text written
+            // in place of the substring is there by the time this reads it.
             doc = string.Concat(
                 doc.AsSpan(0, first),
-                replacement.New,
+                replacement.New!,
                 doc.AsSpan(first + replacement.Old.Length));
         }
 

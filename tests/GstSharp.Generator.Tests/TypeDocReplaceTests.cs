@@ -160,6 +160,37 @@ public sealed class TypeDocReplaceTests
     }
 
     [Fact]
+    public void AnEntryWithoutANewIsRefusedWhileTheOverlaysLoad()
+    {
+        // An unknown member of the entry is tolerated - that is what lets
+        // '$comment' sit inside it - so a misspelled 'new' reads exactly like an
+        // omitted one, and both would delete the substring without a word.
+        Assert.Contains(
+            "Gst.Widget",
+            Refused("""{ "typeDocReplace": { "Gst.Widget": [{ "old": "|| video", "nw": "||video" }] } }"""),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnEntryWithAnEmptyNewRemovesTheSubstring()
+    {
+        // The removal that is meant is written out, and it is still legal.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "typeDocReplace": {
+                "Gst.Widget": [{ "old": " || video", "new": "" }]
+              }
+            }
+            """);
+
+        Assert.Contains("\"audio bin bin\"", run.File("Widget.cs"), StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0064", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void AnEntryThatWritesItsOwnTextBackIsRefusedWhileTheOverlaysLoad()
     {
         Assert.Contains(
