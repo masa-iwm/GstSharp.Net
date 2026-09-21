@@ -443,6 +443,33 @@ public sealed class GesEffectSubclassTests
     }
 
     /// <summary>
+    /// An id that carries both halves sets both descriptions — as long as no space
+    /// follows the bars, which is what the grammar of such an id turns on.
+    /// </summary>
+    /// <remarks>
+    /// The half after the bars is split on its first space
+    /// (<c>ges-effect-asset.c:390-397</c>), so a space there leaves an empty first
+    /// token, the half has no type, the whole of it is parsed as a bin instead and
+    /// it is dropped with nothing but a log line. The library's own writers emit no
+    /// space either (<c>ges-effect-clip.c:122-124</c>).
+    /// </remarks>
+    [RequiresElementFact("videobalance", "audioconvert")]
+    public void AnEffectClipIdWithBothHalvesSetsBothDescriptions()
+    {
+        GstGES.Initialize();
+
+        ProbeNativeEffectClip clip = ProbeNativeEffectClip.New("audio audioconvert ||video videobalance");
+
+        using (clip)
+        {
+            // The space before the bars belongs to the half it ends, which is why
+            // the audio description carries a trailing one.
+            Assert.Equal("audioconvert ", clip.AudioBinDescription);
+            Assert.Equal("videobalance", clip.VideoBinDescription);
+        }
+    }
+
+    /// <summary>
     /// An id whose description names nothing installed is refused rather than
     /// answered, and the refusal costs the process nothing.
     /// </summary>

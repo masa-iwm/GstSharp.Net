@@ -8,8 +8,11 @@ namespace GstSharp.IntegrationTests;
 /// out of the description its asset carries.
 /// </summary>
 /// <remarks>
-/// The id of such an asset is <c>"audio &lt;description&gt; || video &lt;description&gt;"</c>,
-/// either half of which may be absent (<c>ges-effect-clip.c:68-105</c>). An empty
+/// The id of such an asset is <c>"audio &lt;description&gt; ||video &lt;description&gt;"</c>,
+/// either half of which may be absent (<c>ges-effect-clip.c:68-105</c>) and
+/// neither of which may be preceded by a space: the half after the bars is split
+/// on its first space (<c>ges-effect-asset.c:390-397</c>), so a space there costs
+/// the half its type and it is dropped. An empty
 /// id is a clip with no description and no child; a <see langword="null"/> id
 /// takes the process down, because the asset hashes the id without checking it
 /// (<c>ges-asset.c:752-766</c>), so no test here passes one.

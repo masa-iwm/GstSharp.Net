@@ -1580,8 +1580,12 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   (`ges-base-effect-clip.c:57-79`). A direct `GES.OperationClip` subclass cannot
   take top effects at all: `can_add_effects` is a class data field and nothing
   configures it. A `GES.EffectClip` subtype is requested with the id
-  `"audio <description> || video <description>"`, either half of which may be
-  absent (`ges-effect-clip.c:68-105`); it keeps the native `GESEffect` child
+  `"audio <description> ||video <description>"`, either half of which may be
+  absent (`ges-effect-clip.c:68-105`); **no space may follow the bars**, because
+  the half after them is split on its first space and an empty first token
+  leaves the half typeless and silently dropped
+  (`ges-effect-asset.c:390-397`), which is why the library writes it without one
+  itself (`ges-effect-clip.c:122-124`). It keeps the native `GESEffect` child
   unless it overrides `OnCreateTrackElement`, accepts `""` as "no description, no
   child", and — like every `GESEffect` subtype — takes the process down on a
   `null` id, this time in the hash of the asset key (`ges-asset.c:752-766`).
