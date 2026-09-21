@@ -770,8 +770,18 @@ public sealed class GesEffectSubclassTests
 
     /// <summary>
     /// The same refusal answers <c>Container.Add</c>, which is the other way to
-    /// reach the branch that reads the missing asset.
+    /// reach the branch that reads the missing asset, and neither a container
+    /// whose class takes no effects nor an effect that has an asset is touched
+    /// by it.
     /// </summary>
+    /// <remarks>
+    /// The two boundaries below are the negative legs of the guard: a
+    /// <c>GESTransitionClip</c> leaves <c>can_add_effects</c> FALSE, so the read
+    /// of that field has to answer FALSE and the refusal has to come from C
+    /// (<c>ges-clip.c:1869-1884</c>, a <c>GST_WARNING</c> and FALSE) rather than
+    /// from the guard; and a native <c>GESEffect</c> built through
+    /// <c>ges_effect_new</c> has an asset, so it still goes in.
+    /// </remarks>
     [RequiresElementFact("videobalance", "videoconvert", "videotestsrc", "audiotestsrc")]
     public void AnEffectWithNoAssetIsRefusedByContainerAdd()
     {
@@ -793,6 +803,26 @@ public sealed class GesEffectSubclassTests
 
         Assert.True(group.Add(clip));
         Assert.True(group.Remove(clip));
+
+        // A clip whose class leaves can_add_effects FALSE refuses the same
+        // effect in C, with no exception and no parent left behind, which is
+        // the proof that the flag is read where it lives.
+        using TransitionClip transition =
+            TransitionClip.New(VideoStandardTransitionType.Crossfade)
+            ?? throw new InvalidOperationException("The transition clip could not be created.");
+
+        Assert.False(transition.Add(assetless));
+        Assert.Null(assetless.Parent);
+
+        // A native effect carries the asset the branch reads, so it is added.
+        using Effect native = Effect.New("videobalance")
+            ?? throw new InvalidOperationException("The effect could not be created.");
+
+        using Asset? asset = native.GetAsset();
+
+        Assert.NotNull(asset);
+        Assert.True(clip.AddTopEffect(native, -1));
+        Assert.True(clip.RemoveTopEffect(native));
     }
 
     /// <summary>Builds a one-second audio and video test clip.</summary>
