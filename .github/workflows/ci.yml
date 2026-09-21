@@ -641,8 +641,9 @@ jobs:
       # audio source and the ungroup slot of the clip. It needs the nle and ges
       # plugins and the base and good plugin sets a video and an audio source
       # bin are built from - videotestsrc and audiotestsrc among them, which the
-      # integration tests of this leg already require - and --timeout 20 is the
-      # deadline the half second clip has to reach the end of stream in.
+      # integration tests of this leg already use and gstreamer1.0-plugins-base
+      # ships - and --timeout 20 is the deadline the half second clip has to
+      # reach the end of stream in.
       - name: GesCustomSource
         run: dotnet run --project samples/GesCustomSource --no-build -- --timeout 20
 

@@ -4,24 +4,23 @@ A timeline made of managed types: `CustomSourceClip`, a `GES.SourceClip` whose
 `OnCreateTrackElement` answers a child per track type, `CustomVideoSource`, a
 `GES.VideoSource` whose `OnCreateSource` answers a `videotestsrc`, and
 `CustomAudioSource`, a `GES.AudioSource` whose `OnCreateSource` answers an
-`audiotestsrc`. All of them are built by the editing services rather than by C#,
-which is the child contract
-`docs/subclassing.md` §11 describes: a child has to be extracted from an asset
-for its own `GType` (`GES.Asset.Request(...)!.Extract<T>()`), because a child
-built with `new` has no asset, never gets an `nleobject` and is removed from the
-clip again. The sample builds a timeline with one audio and one video track, one
-layer and one half
-second clip, plays it through a `GES.Pipeline` whose two preview sinks are a
-`fakesink` each, and waits on the bus for the end of stream — so it is headless
-and bounded. What it needs installed is the `nle` and `ges` plugins the editing
-services are themselves built on, and the elements a video and an audio source
-bin are made
-of: `videotestsrc`, `compositor`, `videoconvertscale` and `videorate` from the
-base plugins, `capsfilter` from the core elements, and `videoflip`,
-`videocrop` and `deinterlace` from the good ones for the video side, and
-`audiotestsrc`, `audioconvert`, `audioresample`, `volume` and `audiomixer` from
-the base plugins for the audio one. It exits 0 when every step below held and
-the run reached the end of stream, and 1 on an error or on the timeout.
+`audiotestsrc`. All of them are built by the editing services rather than by
+C#, which is the child contract `docs/subclassing.md` §11 describes: a child
+has to be extracted from an asset for its own `GType`
+(`GES.Asset.Request(...)!.Extract<T>()`), because a child built with `new` has
+no asset, never gets an `nleobject` and is removed from the clip again. The
+sample builds a timeline with one audio and one video track, one layer and one
+half second clip, plays it through a `GES.Pipeline` whose two preview sinks are
+a `fakesink` each, and waits on the bus for the end of stream — so it is
+headless and bounded. What it needs installed is the `nle` and `ges` plugins
+the editing services are themselves built on, and the elements a video and an
+audio source bin are made of: `videotestsrc`, `compositor`,
+`videoconvertscale` and `videorate` from the base plugins, `capsfilter` from
+the core elements, and `videoflip`, `videocrop` and `deinterlace` from the good
+ones for the video side, and `audiotestsrc`, `audioconvert`, `audioresample`,
+`volume` and `audiomixer` from the base plugins for the audio one. It exits 0
+when every step below held and the run reached the end of stream, and 1 on an
+error or on the timeout.
 
 It prints four numbered steps.
 
@@ -50,8 +49,12 @@ It prints four numbered steps.
    implementation below it — `GESClip::ungroup`, which a chain-up always reaches
    — answered, and hands that list on. The list belongs to the caller: the clip
    is in it and is disposed by the `using` that made it, and the one new clip
-   beside it is disposed by the sample. GStreamer 1.28 reads the `recursive`
-   flag nowhere, which is why the override only reports it.
+   beside it is disposed by the sample — which releases the reference of that
+   caller, the layer keeping its own, but also retires the managed side of that
+   clip: a disposed wrapper chains up for ever, which costs nothing here
+   because the run is over, while an editing application keeps the wrapper for
+   as long as it wants its overrides to answer. GStreamer 1.28 reads the
+   `recursive` flag nowhere, which is why the override only reports it.
 
 ```sh
 dotnet run --project samples/GesCustomSource
