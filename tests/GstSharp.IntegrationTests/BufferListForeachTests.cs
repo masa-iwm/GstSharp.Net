@@ -133,6 +133,104 @@ public sealed unsafe partial class BufferListForeachTests
     }
 
     /// <summary>
+    /// Disposing the wrapper without clearing the slot removes the buffer as
+    /// well, because the wrapper owns nothing any more.
+    /// </summary>
+    /// <remarks>
+    /// Nothing else holds the buffer here, so the library lends the only
+    /// reference the list has and removes the entry without releasing a
+    /// reference of its own.
+    /// </remarks>
+    [Fact]
+    public void DisposingTheWrapperRemovesTheEntry()
+    {
+        using BufferList list = NewList();
+
+        Assert.True(list.Foreach((ref Buffer? buffer, uint idx) =>
+        {
+            if (buffer!.Pts.Nanoseconds == 20ul)
+            {
+                buffer.Dispose();
+            }
+
+            return true;
+        }));
+
+        Assert.Equal(2u, list.Length());
+
+        using Buffer first = list.Get(0);
+        using Buffer second = list.Get(1);
+
+        Assert.Equal(10ul, first.Pts.Nanoseconds);
+        Assert.Equal(30ul, second.Pts.Nanoseconds);
+    }
+
+    /// <summary>
+    /// Clearing the slot of a buffer nothing else holds removes it, on the path
+    /// where the reference the slot lends is the only one the list has.
+    /// </summary>
+    [Fact]
+    public void ClearingTheSlotOfAWritableBufferRemovesIt()
+    {
+        using BufferList list = NewList();
+
+        Assert.True(list.Foreach((ref Buffer? buffer, uint idx) =>
+        {
+            if (buffer!.Pts.Nanoseconds == 20ul)
+            {
+                buffer = null;
+            }
+
+            return true;
+        }));
+
+        Assert.Equal(2u, list.Length());
+
+        using Buffer first = list.Get(0);
+        using Buffer second = list.Get(1);
+
+        Assert.Equal(10ul, first.Pts.Nanoseconds);
+        Assert.Equal(30ul, second.Pts.Nanoseconds);
+    }
+
+    /// <summary>
+    /// Assigning another buffer over a buffer nothing else holds replaces the
+    /// entry, on the same path: the buffer that was there is released by the
+    /// binding rather than by the library.
+    /// </summary>
+    [Fact]
+    public void AssigningAnotherBufferOverAWritableBufferReplacesIt()
+    {
+        using BufferList list = NewList();
+        Buffer? replacement = null;
+
+        Assert.True(list.Foreach((ref Buffer? buffer, uint idx) =>
+        {
+            if (idx != 1)
+            {
+                return true;
+            }
+
+            replacement = Buffer.New();
+            replacement.SetPts(ClockTime.FromNanoseconds(99));
+            buffer = replacement;
+            return true;
+        }));
+
+        Assert.NotNull(replacement);
+        Assert.True(replacement.IsDisposed);
+        Assert.Equal(3u, list.Length());
+
+        using Buffer first = list.Get(0);
+        using Buffer second = list.Get(1);
+        using Buffer third = list.Get(2);
+
+        Assert.Equal(10ul, first.Pts.Nanoseconds);
+        Assert.Equal(99ul, second.Pts.Nanoseconds);
+        Assert.Equal(30ul, third.Pts.Nanoseconds);
+    }
+
+    /// <summary>
     /// The buffer of a writable list that nothing else holds is writable inside
     /// the function, so it can be edited in place without replacing the entry.
     /// </summary>

@@ -188,6 +188,39 @@ public sealed unsafe partial class StickyEventsForeachTests
     }
 
     /// <summary>
+    /// Disposing the wrapper without clearing the slot removes the event as
+    /// well, because the wrapper owns nothing any more.
+    /// </summary>
+    [Fact]
+    public void DisposingTheWrapperRemovesTheEntry()
+    {
+        using Pad pad = NewPadWithStickyEvents();
+        using Event held = Hold(pad, EventType.Segment);
+        nint handle = held.Handle;
+
+        Assert.Equal(2u, RefCountOf(handle));
+
+        pad.StickyEventsForeach((Pad _, ref Event? @event) =>
+        {
+            if (@event!.Type == EventType.Segment)
+            {
+                @event.Dispose();
+            }
+
+            return true;
+        });
+
+        Assert.Null(pad.GetStickyEvent(EventType.Segment, 0));
+        Assert.Equal(1u, RefCountOf(handle));
+
+        using Event? streamStart = pad.GetStickyEvent(EventType.StreamStart, 0);
+        using Event? caps = pad.GetStickyEvent(EventType.Caps, 0);
+
+        Assert.NotNull(streamStart);
+        Assert.NotNull(caps);
+    }
+
+    /// <summary>
     /// Assigning another event replaces the entry: the new event is handed over
     /// to the library and the old one loses the reference the pad held.
     /// </summary>
