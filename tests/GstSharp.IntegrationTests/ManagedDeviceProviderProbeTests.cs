@@ -322,6 +322,39 @@ public sealed unsafe partial class ManagedDeviceProviderProbeTests
         Assert.Equal(1u, RefCountOf(provider.Kept.Handle));
     }
 
+    /// <summary>
+    /// An override that chains up: no class below a managed provider implements
+    /// <c>probe</c>, so the chain-up reads a NULL slot and answers no devices,
+    /// which both callers of the slot take as the empty answer rather than as a
+    /// failure.
+    /// </summary>
+    [Fact]
+    public void AProbeOverrideThatChainsUpAnswersNoDevices()
+    {
+        using ProbeOnlyDeviceProvider provider = new() { ChainsUp = true };
+        using Bus bus = provider.GetBus();
+
+        Assert.Empty(provider.GetDevices());
+        Assert.Equal(1, provider.Probed);
+        Assert.Null(provider.Fresh);
+
+        // The same answer as a C caller sees it: NULL is the empty list.
+        Assert.Equal(nint.Zero, DeviceProviderGetDevices(provider.Handle));
+        Assert.Equal(2, provider.Probed);
+
+        Assert.True(provider.Start());
+
+        try
+        {
+            Assert.Equal(3, provider.Probed);
+            Assert.Null(bus.Pop());
+        }
+        finally
+        {
+            provider.Stop();
+        }
+    }
+
     /// <summary>Runs an action with the exception trap listening.</summary>
     /// <param name="action">What to run.</param>
     /// <returns>What the trap reported while it ran.</returns>

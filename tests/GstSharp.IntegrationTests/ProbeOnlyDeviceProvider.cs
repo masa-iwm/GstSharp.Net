@@ -76,6 +76,14 @@ internal sealed class ProbeOnlyDeviceProvider : DeviceProvider, IManagedSubclass
     /// </summary>
     internal bool AnswersTheKeptDeviceTwice { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the override answers what the
+    /// implementation below it answers, which is what the default override
+    /// does: no class below a managed provider implements <c>probe</c>, so the
+    /// chain-up reads a NULL slot and answers no devices.
+    /// </summary>
+    internal bool ChainsUp { get; set; }
+
     /// <summary>Builds the wrapper of an instance native code created.</summary>
     /// <param name="args">What the runtime says about the instance.</param>
     /// <returns>The wrapper, which adopts the instance.</returns>
@@ -89,6 +97,11 @@ internal sealed class ProbeOnlyDeviceProvider : DeviceProvider, IManagedSubclass
         if (Throws)
         {
             throw new InvalidOperationException(Excuse);
+        }
+
+        if (ChainsUp)
+        {
+            return ChainUpProbe();
         }
 
         if (AnswersANullEntry)
