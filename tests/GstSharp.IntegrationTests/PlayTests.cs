@@ -426,6 +426,7 @@ public sealed class PlayTests
         using ManualResetEventSlim stopped = new(initialState: false);
         Bus bus = play.GetMessageBus();
         adapter.StateChanged += OnStateChanged;
+        bool reachedPlaying = false;
         try
         {
             play.Uri = media.Uri;
@@ -441,21 +442,31 @@ public sealed class PlayTests
                     "the synchronous adapter never emitted a PLAYING state change. "
                     + TimeoutDiagnostics.Describe(Patience, play.GetPipeline(), bus));
             }
+
+            reachedPlaying = true;
         }
         finally
         {
             // This adapter drops every message of the API bus, so the stop is
             // observed through the adapter rather than through the bus. The
             // signal is emitted on the thread of the play, from inside the
-            // post that carries it, so the drain below is what waits for that
-            // thread to be done with the play before the wrapper lets go.
+            // post that carries it, so the wait below is what lets that thread
+            // be done with the play before the wrapper lets go.
             play.Stop();
-            Assert.True(
-                stopped.Wait(Patience),
-                "the synchronous adapter never emitted a STOPPED state change");
+            bool stopSeen = stopped.Wait(Patience);
 
             adapter.StateChanged -= OnStateChanged;
             WaitUntilQuiet(bus);
+
+            // An assertion that throws out of this block replaces the message
+            // of whatever failure is already in flight, so the stop is only
+            // asserted when the body reached PLAYING without failing.
+            if (reachedPlaying)
+            {
+                Assert.True(
+                    stopSeen,
+                    "the synchronous adapter never emitted a STOPPED state change");
+            }
         }
 
         void OnStateChanged(object? sender, PlaySignalAdapter.StateChangedSignalArgs args)

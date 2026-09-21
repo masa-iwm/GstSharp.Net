@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Gst;
 
 namespace GstSharp.IntegrationTests;
@@ -44,12 +45,36 @@ internal static class TimeoutDiagnostics
     /// </remarks>
     internal static string Describe(TimeSpan waited, Element? pipeline, Bus? apiBus)
     {
-        string state = DescribeState(pipeline);
-        string api = DescribeQueue(apiBus);
-        string element = DescribeQueue(pipeline?.GetBus());
+        string state = Attempt(() => DescribeState(pipeline));
+        string api = Attempt(() => DescribeQueue(apiBus));
+        string element = Attempt(() => DescribeQueue(pipeline?.GetBus()));
 
         return FormattableString.Invariant($"waited {waited}; pipeline: {state}; ")
             + FormattableString.Invariant($"api bus: {api}; pipeline bus: {element}");
+    }
+
+    /// <summary>
+    /// Reports one section of the evidence, or why that section is missing.
+    /// </summary>
+    /// <param name="section">The section to gather.</param>
+    /// <returns>The section, or a note naming what stopped it.</returns>
+    // Catching everything is what this helper is for: the text it builds is the
+    // message of a failure that already happened, so an exception escaping one
+    // section would replace that message with its own.
+    [SuppressMessage(
+        "Design",
+        "CA1031:Do not catch general exception types",
+        Justification = "A section that cannot be gathered must not replace the failure being reported.")]
+    private static string Attempt(Func<string> section)
+    {
+        try
+        {
+            return section();
+        }
+        catch (Exception raised)
+        {
+            return FormattableString.Invariant($"unavailable ({raised.GetType().Name}: {raised.Message})");
+        }
     }
 
     /// <summary>
@@ -94,9 +119,18 @@ internal static class TimeoutDiagnostics
             queued.Add(DescribeMessage(message));
         }
 
-        return queued.Count == 0
-            ? "empty"
-            : FormattableString.Invariant($"{queued.Count} queued [{string.Join("; ", queued)}]");
+        if (queued.Count == 0)
+        {
+            return "empty";
+        }
+
+        // A bus that filled the listing may be carrying more, so the count is
+        // reported as a lower bound rather than as the length of the queue.
+        string counted = queued.Count == MostMessages
+            ? FormattableString.Invariant($"at least {MostMessages} queued, listing stopped")
+            : FormattableString.Invariant($"{queued.Count} queued");
+
+        return FormattableString.Invariant($"{counted} [{string.Join("; ", queued)}]");
     }
 
     /// <summary>
