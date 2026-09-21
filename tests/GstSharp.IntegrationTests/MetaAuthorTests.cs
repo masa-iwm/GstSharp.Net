@@ -505,6 +505,11 @@ public sealed class MetaAuthorTests
         item.Payload<Pair>().Second = 43;
 
         int caller = Environment.CurrentManagedThreadId;
+        registration.Probe.CallerThread = caller;
+
+        // The push hands the buffer over and disposes the wrapper, so the
+        // handle has to be read before it, not after.
+        nint pushed = frame.Handle;
 
         try
         {
@@ -524,20 +529,60 @@ public sealed class MetaAuthorTests
             }
 
             Assert.NotNull(sample);
+            nint delivered;
             using (sample)
             {
                 using Buffer? converted = sample.GetBuffer();
                 Assert.NotNull(converted);
+                delivered = converted.Handle;
 
                 Meta carried = Assert.IsType<Meta>(converted.GetMeta(registration.Api));
                 Assert.Equal(42, carried.Payload<Pair>().First);
                 Assert.Equal(43, carried.Payload<Pair>().Second);
             }
 
+            // Everything the next unexplained count needs to name its
+            // mechanism: a last source equal to the pushed buffer is a copy
+            // upstream of the conversion, one equal to the delivered buffer is
+            // a copy downstream of it.
             _output.WriteLine(
-                $"transformed on thread {registration.Probe.LastTransformThread}, pushed from {caller}");
+                FormattableString.Invariant(
+                    $"transformed on thread {registration.Probe.LastTransformThread}, pushed from {caller}, ")
+                + FormattableString.Invariant(
+                    $"calls {registration.Probe.TransformCalls}, pushed buffer 0x{pushed:x}, ")
+                + FormattableString.Invariant(
+                    $"delivered buffer 0x{delivered:x}, ")
+                + FormattableString.Invariant(
+                    $"last source 0x{registration.Probe.LastTransformSource:x}, ")
+                + FormattableString.Invariant(
+                    $"last kind {registration.Probe.LastTransformType}, ")
+                + FormattableString.Invariant(
+                    $"region {registration.Probe.LastTransformRegion}"));
 
-            Assert.Equal(1, registration.Probe.TransformCalls);
+            // The count is not pinned here, because this pipeline does not
+            // control how often GStreamer may legitimately copy the buffer.
+            // Two sites carry the item for this graph: the conversion itself
+            // (gst_base_transform default_copy_metadata walking the metas of
+            // the input), and a deep copy of the buffer the sink keeps as its
+            // last sample (gst_base_sink_drain calling gst_buffer_copy_deep on
+            // an allocation or drain query). What re-triggers that query after
+            // the first buffer is unproven, and the legs that saw a second
+            // call ran GStreamer 1.24 and 1.26 rather than the version this
+            // graph was read against. The exact count stays pinned where it is
+            // deterministic and single threaded: in
+            // ACopyCarriesAnItemOnlyThroughATransformation (one call for a
+            // direct copy, none for a registration without a transformation)
+            // and in ACopyFromAWorkerRunsTheTransformationOnTheWorker.
+            Assert.True(
+                registration.Probe.TransformCalls >= 1,
+                "the conversion never ran the transformation");
+
+            // What this fact is about. The flag covers every call rather than
+            // the last one, so the relaxed count above cannot hide a call on
+            // the thread that pushed the buffer in.
+            Assert.False(
+                registration.Probe.TransformRanOnCallerThread,
+                "a transformation ran on the thread that pushed the buffer in");
             Assert.NotEqual(caller, registration.Probe.LastTransformThread);
         }
         finally
@@ -716,6 +761,21 @@ public sealed class MetaAuthorTests
         /// <summary>The buffer the item of the last transformation was on.</summary>
         internal nint LastTransformSource;
 
+        /// <summary>
+        /// The thread a transformation must not run on, or zero when there is
+        /// none. A managed thread identifier is never zero, so the default
+        /// matches no thread.
+        /// </summary>
+        internal int CallerThread;
+
+        /// <summary>
+        /// Whether any transformation ran on <see cref="CallerThread"/>. This
+        /// covers what <see cref="LastTransformThread"/> cannot: it only keeps
+        /// the last call, so a test that allows more than one call needs a
+        /// record of every one of them.
+        /// </summary>
+        internal bool TransformRanOnCallerThread;
+
         /// <summary>The version the last deserialisation was handed.</summary>
         internal byte LastVersion;
 
@@ -742,6 +802,8 @@ public sealed class MetaAuthorTests
             LastMeta = null;
             LastInitMeta = null;
             LastTransformSource = 0;
+            CallerThread = 0;
+            TransformRanOnCallerThread = false;
             LastVersion = 0;
             RefuseInit = false;
             ThrowOnTransform = false;
@@ -787,6 +849,7 @@ public sealed class MetaAuthorTests
             LastTransformThread = Environment.CurrentManagedThreadId;
             LastTransformSource = buffer.Handle;
             LastTransformRegion = data != 0 && ((MetaTransformCopy*)data)->Region != 0;
+            TransformRanOnCallerThread |= LastTransformThread == CallerThread;
 
             if (ThrowOnTransform)
             {
