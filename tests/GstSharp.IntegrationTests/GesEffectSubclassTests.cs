@@ -176,8 +176,8 @@ public sealed class GesEffectSubclassTests
 
     /// <summary>
     /// A child property of the element a managed effect inherited is written and
-    /// read through the clip, which is the native <c>set_child_property_full</c>
-    /// the managed type inherits.
+    /// read through the effect itself, which is the native
+    /// <c>set_child_property_full</c> the managed type inherits.
     /// </summary>
     [RequiresElementFact("videobalance", "videoconvert", "videotestsrc", "audiotestsrc")]
     public void AChildPropertyOfAManagedEffectReachesTheElement()
@@ -519,6 +519,10 @@ public sealed class GesEffectSubclassTests
         ProbeElementEffect.Reset();
 
         AssertATimelineRendersWith(static () => ProbeElementEffect.NewFromDescription("video identity"));
+
+        // Without this the test would also pass with the override slot absent,
+        // where the inherited create_element parses the description instead.
+        Assert.True(ProbeElementEffect.CreateElementCalls >= 1);
     }
 
     /// <summary>
@@ -541,6 +545,8 @@ public sealed class GesEffectSubclassTests
 
             return trackAsset.Extract<ProbeBaseEffect>();
         });
+
+        Assert.True(ProbeBaseEffect.CreateElementCalls >= 1);
     }
 
     /// <summary>
