@@ -298,12 +298,11 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// ges_asset_request_async().
     /// </para>
     /// <para>
-    /// The binding throws ArgumentException for a null id on a GESEffect or GESEffectClip type.
-    /// The call runs the same _check_and_update_parameters as the request (ges-asset.c:1533),
-    /// where a GESEffect type reads the first token out of the NULL that splitting a null id
-    /// answers (ges-effect-asset.c:390-391) and a GESEffectClip type ends up hashing the null
-    /// key of the wrong-id asset (ges-asset.c:752-766): both take the process down, so the id
-    /// is refused before the call.
+    /// The binding throws ArgumentException for a null id on a GESEffect, GESEffectClip,
+    /// GESUriClip, GESAudioUriSource, GESVideoUriSource, GESMultiFileSource or
+    /// GESTransitionClip type, and on GESSourceClip itself. The call runs the same
+    /// _check_and_update_parameters as the request (ges-asset.c:1533), so it takes the process
+    /// down for the same eight families, and for the same reasons ges_asset_request lists.
     /// </para>
     /// </remarks>
     /// <param name="extractableType">
@@ -369,14 +368,17 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// want to wait for the request to finish.
     /// </para>
     /// <para>
-    /// The binding throws ArgumentException for a null id on a GESEffect or GESEffectClip type.
-    /// The id of such a type is the bin description the effect is built from, and
-    /// ges-asset.c:1263 hands it to check_id unguarded: a GESEffect type reads the first token
-    /// out of the NULL that splitting it answers (ges-effect-asset.c:390-391), and a
-    /// GESEffectClip type ends up hashing the null key of the wrong-id asset
-    /// (ges-asset.c:752-766). Both take the process down, so the id is refused before the call.
-    /// Every other extractable type still takes a null id, which the default check_id turns
-    /// into the name of the type (ges-extractable.c:59-63).
+    /// The binding throws ArgumentException for a null id on a GESEffect, GESEffectClip,
+    /// GESUriClip, GESAudioUriSource, GESVideoUriSource, GESMultiFileSource or
+    /// GESTransitionClip type, and on GESSourceClip itself - never on one of its subclasses,
+    /// which chain to the default check_id. ges-asset.c:1263 hands the id to check_id
+    /// unguarded. A GESEffect type reads the first token out of the NULL that splitting it
+    /// answers (ges-effect-asset.c:390-391). The other seven answer NULL from check_id, which
+    /// sends the call to _ensure_asset_for_wrong_id with the id as it was given
+    /// (ges-asset.c:1264-1268) and on to ges_asset_cache_put, where the null becomes the key of
+    /// a g_str_hash table (ges-asset.c:745-766). All eight take the process down, so the id is
+    /// refused before the call. Every other extractable type still takes a null id, which the
+    /// default check_id turns into the name of the type (ges-extractable.c:59-63).
     /// </para>
     /// </remarks>
     /// <param name="extractableType">The #GESAsset:extractable-type of the asset</param>
