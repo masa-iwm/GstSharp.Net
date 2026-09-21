@@ -46,9 +46,10 @@ internal sealed class CustomSourceClip : GES.SourceClip, IManagedSubclass<Custom
 
     /// <summary>Gets what the <c>ungroup</c> override was asked, or none.</summary>
     /// <remarks>
-    /// Only what the override saw and answered is kept, as text: the containers
-    /// themselves belong to whoever asked for the split and are disposed there,
-    /// so a stash of the wrappers would be a stash of disposed ones.
+    /// Only what the override saw and answered is kept, as text: the binding
+    /// gives the caller of the slot a reference of its own per container, and
+    /// that caller is the one that disposes them, so a stash of the wrappers
+    /// would be a stash of disposed ones.
     /// </remarks>
     internal string? UngroupStory { get; private set; }
 
@@ -110,8 +111,11 @@ internal sealed class CustomSourceClip : GES.SourceClip, IManagedSubclass<Custom
         // The implementation below a managed clip is a native one by
         // construction, and for a clip that is GESClip::ungroup: it answers
         // this clip together with one new clip per further track type of its
-        // children. The list it hands back is owned by whoever asked for the
-        // split, so nothing of it is kept here.
+        // children. ChainUpUngroup hands these wrappers to this override, and
+        // the binding gives the caller of the slot a reference of its own per
+        // container. When the caller is Container.Ungroup the wrappers it
+        // answers are these very ones (interned), so the application's Dispose
+        // is the one release; the override keeps and disposes none of them.
         IReadOnlyList<GES.Container> parts = ChainUpUngroup(recursive);
 
         UngroupStory = string.Create(

@@ -41,6 +41,12 @@ internal sealed class CustomAudioSource : GES.AudioSource, IManagedSubclass<Cust
     /// <summary>The highest tone the override lets through, in hertz.</summary>
     internal const double HighestTone = 2000.0;
 
+    /// <summary>The error domain this sample refuses a write in.</summary>
+    internal const string ErrorDomain = "gstsharp-sample-ges-custom-source-error";
+
+    /// <summary>The code of a tone above the ceiling, in that domain.</summary>
+    internal const int ToneRefusedCode = 1;
+
     private static readonly SubclassType Definition = DefineSubclass<CustomAudioSource>(
         GTypeName,
         null,
@@ -102,6 +108,10 @@ internal sealed class CustomAudioSource : GES.AudioSource, IManagedSubclass<Cust
 
         // A tone the sample decided against: the refusal carries a reason, so
         // the caller of the full member is told why rather than only that.
+        // A by-name write arrives as a string and is transformed below this
+        // slot, so it passes this ceiling untested: a validator that has to
+        // hold for those as well transforms the value to the type of the pspec
+        // first.
         if (string.Equals(pspec.Name, ToneProperty, StringComparison.Ordinal)
             && value.Type == Gst.GObject.GType.Double
             && value.GetDouble() > HighestTone)
@@ -110,9 +120,12 @@ internal sealed class CustomAudioSource : GES.AudioSource, IManagedSubclass<Cust
                 System.Globalization.CultureInfo.InvariantCulture,
                 $"{value.GetDouble():F0} Hz is above the {HighestTone:F0} Hz this source allows.");
 
+            // An application policy gets a domain of its own rather than one of
+            // the library's: the contract only asks for a domain, and a code of
+            // this domain is this application's to number.
             error = new Gst.GLib.GException(
-                Gst.CoreErrorExtensions.Quark(),
-                (int)Gst.CoreError.Failed,
+                Gst.GLib.Quark.FromString(ErrorDomain),
+                ToneRefusedCode,
                 LastRefusal);
             return false;
         }

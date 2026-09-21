@@ -131,8 +131,7 @@ internal static class CustomSourceSample
             }
 
             // The split comes after the run: the pipeline is back at NULL and
-            // released, and the timeline is the only thing still holding the
-            // clip.
+            // released, so the pipeline no longer drives the timeline.
             return ShowUngroup(clip) ? 0 : 1;
         }
         catch (Exception exception)
@@ -245,8 +244,18 @@ internal static class CustomSourceSample
         // override answered, which the full member raises.
         try
         {
-            _ = audio.SetChildPropertyFull(CustomAudioSource.ToneProperty, refused);
-            Console.Error.WriteLine("GesCustomSource: the tone above the ceiling was written all the same.");
+            // A refusal without a reason is a legal answer of the slot as well,
+            // so the answer is what tells a write from a silent refusal.
+            if (audio.SetChildPropertyFull(CustomAudioSource.ToneProperty, refused))
+            {
+                Console.Error.WriteLine("GesCustomSource: the tone above the ceiling was written all the same.");
+            }
+            else
+            {
+                Console.Error.WriteLine(
+                    "GesCustomSource: the tone above the ceiling was refused, but without the reason the override gave.");
+            }
+
             return false;
         }
         catch (GException refusal)
@@ -268,7 +277,7 @@ internal static class CustomSourceSample
         }
         catch (InvalidOperationException plain)
         {
-            Console.WriteLine($"plain setter: {plain.Message}");
+            Console.WriteLine($"setter:      {plain.Message}");
         }
 
         double kept;
@@ -301,9 +310,8 @@ internal static class CustomSourceSample
         Console.WriteLine();
         Console.WriteLine("4. the clip answers its own split");
 
-        // The containers are owned by this caller. The clip is in the answer
-        // as well, and it is disposed by the using of the caller above, so
-        // only the copies beside it are released here.
+        // The containers are owned by this caller. The clip is in the answer as
+        // well, and it is disposed by the using of the caller above.
         IReadOnlyList<Container> parts = clip.Ungroup(recursive: false);
 
         try
@@ -311,16 +319,24 @@ internal static class CustomSourceSample
             Console.WriteLine($"override:    {clip.UngroupStory ?? "never ran"}");
             Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"containers:  {parts.Count}"));
 
+            List<string> lines = [];
+
             foreach (Container part in parts)
             {
                 IReadOnlyList<TimelineElement> children = part.GetChildren(false);
                 string which = ReferenceEquals(part, clip) ? "the clip itself" : "a new clip";
                 string carries = children.Count == 1 ? children[0].GetTrackTypes().ToString() : "no single track type";
 
-                Console.WriteLine(string.Create(
+                lines.Add(string.Create(
                     CultureInfo.InvariantCulture,
                     $"  {part.Name ?? "?"}: {which}, {children.Count} child, {carries}"));
             }
+
+            // The answer is built by a walk of a hash table, so the order it
+            // arrives in is the library's business: the lines are sorted here
+            // to make the print a function of the set rather than of the walk.
+            lines.Sort(StringComparer.Ordinal);
+            lines.ForEach(Console.WriteLine);
 
             if (clip.UngroupStory is null || parts.Count != 2)
             {
@@ -333,6 +349,12 @@ internal static class CustomSourceSample
         }
         finally
         {
+            // Disposing releases the reference of this caller only - the layer
+            // keeps its own and the clip stays in the timeline - but it also
+            // retires the managed side of that clip: a disposed wrapper chains
+            // up for ever (docs/subclassing.md §5). That is fine here because
+            // the run is over; an application that goes on editing keeps the
+            // wrapper for as long as it wants its overrides to answer.
             foreach (Container part in parts)
             {
                 if (!ReferenceEquals(part, clip))
