@@ -40,10 +40,11 @@ internal sealed record FixtureRun(GenerationResult Result)
     /// <summary>Gets the body of one generated member, without its documentation.</summary>
     /// <param name="fileName">The file to read.</param>
     /// <param name="signature">The start of the member declaration.</param>
+    /// <param name="project">The project directory the module writes into.</param>
     /// <returns>The declaration and its body, trimmed of the leading indentation.</returns>
-    internal string Member(string fileName, string signature)
+    internal string Member(string fileName, string signature, string project = "GstSharp.Net")
     {
-        string[] lines = File(fileName).Split('\n');
+        string[] lines = File(fileName, project).Split('\n');
         for (int i = 0; i < lines.Length; i++)
         {
             if (!lines[i].TrimStart().StartsWith(signature, StringComparison.Ordinal))

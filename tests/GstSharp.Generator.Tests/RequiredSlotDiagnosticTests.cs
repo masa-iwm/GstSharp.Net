@@ -102,7 +102,47 @@ public sealed class RequiredSlotDiagnosticTests
             </record>
         """;
 
+    /// <summary>
+    /// <c>Gst.DeviceProvider</c> with its <c>start</c> slot, which is the one
+    /// class whose rule names a hand-written alternative: a provider may declare
+    /// <c>probe</c> instead, and that slot carries no emitted surface at all.
+    /// </summary>
+    private const string DeviceProviderBody =
+        """
+            <class name="DeviceProvider" c:type="GstDeviceProvider" parent="GObject.Object" glib:type-name="GstDeviceProvider" glib:get-type="gst_device_provider_get_type" glib:type-struct="DeviceProviderClass">
+              <virtual-method name="start">
+                <return-value transfer-ownership="none">
+                  <type name="gboolean" c:type="gboolean"/>
+                </return-value>
+                <parameters>
+                  <instance-parameter name="provider" transfer-ownership="none">
+                    <type name="DeviceProvider" c:type="GstDeviceProvider*"/>
+                  </instance-parameter>
+                </parameters>
+              </virtual-method>
+            </class>
+            <record name="DeviceProviderClass" c:type="GstDeviceProviderClass" glib:is-gtype-struct-for="DeviceProvider">
+              <field name="parent_class">
+                <type name="GObject.ObjectClass" c:type="GObjectClass"/>
+              </field>
+              <field name="start">
+                <callback name="start">
+                  <return-value transfer-ownership="none">
+                    <type name="gboolean" c:type="gboolean"/>
+                  </return-value>
+                  <parameters>
+                    <parameter name="provider" transfer-ownership="none">
+                      <type name="DeviceProvider" c:type="GstDeviceProvider*"/>
+                    </parameter>
+                  </parameters>
+                </callback>
+              </field>
+            </record>
+        """;
+
     private const string Allowlist = """{ "subclassable": ["GstBase.Aggregator"] }""";
+
+    private const string DeviceProviderAllowlist = """{ "subclassable": ["Gst.DeviceProvider"] }""";
 
     [Fact]
     public void ARequiredSlotThatIsNotOnTheEmittedSurfaceIsReported()
@@ -124,17 +164,67 @@ public sealed class RequiredSlotDiagnosticTests
         Assert.Equal(1, run.Result.Census.EmittedCount("GstBase", "vfunc"));
     }
 
-    private static FixtureRun Run(string body)
+    [Fact]
+    public void ARuleWithoutAlternativesChecksTheOneOverride()
+    {
+        FixtureRun run = Run(BodyWithTheRequiredSlot);
+        string body = run.Member(
+            "Subclassing/Aggregator.Subclass.cs",
+            "private static Gst.GObject.SubclassType DefineSubclassCore(",
+            project: "GstSharp.Net.Base");
+
+        Assert.Contains("if (candidate.Function == AggregateOverride.Function)", body, StringComparison.Ordinal);
+        Assert.Contains("has to declare AggregateOverride: ", body, StringComparison.Ordinal);
+        Assert.DoesNotContain(" or ", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARuleWithAlternativesChecksEitherOverride()
+    {
+        FixtureRun run = RunDeviceProvider();
+        string body = run.Member(
+            "Subclassing/DeviceProvider.Subclass.cs",
+            "private static Gst.GObject.SubclassType DefineSubclassCore(");
+
+        Assert.Contains(
+            "if (candidate.Function == StartOverride.Function || candidate.Function == ProbeOverride.Function)",
+            body,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "A managed GstDeviceProvider has to declare StartOverride or ProbeOverride: ",
+            body,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AHandWrittenAlternativeIsNotLookedUpOnTheEmittedSurface()
+    {
+        FixtureRun run = RunDeviceProvider();
+
+        // The alternative names a slot the gir marks introspectable="0", so it
+        // is nowhere on the emitted surface; only the required slot itself goes
+        // through the GEN0034 lookup.
+        Assert.DoesNotContain(run.Result.Diagnostics, static d => d.Code == "GEN0034");
+        Assert.False(run.File("Subclassing/DeviceProvider.Subclass.cs").Contains("OnProbe", StringComparison.Ordinal));
+    }
+
+    private static FixtureRun Run(string body) =>
+        RunWith(body, Allowlist, "GstBase");
+
+    private static FixtureRun RunDeviceProvider() =>
+        RunWith(DeviceProviderBody, DeviceProviderAllowlist, "Gst");
+
+    private static FixtureRun RunWith(string body, string fixups, string namespaceName)
     {
         string directory = Path.Combine(Path.GetTempPath(), "GstSharp.Generator.Tests", Path.GetRandomFileName());
         Directory.CreateDirectory(directory);
         try
         {
-            File.WriteAllText(Path.Combine(directory, "fixups.json"), Allowlist);
+            File.WriteAllText(Path.Combine(directory, "fixups.json"), fixups);
             return Fixture.Run(
                 body,
                 Overlays.Load(directory),
-                namespaceName: "GstBase");
+                namespaceName: namespaceName);
         }
         finally
         {

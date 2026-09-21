@@ -259,7 +259,7 @@ public sealed class ManagedDeviceProviderTests
 
         _output.WriteLine($"refused: {error.Message}");
 
-        Assert.Contains("StartOverride", error.Message, StringComparison.Ordinal);
+        Assert.Contains("StartOverride or ProbeOverride", error.Message, StringComparison.Ordinal);
         Assert.False(Gst.GObject.GType.FromName("GstSharpTestStopOnlyDeviceProvider").IsValid);
     }
 }

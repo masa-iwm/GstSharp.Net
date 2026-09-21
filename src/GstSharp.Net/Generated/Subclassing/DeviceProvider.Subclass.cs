@@ -152,7 +152,7 @@ public unsafe partial class DeviceProvider
         bool declaredStart = false;
         foreach (Gst.GObject.VfuncOverride candidate in overrides)
         {
-            if (candidate.Function == StartOverride.Function)
+            if (candidate.Function == StartOverride.Function || candidate.Function == ProbeOverride.Function)
             {
                 declaredStart = true;
                 break;
@@ -162,7 +162,7 @@ public unsafe partial class DeviceProvider
         if (!declaredStart)
         {
             throw new ArgumentException(
-                "A managed GstDeviceProvider has to declare StartOverride: gst_device_provider_start calls klass->probe with no NULL check when the start slot is unset (gstdeviceprovider.c:476-481), and probe carries no managed surface, so a provider without it crashes the process when it is started.",
+                "A managed GstDeviceProvider has to declare StartOverride or ProbeOverride: gst_device_provider_start calls klass->probe with no NULL check when the start slot is unset (gstdeviceprovider.c:476-481), so a provider that declares neither crashes the process when it is started.",
                 nameof(overrides));
         }
 

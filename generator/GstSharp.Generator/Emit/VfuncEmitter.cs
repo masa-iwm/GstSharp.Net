@@ -39,8 +39,9 @@ internal sealed class VfuncEmitter
                     new(
                         "start",
                         "gst_device_provider_start calls klass->probe with no NULL check when the start "
-                        + "slot is unset (gstdeviceprovider.c:476-481), and probe carries no managed "
-                        + "surface, so a provider without it crashes the process when it is started"),
+                        + "slot is unset (gstdeviceprovider.c:476-481), so a provider that declares "
+                        + "neither crashes the process when it is started",
+                        ["Probe"]),
                 ]),
             ["GstBase.BaseSrc"] = new(["src"], []),
             ["GstBase.PushSrc"] = new(["src"], []),
@@ -449,7 +450,7 @@ internal sealed class VfuncEmitter
         string configure = mandatory ? "Action<" + facade + ">" : "Action<" + facade + ">?";
         string type = model.Owner.Name;
 
-        List<(string Name, string? Reason)> required = [];
+        List<(string Name, string? Reason, IReadOnlyList<string> Alternatives)> required = [];
         foreach (RequiredSlot slot in rule?.Required ?? [])
         {
             string? name = null;
@@ -470,7 +471,7 @@ internal sealed class VfuncEmitter
                 continue;
             }
 
-            required.Add((name, slot.Reason));
+            required.Add((name, slot.Reason, slot.HandWrittenAlternatives ?? []));
         }
 
         WriteDefineSubclassDoc(writer, cName, rule, mandatory, generic: false, options: false);
@@ -529,13 +530,23 @@ internal sealed class VfuncEmitter
             writer.WriteLine("ArgumentNullException.ThrowIfNull(overrides);");
         }
 
-        foreach ((string name, string? reason) in required)
+        foreach ((string name, string? reason, IReadOnlyList<string> alternatives) in required)
         {
+            // A rule with alternatives is satisfied by any one of the stems, so
+            // the check is a disjunction and the message names them in the same
+            // order. With none of them the two strings are the ones a single
+            // required slot has always produced.
+            List<string> stems = [name, .. alternatives];
+            string condition = string.Join(
+                " || ",
+                stems.Select(static stem => "candidate.Function == " + stem + "Override.Function"));
+            string declares = string.Join(" or ", stems.Select(static stem => stem + "Override"));
+
             writer.WriteLine();
             writer.WriteLine("bool declared" + name + " = false;");
             writer.WriteLine("foreach (Gst.GObject.VfuncOverride candidate in overrides)");
             writer.OpenBlock();
-            writer.WriteLine("if (candidate.Function == " + name + "Override.Function)");
+            writer.WriteLine("if (" + condition + ")");
             writer.OpenBlock();
             writer.WriteLine("declared" + name + " = true;");
             writer.WriteLine("break;");
@@ -546,7 +557,7 @@ internal sealed class VfuncEmitter
             writer.OpenBlock();
             writer.WriteLine("throw new ArgumentException(");
             writer.WriteLine(
-                "    \"A managed " + cName + " has to declare " + name + "Override: "
+                "    \"A managed " + cName + " has to declare " + declares + ": "
                 + (reason ?? "the base class calls the slot unguarded") + ".\",");
             writer.WriteLine("    nameof(overrides));");
             writer.CloseBlock();
@@ -2704,5 +2715,15 @@ internal sealed class VfuncEmitter
     /// It says "the base class calls the slot unguarded" when it is not given,
     /// which is the reason a required slot usually has.
     /// </param>
-    private sealed record RequiredSlot(string Slot, string? Reason);
+    /// <param name="HandWrittenAlternatives">
+    /// The C# member stems of hand-written overrides that satisfy the rule
+    /// instead of <paramref name="Slot"/>, so that the registration accepts a
+    /// subclass that declares any one of them. They are stems rather than gir
+    /// names because the slots behind them carry no emitted surface to look the
+    /// name up on; the GEN0034 lookup applies to <paramref name="Slot"/> alone.
+    /// </param>
+    private sealed record RequiredSlot(
+        string Slot,
+        string? Reason,
+        IReadOnlyList<string>? HandWrittenAlternatives = null);
 }
