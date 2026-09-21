@@ -20,9 +20,15 @@ internal sealed class ProbeManagedAggregatorPad : AggregatorPad, IManagedSubclas
         FlushOverride,
         SkipBufferOverride);
 
+    private readonly object _answers = new();
+
     private int _flushed;
 
     private int _skipped;
+
+    private FlowReturn? _lastFlushAnswer;
+
+    private bool? _lastSkipAnswer;
 
     private ProbeManagedAggregatorPad(SubclassCtorArgs args)
         : base(args)
@@ -37,6 +43,36 @@ internal sealed class ProbeManagedAggregatorPad : AggregatorPad, IManagedSubclas
 
     /// <summary>Gets how often the <c>skip_buffer</c> override ran for this pad.</summary>
     internal int Skipped => Volatile.Read(ref _skipped);
+
+    /// <summary>
+    /// Gets what the last chain-up of the <c>flush</c> slot answered, or
+    /// <see langword="null"/> when none has run or the last one threw.
+    /// </summary>
+    internal FlowReturn? LastFlushAnswer
+    {
+        get
+        {
+            lock (_answers)
+            {
+                return _lastFlushAnswer;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets what the last chain-up of the <c>skip_buffer</c> slot answered, or
+    /// <see langword="null"/> when none has run or the last one threw.
+    /// </summary>
+    internal bool? LastSkipAnswer
+    {
+        get
+        {
+            lock (_answers)
+            {
+                return _lastSkipAnswer;
+            }
+        }
+    }
 
     /// <summary>Builds the wrapper of an instance native code created.</summary>
     /// <param name="args">What the runtime says about the instance.</param>
@@ -60,17 +96,45 @@ internal sealed class ProbeManagedAggregatorPad : AggregatorPad, IManagedSubclas
             ["template"] = templ,
         }));
 
+    /// <summary>Chains the <c>flush</c> slot up from outside a slot call.</summary>
+    /// <param name="aggregator">The aggregator the pad belongs to.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal FlowReturn ChainUpFlushForTest(Aggregator aggregator) => ChainUpFlush(aggregator);
+
+    /// <summary>Chains the <c>skip_buffer</c> slot up from outside a slot call.</summary>
+    /// <param name="aggregator">The aggregator the pad belongs to.</param>
+    /// <param name="buffer">The buffer the decision is about.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpSkipBufferForTest(Aggregator aggregator, Gst.Buffer buffer) =>
+        ChainUpSkipBuffer(aggregator, buffer);
+
     /// <inheritdoc/>
     protected override FlowReturn OnFlush(Aggregator aggregator)
     {
         _ = Interlocked.Increment(ref _flushed);
-        return ChainUpFlush(aggregator);
+
+        FlowReturn answer = ChainUpFlush(aggregator);
+
+        lock (_answers)
+        {
+            _lastFlushAnswer = answer;
+        }
+
+        return answer;
     }
 
     /// <inheritdoc/>
     protected override bool OnSkipBuffer(Aggregator aggregator, Gst.Buffer buffer)
     {
         _ = Interlocked.Increment(ref _skipped);
-        return ChainUpSkipBuffer(aggregator, buffer);
+
+        bool answer = ChainUpSkipBuffer(aggregator, buffer);
+
+        lock (_answers)
+        {
+            _lastSkipAnswer = answer;
+        }
+
+        return answer;
     }
 }

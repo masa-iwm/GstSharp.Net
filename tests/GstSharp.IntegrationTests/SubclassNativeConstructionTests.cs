@@ -450,31 +450,114 @@ public sealed unsafe class SubclassNativeConstructionTests
 
         Bus bus = pipeline.GetBus();
 
+        List<Exception> reported = [];
+
+        void OnFailure(Exception exception)
+        {
+            lock (reported)
+            {
+                reported.Add(exception);
+            }
+        }
+
+        // The transition to NULL is inside the watched stretch on purpose: the
+        // second flush comes from gst_aggregator_stop_pad on the way there.
+        ExceptionTrap.UnhandledException += OnFailure;
+
         try
         {
-            Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
+            try
+            {
+                Assert.NotEqual(StateChangeReturn.Failure, pipeline.SetState(State.Playing));
 
-            using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, BusTimeout);
+                using Message? message = BusPump.WaitFor(bus, MessageType.Eos | MessageType.Error, BusTimeout);
 
-            Assert.NotNull(message);
-            Assert.Equal(MessageType.Eos, message.Type);
+                Assert.NotNull(message);
+                Assert.Equal(MessageType.Eos, message.Type);
 
-            // A flush is what reaches the flush slot of the pad, and it runs on
-            // the thread that sends the events.
-            Assert.True(managed.SendEvent(Event.NewFlushStart()));
-            Assert.True(managed.SendEvent(Event.NewFlushStop(true)));
-
-            _output.WriteLine(FormattableString.Invariant(
-                $"pad: flushed={managed.Flushed}, skipped={managed.Skipped}"));
-
-            // skip_buffer is not reached by plain streaming through an
-            // aggregator with a single sink pad, so the flush slot is what this
-            // asserts; both are declared and both are dispatched the same way.
-            Assert.True(managed.Flushed > 0, "The flush override of the managed pad did not run.");
+                // A flush is what reaches the flush slot of the pad, and it runs
+                // on the thread that sends the events.
+                Assert.True(managed.SendEvent(Event.NewFlushStart()));
+                Assert.True(managed.SendEvent(Event.NewFlushStop(true)));
+            }
+            finally
+            {
+                pipeline.SetState(State.Null);
+            }
         }
         finally
         {
-            pipeline.SetState(State.Null);
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        _output.WriteLine(FormattableString.Invariant(
+            $"pad: flushed={managed.Flushed}, skipped={managed.Skipped}, lastFlush={managed.LastFlushAnswer}, lastSkip={managed.LastSkipAnswer}"));
+
+        // skip_buffer is not reached by plain streaming through an aggregator
+        // with a single sink pad, so the flush slot is what this asserts; both
+        // are declared and both are dispatched the same way. Two flushes is the
+        // behavioural witness that the aggregator still flushes through the
+        // managed slot: the flush-stop above, and gst_aggregator_stop_pad on
+        // the way to NULL.
+        Assert.True(managed.Flushed >= 2, "The flush override of the managed pad did not run twice.");
+
+        // GstAggregatorPad leaves the flush slot empty, and the library reads an
+        // empty one as a successful flush, so that is what the chain-up answers
+        // rather than throwing through the callback boundary.
+        Assert.Equal(FlowReturn.Ok, managed.LastFlushAnswer);
+
+        lock (reported)
+        {
+            Assert.Empty(reported);
+        }
+    }
+
+    /// <summary>
+    /// A chain-up of either slot of a managed aggregator pad answers what the
+    /// library answers for the empty slot <c>GstAggregatorPad</c> leaves behind:
+    /// a successful flush, and a buffer that is kept.
+    /// </summary>
+    [Fact]
+    public void ChainingUpTheSlotsOfAManagedAggregatorPadAnswersTheLibraryDefaults()
+    {
+        using ProbeCreateNewPadAggregator aggregator = new();
+
+        using Pad? requested = aggregator.RequestPad(
+            ProbeCreateNewPadAggregator.SinkPadTemplate,
+            "sink_0",
+            null);
+
+        Assert.NotNull(requested);
+
+        ProbeManagedAggregatorPad managed = Assert.IsType<ProbeManagedAggregatorPad>(requested);
+
+        List<Exception> reported = [];
+
+        void OnFailure(Exception exception)
+        {
+            lock (reported)
+            {
+                reported.Add(exception);
+            }
+        }
+
+        ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            using Gst.Buffer buffer = Gst.Buffer.New();
+
+            Assert.Equal(FlowReturn.Ok, managed.ChainUpFlushForTest(aggregator));
+            Assert.False(managed.ChainUpSkipBufferForTest(aggregator, buffer));
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        lock (reported)
+        {
+            Assert.Empty(reported);
         }
     }
 
