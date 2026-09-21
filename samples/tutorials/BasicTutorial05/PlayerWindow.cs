@@ -177,21 +177,29 @@ internal sealed class PlayerWindow : Window, IDisposable
     /// <remarks>
     /// <para>
     /// A window handle is only as portable as the windowing system behind it.
-    /// On Windows it is an HWND and on macOS an NSView, and whatever sink
-    /// playbin picks there understands the one its platform has. On Linux the
-    /// handle is an X11 XID — the upstream page says the same thing about the
-    /// overlay route — and <b>Wayland has no XID at all</b>. Avalonia's Linux
-    /// backend is X11, so on a Wayland session it runs through XWayland and its
-    /// controls do have an XID; but playbin, which knows nothing of that, may
-    /// well pick <c>waylandsink</c>, which cannot take one.
+    /// On Windows it is an HWND, which is what the Windows run of this sample
+    /// was verified against. On macOS it is an NSView, and that branch is
+    /// <b>untested: it compiles and is the documented shape, and nothing here
+    /// has ever run it</b>. On Linux the handle is an X11 XID — the upstream
+    /// page says the same thing about the overlay route — and <b>Wayland has no
+    /// XID at all</b>. Avalonia's Linux backend is X11, so on a Wayland session
+    /// it runs through XWayland and its controls do have an XID; but the sink
+    /// playbin picks knows nothing of that. The realistic offender is
+    /// <c>glimagesink</c>, which is installed wherever GL is and whose GL
+    /// window system prefers Wayland when <c>WAYLAND_DISPLAY</c> is set: it
+    /// then has a Wayland surface and no use for an XID.
     /// </para>
     /// <para>
     /// So on a Wayland session the sink is named explicitly, and an X11-capable
-    /// one is asked for. If neither is installed the run continues with a
-    /// message rather than a failure: the picture may then appear in a window
-    /// of the sink's own instead of inside this one, which is exactly the
-    /// failure <c>GstVideoOverlay</c> exists to avoid and worth seeing when it
-    /// happens.
+    /// one is asked for. Each candidate is taken to READY before it is chosen,
+    /// because the factory existing says nothing about the server: under
+    /// XWayland without an Xv adaptor <c>xvimagesink</c> is built happily and
+    /// fails when it opens the display, and a sample that had already committed
+    /// to it would never try <c>ximagesink</c>. If neither can be opened the run
+    /// continues with a message rather than a failure: the picture may then
+    /// appear in a window of the sink's own instead of inside this one, which is
+    /// exactly the failure <c>GstVideoOverlay</c> exists to avoid and worth
+    /// seeing when it happens.
     /// </para>
     /// </remarks>
     private static void ChooseVideoSink(Pipeline playbin)
@@ -227,6 +235,19 @@ internal sealed class PlayerWindow : Window, IDisposable
                 continue;
             }
 
+            // READY is where a video sink opens the display, so it is the
+            // cheapest question that has a true answer. The sink is put back to
+            // NULL either way: a rejected one is disposed, and the chosen one is
+            // handed to playbin in the state a freshly made element is in.
+            if (sink.SetState(State.Ready) == StateChangeReturn.Failure)
+            {
+                sink.SetState(State.Null);
+                sink.Dispose();
+                continue;
+            }
+
+            sink.SetState(State.Null);
+
             // gst_util_set_object_arg deserializes a string into the type of
             // the property, and there is no deserializer for an object-valued
             // one: the element property of a playbin is written with a GValue
@@ -242,7 +263,7 @@ internal sealed class PlayerWindow : Window, IDisposable
         }
 
         Console.Error.WriteLine(
-            "BasicTutorial05: this is a Wayland session and neither xvimagesink nor ximagesink is installed, so the sink playbin picks may open a window of its own.");
+            "BasicTutorial05: this is a Wayland session and neither xvimagesink nor ximagesink could be opened, so the sink playbin picks may open a window of its own.");
     }
 
     /// <summary>

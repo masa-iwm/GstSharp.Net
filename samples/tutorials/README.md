@@ -77,9 +77,14 @@ Three consequences to know before running it:
 * **Linux is X11.** A window handle is an XID there, and Wayland has no XID —
   the upstream page says as much about the overlay route. Avalonia's Linux
   backend is X11, so a Wayland session runs it through XWayland and its
-  controls do have an XID; but playbin may pick `waylandsink`, which cannot
-  take one. On a Wayland session the sample therefore names `xvimagesink` or
-  `ximagesink` itself, and says so on a log line when neither is installed.
+  controls do have an XID; but the sink playbin picks knows nothing of that.
+  The realistic offender is `glimagesink`, whose GL window system prefers
+  Wayland when `WAYLAND_DISPLAY` is set and which then has no use for an XID.
+  On a Wayland session the sample therefore names `xvimagesink` or
+  `ximagesink` itself — taking each to `READY` first, because a factory that
+  exists can still fail to open the display — and says so on a log line when
+  neither can be opened. The windowed run on Linux is untested as well: CI has
+  no display and runs only the self test.
 * **macOS is untested.** The `NSView` branch is written and is the documented
   shape, and nothing in CI or on the machines this was developed on can run it.
   Avalonia runs the AppKit loop itself, so `Gst.Global.MacosMain` is not the
