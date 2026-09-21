@@ -5779,6 +5779,14 @@ internal sealed class MarshalPlanner
             // block the arguments of the trampoline are declared in, so a
             // parameter the gir spells `result_handle` would shadow it.
             "resultHandle",
+
+            // The chain-up reads the answer of the parent slot into a local
+            // beside the one it converts it into, and the arguments of the
+            // chain-up are the parameters themselves, so a parameter the gir
+            // spells `result_native` would be redeclared by it. The name is
+            // reserved here rather than stepped around in the emitter, which is
+            // how `result` next to it is kept free.
+            "resultNative",
             "parent",
             "slot",
         };
