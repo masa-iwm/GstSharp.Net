@@ -43,6 +43,16 @@ public abstract unsafe partial class Clip
     /// one with a creator asset, <c>ges-track-element.c:2154-2158</c>, and it
     /// takes the branch above), and it has no asset at all.
     /// </para>
+    /// <para>
+    /// Two of the shapes it now refuses were not crashing ones: an asset-less
+    /// <c>GESEffect</c> that already has a parent (<c>ges-container.c:716</c>,
+    /// a critical and FALSE) or that carries another timeline
+    /// (<c>ges-clip.c:1655-1661</c>, a warning and FALSE) left C before the
+    /// read, so those two calls answered false and now throw. Both need a
+    /// <c>SetParent</c> or <c>SetTimeline</c> written by hand on an orphan
+    /// effect, and both were already failing calls, so no call that worked
+    /// throws now.
+    /// </para>
     /// </remarks>
     /// <exception cref="InvalidOperationException">
     /// <paramref name="child"/> is a <c>GESEffect</c> with no asset and
