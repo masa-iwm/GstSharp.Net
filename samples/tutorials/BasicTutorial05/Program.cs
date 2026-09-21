@@ -55,7 +55,8 @@
 //     addition: with no window to close by hand, it bounds a run. It counts
 //     from the moment the pipeline first reaches PLAYING, so that opening a
 //     window and prerolling a stream does not eat the playback it was meant to
-//     bound; a run that never gets there is bounded from process start instead.
+//     bound; a run that never gets there is bounded from the moment the window
+//     was built instead.
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Avalonia;

@@ -45,8 +45,9 @@ internal sealed class PlayerWindow : Window, IDisposable
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
 
     /// <summary>
-    /// How long <c>--timeout</c> has left to run: from process start until the
-    /// pipeline first reaches PLAYING, and from that moment afterwards.
+    /// How long <c>--timeout</c> has left to run: from the moment this window
+    /// was built until the pipeline first reaches PLAYING, and from that
+    /// moment afterwards.
     /// </summary>
     private readonly Stopwatch _elapsed = Stopwatch.StartNew();
 
@@ -553,8 +554,8 @@ internal sealed class PlayerWindow : Window, IDisposable
             // --timeout is meant to bound the playback, not the start-up, and
             // opening a window and prerolling a stream can take seconds. The
             // clock therefore restarts the first time there is something to
-            // watch; before that it runs from process start, so a run that
-            // never reaches PLAYING is still bounded.
+            // watch; before that it runs from the moment this window was built,
+            // so a run that never reaches PLAYING is still bounded.
             _playing = true;
             _elapsed.Restart();
         }
