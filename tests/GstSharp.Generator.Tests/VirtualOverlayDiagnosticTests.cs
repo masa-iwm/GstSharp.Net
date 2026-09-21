@@ -453,6 +453,19 @@ public sealed class VirtualOverlayDiagnosticTests
     }
 
     [Fact]
+    public void AKeyThatNamesNoMirroredSlotIsStillReported()
+    {
+        // The chain-only mirror lays out one slot and the key names another, so
+        // the wider set the ledger is checked against does not cover it either.
+        FixtureRun run = Run(
+            ChainOnlyBody,
+            """{ "subclassable": ["Gst.Gadget"], "skipVirtuals": { "Gst.Widget::wind": "not a slot of that class" } }""");
+
+        Diagnostic stale = Assert.Single(run.Result.Diagnostics, static d => d.Code == "GEN0029");
+        Assert.Contains("Gst.Widget::wind", stale.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ADefaultThatNamesNoSlotIsReported()
     {
         FixtureRun run = Run(
