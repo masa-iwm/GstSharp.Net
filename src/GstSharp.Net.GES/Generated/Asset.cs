@@ -297,6 +297,14 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// reload on the next call to ges_asset_request() or
     /// ges_asset_request_async().
     /// </para>
+    /// <para>
+    /// The binding throws ArgumentException for a null id on a GESEffect or GESEffectClip type.
+    /// The call runs the same _check_and_update_parameters as the request (ges-asset.c:1533),
+    /// where a GESEffect type reads the first token out of the NULL that splitting a null id
+    /// answers (ges-effect-asset.c:390-391) and a GESEffectClip type ends up hashing the null
+    /// key of the wrong-id asset (ges-asset.c:752-766): both take the process down, so the id
+    /// is refused before the call.
+    /// </para>
     /// </remarks>
     /// <param name="extractableType">
     /// The #GESAsset:extractable-type of the asset that
@@ -312,6 +320,7 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// </returns>
     public static bool NeedsReload(Gst.GObject.GType extractableType, string? id)
     {
+        ThrowIfIdIsRequired(extractableType, id, nameof(id));
         System.Span<byte> idBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope idScope = Gst.Interop.GMarshal.StackUtf8(id, idBuffer);
         int nativeResult = GesAssetNeedsReload(extractableType.Value, idScope.Pointer);
@@ -359,6 +368,16 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// #GESUriClip, you can use ges_uri_clip_asset_request_sync() if you only
     /// want to wait for the request to finish.
     /// </para>
+    /// <para>
+    /// The binding throws ArgumentException for a null id on a GESEffect or GESEffectClip type.
+    /// The id of such a type is the bin description the effect is built from, and
+    /// ges-asset.c:1263 hands it to check_id unguarded: a GESEffect type reads the first token
+    /// out of the NULL that splitting it answers (ges-effect-asset.c:390-391), and a
+    /// GESEffectClip type ends up hashing the null key of the wrong-id asset
+    /// (ges-asset.c:752-766). Both take the process down, so the id is refused before the call.
+    /// Every other extractable type still takes a null id, which the default check_id turns
+    /// into the name of the type (ges-extractable.c:59-63).
+    /// </para>
     /// </remarks>
     /// <param name="extractableType">The #GESAsset:extractable-type of the asset</param>
     /// <param name="id">The #GESAsset:id of the asset</param>
@@ -369,6 +388,7 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// <exception cref="Gst.GLib.GException">The native call failed.</exception>
     public static GES.Asset? Request(Gst.GObject.GType extractableType, string? id)
     {
+        ThrowIfIdIsRequired(extractableType, id, nameof(id));
         System.Span<byte> idBuffer = stackalloc byte[Gst.Interop.GMarshal.StackBufferSize];
         using Gst.Interop.Utf8Scope idScope = Gst.Interop.GMarshal.StackUtf8(id, idBuffer);
         nint errorNative = 0;

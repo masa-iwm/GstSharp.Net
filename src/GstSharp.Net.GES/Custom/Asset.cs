@@ -75,7 +75,11 @@ public unsafe partial class Asset
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">
-    /// <paramref name="id"/> contains a null character.
+    /// <paramref name="id"/> contains a null character, or it is
+    /// <see langword="null"/> while <paramref name="extractableType"/> is a
+    /// <c>GESEffect</c> or a <c>GESEffectClip</c> type, whose identifier is the
+    /// bin description and which the library reads without a check
+    /// (<c>ges-effect-asset.c:390-391</c>, <c>ges-asset.c:752-766</c>).
     /// </exception>
     /// <exception cref="Gst.GLib.GException">
     /// The asset could not be built.
@@ -90,8 +94,11 @@ public unsafe partial class Asset
     public static Task<GES.Asset> RequestAsync(
         Gst.GObject.GType extractableType,
         string? id,
-        CancellationToken cancellationToken = default) =>
-        new RequestState(extractableType, id, cancellationToken).Start();
+        CancellationToken cancellationToken = default)
+    {
+        ThrowIfIdIsRequired(extractableType, id, nameof(id));
+        return new RequestState(extractableType, id, cancellationToken).Start();
+    }
 
     /// <summary>
     /// Requests an asset with the given properties, watching a
@@ -144,7 +151,11 @@ public unsafe partial class Asset
     /// <paramref name="cancellable"/> is <see langword="null"/>.
     /// </exception>
     /// <exception cref="ArgumentException">
-    /// <paramref name="id"/> contains a null character.
+    /// <paramref name="id"/> contains a null character, or it is
+    /// <see langword="null"/> while <paramref name="extractableType"/> is a
+    /// <c>GESEffect</c> or a <c>GESEffectClip</c> type, as
+    /// <see cref="RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>
+    /// documents.
     /// </exception>
     /// <exception cref="Gst.GLib.GException">
     /// The asset could not be built.
@@ -160,7 +171,75 @@ public unsafe partial class Asset
         Gst.Gio.Cancellable cancellable)
     {
         ArgumentNullException.ThrowIfNull(cancellable);
+        ThrowIfIdIsRequired(extractableType, id, nameof(id));
         return new RequestState(extractableType, id, cancellable).Start();
+    }
+
+    /// <summary>
+    /// Refuses a <see langword="null"/> identifier for an extractable type whose
+    /// <c>check_id</c> reads the identifier through, which the editing services
+    /// do not survive.
+    /// </summary>
+    /// <param name="extractableType">The type the asset is requested for.</param>
+    /// <param name="id">The identifier the caller gave.</param>
+    /// <param name="paramName">The name of the parameter that carried it.</param>
+    /// <remarks>
+    /// <para>
+    /// Every request runs <c>_check_and_update_parameters</c> before anything
+    /// else (<c>ges-asset.c:1263</c>, <c>:1422</c>, <c>:1533</c>), which calls
+    /// the <c>check_id</c> of the extractable interface with the identifier as
+    /// it was given. A <c>GESEffect</c> type splits it without a check and reads
+    /// the first token out of the <see langword="null"/> the split answers
+    /// (<c>ges-effect-asset.c:390-391</c>), and a <c>GESEffectClip</c> type
+    /// answers <c>g_strdup (NULL)</c>, which sends the request down the wrong-id
+    /// path where the identifier becomes the key of a <c>g_str_hash</c> table
+    /// (<c>ges-asset.c:752-766</c>). Both dereference a null pointer inside the
+    /// library, so the check has to be here rather than after the call. The
+    /// native <c>GESEffect</c> and <c>GESEffectClip</c> carry the same
+    /// <c>check_id</c> as a managed subtype does, so neither is exempt.
+    /// </para>
+    /// <para>
+    /// Every other extractable type is left alone: the default <c>check_id</c>
+    /// answers the name of the type for a <see langword="null"/> identifier
+    /// (<c>ges-extractable.c:59-63</c>), which is the documented spelling for a
+    /// source, a clip and a direct <c>GESBaseEffect</c> subtype.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="extractableType"/> is a <c>GESEffect</c> or a
+    /// <c>GESEffectClip</c> type and <paramref name="id"/> is
+    /// <see langword="null"/>.
+    /// </exception>
+    internal static void ThrowIfIdIsRequired(
+        Gst.GObject.GType extractableType,
+        string? id,
+        string paramName)
+    {
+        if (id is not null)
+        {
+            return;
+        }
+
+        if (extractableType.IsA(new Gst.GObject.GType(GES.Effect.GetGType())))
+        {
+            throw new ArgumentException(
+                "An asset of " + extractableType.Name + " cannot be requested with a null id: the id of "
+                + "a GESEffect type is the bin description the effect is built from, and the "
+                + "library reads it without a check. Pass \"video <description>\" or "
+                + "\"audio <description>\".",
+                paramName);
+        }
+
+        if (extractableType.IsA(new Gst.GObject.GType(GES.EffectClip.GetGType())))
+        {
+            throw new ArgumentException(
+                "An asset of " + extractableType.Name + " cannot be requested with a null id: the id of "
+                + "a GESEffectClip type is the bin description of its halves, and the library "
+                + "reads it without a check. Pass "
+                + "\"audio <description> ||video <description>\", either half of which may be "
+                + "absent, or \"\" for neither.",
+                paramName);
+        }
     }
 
     /// <summary>
