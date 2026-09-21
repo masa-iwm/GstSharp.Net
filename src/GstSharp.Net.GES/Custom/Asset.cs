@@ -22,8 +22,8 @@ public unsafe partial class Asset
     /// <param name="id">
     /// The identifier of the asset, or <see langword="null"/> when the
     /// extractable type does not parametrise its extraction and the standard
-    /// identifier of the type is wanted. Read the warning below before passing
-    /// <see langword="null"/>.
+    /// identifier of the type is wanted. A handful of types refuse a
+    /// <see langword="null"/>; see the remarks below.
     /// </param>
     /// <param name="cancellationToken">
     /// The token that abandons the request. It is translated into the
@@ -59,27 +59,42 @@ public unsafe partial class Asset
     /// disposed like any other GObject wrapper of the binding.
     /// </para>
     /// <para>
-    /// <strong>A <see langword="null"/> <paramref name="id"/> is a hazard on
-    /// the library side.</strong> <c>ges_asset_request_async</c> in the
-    /// editing services 1.28.6 reads through a null pointer, and takes the
-    /// process down, when it is given no identifier <em>and</em> the asset is
-    /// already in its cache; the first request for a type succeeds and the
-    /// second one crashes. The synchronous <see cref="Request"/> and every
-    /// request that names its identifier are unaffected, so pass the
-    /// identifier — for a type whose extraction is not parametrised that is
-    /// the name of the type, which is what the editing services would have
-    /// derived themselves. The binding does not derive it for you: which
-    /// identifier a <see langword="null"/> stands for is the extractable
-    /// type's own answer, and guessing it here would be wrong for every type
-    /// that overrides it.
+    /// <strong>A <see langword="null"/> <paramref name="id"/> never reaches
+    /// the library.</strong> <c>ges_asset_request_async</c> looks its cache
+    /// entry up with the identifier as it was given
+    /// (<c>ges-asset.c:1428</c>, 1.24.0: <c>:1411</c>), after having normalised
+    /// it for everything else, so a <see langword="null"/> is handed to
+    /// <c>g_str_hash</c> and takes the process down as soon as the type has an
+    /// entries table — on the second request for a type, or on the first one
+    /// when anything else cached an asset of that type before it. The
+    /// synchronous <see cref="Request"/> has no such lookup. The binding
+    /// therefore substitutes the identifier the editing services would have
+    /// derived themselves, which for every type but the ones below is the name
+    /// of the type (<c>ges-extractable.c:60-63</c>): the asset that comes back
+    /// is the one <see cref="Request"/> answers for the same
+    /// <see langword="null"/>.
+    /// </para>
+    /// <para>
+    /// The exceptions are the types whose <c>check_id</c> derives something
+    /// else. A <c>GESEffect</c> or <c>GESEffectClip</c> type takes its bin
+    /// description, a <c>GESUriClip</c> or URI source type takes its URI, a
+    /// <c>GESTransitionClip</c> type takes a transition nickname,
+    /// <c>GESSourceClip</c> itself takes <c>time-overlay</c>, a
+    /// <c>GESFormatter</c> type takes the name in its class struct and a
+    /// <c>GESTimeline</c> a freshly minted <c>project-&lt;n&gt;</c>. None of
+    /// those can be spelled here, so a <see langword="null"/> identifier for
+    /// one of them is an <see cref="ArgumentException"/> that names the type.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">
     /// <paramref name="id"/> contains a null character, or it is
-    /// <see langword="null"/> while <paramref name="extractableType"/> is a
-    /// <c>GESEffect</c> or a <c>GESEffectClip</c> type, whose identifier is the
-    /// bin description and which the library reads without a check
-    /// (<c>ges-effect-asset.c:390-391</c>, <c>ges-asset.c:752-766</c>).
+    /// <see langword="null"/> while <paramref name="extractableType"/> is one
+    /// of the types listed in the remarks, whose identifier the binding cannot
+    /// derive: a <c>GESEffect</c>, <c>GESEffectClip</c>, <c>GESUriClip</c>,
+    /// <c>GESAudioUriSource</c>, <c>GESVideoUriSource</c>,
+    /// <c>GESMultiFileSource</c>, <c>GESTransitionClip</c>,
+    /// <c>GESFormatter</c> or <c>GESTimeline</c> type, or <c>GESSourceClip</c>
+    /// itself.
     /// </exception>
     /// <exception cref="Gst.GLib.GException">
     /// The asset could not be built.
@@ -97,6 +112,7 @@ public unsafe partial class Asset
         CancellationToken cancellationToken = default)
     {
         ThrowIfIdIsRequired(extractableType, id, nameof(id));
+        id ??= ResolveNullIdForAsyncRequest(extractableType, nameof(id));
         return new RequestState(extractableType, id, cancellationToken).Start();
     }
 
@@ -109,9 +125,9 @@ public unsafe partial class Asset
     /// </param>
     /// <param name="id">
     /// The identifier of the asset, or <see langword="null"/> for the standard
-    /// identifier of the type — read the warning on
+    /// identifier of the type — which
     /// <see cref="RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>
-    /// before passing <see langword="null"/>.
+    /// substitutes, and for a handful of types refuses.
     /// </param>
     /// <param name="cancellable">
     /// The <c>GCancellable</c> the request watches. It is <em>borrowed</em>: the
@@ -152,8 +168,8 @@ public unsafe partial class Asset
     /// </exception>
     /// <exception cref="ArgumentException">
     /// <paramref name="id"/> contains a null character, or it is
-    /// <see langword="null"/> while <paramref name="extractableType"/> is a
-    /// <c>GESEffect</c> or a <c>GESEffectClip</c> type, as
+    /// <see langword="null"/> while <paramref name="extractableType"/> is one
+    /// of the types whose identifier the binding cannot derive, as
     /// <see cref="RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>
     /// documents.
     /// </exception>
@@ -172,6 +188,7 @@ public unsafe partial class Asset
     {
         ArgumentNullException.ThrowIfNull(cancellable);
         ThrowIfIdIsRequired(extractableType, id, nameof(id));
+        id ??= ResolveNullIdForAsyncRequest(extractableType, nameof(id));
         return new RequestState(extractableType, id, cancellable).Start();
     }
 
@@ -203,6 +220,12 @@ public unsafe partial class Asset
     /// answers the name of the type for a <see langword="null"/> identifier
     /// (<c>ges-extractable.c:59-63</c>), which is the documented spelling for a
     /// source, a clip and a direct <c>GESBaseEffect</c> subtype.
+    /// </para>
+    /// <para>
+    /// This is the check the synchronous entry points share. The asynchronous
+    /// ones run <see cref="ResolveNullIdForAsyncRequest"/> on top of it,
+    /// because <c>ges_asset_request_async</c> has a second, unnormalised use of
+    /// the identifier that the synchronous request does not.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">
@@ -240,6 +263,144 @@ public unsafe partial class Asset
                 + "absent, or \"\" for neither.",
                 paramName);
         }
+    }
+
+    /// <summary>
+    /// Answers the identifier an asynchronous request is made with when the
+    /// caller named none, which is the identifier the editing services would
+    /// have derived themselves, or refuses the type when they would have
+    /// derived something the binding cannot spell.
+    /// </summary>
+    /// <param name="extractableType">The type the asset is requested for.</param>
+    /// <param name="paramName">The name of the parameter that carried the identifier.</param>
+    /// <returns>The identifier to request the asset with, never <see langword="null"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// <c>ges_asset_request_async</c> normalises the identifier through
+    /// <c>check_id</c> like every other request, and then looks the cache entry
+    /// up with the identifier <em>as it was given</em>
+    /// (<c>ges-asset.c:1428</c>, 1.24.0: <c>:1411</c>). That second lookup
+    /// hashes the identifier with <c>g_str_hash</c> as soon as the type has an
+    /// entries table, so a <see langword="null"/> takes the process down — on
+    /// the second request for a type, or on the first one when something else
+    /// cached an asset of that type before it. The synchronous request has no
+    /// such lookup. This substitution is what keeps the two halves equivalent:
+    /// what is passed is exactly what <c>check_id</c> would have answered.
+    /// </para>
+    /// <para>
+    /// The default <c>check_id</c> answers the name of the type
+    /// (<c>ges-extractable.c:60-63</c>), and so does the one the test sources
+    /// and <c>GESTestClip</c> install (<c>ges-test-clip.c:173-232</c>, whose
+    /// <see langword="null"/> branch is the same <c>g_type_name</c>), so the
+    /// name of the type is the substitution for every type but the ones listed
+    /// below. The list is derived from the <c>check_id</c> overrides in the
+    /// editing services rather than read off the interface, because the vtable
+    /// of an interface is not reachable from managed code without fabricating a
+    /// wrapper for it; a managed subclass inherits the <c>check_id</c> of its
+    /// native parent, so the <c>is-a</c> tests cover managed types too.
+    /// </para>
+    /// <para>
+    /// The refusals are not new failures. Every type below either kills the
+    /// process on the asynchronous path or, for <c>GESFormatter</c> and
+    /// <c>GESTimeline</c>, hands back an identifier the caller never named and
+    /// then kills the process on the next request.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// The identifier a <see langword="null"/> stands for cannot be derived for
+    /// <paramref name="extractableType"/>.
+    /// </exception>
+    internal static string ResolveNullIdForAsyncRequest(
+        Gst.GObject.GType extractableType,
+        string paramName)
+    {
+        // The exact type rather than a subtype: GESSourceClip refuses every
+        // identifier of its own (ges-source-clip.c:59-69), while its subclasses
+        // — GESTestClip, GESTitleClip, GESUriClip — chain to the check_id of
+        // the parent interface.
+        if (extractableType.Value == GES.SourceClip.GetGType())
+        {
+            throw Refuse(
+                extractableType,
+                "GESSourceClip itself is only extractable through the id \"time-overlay\"; every "
+                + "other id, a null one among them, is refused by the library and the refusal is "
+                + "fatal on the asynchronous path.",
+                paramName);
+        }
+
+        if (extractableType.IsA(new Gst.GObject.GType(GES.UriClip.GetGType())))
+        {
+            throw Refuse(
+                extractableType,
+                "the id of a GESUriClip type is the URI of the media, which the library validates "
+                + "before anything else (ges-uri-clip.c:198-206). Pass the URI.",
+                paramName);
+        }
+
+        if (extractableType.IsA(new Gst.GObject.GType(GES.AudioUriSource.GetGType()))
+            || extractableType.IsA(new Gst.GObject.GType(GES.VideoUriSource.GetGType())))
+        {
+            throw Refuse(
+                extractableType,
+                "the id of a URI source type is the URI of the media, which the library copies "
+                + "without a check (ges-audio-uri-source.c:59-62, ges-video-uri-source.c:183-186). "
+                + "Pass the URI.",
+                paramName);
+        }
+
+#pragma warning disable CS0618 // GESMultiFileSource is deprecated upstream, but its GType is still
+        // requestable and a null id still kills the process, so the refusal has to name it.
+        if (extractableType.IsA(new Gst.GObject.GType(GES.MultiFileSource.GetGType())))
+#pragma warning restore CS0618
+        {
+            throw Refuse(
+                extractableType,
+                "the id of a GESMultiFileSource type is its multifile URI, which the library copies "
+                + "without a check (ges-multi-file-source.c:50-53). Pass the URI.",
+                paramName);
+        }
+
+        if (extractableType.IsA(new Gst.GObject.GType(GES.TransitionClip.GetGType())))
+        {
+            throw Refuse(
+                extractableType,
+                "the id of a GESTransitionClip type is the nickname of a "
+                + "GESVideoStandardTransitionType, \"crossfade\" for one, and no nickname matches a "
+                + "null id (ges-transition-clip.c:131-143).",
+                paramName);
+        }
+
+        if (extractableType.IsA(new Gst.GObject.GType(GES.Formatter.GetGType())))
+        {
+            throw Refuse(
+                extractableType,
+                "the id of a GESFormatter type is the name registered in its class struct, not the "
+                + "name of the type (ges-formatter.c:67-77), and the binding does not mirror that "
+                + "field. Pass the name of the formatter, \"xges\" for the one the editing services "
+                + "ship.",
+                paramName);
+        }
+
+        if (extractableType.IsA(new Gst.GObject.GType(GES.Timeline.GetGType())))
+        {
+            throw Refuse(
+                extractableType,
+                "the library mints a fresh \"project-<n>\" id for a GESTimeline every time it is "
+                + "asked for one (ges-timeline.c:302-314), so there is nothing to repeat here. Pass "
+                + "an id of your own.",
+                paramName);
+        }
+
+        return extractableType.Name;
+
+        static ArgumentException Refuse(
+            Gst.GObject.GType extractableType,
+            string reason,
+            string paramName) =>
+            new ArgumentException(
+                "An asset of " + extractableType.Name + " cannot be requested asynchronously with a "
+                + "null id: " + reason,
+                paramName);
     }
 
     /// <summary>
