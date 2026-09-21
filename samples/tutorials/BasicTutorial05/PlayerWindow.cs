@@ -68,6 +68,9 @@ internal sealed class PlayerWindow : Window, IDisposable
     /// <summary>Whether the pipeline has been started.</summary>
     private bool _started;
 
+    /// <summary>Whether the pipeline has been brought to rest.</summary>
+    private bool _stopped;
+
     /// <summary>Whether the pipeline has been torn down.</summary>
     private bool _disposed;
 
@@ -695,10 +698,62 @@ internal sealed class PlayerWindow : Window, IDisposable
     }
 
     /// <inheritdoc/>
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        base.OnClosing(e);
+
+        // The pipeline is stopped here and not in OnClosed, because by then the
+        // platform window has begun to die. On Windows that is still early
+        // enough, but X11 destroys a window's children before the parent's
+        // DestroyNotify is delivered, so a sink asked to go to NULL after the
+        // fact would be drawing on and tearing down a foreign XID that no
+        // longer exists — a BadWindow, which is fatal without an error handler.
+        // OnClosing runs while the window is unmistakably alive on every
+        // platform. A cancelled close leaves everything running.
+        if (!e.Cancel)
+        {
+            Stop();
+        }
+    }
+
+    /// <inheritdoc/>
     protected override void OnClosed(EventArgs e)
     {
         base.OnClosed(e);
         Dispose();
+    }
+
+    /// <summary>
+    /// Brings the pipeline to rest, as often as it is asked to.
+    /// </summary>
+    /// <remarks>
+    /// This is called from <see cref="OnClosing"/> on the ordinary path and
+    /// from <see cref="Dispose"/> on every other one — a window disposed
+    /// without being closed, or closed by something that never raised the
+    /// event — so it has to be safe to call twice.
+    /// </remarks>
+    private void Stop()
+    {
+        if (_stopped)
+        {
+            return;
+        }
+
+        _stopped = true;
+        _timer.Stop();
+
+        // One last read, because the timer will not tick again: an error posted
+        // after the final tick would otherwise never be printed and never reach
+        // the exit code.
+        PumpBus();
+
+        // The handler captured this window, and a handler that captured
+        // something the bus keeps alive is a cycle the collector cannot break.
+        // Clearing it is what ends that, and it is done before the pipeline
+        // moves so that nothing is posted into a handler that is going away.
+        _bus.ClearSyncHandler();
+
+        _playbin.SetState(State.Null);
     }
 
     /// <summary>
@@ -712,15 +767,7 @@ internal sealed class PlayerWindow : Window, IDisposable
         }
 
         _disposed = true;
-        _timer.Stop();
-
-        // The handler captured this window, and a handler that captured
-        // something the bus keeps alive is a cycle the collector cannot break.
-        // Clearing it is what ends that, and it is done before the pipeline
-        // moves so that nothing is posted into a handler that is going away.
-        _bus.ClearSyncHandler();
-
-        _playbin.SetState(State.Null);
+        Stop();
         _playbin.Dispose();
 
         GC.SuppressFinalize(this);
