@@ -1,15 +1,18 @@
-// A timeline whose clip and whose source are managed types: the clip builds its
-// own track element and the source answers the element behind it, both through
-// overrides of the editing services' class struct slots. It is the smallest
-// application that exercises the child contract of docs/subclassing.md §11.
+// A timeline whose clip and whose sources are managed types: the clip builds
+// its own track elements, each source answers the element behind it, the clip
+// takes over the split of its own children and the audio source watches every
+// child property write reaching it - all through overrides of the editing
+// services' class struct slots. It is the smallest application that exercises
+// the child contract of docs/subclassing.md §11.
 //
 // Usage: GesCustomSource [--timeout <seconds>] [--native-path <directory>]
 //                        [--flavor msvc|mingw]
 //
-// It is headless and bounded: the source is a videotestsrc, the preview sink is
-// a fakesink and the clip is half a second long, so the run ends at the end of
-// stream on any machine that has the nle and ges plugins and the base and good
-// plugin sets a video source bin is built from.
+// It is headless and bounded: the sources are a videotestsrc and an
+// audiotestsrc, both preview sinks are fakesinks and the clip is half a second
+// long, so the run ends at the end of stream on any machine that has the nle
+// and ges plugins and the base and good plugin sets a video and an audio source
+// bin are built from.
 //
 // Everything runs on this thread. The editing services assert the thread a
 // timeline and its tracks were created on, so a Task.Run around any of this
@@ -31,6 +34,12 @@ internal static class CustomSourceSample
 
     /// <summary>How long one poll of the bus waits.</summary>
     private static readonly ClockTime PollInterval = ClockTime.FromMilliseconds(100);
+
+    /// <summary>The tone the audio source lets through, in hertz.</summary>
+    private const double AcceptedTone = 880.0;
+
+    /// <summary>The tone the audio source refuses, in hertz.</summary>
+    private const double RefusedTone = 5000.0;
 
     /// <summary>
     /// Builds the timeline, plays it and reports what the bus said.
@@ -56,18 +65,25 @@ internal static class CustomSourceSample
             Console.WriteLine($"flavor:      {NativeLoader.ResolvedFlavor?.ToString() ?? "not applicable"}");
             Console.WriteLine($"directory:   {NativeLoader.ResolvedDirectory ?? "the process search path"}");
             Console.WriteLine($"clip:        {CustomSourceClip.GTypeName}");
-            Console.WriteLine($"source:      {CustomVideoSource.GTypeName}");
+            Console.WriteLine($"video:       {CustomVideoSource.GTypeName}");
+            Console.WriteLine($"audio:       {CustomAudioSource.GTypeName}");
 
-            // A video-only timeline: the clip is asked for a video child and
-            // for nothing else, which is what keeps the audio side of the
-            // question - a track type the override answers null for - out of
-            // this sample.
+            // One track of each type: the clip is asked for a child twice and
+            // answers a managed source both times, so the timeline is made of
+            // managed types on the audio side as well as on the video one.
             using Timeline timeline = Timeline.New();
-            using VideoTrack track = VideoTrack.New();
+            using VideoTrack videoTrack = VideoTrack.New();
+            using AudioTrack audioTrack = AudioTrack.New();
 
-            if (!timeline.AddTrack(track))
+            if (!timeline.AddTrack(videoTrack))
             {
                 Console.Error.WriteLine("GesCustomSource: the video track was refused.");
+                return 1;
+            }
+
+            if (!timeline.AddTrack(audioTrack))
+            {
+                Console.Error.WriteLine("GesCustomSource: the audio track was refused.");
                 return 1;
             }
 
@@ -78,7 +94,7 @@ internal static class CustomSourceSample
             // no asset and the layer would remove it again.
             using CustomSourceClip clip = CustomSourceClip.New();
 
-            clip.SupportedFormats = TrackType.Video;
+            clip.SupportedFormats = TrackType.Video | TrackType.Audio;
 
             if (!clip.SetStart(ClockTime.Zero) || !clip.SetDuration(Length))
             {
@@ -94,9 +110,30 @@ internal static class CustomSourceSample
                 return 1;
             }
 
-            Report(clip);
+            if (!Report(clip))
+            {
+                return 1;
+            }
 
-            return Play(timeline, options.Timeout);
+            // The children carry the child properties, so this is asked once
+            // the clip is in a layer and before anything plays: the tone the
+            // override lets through is the tone the run renders.
+            if (!ShowChildProperties(clip))
+            {
+                return 1;
+            }
+
+            int played = Play(timeline, options.Timeout);
+
+            if (played != 0)
+            {
+                return played;
+            }
+
+            // The split comes after the run: the pipeline is back at NULL and
+            // released, and the timeline is the only thing still holding the
+            // clip.
+            return ShowUngroup(clip) ? 0 : 1;
         }
         catch (Exception exception)
         {
@@ -110,24 +147,200 @@ internal static class CustomSourceSample
     }
 
     /// <summary>
-    /// Prints what the two overrides built, which is the contract this sample
-    /// is about.
+    /// Prints what the overrides built, which is the contract this sample is
+    /// about.
     /// </summary>
     /// <param name="clip">The clip that was added to the layer.</param>
-    private static void Report(CustomSourceClip clip)
+    /// <returns>Whether the clip was given the two children it answered.</returns>
+    private static bool Report(CustomSourceClip clip)
     {
+        Console.WriteLine();
+        Console.WriteLine("1. the clip builds its own children");
+
         IReadOnlyList<TimelineElement> children = clip.GetChildren(false);
 
         Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"children:    {children.Count}"));
 
-        // The child is the very wrapper the override answered: the interning
+        // Each child is the very wrapper the override answered: the interning
         // is what makes the two the same object rather than two wrappers for
         // one instance.
-        CustomVideoSource? child = clip.AnsweredChild;
+        CustomVideoSource? video = clip.AnsweredChild;
+        CustomAudioSource? audio = clip.AnsweredAudioChild;
 
-        Console.WriteLine($"child:       {child?.Name ?? "none"}");
-        Console.WriteLine($"interned:    {children.Count == 1 && ReferenceEquals(children[0], child)}");
-        Console.WriteLine($"element:     {child?.BuiltElement ?? "none"}");
+        bool interned = children.Count == 2
+            && children.Any(child => ReferenceEquals(child, video))
+            && children.Any(child => ReferenceEquals(child, audio));
+
+        Console.WriteLine($"video child: {video?.Name ?? "none"} ({video?.BuiltElement ?? "no element"})");
+        Console.WriteLine($"audio child: {audio?.Name ?? "none"} ({audio?.BuiltElement ?? "no element"})");
+        Console.WriteLine($"interned:    {interned}");
+
+        if (!interned)
+        {
+            Console.Error.WriteLine(
+                "GesCustomSource: the clip was not given the two children its override answered.");
+        }
+
+        return interned;
+    }
+
+    /// <summary>
+    /// Writes a child property of the element the audio source is made of,
+    /// through the slot the source took over.
+    /// </summary>
+    /// <param name="clip">The clip that was added to the layer.</param>
+    /// <returns>Whether the writes were answered the way the source promises.</returns>
+    private static bool ShowChildProperties(CustomSourceClip clip)
+    {
+        Console.WriteLine();
+        Console.WriteLine("2. the audio source watches its child properties");
+
+        CustomAudioSource? audio = clip.AnsweredAudioChild;
+
+        if (audio is null)
+        {
+            Console.Error.WriteLine("GesCustomSource: there is no audio child to ask.");
+            return false;
+        }
+
+        using (Gst.GObject.Value current = audio.GetChildProperty(CustomAudioSource.ToneProperty))
+        {
+            Console.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"registered:  {CustomAudioSource.ToneProperty} of the inner element, at {current.GetDouble():F0} Hz"));
+        }
+
+        using Gst.GObject.Value wanted = Gst.GObject.Value.New(Gst.GObject.GType.Double);
+        wanted.SetDouble(AcceptedTone);
+
+        // The write goes through set_child_property_full, which is the only
+        // caller of the set_child_property slot: the override sees it, lets it
+        // through by chaining up, and the value lands on the audiotestsrc.
+        if (!audio.SetChildPropertyFull(CustomAudioSource.ToneProperty, wanted))
+        {
+            Console.Error.WriteLine("GesCustomSource: the accepted tone was refused after all.");
+            return false;
+        }
+
+        double written;
+        using (Gst.GObject.Value readBack = audio.GetChildProperty(CustomAudioSource.ToneProperty))
+        {
+            written = readBack.GetDouble();
+        }
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"accepted:    {AcceptedTone:F0} Hz, read back as {written:F0} Hz"));
+
+        if (Math.Abs(written - AcceptedTone) > 0.5)
+        {
+            Console.Error.WriteLine("GesCustomSource: the tone the source kept is not the one that was written.");
+            return false;
+        }
+
+        using Gst.GObject.Value refused = Gst.GObject.Value.New(Gst.GObject.GType.Double);
+        refused.SetDouble(RefusedTone);
+
+        // A refusal that carries a reason reaches the caller as the GError the
+        // override answered, which the full member raises.
+        try
+        {
+            _ = audio.SetChildPropertyFull(CustomAudioSource.ToneProperty, refused);
+            Console.Error.WriteLine("GesCustomSource: the tone above the ceiling was written all the same.");
+            return false;
+        }
+        catch (GException refusal)
+        {
+            Console.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"refused:     {RefusedTone:F0} Hz, domain {refusal.Domain} ({refusal.Code})"));
+            Console.WriteLine($"reason:      {refusal.Message}");
+        }
+
+        // The same refusal through the plain setter, which carries no room for
+        // a reason: it is told apart from an unknown name by a lookup and
+        // raised as a refusal rather than as a missing property.
+        try
+        {
+            audio.SetChildProperty(CustomAudioSource.ToneProperty, refused);
+            Console.Error.WriteLine("GesCustomSource: the plain setter wrote what the full one refused.");
+            return false;
+        }
+        catch (InvalidOperationException plain)
+        {
+            Console.WriteLine($"plain setter: {plain.Message}");
+        }
+
+        double kept;
+        using (Gst.GObject.Value afterRefusal = audio.GetChildProperty(CustomAudioSource.ToneProperty))
+        {
+            kept = afterRefusal.GetDouble();
+        }
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"still at:    {kept:F0} Hz after {audio.ObservedWrites.Count} writes the override saw"));
+
+        if (Math.Abs(kept - AcceptedTone) > 0.5)
+        {
+            Console.Error.WriteLine("GesCustomSource: a refused write changed the tone anyway.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Splits the clip into one clip per track type, through the slot the clip
+    /// took over.
+    /// </summary>
+    /// <param name="clip">The clip that was played.</param>
+    /// <returns>Whether the split was answered the way the override reports it.</returns>
+    private static bool ShowUngroup(CustomSourceClip clip)
+    {
+        Console.WriteLine();
+        Console.WriteLine("4. the clip answers its own split");
+
+        // The containers are owned by this caller. The clip is in the answer
+        // as well, and it is disposed by the using of the caller above, so
+        // only the copies beside it are released here.
+        IReadOnlyList<Container> parts = clip.Ungroup(recursive: false);
+
+        try
+        {
+            Console.WriteLine($"override:    {clip.UngroupStory ?? "never ran"}");
+            Console.WriteLine(string.Create(CultureInfo.InvariantCulture, $"containers:  {parts.Count}"));
+
+            foreach (Container part in parts)
+            {
+                IReadOnlyList<TimelineElement> children = part.GetChildren(false);
+                string which = ReferenceEquals(part, clip) ? "the clip itself" : "a new clip";
+                string carries = children.Count == 1 ? children[0].GetTrackTypes().ToString() : "no single track type";
+
+                Console.WriteLine(string.Create(
+                    CultureInfo.InvariantCulture,
+                    $"  {part.Name ?? "?"}: {which}, {children.Count} child, {carries}"));
+            }
+
+            if (clip.UngroupStory is null || parts.Count != 2)
+            {
+                Console.Error.WriteLine(
+                    "GesCustomSource: the split did not answer one container per track type.");
+                return false;
+            }
+
+            return true;
+        }
+        finally
+        {
+            foreach (Container part in parts)
+            {
+                if (!ReferenceEquals(part, clip))
+                {
+                    part.Dispose();
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -139,6 +352,9 @@ internal static class CustomSourceSample
     /// <returns>0 on end of stream, 1 on any error or on the timeout.</returns>
     private static int Play(Timeline timeline, TimeSpan timeout)
     {
+        Console.WriteLine();
+        Console.WriteLine("3. the timeline renders audio and video to fakesinks");
+
         using GES.Pipeline pipeline = GES.Pipeline.New();
 
         try
@@ -149,14 +365,18 @@ internal static class CustomSourceSample
                 return 1;
             }
 
-            // Headless: the preview goes nowhere. The sink is set before the
+            // Headless: both previews go nowhere. A sink is set before the
             // pipeline leaves NULL, which is the only window a preview sink
-            // can be chosen in.
-            using Element sink = ElementFactory.Make("fakesink", null)
+            // can be chosen in, and each preview needs a sink of its own.
+            using Element videoSink = ElementFactory.Make("fakesink", null)
+                ?? throw new InvalidOperationException("fakesink is not installed.");
+            using Element audioSink = ElementFactory.Make("fakesink", null)
                 ?? throw new InvalidOperationException("fakesink is not installed.");
 
-            sink.SetProperty("sync", false);
-            pipeline.PreviewSetVideoSink(sink);
+            videoSink.SetProperty("sync", false);
+            audioSink.SetProperty("sync", false);
+            pipeline.PreviewSetVideoSink(videoSink);
+            pipeline.PreviewSetAudioSink(audioSink);
 
             // The bus wrapper is an interned GObject wrapper, shared with
             // every other lookup of the same bus, so it is not disposed here.
