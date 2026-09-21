@@ -1054,6 +1054,37 @@ public sealed class ClassEmitterTests
         }
     }
 
+    /// <summary>
+    /// Exactly one committed <c>skipVirtuals</c> key names a class that is not
+    /// subclassable: the chain-only mirror whose slot is hand bound for the
+    /// classes below it.
+    /// </summary>
+    /// <remarks>
+    /// GEN0029 cannot report this. It holds the skipped keys against the slots
+    /// the mirrors lay out, and a class taken off the subclassable list keeps
+    /// its mirror, so its entries go on reading as ledger reasons for a surface
+    /// that is gone. Pinning the set is the report the run has no way to write:
+    /// the moment a class with skip entries leaves the allowlist, this fails and
+    /// its reasons are re-read by hand.
+    /// </remarks>
+    [Fact]
+    public void OneSkippedVirtualNamesAClassThatIsNotSubclassable()
+    {
+        List<string> chainOnly = [];
+        foreach (string key in GirFixture.Overlays.SkippedVirtualKeys)
+        {
+            int separator = key.IndexOf("::", StringComparison.Ordinal);
+            Assert.True(separator > 0, "The skipped virtual key " + key + " names no class.");
+
+            if (!GirFixture.Overlays.IsSubclassable(key[..separator]))
+            {
+                chainOnly.Add(key);
+            }
+        }
+
+        Assert.Equal("GES.Container::ungroup", Assert.Single(chainOnly));
+    }
+
     [Fact]
     public void EveryGeneratedFileHasItsOwnPath()
     {
