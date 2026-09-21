@@ -92,12 +92,21 @@ public abstract unsafe partial class Clip
     /// The first word of a <c>GTypeInstance</c> is its class pointer, so this
     /// reads the flag of the class the add is about to dispatch through, the
     /// way <c>GES_CLIP_CLASS_CAN_ADD_EFFECTS</c> does (<c>ges-clip.h:42</c>).
-    /// The layout it reads through is the mirror the ABI probes assert against
-    /// the running library.
+    /// The layout it reads through is the mirror the class-struct layout tests
+    /// pin.
     /// </remarks>
     private static bool CanAddEffects(nint instance) =>
         *(int*)(*(nint*)instance + CanAddEffectsOffset) != 0;
 
+    /// <summary>
+    /// Measures the offset of <c>can_add_effects</c> in the class struct.
+    /// </summary>
+    /// <returns>The offset in bytes.</returns>
+    /// <remarks>
+    /// The field is data rather than a slot, so it is measured with the
+    /// instance-layout helper: <c>ClassSlot.OffsetOf</c> takes a
+    /// <c>ref nint</c> and a <c>gboolean</c> is not one.
+    /// </remarks>
     private static int MeasureCanAddEffectsOffset()
     {
         GES.ClipClassRaw probe = default;
