@@ -152,6 +152,24 @@ internal static class GstStubs
 
                 protected virtual int OnY() => 0;
             }
+
+            /// <summary>
+            /// A stand-in for a class below a subclassable one, shaped the way
+            /// the editing services are: it declares a slot and a registration
+            /// entry point of its own, and inherits the slot declaration of its
+            /// base class, which a registration of it may still name.
+            /// </summary>
+            public class FakeFilter : FakeSrc
+            {
+                public static GObject.VfuncOverride ZOverride { get; } = default;
+
+                public static new GObject.SubclassType DefineSubclass(
+                    string typeName,
+                    System.Action<GObject.ClassConfig>? configureClass,
+                    params GObject.VfuncOverride[] overrides) => new GObject.SubclassType();
+
+                protected virtual int OnZ() => 0;
+            }
         #nullable restore
 
             namespace Base

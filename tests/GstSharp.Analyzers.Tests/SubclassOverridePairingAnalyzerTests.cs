@@ -46,6 +46,40 @@ public sealed class SubclassOverridePairingAnalyzerTests
             }
             """);
 
+    /// <summary>
+    /// A slot an ancestor declares, named in the registration of a class below
+    /// it: the pair is the ancestor's declaration and the override of the class,
+    /// which is the shape <c>GES.Container.UngroupOverride</c> takes in a
+    /// registration of a clip.
+    /// </summary>
+    [Fact]
+    public Task AnAncestorDeclaredSlotWithItsOverride_IsSilent() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeFilter
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("managed", null, Gst.FakeSrc.XOverride, ZOverride);
+
+                protected override int OnX() => 1;
+
+                protected override int OnZ() => 2;
+            }
+            """);
+
+    /// <summary>
+    /// The same slot without the override of it is reported, so that the
+    /// qualified name is not a way around the pairing.
+    /// </summary>
+    [Fact]
+    public Task AnAncestorDeclaredSlotWithoutItsOverride_IsReported() =>
+        VerifyAsync("""
+            internal sealed class Managed : Gst.FakeFilter
+            {
+                private static readonly Gst.GObject.SubclassType Definition =
+                    DefineSubclass("managed", null, {|GST0004:Gst.FakeSrc.XOverride|});
+            }
+            """);
+
     [Fact]
     public Task NeitherDeclarationNorOverride_IsSilent() =>
         VerifyAsync("""
