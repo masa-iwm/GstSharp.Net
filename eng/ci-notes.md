@@ -354,7 +354,9 @@ runtime packs are not an argument for a cache on the other legs.
 
 Those numbers predate `samples/tutorials/BasicTutorial05`, which is the one
 project under `samples/` that carries a third-party package. Avalonia brings the
-whole restore to about **42 package ids and ~318 MB** of `.nupkg`, dominated by
+whole restore to **about 300 MB (25 package ids for this project alone)** of
+`.nupkg`, measured by summing the package files in the NuGet cache for the ids
+that project's own `project.assets.json` lists after a restore. It is dominated by
 the `SkiaSharp.NativeAssets.*` and `HarfBuzzSharp.NativeAssets.*` packages —
 including the WebAssembly ones, which are plain `<dependency>` entries rather
 than RID-conditional assets, so pinning a `RuntimeIdentifier` downloads exactly

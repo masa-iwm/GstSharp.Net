@@ -90,8 +90,10 @@ Three consequences to know before running it:
   Avalonia runs the AppKit loop itself, so `Gst.Global.MacosMain` is not the
   missing piece — but treat that platform as unproven.
 * **It carries the only third-party package under `samples/`.** Avalonia is
-  MIT, pinned centrally, and adds about 318 MB to a cold restore on every CI
-  leg without a package cache. `eng/ci-notes.md` records that cost.
+  MIT, pinned centrally, and adds about 300 MB (25 package ids for this project
+  alone, summed from the NuGet cache against its `project.assets.json`) to a
+  cold restore on every CI leg without a package cache. `eng/ci-notes.md`
+  records that cost.
 
 ## What is not ported, and why
 
