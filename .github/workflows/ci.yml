@@ -442,9 +442,9 @@ jobs:
       - name: AppSrcPush
         run: dotnet run --project samples/AppSrcPush --no-build -- --buffers 200 --output appsrc-push.raw
 
-      # The ported GStreamer tutorials. All eighteen are built by the solution
-      # on every leg; these sixteen are the ones that can also run, and they run
-      # on both Linux legs rather than anywhere else because those have the
+      # The ported GStreamer tutorials. All nineteen are built by the solution
+      # on every leg; these seventeen are the ones that can also run, and they
+      # run on both Linux legs rather than anywhere else because those have the
       # richest plugin set and no GUI to tempt them.
       #
       # --headless is the sample-only option that swaps every automatic sink
@@ -470,7 +470,7 @@ jobs:
       #
       # Not run: basic tutorial 1, whose default media is an https URI, and
       # basic tutorial 6, whose interesting output is the caps a real audio
-      # sink negotiates. Those two are the only ones of the eighteen that are
+      # sink negotiates. Those two are the only ones of the nineteen that are
       # built and not run; playback 9 is not ported at all.
       #
       # Playback 5 moves the colour balance of the picture. --keys covers all

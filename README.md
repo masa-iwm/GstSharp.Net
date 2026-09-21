@@ -318,6 +318,7 @@ numbering kept:
 | `BasicTutorial02` | [GStreamer concepts](https://gstreamer.freedesktop.org/documentation/tutorials/basic/concepts.html) | factories, a pipeline, a link, a property, a parsed error |
 | `BasicTutorial03` | [Dynamic pipelines](https://gstreamer.freedesktop.org/documentation/tutorials/basic/dynamic-pipelines.html) | `pad-added`, linking pads, reading caps |
 | `BasicTutorial04` | [Time management](https://gstreamer.freedesktop.org/documentation/tutorials/basic/time-management.html) | position, duration, the seeking query, `SeekSimple` |
+| `BasicTutorial05` | [GUI toolkit integration](https://gstreamer.freedesktop.org/documentation/tutorials/basic/toolkit-integration.html) | `GstVideoOverlay`, a window handle, a sync bus handler, a seek slider |
 | `BasicTutorial06` | [Media formats and pad capabilities](https://gstreamer.freedesktop.org/documentation/tutorials/basic/media-formats-and-pad-capabilities.html) | caps, structures, fields, pad templates |
 | `BasicTutorial07` | [Multithreading and pad availability](https://gstreamer.freedesktop.org/documentation/tutorials/basic/multithreading-and-pad-availability.html) | a `tee`, its request pads, a `queue` per branch |
 | `BasicTutorial08` | [Short-cutting the pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/basic/short-cutting-the-pipeline.html) | `appsrc`, `appsink`, a `tee` and its request pads |
@@ -341,6 +342,14 @@ options the tutorials do not have (`--headless`, the `--keys` of
 `BasicTutorial13` and of the three playback tutorials that read a keyboard, the
 `--enable`/`--disable` of `PlaybackTutorial08` and the per-tutorial bounds),
 which exist so that a tutorial can be run unattended.
+
+`BasicTutorial05` is the one that is not quite the same program as its
+original. Upstream 1.28 packs a GTK widget that `gtkglsink` hands out, and GTK
+in this process would mean a second GObject type registry beside this binding's
+own; the port therefore teaches the same lesson through `GstVideoOverlay` —
+the toolkit-neutral route the GStreamer documentation describes — with Avalonia
+as the toolkit and its `NativeControlHost` as the surface. It is also the only
+project in the tree with a third-party runtime dependency.
 
 ```sh
 dotnet run --project samples/tutorials/BasicTutorial02
