@@ -187,7 +187,17 @@ public sealed class TranscoderTests
         }
 
         Assert.True(failure is null, failure?.Message);
-        Assert.True(done, "the transcoder never posted a done message");
+
+        if (!done)
+        {
+            // This fact pops the API bus itself, so a bus that is empty here
+            // says the messages were never posted rather than never delivered,
+            // and the state of the pipeline says how far it got.
+            Assert.Fail(
+                "the transcoder never posted a done message. "
+                + TimeoutDiagnostics.Describe(elapsed.Elapsed, transcoder.GetPipeline(), bus));
+        }
+
         Assert.True(sawPlaying, "the transcoder never reported the PLAYING state");
     }
 
@@ -364,10 +374,22 @@ public sealed class TranscoderTests
             first.Warning -= OnWarning;
         }
 
-        Assert.True(
-            done,
-            $"the signal adapter never raised its done signal; error: {failure ?? "none"}; " +
-            $"warnings: {warnings.Count}; waited {elapsed.Elapsed}");
+        if (!done)
+        {
+            // The error and the warnings below are raised by the very adapter
+            // whose delivery is in question, so "error: none" cannot tell a
+            // transcode that reported nothing from an adapter that delivered
+            // nothing. What follows them is independent of the adapter: the
+            // state of the pipeline and the messages that were still queued.
+            Assert.Fail(
+                "the signal adapter never raised its done signal. "
+                + $"From the adapter itself, which is what is in doubt here: error {failure ?? "none"}, "
+                + $"warnings {warnings.Count}. Independently of it: "
+                + TimeoutDiagnostics.Describe(
+                    elapsed.Elapsed,
+                    transcoder.GetPipeline(),
+                    transcoder.GetMessageBus()));
+        }
     }
 
     /// <summary>

@@ -431,9 +431,16 @@ public sealed class PlayTests
             play.Uri = media.Uri;
             play.Start();
 
-            Assert.True(
-                playing.Wait(Patience),
-                "the synchronous adapter never emitted a PLAYING state change");
+            if (!playing.Wait(Patience))
+            {
+                // This adapter is a synchronous handler that drops every
+                // message of the API bus, so an empty API bus below is its
+                // normal state and says nothing. The evidence here is the
+                // state of the playbin and what its own bus was carrying.
+                Assert.Fail(
+                    "the synchronous adapter never emitted a PLAYING state change. "
+                    + TimeoutDiagnostics.Describe(Patience, play.GetPipeline(), bus));
+            }
         }
         finally
         {
