@@ -391,6 +391,37 @@ public sealed unsafe partial class BufferListForeachTests
         }
     }
 
+    /// <summary>
+    /// A <c>user_data</c> pointer whose state is of another type reads as no
+    /// function at all, and the walk ends with the slot as the library left it.
+    /// </summary>
+    /// <remarks>
+    /// The trampoline is called directly, because no walk the binding starts
+    /// can reach this: the state it allocates is always of the function type.
+    /// It is the one branch of the two guards above the invocation that a test
+    /// can stand on - a handle freed under the walk is undefined and cannot be
+    /// provoked honestly, so the catch blocks themselves stay untested.
+    /// </remarks>
+    [Fact]
+    public void AStateOfAnotherTypeEndsTheWalkWithTheSlotUntouched()
+    {
+        using Buffer buffer = Buffer.New();
+        nint slot = buffer.Handle;
+        GCHandle other = GCHandle.Alloc(new object());
+        try
+        {
+            delegate* unmanaged[Cdecl]<nint*, uint, nint, int> entry =
+                (delegate* unmanaged[Cdecl]<nint*, uint, nint, int>)BufferList.ForeachTrampoline.Pointer;
+
+            Assert.Equal(0, entry(&slot, 0, GCHandle.ToIntPtr(other)));
+            Assert.Equal(buffer.Handle, slot);
+        }
+        finally
+        {
+            other.Free();
+        }
+    }
+
     /// <summary>Builds a list of three buffers with distinct timestamps.</summary>
     /// <returns>The list, which the caller disposes.</returns>
     private static BufferList NewList()

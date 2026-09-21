@@ -177,8 +177,9 @@ public unsafe partial class Pad
             }
             catch (Exception exception)
             {
-                // Reading the state is a handle lookup that throws on a handle
-                // that was freed under the walk. There is nothing to settle
+                // Reading the state is a handle lookup, and a handle that was
+                // freed under the walk may throw there - what it does is
+                // undefined. There is nothing to settle
                 // over the slot then - the reference it lends was never taken -
                 // so the walk ends with the slot as the library left it.
                 Gst.Interop.ExceptionTrap.Report(exception);
