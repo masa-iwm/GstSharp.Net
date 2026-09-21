@@ -17,6 +17,15 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
   </ItemGroup>
 
+  <!-- The only third-party runtime dependency under samples/. BasicTutorial05
+       is the port of the toolkit-integration tutorial, and a toolkit is what
+       it needs; see samples/tutorials/README.md for why this one. -->
+  <ItemGroup Label="Samples (GUI)">
+    <PackageVersion Include="Avalonia" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+  </ItemGroup>
+
   <ItemGroup Label="Test infrastructure">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
