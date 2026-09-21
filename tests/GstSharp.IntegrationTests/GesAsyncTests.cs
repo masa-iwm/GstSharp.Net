@@ -56,12 +56,11 @@ public sealed class GesAsyncTests
     /// for.
     /// </para>
     /// <para>
-    /// The identifier is spelled out rather than left <see langword="null"/>.
-    /// It is the same identifier the editing services would derive from the
-    /// type, but <c>ges_asset_request_async</c> in 1.28.6 crashes on a
-    /// <c>NULL</c> identifier once the asset is in its cache — see
-    /// <see cref="Asset.RequestAsync(Gst.GObject.GType, string, CancellationToken)"/>,
-    /// which documents the hazard.
+    /// The identifier is spelled out rather than left <see langword="null"/>,
+    /// which keeps this test about the dispatcher alone. It is the same
+    /// identifier the binding substitutes for a <see langword="null"/>, and
+    /// <see cref="ARequestWithNoIdentifierAnswersTheSynchronousAssetTwice"/> is
+    /// where that substitution is the subject.
     /// </para>
     /// </remarks>
     [Fact]

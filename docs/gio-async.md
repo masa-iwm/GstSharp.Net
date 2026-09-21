@@ -279,8 +279,14 @@ consumer has. The public method builds the state and starts it:
 public static Task<GES.Asset> RequestAsync(
     Gst.GObject.GType extractableType,
     string? id,
-    CancellationToken cancellationToken = default) =>
-    new RequestState(extractableType, id, cancellationToken).Start();
+    CancellationToken cancellationToken = default)
+{
+    // Argument checks belong on the calling thread; section 8 says what these
+    // two are for.
+    ThrowIfIdIsRequired(extractableType, id, nameof(id));
+    id ??= ResolveNullIdForAsyncRequest(extractableType, nameof(id));
+    return new RequestState(extractableType, id, cancellationToken).Start();
+}
 ```
 
 and the state supplies the two entry points and takes back what it allocated:
@@ -352,16 +358,39 @@ because none of them is visible from the signature:
 
 `ges_asset_request_async` in the editing services 1.28.6 dereferences a null
 pointer, taking the process down, when it is given no identifier **and** the
-asset is already in its cache. The first request for a given type succeeds and
-populates the cache; the second one crashes. The synchronous `ges_asset_request`
-and every request that names its identifier are unaffected, and the crash
-reproduces from a raw `LibraryImport` with none of this machinery involved.
+type already has an entries table in the asset cache. It normalises the
+identifier through `check_id` like every other request and then looks the cache
+entry up with the identifier *as it was given* (`ges-asset.c:1428`, 1.24.0:
+`:1411`), so the `NULL` reaches `g_str_hash`. The first request for a given type
+populates the cache; the second one crashes — and the first one crashes too when
+a synchronous request, or any other identifier, came before it. The synchronous
+`ges_asset_request` has no such lookup, and the crash reproduces from a raw
+`LibraryImport` with none of this machinery involved.
 
-`GES.Asset.RequestAsync` therefore documents the hazard rather than working
-around it. Deriving the identifier a `null` stands for is the extractable type's
-own answer — the default is the name of the type, but types are free to override
-it — so guessing it in the binding would be wrong for exactly the types that
-need it most.
+`GES.Asset.RequestAsync` works around it by never passing a `null` on: it
+substitutes the identifier the editing services would have derived themselves,
+which is the name of the type for every type that keeps the default `check_id`
+(`ges-extractable.c:60-63`) and for the test sources, whose override answers the
+same `g_type_name` for a `NULL`. The asset that comes back is the one
+`GES.Asset.Request` answers for the same `null`.
+
+The types whose `check_id` derives something else cannot be served that way, so
+a `null` identifier for one of them is an `ArgumentException` naming the type
+rather than a request: `GESEffect` and `GESEffectClip` (bin description),
+`GESUriClip`, `GESAudioUriSource`, `GESVideoUriSource` and `GESMultiFileSource`
+(URI), `GESTransitionClip` (transition nickname), `GESSourceClip` itself
+(`time-overlay` only), `GESFormatter` (the name in its class struct, which the
+binding does not mirror) and `GESTimeline` (a `project-<n>` the library mints
+afresh on every request). The list is an `is-a` test per family, derived from
+the `check_id` overrides in the editing services rather than read off the
+interface vtable, which managed code cannot reach; a managed subclass inherits
+the `check_id` of its native parent, so subclasses are covered by it.
+
+The synchronous `GES.Asset.Request` and `GES.Asset.NeedsReload` guard only the
+`GESEffect` and `GESEffectClip` pair. They crash on a `null` identifier for the
+other refused types as well, through a different path
+(`_ensure_asset_for_wrong_id`, `ges-asset.c:1264-1268`); widening their guard is
+a separate change.
 
 ## 9. Deliberate omissions
 

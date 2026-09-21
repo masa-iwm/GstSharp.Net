@@ -1700,7 +1700,9 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   effect throws `InvalidOperationException` out of `GES.Clip.AddTopEffect` and
   `GES.Container.Add`. The three rules above under *An effect for the editing
   services* say why the library cannot be asked; the refusals are the rules made
-  into exceptions, and nothing wider is refused.
+  into exceptions. `GES.Asset.RequestAsync` alone refuses a wider set of types
+  for a `null` id, because it has a second, unnormalised use of the id that the
+  synchronous request does not; `docs/gio-async.md` section 8 lists them.
 
 ### The vfuncs that are bound
 
