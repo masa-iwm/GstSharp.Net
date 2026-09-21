@@ -192,6 +192,14 @@ public unsafe partial class Asset
     /// MySource child = asset.Extract&lt;MySource&gt;();
     /// </code>
     /// <para>
+    /// The <see langword="null"/> id above is the spelling for a source or a
+    /// clip. A <see cref="GES.Effect"/> or <see cref="GES.EffectClip"/> type
+    /// takes its bin description as the id instead, and for one of those a
+    /// <see langword="null"/> id is fatal rather than merely wrong: the library
+    /// dereferences it (<c>ges-effect-asset.c:390-391</c>,
+    /// <c>ges-asset.c:752-766</c>).
+    /// </para>
+    /// <para>
     /// The library hands the instance back <em>floating</em>. The wrapper sinks
     /// it and owns the one reference there is, so the child must not be
     /// disposed before the slot that answers it returns: whoever consumes it —
