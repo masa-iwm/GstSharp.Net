@@ -1564,6 +1564,30 @@ outlive the call. Every other untransferred mini object a callback is handed —
 a `Gst.Message` on a bus watch, a `Gst.TagList` in a tag walk — keeps a
 reference, so a handler may file the wrapper away and read it later.
 
+The two walks below are the exception: their function is lent a reference
+through a slot, so the wrapper it is handed owns that reference.
+`Gst.Pad.StickyEventsForeach` and `Gst.BufferList.Foreach` call a function with
+a `ref` wrapper rather than a value, because the C hands it a `GstEvent**` and a
+`GstBuffer**` whose one reference belongs to the function while it runs
+(`gstpad.c:607-667`, `gstbufferlist.c:239-320`). Leaving the slot alone keeps
+the entry and hands the reference back. Assigning `null` removes the entry, and
+the binding releases the lent reference. Assigning another wrapper replaces the
+entry: that wrapper is handed over to the library and is dead afterwards — a
+wrapper that only borrows its object has a reference minted for the library
+instead — and the old object is released. Disposing the wrapper, or passing it
+to a member that consumes it, without clearing the slot is the same answer as
+clearing it: the entry is removed, because the wrapper owns nothing any more.
+The buffer of a writable list is writable inside the function, so
+`MakeWritable()` in place is a legal replace, while a sticky event never is: the
+pad keeps a second reference to it. This is the opposite of the identity slot of
+`PadGetRangeFunction`, where the `inout` buffer the puller lends has to be
+answered unchanged and any other pointer is refused.
+
+`GES.MetaContainerExtensions.Foreach` lends nothing, but it is written by hand
+for a neighbouring reason: the C passes the container of the walk back to the
+function, and the binding hands over the very receiver the walk was started on
+rather than a second wrapper of it.
+
 ### Memory the caller lends to the pipeline
 
 `Gst.Buffer.NewWrappedFull` and `Gst.Memory.NewWrapped` are the reverse
