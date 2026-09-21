@@ -783,9 +783,9 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// the instance is gone, and writing into it changes nothing native.
     /// </para>
     /// <para>
-    /// The library rewrites the field under the STREAM_LOCK of the encoder, a recursive mutex of its own, which managed code cannot
-    /// take, so the copy is only guaranteed consistent when it is read on the
-    /// streaming thread, inside
+    /// The library rewrites the field under the STREAM_LOCK of the encoder, a recursive mutex
+    /// of its own, which managed code cannot take, so the copy is only guaranteed consistent
+    /// when it is read on the streaming thread, inside
     /// <see cref="OnHandleFrame"/>.
     /// A read from any other thread may mix the fields of two segments; it is never
     /// unsafe, because the structure is flat and owns no pointer.
@@ -811,9 +811,9 @@ public abstract unsafe partial class AudioEncoder : Gst.Element, Gst.IPreset
     /// the instance is gone, and writing into it changes nothing native.
     /// </para>
     /// <para>
-    /// The library rewrites the field under the STREAM_LOCK of the encoder, a recursive mutex of its own, which managed code cannot
-    /// take, so the copy is only guaranteed consistent when it is read on the
-    /// streaming thread, inside
+    /// The library rewrites the field under the STREAM_LOCK of the encoder, a recursive mutex
+    /// of its own, which managed code cannot take, so the copy is only guaranteed consistent
+    /// when it is read on the streaming thread, inside
     /// <see cref="OnHandleFrame"/>.
     /// A read from any other thread may mix the fields of two segments; it is never
     /// unsafe, because the structure is flat and owns no pointer.
