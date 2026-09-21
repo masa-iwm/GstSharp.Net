@@ -90,6 +90,17 @@ internal sealed class ProbeOnlyDeviceProvider : DeviceProvider, IManagedSubclass
     public static ProbeOnlyDeviceProvider CreateWrapper(SubclassCtorArgs args) => new(args);
 
     /// <inheritdoc/>
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _kept.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
+
+    /// <inheritdoc/>
     protected override IReadOnlyList<Device> OnProbe()
     {
         int round = Interlocked.Increment(ref _probed);

@@ -41,19 +41,37 @@ public sealed unsafe partial class ManagedClipUngroupTests
         using Timeline timeline = Timeline.NewAudioVideo();
         using Layer layer = timeline.AppendLayer();
 
+        // What "the way a native clip of the same shape does" means is read off
+        // one: a native clip of its own layer, so that the two splits do not
+        // meet, is what the counts below are compared against.
+        using Layer nativeLayer = timeline.AppendLayer();
+        using TestClip native = TestClip.New() ?? throw new InvalidOperationException("The test clip was refused.");
+        Assert.True(native.SetDuration(Length));
+        Assert.True(nativeLayer.AddClip(native));
+
+        int nativeChildren = native.GetChildren(recursive: false).Count;
+        IReadOnlyList<Container> nativeParts = native.Ungroup(recursive: false);
+        foreach (Container part in nativeParts)
+        {
+            if (!ReferenceEquals(part, native))
+            {
+                part.Dispose();
+            }
+        }
+
         ProbeUngroupSourceClip clip = ProbeUngroupSourceClip.New();
 
         using (clip)
         {
             Assert.True(clip.SetDuration(Length));
             Assert.True(layer.AddClip(clip));
-            Assert.Equal(2, clip.GetChildren(recursive: false).Count);
+            Assert.Equal(nativeChildren, clip.GetChildren(recursive: false).Count);
 
             uint before = RefCountOf(clip.Handle);
             IReadOnlyList<Container> parts = clip.Ungroup(recursive: false);
 
             Assert.Equal(1, clip.Ungrouped);
-            Assert.Equal(2, parts.Count);
+            Assert.Equal(nativeParts.Count, parts.Count);
             Assert.Contains(parts, part => ReferenceEquals(part, clip));
 
             foreach (Container part in parts)
@@ -223,6 +241,7 @@ public sealed unsafe partial class ManagedClipUngroupTests
             Assert.True(layer.RemoveClip(clip));
             Assert.NotEmpty(clip.GetChildren(recursive: false));
 
+            uint before = RefCountOf(clip.Handle);
             IReadOnlyList<Container> parts = clip.Ungroup(recursive: false);
             Assert.Equal(2, parts.Count);
 
@@ -237,6 +256,10 @@ public sealed unsafe partial class ManagedClipUngroupTests
                 }
             }
 
+            // The clip itself is in the answer too, and the reference the
+            // trampoline added for it is the one the forward member took over,
+            // so it stands where it stood.
+            Assert.Equal(before, RefCountOf(clip.Handle));
             Assert.NotNull(clip.Name);
         }
     }
