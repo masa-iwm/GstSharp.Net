@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Gst;
 using Gst.Interop;
 using Xunit;
@@ -350,6 +351,38 @@ public sealed unsafe partial class StickyEventsForeachTests
         });
 
         return (captured, calls[0]);
+    }
+
+    /// <summary>
+    /// A <c>user_data</c> pointer whose state is of another type reads as no
+    /// state at all, and the walk ends with the slot as the library left it.
+    /// </summary>
+    /// <remarks>
+    /// The trampoline is called directly, because no walk the binding starts
+    /// can reach this: the state it allocates is always of the walk's own type.
+    /// It is the one branch above the invocation a test can stand on - a handle
+    /// freed under the walk is undefined and cannot be provoked honestly, so
+    /// the catch blocks themselves stay untested.
+    /// </remarks>
+    [Fact]
+    public void AStateOfAnotherTypeEndsTheWalkWithTheSlotUntouched()
+    {
+        using Pad pad = NewPadWithStickyEvents();
+        using Event held = Hold(pad, EventType.StreamStart);
+        nint slot = held.Handle;
+        GCHandle other = GCHandle.Alloc(new object());
+        try
+        {
+            delegate* unmanaged[Cdecl]<nint, nint*, nint, int> entry =
+                (delegate* unmanaged[Cdecl]<nint, nint*, nint, int>)Pad.StickyEventsForeachTrampoline.Pointer;
+
+            Assert.Equal(0, entry(pad.Handle, &slot, GCHandle.ToIntPtr(other)));
+            Assert.Equal(held.Handle, slot);
+        }
+        finally
+        {
+            other.Free();
+        }
     }
 
     /// <summary>Builds an active pad that carries three sticky events.</summary>
