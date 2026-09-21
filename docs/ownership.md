@@ -689,7 +689,9 @@ to `handle_frame` (`gstvideodecoder.c:3436-3447` called from `:2500`,
 `gstvideoencoder.c:1532`), so inside that call it is never `null`. It answers
 `null` only on a frame the assignment has not reached yet, or one a subclass
 has taken the buffer out of itself. The four `GetSegment()` methods of the
-GstBase classes are the other exception, and a different one: they are not
+GstBase classes and the eight `GetInputSegment()` / `GetOutputSegment()`
+methods of `AudioDecoder`, `AudioEncoder`, `VideoDecoder` and `VideoEncoder`
+are the other exception, and a different one: they are not
 nullable at all, because what they read is storage the instance is made of
 rather than a pointer the library fills in. They are also the only members of
 this section that read a field of a class rather than of a structure a call
@@ -697,26 +699,51 @@ handed over, so the window is not a call the caller is inside of but an override
 the base class calls with the locks its own writers take already held —
 `OnRender` or `OnPreroll` for `BaseSink`, `OnCreate` or `OnFill` for `BaseSrc`,
 `OnTransform` or `OnTransformIp` for `BaseTransform`, `OnHandleFrame` for
-`BaseParse`. The pad holds `STREAM_LOCK` around a chain, a getrange and a
-serialized event (`gstpad.c:4554`, `:5072`, `:6053`), which covers the writers
-the four overlay entries cite save one: an instant rate change rewrites
+`BaseParse`, `OnHandleFrame` for the two encoders and `OnHandleFrame` or
+`OnParse` for the two decoders. The pad holds `STREAM_LOCK` around a chain, a getrange and a
+serialized event (`gstpad.c:4554`, `:5072`, `:6053`), and the codec classes take
+a `STREAM_LOCK` of their own around the same calls, which together cover the
+writers the twelve overlay entries cite save two. One: an instant rate change rewrites
 `GstBaseSink.segment` from the thread that sent the event and holds
 `PREROLL_LOCK` alone to do it (`gstbasesink.c:4500-4562`), and that lock is held
-for the whole of the chain function `OnRender` and `OnPreroll` run inside.
+for the whole of the chain function `OnRender` and `OnPreroll` run inside. Two:
+the same kind of event rewrites the `flags` of `AudioDecoder.input_segment` and
+`VideoDecoder.input_segment` from the sending thread under `OBJECT_LOCK` alone
+(`gstaudiodecoder.c:2479-2481`, `gstvideodecoder.c:1618-1620`); `flags` is one
+32 bit word, so a copy holds the old value or the new one and never a mix, and
+the in tree C decoders read it on the same terms.
 Outside it the read is still memory safe and still answers a segment: a
 `GstSegment` is 120 flat bytes and owns no pointer, so the worst a racing
 rewrite can produce is a value that mixes the fields of two segments. That is
 the whole cost of the accessor taking no lock, which it cannot: every one of
 these locks is a C macro with no exported function, `OBJECT_LOCK` is a non
 recursive `GMutex` that item 8 of `docs/modules.md` forbids a member to take, and
-`STREAM_LOCK` lives inside `GstPad`, whose layout differs between ABIs, while
-`PREROLL_LOCK` is a `GstBaseSink` field that no member of the binding takes.
+the `STREAM_LOCK` of the GstBase classes lives inside `GstPad`, whose layout
+differs between ABIs, while `PREROLL_LOCK` is a `GstBaseSink` field that no
+member of the binding takes. The codec classes are the one place where that is
+a choice rather than a fact: their `STREAM_LOCK` is a `GRecMutex` of their own,
+at a mirrored offset, and `g_rec_mutex_lock` is exported. The accessor still
+takes none, because the chain function holds that lock across the push
+downstream, so a reader on an application thread would wait for as long as a
+downstream preroll blocks — and one contract for all twelve methods is worth
+more than a lock on four of them.
 
 * `BaseSink.GetSegment()`, `BaseSrc.GetSegment()`,
   `BaseTransform.GetSegment()` and `BaseParse.GetSegment()` — a copy, good for
   as long as the caller keeps it; consistent when it was taken inside one of the
   overrides above (`gstbasesink.h:104-106`, `gstbasesrc.h:96-97`,
   `gstbasetransform.h:91-93`, `gstbaseparse.h:171-172`).
+* `AudioDecoder.GetInputSegment()`, `AudioDecoder.GetOutputSegment()`,
+  `AudioEncoder.GetInputSegment()`, `AudioEncoder.GetOutputSegment()`,
+  `VideoDecoder.GetInputSegment()`, `VideoDecoder.GetOutputSegment()`,
+  `VideoEncoder.GetInputSegment()` and `VideoEncoder.GetOutputSegment()` — the
+  same contract, a copy the caller keeps, consistent when it was taken inside
+  `OnHandleFrame`, or inside `OnParse` on a decoder
+  (`gstaudiodecoder.h:161-173`, `gstaudioencoder.h:99-119`,
+  `gstvideodecoder.h:177-188`, `gstvideoencoder.h:140-151`). The two video
+  headers mark the segments `/*< protected >*/` behind a `/*< private >*/` the
+  scanner never leaves, which is why their overlay entries state the header line
+  the gir contradicts.
 * `Buffer.Pool` — as long as the buffer reference lives: the field holds a
   strong reference (`gstbufferpool.c:1285`), and the only thing that clears it
   is the compare and exchange in `gst_buffer_pool_release_buffer`

@@ -421,8 +421,10 @@ asserts the crossing the hierarchy makes possible: the same source handed to
    type can be asserted against it). A field the generator exposes instead goes
    through the `instanceFields` key of `girs/overlays/fixups.json`, which emits
    the mirror and the accessor into `Generated/InstanceFields/` and joins the
-   three probe layers of `InstanceFieldProbeTests` with it; the hand written
-   route stays for a field that key refuses.
+   three probe layers of `InstanceFieldProbeTests` with it; an entry states the
+   optional `headerPublic` when the gir marks the field private because the
+   structure it belongs to switched from a private marker to a protected one,
+   and the hand written route stays for a field that key refuses.
 10. A zero terminated `Record**` return that comes with a free of its own is
     hand bound. Walk to the terminator, and wrap every element with the
     transfer the C dictates: a deep boxed copy when one free releases the whole
