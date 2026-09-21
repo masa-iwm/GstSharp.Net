@@ -1164,7 +1164,7 @@
   "typeDocReplace": {
     "GES.EffectClip": [
       {
-        "$comment": "The documented asset id writes a space on both sides of the bar, and that id does not work: ges-effect-asset.c:390-397 splits the id with g_strsplit (id, \" \", 2), so the token after the bar is '||video' rather than 'video', the track type is neither audio nor video, and the whole string is parsed as one bin description - the second half is silently dropped. The library itself writes the form without that space: ges-effect-clip.c:122-124 appends \"audio %s ||\" and then \"video %s\", which is a space BEFORE the bar and none after it.",
+        "$comment": "The documented asset id writes a space on both sides of the bar, and that id does not work: ges-effect-clip.c:73 splits the id on \"||\" first, so the piece after the bar keeps the leading space; ges-effect-asset.c:390 then splits that piece with g_strsplit (piece, \" \", 2) and reads an empty first token, which is neither audio nor video, so the track type stays unknown and the whole piece is taken as a bin description (ges-effect-asset.c:398-399). Parsing it fails on the element name 'video' and is logged (ges-effect-asset.c:407), and the clip drops the piece with a GST_ERROR of its own (ges-effect-clip.c:94-95) - so the half after the bar is lost, loudly. The library itself writes the form without that space: ges-effect-clip.c:122-124 appends \"audio %s ||\" and then \"video %s\", which is a space BEFORE the bar and none after it.",
         "old": "|| video",
         "new": "||video"
       }
