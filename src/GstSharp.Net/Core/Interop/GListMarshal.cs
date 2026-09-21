@@ -253,6 +253,92 @@ internal static partial class GListMarshal
     }
 
     /// <summary>
+    /// Builds the list a virtual method override hands to a C caller that takes
+    /// over the list and one reference per element (<c>transfer full</c>).
+    /// </summary>
+    /// <param name="items">
+    /// The objects to answer, in list order, or <see langword="null"/> for none.
+    /// </param>
+    /// <param name="member">
+    /// The managed member that produced the list, for the message of a refusal.
+    /// </param>
+    /// <param name="slot">
+    /// The C slot the list is answered to, for the message of a refusal.
+    /// </param>
+    /// <returns>
+    /// The first node, or <see cref="nint.Zero"/> when there is nothing to
+    /// answer: <c>NULL</c> is how C spells the empty list.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The list is walked twice on purpose. The first pass only reads the
+    /// handles, so nothing is referenced until every entry has been read and a
+    /// bad entry leaves no reference behind; the second pass mints the one
+    /// reference per element the caller is about to take over. A failure while
+    /// the spine is being built releases exactly the references the second pass
+    /// took and rethrows, so the answer is either whole or nothing at all.
+    /// </para>
+    /// <para>
+    /// The wrappers keep the reference they own. What the caller receives is an
+    /// added one per element, which is what <c>transfer full</c> on the elements
+    /// of the list means, so every object answered here stays usable afterwards
+    /// and may be answered again. The same object may appear more than once:
+    /// each occurrence mints a reference of its own.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="System.InvalidOperationException">
+    /// One of <paramref name="items"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="System.ObjectDisposedException">
+    /// One of <paramref name="items"/> was disposed.
+    /// </exception>
+    internal static nint BuildOwnedObjectList(
+        System.Collections.Generic.IReadOnlyList<Gst.GObject.Object>? items,
+        string member,
+        string slot)
+    {
+        if (items is not { Count: > 0 })
+        {
+            return nint.Zero;
+        }
+
+        nint[] handles = new nint[items.Count];
+        for (int i = 0; i < handles.Length; i++)
+        {
+            Gst.GObject.Object? item = items[i];
+            if (item is null)
+            {
+                throw new InvalidOperationException(
+                    $"{member} answered a list with an empty entry, which {slot} does not allow.");
+            }
+
+            handles[i] = item.Handle;
+        }
+
+        int referenced = 0;
+        try
+        {
+            for (; referenced < handles.Length; referenced++)
+            {
+                _ = GObjectNative.ObjectRef(handles[referenced]);
+            }
+
+            nint head = BuildSpine(handles, singly: false);
+            GC.KeepAlive(items);
+            return head;
+        }
+        catch
+        {
+            for (int i = 0; i < referenced; i++)
+            {
+                GObjectNative.ObjectUnref(handles[i]);
+            }
+
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Releases the nodes of a list, and nothing else.
     /// </summary>
     /// <param name="head">The first node, or <see cref="nint.Zero"/> for an empty list.</param>
