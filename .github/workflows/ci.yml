@@ -518,6 +518,14 @@ jobs:
       # Range probe that insists on a 206 — it proves both that the server is up
       # and that it does what the two tutorials need. The server is trapped so
       # that it is killed even when a gate fails.
+      #
+      # Basic 5 is the one tutorial that opens a window, and no runner has a
+      # display, so what runs here is its --headless-selftest: it starts no
+      # toolkit at all and only asserts that a playbin proxies GstVideoOverlay.
+      # The assertion is on playbin and not on a video sink on purpose —
+      # playbin implements the interface itself and proxies it to whatever sink
+      # it builds, so the same line is meaningful on every leg, where a named
+      # sink would not even be in the registry on most of them.
       - name: Tutorials
         run: |
           dotnet run --project samples/GstLaunch --no-build -- -q videotestsrc num-buffers=300 ! video/x-raw,width=320,height=240,framerate=30/1 ! videoconvert ! theoraenc ! oggmux name=mux ! filesink location=tutorial-media.ogg audiotestsrc num-buffers=430 ! audioconvert ! vorbisenc ! mux.
@@ -532,6 +540,7 @@ jobs:
           dotnet run --project samples/tutorials/BasicTutorial02 --no-build -- --headless
           dotnet run --project samples/tutorials/BasicTutorial03 --no-build -- --headless tutorial-media.ogg
           dotnet run --project samples/tutorials/BasicTutorial04 --no-build -- --headless --seek-at 1 --seek-to 7 tutorial-media.ogg
+          dotnet run --project samples/tutorials/BasicTutorial05 --no-build -- --headless-selftest
           dotnet run --project samples/tutorials/BasicTutorial07 --no-build -- --headless --buffers 200
           dotnet run --project samples/tutorials/BasicTutorial08 --no-build -- --headless --chunks 200
           dotnet run --project samples/tutorials/BasicTutorial09 --no-build -- tutorial-media.ogg

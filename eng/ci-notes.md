@@ -352,6 +352,17 @@ on a Linux runner. The NativeAOT publishes were not measurably slower cold
 either (48 s cold against 60 s warm on the MSVC leg), so the ILCompiler and
 runtime packs are not an argument for a cache on the other legs.
 
+Those numbers predate `samples/tutorials/BasicTutorial05`, which is the one
+project in the tree with a third-party runtime dependency. Avalonia brings the
+whole restore to about **42 package ids and ~318 MB** of `.nupkg`, dominated by
+the `SkiaSharp.NativeAssets.*` and `HarfBuzzSharp.NativeAssets.*` packages —
+including the WebAssembly ones, which are plain `<dependency>` entries rather
+than RID-conditional assets, so pinning a `RuntimeIdentifier` downloads exactly
+the same bytes. The four legs with no cache pay it on every run. That was known
+and accepted when the sample was taken: it is the price of having the toolkit
+tutorial in the solution at all, and keeping the project out of the solution
+would defeat the `--no-build` shape every sample invocation relies on.
+
 On the two legs that keep one:
 
 * **Restore at the top, save as the last step before the failure upload, and
