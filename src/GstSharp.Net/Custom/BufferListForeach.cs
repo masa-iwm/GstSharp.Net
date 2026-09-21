@@ -139,16 +139,46 @@ public sealed unsafe partial class BufferList
         [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
         private static int Invoke(nint* buffer, uint idx, nint userData)
         {
-            if (Gst.Interop.CallbackHandle.GetState<Gst.BufferListFunc>(userData) is not { } callback)
+            Gst.BufferListFunc callback;
+            try
             {
-                // Without the function nothing can decide anything, and ending
-                // the walk with the slot untouched changes nothing about the list.
+                if (Gst.Interop.CallbackHandle.GetState<Gst.BufferListFunc>(userData) is not { } read)
+                {
+                    // Without the function nothing can decide anything, and ending
+                    // the walk with the slot untouched changes nothing about the list.
+                    return 0;
+                }
+
+                callback = read;
+            }
+            catch (Exception exception)
+            {
+                // Reading the function is a handle lookup that throws on a
+                // handle that was freed under the walk. There is nothing to
+                // settle over the slot then - the reference it lends was never
+                // taken - so the walk ends with the slot as the library left it.
+                Gst.Interop.ExceptionTrap.Report(exception);
                 return 0;
             }
 
-            // The library never passes a NULL slot (gstbufferlist.c:275); the
-            // check is here so that there is no unchecked dereference.
-            Gst.Buffer? entry = buffer is null ? null : Gst.Buffer.FromNative(*buffer, Gst.Interop.Transfer.Full);
+            Gst.Buffer? entry;
+            try
+            {
+                // The library never passes a NULL slot (gstbufferlist.c:275); the
+                // check is here so that there is no unchecked dereference.
+                entry = buffer is null ? null : Gst.Buffer.FromNative(*buffer, Gst.Interop.Transfer.Full);
+            }
+            catch (Exception exception)
+            {
+                // The wrapper was never built, so the reference the slot lends
+                // was never taken over either. Settling over the slot here
+                // would settle a null - a removal of a buffer that is still
+                // perfectly good - so the slot is left untouched and the walk
+                // declines instead.
+                Gst.Interop.ExceptionTrap.Report(exception);
+                return 0;
+            }
+
             Gst.Buffer? current = entry;
             int answer = 0;
 
