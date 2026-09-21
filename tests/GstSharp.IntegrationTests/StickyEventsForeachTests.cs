@@ -83,6 +83,78 @@ public sealed unsafe partial class StickyEventsForeachTests
     }
 
     /// <summary>
+    /// A function that removes its event and answers false is not called
+    /// again, and the events it never saw stay where they were.
+    /// </summary>
+    /// <remarks>
+    /// The library goes on asking after a removal, so the binding is what has
+    /// to end the walk here.
+    /// </remarks>
+    [Fact]
+    public void RemovingAnEventAndReturningFalseEndsTheWalk()
+    {
+        using Pad pad = NewPadWithStickyEvents();
+        int calls = 0;
+
+        pad.StickyEventsForeach((Pad _, ref Event? @event) =>
+        {
+            calls++;
+            @event = null;
+            return false;
+        });
+
+        Assert.Equal(1, calls);
+        Assert.Null(pad.GetStickyEvent(EventType.StreamStart, 0));
+
+        using Event? caps = pad.GetStickyEvent(EventType.Caps, 0);
+        using Event? segment = pad.GetStickyEvent(EventType.Segment, 0);
+
+        Assert.NotNull(caps);
+        Assert.NotNull(segment);
+    }
+
+    /// <summary>
+    /// A function that removes its event and then throws is reported once and
+    /// is not called again.
+    /// </summary>
+    [Fact]
+    public void AThrowingHandlerThatRemovedItsEventIsNotCalledAgain()
+    {
+        using Pad pad = NewPadWithStickyEvents();
+        InvalidOperationException thrown = new("The walk removed its event and threw.");
+        int calls = 0;
+        int reports = 0;
+
+        void OnFailure(Exception exception)
+        {
+            // The event is process wide, so only the instance this test threw
+            // says anything about this test.
+            if (ReferenceEquals(exception, thrown))
+            {
+                Interlocked.Increment(ref reports);
+            }
+        }
+
+        ExceptionTrap.UnhandledException += OnFailure;
+        try
+        {
+            pad.StickyEventsForeach((Pad _, ref Event? @event) =>
+            {
+                calls++;
+                @event = null;
+                throw thrown;
+            });
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        Assert.Equal(1, calls);
+        Assert.Equal(1, reports);
+    }
+
+    /// <summary>
     /// Clearing the slot removes the event from the pad and releases the
     /// reference the pad held.
     /// </summary>

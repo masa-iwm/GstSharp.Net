@@ -121,6 +121,19 @@ public unsafe partial class Pad
 
         /// <summary>Gets the function to call for each sticky event.</summary>
         internal Gst.PadStickyEventsForeachFunction Function { get; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether an invocation has ended the
+        /// walk.
+        /// </summary>
+        /// <remarks>
+        /// An invocation that removes its event is answered by a
+        /// <c>continue</c> that skips the <c>if (!ret) break;</c> of the loop
+        /// (<c>gstpad.c:644-651</c>), so the library goes on asking however the
+        /// function answered. The next invocation therefore has to decline with
+        /// the slot untouched, which is the answer the library does break on.
+        /// </remarks>
+        internal bool Stopped { get; set; }
     }
 
     /// <summary>
@@ -152,6 +165,15 @@ public unsafe partial class Pad
             {
                 // Without the state nothing can decide anything, and ending the
                 // walk with the slot untouched changes nothing about the pad.
+                return 0;
+            }
+
+            if (state.Stopped)
+            {
+                // An earlier invocation ended the walk while it removed its
+                // event, which the library answers by going on. Leaving the
+                // slot untouched is what it does break on, and it takes the
+                // reference the slot lends straight back.
                 return 0;
             }
 
@@ -188,6 +210,11 @@ public unsafe partial class Pad
                 }
 
                 answer = 0;
+            }
+
+            if (answer == 0)
+            {
+                state.Stopped = true;
             }
 
             return answer;
