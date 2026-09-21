@@ -174,11 +174,15 @@ answered on a thread of the server's pool. A fallback from UDP to TCP is a
 warning and a second `select-stream`, not a failure.
 
 **[`samples/GesCustomSource`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/GesCustomSource/Program.cs)**
-— a timeline whose clip and whose source are managed types, both through
+— a timeline whose clip and whose two sources are managed types, all through
 overrides of the editing services' class struct slots. It is the smallest
-application that exercises the child contract of `docs/subclassing.md` §11.
-Everything runs on one thread: the editing services assert the thread a
-timeline and its tracks were created on.
+application that exercises the child contract of `docs/subclassing.md` §11: the
+clip answers a child per track type, each source answers the element behind it,
+the audio source registers one property of that element as a child property and
+takes every write of it over through `set_child_property_full` — letting one
+through and refusing one with a reason — and the clip takes the `ungroup` slot
+over and answers its own split. Everything runs on one thread: the editing
+services assert the thread a timeline and its tracks were created on.
 
 **[`samples/GesLaunch`](https://github.com/masa-iwm/GstSharp.Net/blob/main/samples/GesLaunch/Program.cs)**
 — `ges-launch-1.0`: the `ges:` description with its escaping, loading and

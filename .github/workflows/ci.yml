@@ -634,12 +634,15 @@ jobs:
       - name: RtspClient
         run: dotnet run --project samples/RtspClient --no-build -- --buffers 100 --timeout 60
 
-      # The editing services with a managed clip and a managed source in the
-      # timeline: what this gates is the child contract, since the clip is only
-      # given a child if its create_track_element answered one the library could
-      # extract from an asset. It needs the nle and ges plugins and the base
-      # and good plugin sets a video source bin is built from, and --timeout 20
-      # is the deadline the half second clip has to reach the end of stream in.
+      # The editing services with a managed clip and a managed source per track
+      # type in the timeline: what this gates is the child contract, since the
+      # clip is only given a child if its create_track_element answered one the
+      # library could extract from an asset, plus the child property slot of the
+      # audio source and the ungroup slot of the clip. It needs the nle and ges
+      # plugins and the base and good plugin sets a video and an audio source
+      # bin are built from - videotestsrc and audiotestsrc among them, which the
+      # integration tests of this leg already require - and --timeout 20 is the
+      # deadline the half second clip has to reach the end of stream in.
       - name: GesCustomSource
         run: dotnet run --project samples/GesCustomSource --no-build -- --timeout 20
 
