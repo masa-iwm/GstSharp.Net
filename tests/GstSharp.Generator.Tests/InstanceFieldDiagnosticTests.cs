@@ -203,6 +203,10 @@ public sealed class InstanceFieldDiagnosticTests
         "GEN0060",
         "states an empty 'headerPublic'")]
     [InlineData(
+        Entries + "{ \"GstWidget.hidden\": { " + Window + ", \"headerPublic\": \"  \" } } }",
+        "GEN0060",
+        "states an empty 'headerPublic'")]
+    [InlineData(
         Entries + "{ \"GstWidget.data\": { " + Window + " } } }",
         "GEN0061",
         "Pointer instance fields are not exposed")]

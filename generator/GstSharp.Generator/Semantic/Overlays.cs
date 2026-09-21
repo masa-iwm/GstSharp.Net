@@ -367,7 +367,7 @@ internal sealed class InstanceField
     /// and without asking what this run made of it.
     /// </summary>
     internal string? ShapeFault =>
-        HeaderPublic is { Length: 0 }
+        HeaderPublic is { } headerPublic && string.IsNullOrWhiteSpace(headerPublic)
             ? "states an empty 'headerPublic'"
             : Lock is not { Length: > 0 }
                 ? "states no 'lock'"
