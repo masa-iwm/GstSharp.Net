@@ -19,12 +19,15 @@ namespace GstSharp.IntegrationTests;
 /// services assert the thread a timeline was created on.
 /// </para>
 /// <para>
-/// Three shapes are absent on purpose, because the library ends the process on
-/// each of them rather than failing: an asset requested for a <c>GESEffect</c> or
-/// <c>GESEffectClip</c> subtype with a <see langword="null"/> id
-/// (<c>ges-effect-asset.c:390-391</c>, <c>ges-asset.c:752-766</c>), and an effect
-/// built with <c>new</c> — so without an asset — added to a clip as a top effect
-/// (<c>ges-clip.c:1786-1790</c>). See <c>docs/subclassing.md</c> §11.
+/// Three shapes would end the process rather than fail, if they reached the
+/// library: an asset requested for a <c>GESEffect</c> or <c>GESEffectClip</c>
+/// type with a <see langword="null"/> id (<c>ges-effect-asset.c:390-391</c>,
+/// <c>ges-asset.c:752-766</c>), and an effect built with <c>new</c> - so
+/// without an asset - added to a clip as a top effect
+/// (<c>ges-clip.c:1786-1790</c>). The binding refuses all three before the
+/// call, which is what the refusal tests below exercise: they are the one
+/// place those shapes are spelled out, and the process surviving them is half
+/// of what each asserts. See <c>docs/subclassing.md</c> §11.
 /// </para>
 /// </remarks>
 [Collection(GstCollection.Name)]
@@ -618,6 +621,178 @@ public sealed class GesEffectSubclassTests
         {
             pipeline.SetState(State.Null);
         }
+    }
+
+    /// <summary>
+    /// A null id is refused for a GESEffect type, the managed one and the
+    /// native one alike, before it reaches the library that dereferences it.
+    /// </summary>
+    [Fact]
+    public void ANullIdIsRefusedForAnEffectType()
+    {
+        GstGES.Initialize();
+
+        ArgumentException refused = Assert.Throws<ArgumentException>(
+            () => Asset.Request(ProbeEffect.Registration.GType, null));
+
+        Assert.Equal("id", refused.ParamName);
+        Assert.Contains(ProbeEffect.GTypeName, refused.Message, StringComparison.Ordinal);
+
+        // check_id belongs to the native class, so the native type is no more
+        // exempt than a subtype of it (ges-effect.c:138-144).
+        ArgumentException native = Assert.Throws<ArgumentException>(
+            () => Asset.Request(GType.FromName("GESEffect"), null));
+
+        Assert.Equal("id", native.ParamName);
+        Assert.Contains("GESEffect", native.Message, StringComparison.Ordinal);
+
+        // The process is still here, which is the other half of the assertion:
+        // a type that parses nothing still takes the null id.
+        Assert.NotNull(Asset.Request(ProbeBaseEffect.Registration.GType, null));
+    }
+
+    /// <summary>
+    /// A null id is refused for a GESEffectClip type as well, where the library
+    /// would hash the null key of the wrong-id asset instead.
+    /// </summary>
+    [Fact]
+    public void ANullIdIsRefusedForAnEffectClipType()
+    {
+        GstGES.Initialize();
+
+        ArgumentException refused = Assert.Throws<ArgumentException>(
+            () => Asset.Request(ProbeNativeEffectClip.Registration.GType, null));
+
+        Assert.Equal("id", refused.ParamName);
+        Assert.Contains(ProbeNativeEffectClip.GTypeName, refused.Message, StringComparison.Ordinal);
+
+        ArgumentException native = Assert.Throws<ArgumentException>(
+            () => Asset.Request(GType.FromName("GESEffectClip"), null));
+
+        Assert.Equal("id", native.ParamName);
+        Assert.Contains("GESEffectClip", native.Message, StringComparison.Ordinal);
+
+        // The emptiest id such a type takes is the empty string, and the
+        // process is there to take it.
+        using Asset empty = Assert.IsAssignableFrom<Asset>(
+            Asset.Request(ProbeNativeEffectClip.Registration.GType, string.Empty));
+
+        Assert.Equal(string.Empty, empty.Id);
+    }
+
+    /// <summary>
+    /// The reload request runs the same check as the request and is refused the
+    /// same way.
+    /// </summary>
+    [Fact]
+    public void ANullIdIsRefusedByTheReloadRequest()
+    {
+        GstGES.Initialize();
+
+        // ges-asset.c:1533 is the same _check_and_update_parameters as the
+        // request makes at :1263.
+        Assert.Equal(
+            "id",
+            Assert.Throws<ArgumentException>(
+                () => Asset.NeedsReload(ProbeEffect.Registration.GType, null)).ParamName);
+
+        Assert.Equal(
+            "id",
+            Assert.Throws<ArgumentException>(
+                () => Asset.NeedsReload(ProbeNativeEffectClip.Registration.GType, null)).ParamName);
+
+        // A type that parses nothing is left alone by the same check. That the
+        // library still answers a null id for such a type is asserted through
+        // the request itself, in ANullIdIsRefusedForAnEffectType, rather than
+        // here, where a reload would mark whatever the cache holds by now.
+    }
+
+    /// <summary>
+    /// Both asynchronous request overloads refuse the null id where the caller
+    /// stands, rather than handing back a task that fails later.
+    /// </summary>
+    [Fact]
+    public void ANullIdIsRefusedByTheAsynchronousRequest()
+    {
+        GstGES.Initialize();
+
+        Assert.Equal(
+            "id",
+            Assert.Throws<ArgumentException>(
+                () => { _ = Asset.RequestAsync(ProbeEffect.Registration.GType, null); }).ParamName);
+
+        using Gst.Gio.Cancellable cancellable = Gst.Gio.Cancellable.New();
+
+        Assert.Equal(
+            "id",
+            Assert.Throws<ArgumentException>(
+                () =>
+                {
+                    _ = Asset.RequestAsync(
+                        ProbeNativeEffectClip.Registration.GType,
+                        null,
+                        cancellable);
+                }).ParamName);
+
+        // Nothing was started, so there is no task to await and no callback
+        // left on the dispatcher.
+        Assert.False(cancellable.IsCancelled);
+    }
+
+    /// <summary>
+    /// An effect that was built with <c>new</c>, and so has no asset, is
+    /// refused by <c>AddTopEffect</c> instead of taking the process down.
+    /// </summary>
+    [RequiresElementFact("videobalance", "videoconvert", "videotestsrc", "audiotestsrc")]
+    public void AnEffectWithNoAssetIsRefusedByAddTopEffect()
+    {
+        GstGES.Initialize();
+        ProbeEffect.Reset();
+
+        using TestClip clip = NewTestClip();
+        using ProbeEffect assetless = ProbeEffect.NewWithoutAsset();
+
+        Assert.Null(assetless.GetAsset());
+
+        InvalidOperationException refused =
+            Assert.Throws<InvalidOperationException>(() => clip.AddTopEffect(assetless, -1));
+
+        Assert.Contains("GES.Asset.Request", refused.Message, StringComparison.Ordinal);
+        Assert.Empty(clip.GetTopEffects());
+
+        // The clip is unharmed and still takes an effect that has an asset,
+        // which is the proof that nothing wider was refused.
+        using ProbeEffect fromAsset = ProbeEffect.NewFromDescription("video videobalance");
+
+        Assert.True(clip.AddTopEffect(fromAsset, -1));
+        Assert.True(clip.RemoveTopEffect(fromAsset));
+    }
+
+    /// <summary>
+    /// The same refusal answers <c>Container.Add</c>, which is the other way to
+    /// reach the branch that reads the missing asset.
+    /// </summary>
+    [RequiresElementFact("videobalance", "videoconvert", "videotestsrc", "audiotestsrc")]
+    public void AnEffectWithNoAssetIsRefusedByContainerAdd()
+    {
+        GstGES.Initialize();
+        ProbeEffect.Reset();
+
+        using TestClip clip = NewTestClip();
+        using ProbeEffect assetless = ProbeEffect.NewWithoutAsset();
+
+        InvalidOperationException refused =
+            Assert.Throws<InvalidOperationException>(() => clip.Add(assetless));
+
+        Assert.Contains("GES.Asset.Request", refused.Message, StringComparison.Ordinal);
+        Assert.Empty(clip.GetChildren(false));
+
+        // A container that is not a clip reads no asset at all, so a group
+        // still takes whatever it is given - here, the clip itself.
+        using Group group = Assert.IsAssignableFrom<Group>(Group.New());
+
+        Assert.True(group.Add(clip));
+        Assert.True(group.Remove(clip));
     }
 
     /// <summary>Builds a one-second audio and video test clip.</summary>

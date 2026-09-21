@@ -79,6 +79,17 @@ internal sealed class ProbeEffect : GES.Effect, IManagedSubclass<ProbeEffect>
         return asset.Extract<ProbeEffect>();
     }
 
+    /// <summary>
+    /// Builds an effect the plain way, which leaves it without an asset.
+    /// </summary>
+    /// <returns>The new effect, which no clip may take as a top effect.</returns>
+    /// <remarks>
+    /// This is the shape <c>ges-clip.c:1786-1790</c> dereferences a null pointer
+    /// over, and the one the binding refuses before the call. It is built here
+    /// so that the refusal can be tested; it is never handed to the library.
+    /// </remarks>
+    internal static ProbeEffect NewWithoutAsset() => new(Definition.NewInstance());
+
     /// <summary>Builds the wrapper of an instance native code created.</summary>
     /// <param name="args">What the runtime says about the instance.</param>
     /// <returns>The wrapper, which adopts the instance.</returns>
