@@ -43,8 +43,11 @@ internal sealed class VideoHost : NativeControlHost
     {
         // The control can be detached and attached again — moved to another
         // top level, for instance — so the handle is withdrawn here and the
-        // next CreateNativeControlCore offers a new one. A sink that keeps
-        // rendering into a destroyed window is the bug this prevents.
+        // next CreateNativeControlCore offers a new one. Withdrawing it stops
+        // the sync handler from handing out a handle that no longer exists; the
+        // sink that already has one is re-pointed when the control is attached
+        // again. This is not the path a closing window takes: there the window
+        // stops the pipeline itself.
         HandleChanged?.Invoke(null);
         base.DestroyNativeControlCore(control);
     }

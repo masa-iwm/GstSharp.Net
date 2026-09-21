@@ -362,10 +362,10 @@ internal sealed class PlayerWindow : Window, IDisposable
     /// </remarks>
     private object? OnTagsChanged(Gst.GObject.Object sender, object?[] arguments)
     {
-        // The structure is copied into the message, so this wrapper keeps its
-        // own and gives it back here; the message itself is consumed by the
-        // post, which disposes its wrapper.
-        using Structure structure = Structure.NewEmpty("tags-changed");
+        // NewApplication is consuming: it copies the structure into the message
+        // and disposes this wrapper, so there is nothing left to give back
+        // here. The message in turn is consumed by the post.
+        Structure structure = Structure.NewEmpty("tags-changed");
         _ = _playbin.PostMessage(Message.NewApplication(_playbin, structure));
 
         return null;
