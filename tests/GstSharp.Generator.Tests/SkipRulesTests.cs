@@ -265,6 +265,16 @@ public sealed class SkipRulesTests
         // hand written with the empty and the out of range case answered before
         // the call. gst_webrtc_data_channel_send_data is the deprecated twin of
         // the send that reports its failure and is not bound at all.
+        // The three walks are the newest entries and stay out for two reasons.
+        // gst_pad_sticky_events_foreach and gst_buffer_list_foreach lend their
+        // function one reference through a T** it may keep, clear or replace,
+        // which is not the identity contract the inout projection of
+        // GstPadGetRangeFunction implements, so both are hand written in
+        // src/GstSharp.Net/Custom beside the delegate each of them declares.
+        // ges_meta_container_foreach is handed the container back as an
+        // interface pointer, which no interface typed value has a projection
+        // for, so the hand written trampoline hands the managed receiver of the
+        // walk over instead.
         Assert.Equal(
             [
                 "Gst.BusSyncHandler",
