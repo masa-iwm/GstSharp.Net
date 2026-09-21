@@ -8,12 +8,13 @@ disappears shows up here as an added line.
 
 ## GES
 
-### HandBound (8)
+### HandBound (9)
 
 - `ges_asset_extract`
 - `ges_asset_request_async`
 - `ges_asset_request_finish`
 - `ges_container_ungroup`
+- `ges_meta_container_foreach`
 - `ges_timeline_element_get_child_property`
 - `ges_timeline_element_set_child_property`
 - `ges_uri_clip_asset_finish`
@@ -63,12 +64,11 @@ disappears shows up here as an added line.
 - `GES.Group:start`
 - `GES.UriClip:supported-formats`
 
-### UnsupportedSignature (5)
+### UnsupportedSignature (4)
 
 - `ges_base_effect_set_time_translation_funcs`
 - `ges_command_line_formatter_get_help`
 - `ges_init_check`
-- `ges_meta_container_foreach`
 - `ges_meta_container_set_meta`
 
 ### VarArgs (4)

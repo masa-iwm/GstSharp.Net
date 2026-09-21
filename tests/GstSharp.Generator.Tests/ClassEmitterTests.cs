@@ -240,7 +240,9 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 7, 0, 0, 0, 0)]
     [InlineData("GstPlay", 0, 23, 0, 0, 0, 0)]
-    [InlineData("GES", 6, 3, 4, 10, 5, 2)]
+    // ges_meta_container_foreach left the unsupported signatures for the hand
+    // bound ledger when the walk over the metadata of a container was written.
+    [InlineData("GES", 6, 3, 4, 10, 4, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -1316,7 +1318,8 @@ public sealed class ClassEmitterTests
     [InlineData("GstTag", 0, 0, 0, 0, 0, 0, 0)]
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]
     [InlineData("GstPlay", 6, 0, 1, 0, 0, 0, 16)]
-    [InlineData("GES", 3, 0, 0, 0, 0, 2, 8)]
+    // The hand bound ledger grew by the walk over the metadata of a container.
+    [InlineData("GES", 3, 0, 0, 0, 0, 2, 9)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,
