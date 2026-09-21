@@ -1747,14 +1747,17 @@ start", and a subclass with no work to do can leave `OnStart` alone.
 
 `stop` has no equivalent hazard: its dispatch is guarded
 (`gstdeviceprovider.c:522-536`). Neither has `GetDevices()`, which guards its
-own `probe` call and answers an empty list for a provider that has not been
-started (`gstdeviceprovider.c:402-433`).
+own `probe` call: a provider that has not been started answers what `OnProbe`
+answers, and an empty list when `probe` is not declared
+(`gstdeviceprovider.c:402-433`).
 
-Both slots run with the provider's **start lock held**
-(`gstdeviceprovider.c:466-506` and `:530-547`), and that `GMutex` is not
-recursive: `IsStarted()`, `GetDevices()`, `Start()` and `Stop()` take the same
-lock (`:874`, `:413`), so calling any of the four on the same provider from
-inside `OnStart` or `OnStop` hangs the thread for ever — no exception, no log.
+All three slots run with the provider's **start lock held**
+(`gstdeviceprovider.c:466-506`, `:530-547`, and `:413-428` for a `probe`
+reached from `GetDevices()`), and that `GMutex` is not recursive:
+`IsStarted()`, `GetDevices()`, `Start()` and `Stop()` take the same lock
+(`:874`, `:413`), so calling any of the four on the same provider from inside
+`OnStart`, `OnStop` or `OnProbe` hangs the thread for ever — no exception, no
+log.
 `DeviceAdd()`, `DeviceRemove()`, `DeviceChanged()` and `HideProvider()` take
 the object lock, which is not held across the slot, and `GetBus()` takes no
 lock at all: those five are what an override announces with.
