@@ -488,7 +488,7 @@ jobs:
       # element is in gst-plugins-good, which the install step of this job
       # takes, so both legs of the matrix have it.
       #
-      # Eighteen tutorials are built on every leg; sixteen are run here, on
+      # Nineteen tutorials are built on every leg; seventeen are run here, on
       # both Linux legs. Three extra fixtures are made alongside the one above:
       # tutorial-multitrack.ogg carries two Vorbis streams so that playback 1
       # and 2 have something to choose between, tutorial-audio.ogg carries no
