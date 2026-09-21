@@ -334,25 +334,33 @@ public sealed unsafe partial class ManagedDeviceProviderProbeTests
         using ProbeOnlyDeviceProvider provider = new() { ChainsUp = true };
         using Bus bus = provider.GetBus();
 
-        Assert.Empty(provider.GetDevices());
-        Assert.Equal(1, provider.Probed);
-        Assert.Null(provider.Fresh);
-
-        // The same answer as a C caller sees it: NULL is the empty list.
-        Assert.Equal(nint.Zero, DeviceProviderGetDevices(provider.Handle));
-        Assert.Equal(2, provider.Probed);
-
-        Assert.True(provider.Start());
-
-        try
+        // The trap listens throughout: a ChainUpProbe() that threw would be
+        // reported there and answer no devices as well, which is the same
+        // reading as the empty answer this test is about.
+        List<Exception> failures = Watch(() =>
         {
-            Assert.Equal(3, provider.Probed);
-            Assert.Null(bus.Pop());
-        }
-        finally
-        {
-            provider.Stop();
-        }
+            Assert.Empty(provider.GetDevices());
+            Assert.Equal(1, provider.Probed);
+            Assert.Null(provider.Fresh);
+
+            // The same answer as a C caller sees it: NULL is the empty list.
+            Assert.Equal(nint.Zero, DeviceProviderGetDevices(provider.Handle));
+            Assert.Equal(2, provider.Probed);
+
+            Assert.True(provider.Start());
+
+            try
+            {
+                Assert.Equal(3, provider.Probed);
+                Assert.Null(bus.Pop());
+            }
+            finally
+            {
+                provider.Stop();
+            }
+        });
+
+        Assert.Empty(failures);
     }
 
     /// <summary>Runs an action with the exception trap listening.</summary>

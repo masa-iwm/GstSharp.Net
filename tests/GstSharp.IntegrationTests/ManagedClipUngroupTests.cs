@@ -51,6 +51,16 @@ public sealed unsafe partial class ManagedClipUngroupTests
 
         int nativeChildren = native.GetChildren(recursive: false).Count;
         IReadOnlyList<Container> nativeParts = native.Ungroup(recursive: false);
+
+        // The comparisons below are equalities against what the native clip
+        // did, so they need a floor of their own: a native clip that grew no
+        // children, or one that was handed back whole, would make them true
+        // without the managed clip having split at all. A test clip of the
+        // editing services carries an audio child and a video child, and
+        // splits into the two clips those go to.
+        Assert.True(nativeChildren >= 2, $"The native clip has {nativeChildren} children.");
+        Assert.True(nativeParts.Count >= 2, $"The native clip split into {nativeParts.Count} parts.");
+
         foreach (Container part in nativeParts)
         {
             if (!ReferenceEquals(part, native))
@@ -63,27 +73,36 @@ public sealed unsafe partial class ManagedClipUngroupTests
 
         using (clip)
         {
-            Assert.True(clip.SetDuration(Length));
-            Assert.True(layer.AddClip(clip));
-            Assert.Equal(nativeChildren, clip.GetChildren(recursive: false).Count);
-
-            uint before = RefCountOf(clip.Handle);
-            IReadOnlyList<Container> parts = clip.Ungroup(recursive: false);
-
-            Assert.Equal(1, clip.Ungrouped);
-            Assert.Equal(nativeParts.Count, parts.Count);
-            Assert.Contains(parts, part => ReferenceEquals(part, clip));
-
-            foreach (Container part in parts)
+            // A ChainUpUngroup() that threw would be reported to the trap and
+            // answer the clip alone, so the trap is watched while the split
+            // runs rather than left to report at teardown, where nothing reads
+            // it.
+            List<Exception> failures = Watch(() =>
             {
-                if (!ReferenceEquals(part, clip))
-                {
-                    part.Dispose();
-                }
-            }
+                Assert.True(clip.SetDuration(Length));
+                Assert.True(layer.AddClip(clip));
+                Assert.Equal(nativeChildren, clip.GetChildren(recursive: false).Count);
 
-            Assert.Equal(before, RefCountOf(clip.Handle));
-            Assert.NotNull(clip.Name);
+                uint before = RefCountOf(clip.Handle);
+                IReadOnlyList<Container> parts = clip.Ungroup(recursive: false);
+
+                Assert.Equal(1, clip.Ungrouped);
+                Assert.Equal(nativeParts.Count, parts.Count);
+                Assert.Contains(parts, part => ReferenceEquals(part, clip));
+
+                foreach (Container part in parts)
+                {
+                    if (!ReferenceEquals(part, clip))
+                    {
+                        part.Dispose();
+                    }
+                }
+
+                Assert.Equal(before, RefCountOf(clip.Handle));
+                Assert.NotNull(clip.Name);
+            });
+
+            Assert.Empty(failures);
         }
     }
 
@@ -192,24 +211,7 @@ public sealed unsafe partial class ManagedClipUngroupTests
             clip.Answer = null;
             clip.AnswersANullEntry = true;
 
-            List<Exception> failures = [];
-            void OnFailure(Exception exception)
-            {
-                lock (failures)
-                {
-                    failures.Add(exception);
-                }
-            }
-
-            ExceptionTrap.UnhandledException += OnFailure;
-            try
-            {
-                Assert.Empty(clip.Ungroup(recursive: false));
-            }
-            finally
-            {
-                ExceptionTrap.UnhandledException -= OnFailure;
-            }
+            List<Exception> failures = Watch(() => Assert.Empty(clip.Ungroup(recursive: false)));
 
             Exception reported = Assert.Single(failures);
             Assert.IsType<InvalidOperationException>(reported);
@@ -268,6 +270,33 @@ public sealed unsafe partial class ManagedClipUngroupTests
     /// <param name="handle">The instance to inspect.</param>
     /// <returns>The current count.</returns>
     private static uint RefCountOf(nint handle) => *(uint*)(handle + sizeof(nint));
+
+    /// <summary>Runs an action with the exception trap listening.</summary>
+    /// <param name="action">What to run.</param>
+    /// <returns>What the trap reported while it ran.</returns>
+    private static List<Exception> Watch(Action action)
+    {
+        List<Exception> failures = [];
+        void OnFailure(Exception exception)
+        {
+            lock (failures)
+            {
+                failures.Add(exception);
+            }
+        }
+
+        ExceptionTrap.UnhandledException += OnFailure;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        return failures;
+    }
 
     /// <summary>
     /// Calls the split the way a C caller does, which is what the forward
