@@ -10,8 +10,8 @@
   </application>
 
   <!-- The list the Win32 native control host looks for. A process with no
-       supportedOS entry is told it is running on Windows Vista, and the host
-       refuses to create its child window. -->
+       supportedOS entry is told it is running on an older Windows than it is,
+       and the host refuses to create its child window. -->
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
       <!-- Windows 7 --><supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}" />

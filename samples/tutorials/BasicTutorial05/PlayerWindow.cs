@@ -286,6 +286,13 @@ internal sealed class PlayerWindow : Window, IDisposable
         }
 
         overlay.SetWindowHandle(handle);
+
+        // Worth a line of its own: this is the one step the whole tutorial is
+        // about, and a sink that opened a window of its own instead looks
+        // exactly like a successful run from the outside. Console is thread
+        // safe, which is what lets a streaming thread write it.
+        Console.WriteLine($"overlay:     window handle given to {message.SourceName ?? "?"}");
+
         return BusSyncReply.Drop;
     }
 
