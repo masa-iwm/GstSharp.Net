@@ -322,7 +322,10 @@ public unsafe partial class TimelineElement
     /// If @parent is not %NULL, you must ensure it already has a
     /// (non-floating) reference to @self before calling this.
     /// </para>
-    /// <para>A null parent is the removal of the element from the parent it had.</para>
+    /// <para>A null parent is the removal of the element from the parent it had. No class of the
+    /// editing services implements this slot except GESVideoSource (ges-video-source.c:261),
+    /// and the caller treats an empty one as success (ges-timeline-element.c:995-1000), so a
+    /// chain-up answers true below every other class rather than throwing.</para>
     /// </remarks>
     /// <param name="newParent">
     /// The <c>newParent</c> argument.
@@ -665,7 +668,10 @@ public unsafe partial class TimelineElement
 
     /// <summary>Runs the implementation of <c>set_parent</c> below the managed override.</summary>
     /// <remarks>
-    /// <para>A null parent is the removal of the element from the parent it had.</para>
+    /// <para>A null parent is the removal of the element from the parent it had. No class of the
+    /// editing services implements this slot except GESVideoSource (ges-video-source.c:261),
+    /// and the caller treats an empty one as success (ges-timeline-element.c:995-1000), so a
+    /// chain-up answers true below every other class rather than throwing.</para>
     /// </remarks>
     /// <param name="newParent">
     /// The <c>newParent</c> argument.
@@ -1022,8 +1028,7 @@ public unsafe partial class TimelineElement
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "TimelineElement.set_parent has no parent implementation; override OnSetParent.");
+            return true;
         }
 
         return slot(self, newParent) != 0;
