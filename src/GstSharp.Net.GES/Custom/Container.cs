@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Gst.Interop;
 
@@ -23,6 +24,15 @@ namespace GES;
 /// return of a childless clip, which hands the clip itself back with none
 /// (ges-clip.c:2150-2152). A generated shape can state one transfer for the
 /// whole list and not two, so the member is written here.
+/// </para>
+/// <para>
+/// The slot behind it is hand bound here as well. A managed clip that declares
+/// <see cref="UngroupOverride"/> answers the split itself, and the forward
+/// member below reads the runtime class slot of the container to tell the two
+/// ownerships apart: the childless quirk belongs to <c>GESClip::ungroup</c>
+/// (ges-clip.c:2150-2152), so a container whose slot is the managed one never
+/// carries it, while a managed clip that leaves the slot alone inherits the
+/// pointer of <c>GESClip</c> and with it the quirk.
 /// </para>
 /// </remarks>
 public abstract unsafe partial class Container
@@ -69,7 +79,99 @@ public abstract unsafe partial class Container
     /// split owned twice.
     /// </para>
     /// </remarks>
-    public System.Collections.Generic.IReadOnlyList<GES.Container> Ungroup(bool recursive)
+    public System.Collections.Generic.IReadOnlyList<GES.Container> Ungroup(bool recursive) =>
+        UngroupThrough(recursive, chainUp: false);
+
+    /// <summary>
+    /// Gets the declaration of <c>GESContainer.ungroup</c>, for a subclass that
+    /// overrides <see cref="OnUngroup"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The slot answers a <c>GList</c> the caller takes over together with one
+    /// reference per container, a shape no generated one expresses, so the
+    /// declaration, the override, its chain-up and its trampoline are written
+    /// here.
+    /// </para>
+    /// <para>
+    /// It is declared with <see cref="GES.Clip.DefineSubclass{TSelf}(string, Action{Gst.GObject.ObjectClassConfig}?, Gst.GObject.VfuncOverride[])"/>
+    /// and the other allowlisted clip bases. <see cref="GES.Container"/> itself
+    /// cannot be registered against: it is not on the allowlist and carries no
+    /// registration of its own. What the registration checks is that the parent
+    /// type derives from the class the slot belongs to, which every clip does.
+    /// </para>
+    /// </remarks>
+    public static Gst.GObject.VfuncOverride UngroupOverride { get; } = new(
+        &GetGType,
+        GES.ContainerClassRaw.UngroupOffset,
+        (nint)(delegate* unmanaged[Cdecl]<nint, int, nint>)&UngroupTrampoline);
+
+    /// <summary>
+    /// Splits this container into the containers its children make up.
+    /// </summary>
+    /// <param name="recursive">
+    /// Whether to split the children of the children as well. No implementation
+    /// in GES 1.28 reads the flag: neither <c>GESClip::ungroup</c>
+    /// (ges-clip.c:2136-2205) nor <c>GESGroup::ungroup</c>
+    /// (ges-group.c:425-452) looks at it.
+    /// </param>
+    /// <returns>
+    /// The containers the split produced. The list is consumed: the caller
+    /// receives a new list and one added reference per container, this one
+    /// included when it is in the answer. Every wrapper keeps the reference it
+    /// owns, stays usable, and may be answered again. An empty list is answered
+    /// as <c>NULL</c>. A null entry is not allowed.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This container is not consumed, whatever the gir says: no implementation
+    /// of the slot releases the reference of its caller, and the transfer the
+    /// annotation describes is the timeline dropping its own reference to an
+    /// emptied group (ges-timeline.c:1421).
+    /// </para>
+    /// <para>
+    /// The default chains up to the implementation below, which for a clip is
+    /// <c>GESClip::ungroup</c>: it answers this clip together with one new clip
+    /// per further track type of its children, and a clip without children
+    /// answers itself alone.
+    /// </para>
+    /// <para>
+    /// An exception that leaves this override is reported through the exception
+    /// trap and the slot answers an empty list.
+    /// </para>
+    /// </remarks>
+    protected virtual System.Collections.Generic.IReadOnlyList<GES.Container> OnUngroup(bool recursive) =>
+        ChainUpUngroup(recursive);
+
+    /// <summary>Runs the implementation of <c>ungroup</c> below the managed override.</summary>
+    /// <param name="recursive">Whether to split the children of the children as well.</param>
+    /// <returns>
+    /// The containers the implementation below answered, which the caller owns
+    /// and disposes.
+    /// </returns>
+    /// <remarks>
+    /// The implementation below a managed clip is a native one by construction,
+    /// so the childless quirk of <c>GESClip::ungroup</c> applies: a clip without
+    /// children is handed back without a reference of its own
+    /// (ges-clip.c:2150-2152), which this adopts as a borrow rather than as a
+    /// transfer.
+    /// </remarks>
+    /// <exception cref="System.ObjectDisposedException">
+    /// This wrapper was disposed.
+    /// </exception>
+    protected System.Collections.Generic.IReadOnlyList<GES.Container> ChainUpUngroup(bool recursive) =>
+        UngroupThrough(recursive, chainUp: true);
+
+    /// <summary>
+    /// Runs one split and adopts what it answered.
+    /// </summary>
+    /// <param name="recursive">Whether to split the children of the children as well.</param>
+    /// <param name="chainUp">
+    /// <see langword="true"/> to call the implementation below the managed
+    /// override, <see langword="false"/> to call <c>ges_container_ungroup</c>.
+    /// </param>
+    /// <returns>The containers the split produced.</returns>
+    private System.Collections.Generic.IReadOnlyList<GES.Container> UngroupThrough(bool recursive, bool chainUp)
     {
         nint self = Handle;
 
@@ -88,7 +190,20 @@ public abstract unsafe partial class Container
 
         bool childless = childHandles.Length == 0;
 
-        nint[] items = GListMarshal.CollectAndFreeSpine(GesContainerUngroup(self, recursive ? 1 : 0));
+        // The quirk belongs to the native implementation, not to the shape of
+        // the container. A chain-up always reaches a native one - a managed
+        // override below a managed override is refused - and the forward call
+        // reaches whichever function the runtime class carries, which is the
+        // managed trampoline only for a container that declared it. A managed
+        // clip that left the slot alone inherits the pointer of GESClip and
+        // answers the childless case the way GESClip does.
+        bool answeredByNativeClip = chainUp || RuntimeUngroupSlot(self) != UngroupOverride.Function;
+
+        nint head = chainUp
+            ? ChainUpUngroup(self, recursive ? 1 : 0)
+            : GesContainerUngroup(self, recursive ? 1 : 0);
+
+        nint[] items = GListMarshal.CollectAndFreeSpine(head);
         System.Collections.Generic.List<GES.Container> result = new(items.Length);
         foreach (nint item in items)
         {
@@ -97,7 +212,8 @@ public abstract unsafe partial class Container
                 continue;
             }
 
-            Transfer transfer = childless && item == self ? Transfer.None : Transfer.Full;
+            bool unreferencedSelf = childless && item == self && answeredByNativeClip;
+            Transfer transfer = unreferencedSelf ? Transfer.None : Transfer.Full;
 
             // A copy that was never added to a layer is still floating and
             // carries the added reference on top of the floating one. Sinking
@@ -118,6 +234,71 @@ public abstract unsafe partial class Container
 
         System.GC.KeepAlive(this);
         return result;
+    }
+
+    /// <summary>
+    /// Reads the <c>ungroup</c> slot the class of an instance carries.
+    /// </summary>
+    /// <param name="instance">The native <c>GESContainer</c>.</param>
+    /// <returns>The function the slot holds, which may be <see cref="nint.Zero"/>.</returns>
+    /// <remarks>
+    /// The first word of a <c>GTypeInstance</c> is its class pointer, so this is
+    /// the dispatch the forward call is about to make, rather than a guess from
+    /// the managed type of the wrapper.
+    /// </remarks>
+    private static nint RuntimeUngroupSlot(nint instance) =>
+        *(nint*)(*(nint*)instance + GES.ContainerClassRaw.UngroupOffset);
+
+    /// <summary>
+    /// Returns the class the registration captured, which is the one an override
+    /// chains up through.
+    /// </summary>
+    /// <param name="instance">The native <c>GESContainer</c>.</param>
+    /// <returns>The parent class of the managed subclass, read as a container class.</returns>
+    /// <remarks>
+    /// A <c>GESClipClass</c> starts with a <c>GESContainerClass</c>, so the
+    /// captured parent class of any clip below this one reads as the mirror of
+    /// this class.
+    /// </remarks>
+    private static GES.ContainerClassRaw* ContainerParentClassOf(nint instance) =>
+        (GES.ContainerClassRaw*)Gst.GObject.SubclassRegistry.DescriptorFor(instance).ParentClass;
+
+    private static nint ChainUpUngroup(nint container, int recursive)
+    {
+        delegate* unmanaged[Cdecl]<nint, int, nint> slot =
+            (delegate* unmanaged[Cdecl]<nint, int, nint>)ContainerParentClassOf(container)->Ungroup;
+
+        // A class without the slot answers nothing, which is what
+        // ges_container_ungroup reads out of one (ges-container.c:960-963):
+        // NULL is the empty list, not a failure.
+        if (slot is null)
+        {
+            return nint.Zero;
+        }
+
+        return slot(container, recursive);
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static nint UngroupTrampoline(nint container, int recursive)
+    {
+        try
+        {
+            if (Gst.GObject.Object.TryGetOrFabricate(container) is not Container managed)
+            {
+                return ChainUpUngroup(container, recursive);
+            }
+
+            return GListMarshal.BuildOwnedObjectList(
+                managed.OnUngroup(recursive != 0),
+                "OnUngroup",
+                "ungroup");
+        }
+        catch (Exception exception)
+        {
+            ExceptionTrap.Report(exception);
+            return default;
+        }
     }
 
     /// <summary>The <c>ges_container_ungroup</c> entry point.</summary>
