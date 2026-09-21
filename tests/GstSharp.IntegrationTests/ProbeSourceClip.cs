@@ -33,12 +33,15 @@ internal sealed class ProbeSourceClip : GES.SourceClip, IManagedSubclass<ProbeSo
         GTypeName,
         ConfigureClass,
         CreateTrackElementOverride,
+        SetParentOverride,
         SetPropertyOverride,
         GetPropertyOverride);
 
     private static int _wrappersBuilt;
 
     private string? _tag;
+
+    private int _setParentCalls;
 
     private ProbeSourceClip(SubclassCtorArgs args)
         : base(args)
@@ -56,6 +59,9 @@ internal sealed class ProbeSourceClip : GES.SourceClip, IManagedSubclass<ProbeSo
 
     /// <summary>Gets what the last write of <c>probe-tag</c> stored.</summary>
     internal string? Tag => _tag;
+
+    /// <summary>Gets how often the <c>set_parent</c> override ran.</summary>
+    internal int SetParentCalls => Volatile.Read(ref _setParentCalls);
 
     /// <summary>Builds a clip out of an asset for its own type.</summary>
     /// <returns>The new clip, which has an asset.</returns>
@@ -91,6 +97,17 @@ internal sealed class ProbeSourceClip : GES.SourceClip, IManagedSubclass<ProbeSo
         ProbeVideoSource child = asset.Extract<ProbeVideoSource>();
         AnsweredChild = child;
         return child;
+    }
+
+    /// <inheritdoc/>
+    protected override bool OnSetParent(GES.TimelineElement? newParent)
+    {
+        _ = Interlocked.Increment(ref _setParentCalls);
+
+        // No class of the editing services implements this slot below a clip, and
+        // the chain-up answers the true the caller of the slot answers for an
+        // empty one (ges-timeline-element.c:995-1000).
+        return ChainUpSetParent(newParent);
     }
 
     /// <inheritdoc/>

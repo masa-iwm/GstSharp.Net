@@ -107,6 +107,74 @@ public sealed class GesEffectSubclassTests
     }
 
     /// <summary>
+    /// Disposing the wrapper of an effect the clip holds leaves the effect in the
+    /// clip, dispatched through the static chain-up alone — and removing it again
+    /// still works, with nothing reported and no parent left behind.
+    /// </summary>
+    /// <remarks>
+    /// This is the ownership rule after <c>AddTopEffect</c>: the clip took a
+    /// reference of its own (<c>ges-container.c:733</c>), so the effect outlives
+    /// the wrapper, and no second wrapper is fabricated for a disposed one. The
+    /// removal calls <c>set_parent</c> with no parent, which the chain-up answers
+    /// for; a refusal there is ignored by the container
+    /// (<c>ges-container.c:127-130</c>) and would leave a stale parent pointer.
+    /// </remarks>
+    [RequiresElementFact("videobalance", "videoconvert", "videotestsrc", "audiotestsrc")]
+    public void ADisposedEffectWrapperLeavesTheEffectRemovable()
+    {
+        GstGES.Initialize();
+        ProbeEffect.Reset();
+
+        using Timeline timeline = Timeline.NewAudioVideo();
+        using Layer layer = timeline.AppendLayer();
+
+        using TestClip clip = NewTestClip();
+        Assert.True(layer.AddClip(clip));
+
+        ProbeEffect effect = ProbeEffect.NewFromDescription("video videobalance");
+        Assert.True(clip.AddTopEffect(effect, -1));
+        Assert.True(effect.SetParentCalls >= 1);
+
+        List<Exception> reported = [];
+
+        void OnFailure(Exception exception)
+        {
+            lock (reported)
+            {
+                reported.Add(exception);
+            }
+        }
+
+        Gst.Interop.ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            effect.Dispose();
+
+            TrackElement single = Assert.Single(clip.GetTopEffects());
+
+            // A disposed wrapper is not fabricated again: what the clip hands
+            // back is a plain wrapper over an instance of the managed GType.
+            Assert.IsNotType<ProbeEffect>(single);
+
+            using BaseEffect only = Assert.IsAssignableFrom<BaseEffect>(single);
+            Assert.Equal(ProbeEffect.Registration.GType, only.NativeType);
+
+            Assert.True(clip.RemoveTopEffect(only));
+            Assert.Null(only.Parent);
+        }
+        finally
+        {
+            Gst.Interop.ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        lock (reported)
+        {
+            Assert.Empty(reported);
+        }
+    }
+
+    /// <summary>
     /// A child property of the element a managed effect inherited is written and
     /// read through the clip, which is the native <c>set_child_property_full</c>
     /// the managed type inherits.

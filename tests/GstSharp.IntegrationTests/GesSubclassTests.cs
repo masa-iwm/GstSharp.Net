@@ -68,6 +68,86 @@ public sealed partial class GesSubclassTests
     }
 
     /// <summary>
+    /// A managed clip that declares <c>set_parent</c> and chains up is adopted by
+    /// a group and let go of again, and nothing is reported: the slot is empty
+    /// below every clip, and the chain-up answers what the library answers for an
+    /// empty one (<c>ges-timeline-element.c:995-1000</c>).
+    /// </summary>
+    /// <remarks>
+    /// <c>ges_container_add</c> is the caller of the slot — adding a clip to a
+    /// layer is not — so a group is what asks a clip for its parent. A refusal
+    /// there would not even roll the removal back
+    /// (<c>ges-container.c:127-130</c>): the child would keep a parent pointer
+    /// with no parent behind it.
+    /// </remarks>
+    [Fact]
+    public void AManagedClipThatChainsUpSetParentIsAdoptedByAGroup()
+    {
+        GstGES.Initialize();
+        ProbeVideoSource.Reset();
+
+        using Timeline timeline = Timeline.NewAudioVideo();
+        using Layer layer = timeline.AppendLayer();
+
+        List<Exception> reported = [];
+
+        void OnFailure(Exception exception)
+        {
+            lock (reported)
+            {
+                reported.Add(exception);
+            }
+        }
+
+        ProbeSourceClip first = ProbeSourceClip.New();
+        ProbeSourceClip second = ProbeSourceClip.New();
+
+        Gst.Interop.ExceptionTrap.UnhandledException += OnFailure;
+
+        try
+        {
+            using (first)
+            using (second)
+            {
+                PrepareForVideo(first);
+                PrepareForVideo(second);
+                Assert.True(second.SetStart(ClockTime.FromSeconds(4)));
+
+                Assert.True(layer.AddClip(first));
+                Assert.True(layer.AddClip(second));
+
+                Container grouped = Container.Group([first, second])
+                    ?? throw new InvalidOperationException("The clips could not be grouped.");
+
+                Group group = Assert.IsType<Group>(grouped);
+
+                using (group)
+                {
+                    Assert.True(first.SetParentCalls >= 1);
+                    Assert.Same(group, first.Parent);
+
+                    Assert.Equal(2, group.Ungroup(recursive: false).Count);
+                    Assert.Null(first.Parent);
+                }
+
+                // The overrides built these wrappers and the clips took a
+                // reference of their own, so they go before the timeline does.
+                first.AnsweredChild?.Dispose();
+                second.AnsweredChild?.Dispose();
+            }
+        }
+        finally
+        {
+            Gst.Interop.ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        lock (reported)
+        {
+            Assert.Empty(reported);
+        }
+    }
+
+    /// <summary>
     /// The three child property slots of a managed track element: the block it answers
     /// carries what the override added to what the registry holds, the lookup
     /// answers a child and a specification of the override's own, and the
