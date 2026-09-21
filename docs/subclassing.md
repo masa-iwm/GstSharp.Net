@@ -1718,7 +1718,8 @@ on, and what one of them overrides is declared through `GES.TimelineElement`,
 `GES.TrackElement`, `GES.Clip` or `Container.UngroupOverride`.
 
 `set_parent` has no native implementation to chain up into anywhere but the video
-source family (`ges-video-source.c:261` is the single assignment in the
+source family (only that family fills it: `ges-video-source.c:261` and
+`ges-video-test-source.c:172` are the two assignments in the
 library), and is still safe to chain up because the fallback of the C is a plain
 value: `ges_timeline_element_set_parent` guards an empty slot,
 adopts the parent and answers `TRUE` (`ges-timeline-element.c:995-1000`), so
