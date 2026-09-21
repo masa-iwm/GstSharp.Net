@@ -1700,9 +1700,12 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   effect throws `InvalidOperationException` out of `GES.Clip.AddTopEffect` and
   `GES.Container.Add`. The three rules above under *An effect for the editing
   services* say why the library cannot be asked; the refusals are the rules made
-  into exceptions. `GES.Asset.RequestAsync` alone refuses a wider set of types
-  for a `null` id, because it has a second, unnormalised use of the id that the
-  synchronous request does not; `docs/gio-async.md` section 8 lists them.
+  into exceptions. All three also refuse a `null` id for the types that carry a
+  URI or a transition nickname, and for `GESSourceClip` itself — never for one
+  of its subclasses, managed ones included — because those crash the library
+  just as surely; `GES.Asset.RequestAsync` refuses `GESFormatter` and
+  `GESTimeline` on top, having a second, unnormalised use of the id that the
+  synchronous request does not. `docs/gio-async.md` section 8 lists all ten.
 
 ### The vfuncs that are bound
 

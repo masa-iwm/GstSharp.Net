@@ -385,20 +385,34 @@ afresh on every request). The list is an `is-a` test per family, derived from
 the `check_id` overrides in the editing services rather than read off the
 interface vtable, which managed code cannot reach; a managed subclass inherits
 the `check_id` of its native parent, so subclasses are covered by it.
+`GESSourceClip` is the one exact-`GType` test, because its `check_id` refuses
+only when the requested type *is* `GES_TYPE_SOURCE_CLIP` and chains to the
+parent interface for every subtype (`ges-source-clip.c:59-69`) — so a managed
+`GESSourceClip` subclass is served its own type name.
 
-Two of those types are refused although their `check_id` survives a `NULL`:
-a `GESFormatter` type, because `ges_init` caches an asset for every concrete
-formatter (`ges-formatter.c:541`) and the entries table is therefore in place
-before the first request; and `GESTimeline`, which answers one request with an
-identifier the caller never named and dies on the next.
+The first eight of those are refused by all four entry points: `GES.Asset.Request`
+and `GES.Asset.NeedsReload` through the `preconditions` overlay, and both
+`GES.Asset.RequestAsync` overloads directly. They are fatal synchronously too,
+through a path of their own — a `NULL` `real_id` sends the call to
+`_ensure_asset_for_wrong_id` with the identifier as it was given
+(`ges-asset.c:1264-1268`), which builds a dummy asset whose identifier is `NULL`
+and hands it to `ges_asset_cache_put`, where the `NULL` becomes the key of a
+`g_str_hash` table (`:745-766`); the only guard on that path,
+`ges_asset_cache_lookup` (`:659`), merely returns before the insert that
+crashes. A `GESEffect` type does not even get that far: it dereferences the
+`NULL` inside `check_id` (`ges-effect-asset.c:390-391`).
 
-The synchronous `GES.Asset.Request` and `GES.Asset.NeedsReload` guard only the
-`GESEffect` and `GESEffectClip` pair. They crash on a `null` identifier for
-`GESUriClip`, `GESAudioUriSource`, `GESVideoUriSource`, `GESMultiFileSource`,
-`GESSourceClip` and `GESTransitionClip` as well, through a different path
-(`_ensure_asset_for_wrong_id`, `ges-asset.c:1264-1268`); widening their guard is
-a separate change. `GESFormatter` and `GESTimeline` are not among them: the
-synchronous request is how the library builds those itself.
+The remaining two are refused by the asynchronous entry points alone, because
+their `check_id` survives a `NULL` and only the unnormalised second lookup does
+not. A `GESFormatter` type dies on the first asynchronous request, because
+`ges_init` caches an asset for every concrete formatter (`ges-formatter.c:541`)
+and the entries table is therefore in place before any caller runs. A
+`GESTimeline` dies on the first request too once anything has created a project
+— `ges_project_new` requests a `GES_TYPE_TIMELINE` asset (`ges-project.c:1287`),
+which fills the table — and answers a single request, with a `project-<n>` the
+caller never named, only in a process where no project has ever existed.
+Synchronously both are left alone: the synchronous request is how the library
+builds them itself.
 
 ## 9. Deliberate omissions
 
