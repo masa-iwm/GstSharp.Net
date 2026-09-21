@@ -61,7 +61,7 @@ internal sealed class InstanceFieldEmitter
     private const string OwnOffsetMember = "OwnOffset";
 
     /// <summary>
-    /// The one embedded structure wave 1 of the allowlist admits. Whether the
+    /// The one embedded structure the allowlist admits. Whether the
     /// copy of an embedded value is a flat duplication of its storage is a
     /// decision per type, so the admitted ones are named rather than derived.
     /// </summary>
@@ -129,9 +129,9 @@ internal sealed class InstanceFieldEmitter
     /// <remarks>
     /// <para>
     /// The allowlist is read in front of every filter the ledger applies, so that
-    /// a key naming a field the gir marks private, or the instance structure of
-    /// the base class, is refused for what it names rather than going quietly
-    /// stale.
+    /// a key naming a field the gir marks private without stating the header line
+    /// that documents it, or the instance structure of the base class, is refused
+    /// for what it names rather than going quietly stale.
     /// </para>
     /// <para>
     /// The support floor is checked against the exposed field alone and not
@@ -185,12 +185,32 @@ internal sealed class InstanceFieldEmitter
                 continue;
             }
 
-            if (field.IsPrivate || !field.IsReadable || field.Name.StartsWith('_'))
+            if (field.Name.StartsWith('_'))
+            {
+                _diagnostics.Error(
+                    "GEN0061",
+                    $"The instance field '{key}' is named the way the girs name reserved padding, with a leading "
+                    + "underscore, and no key un-hides such a field.");
+                continue;
+            }
+
+            bool hidden = field.IsPrivate || !field.IsReadable;
+            if (hidden && entry.HeaderPublic is not { Length: > 0 })
             {
                 _diagnostics.Error(
                     "GEN0061",
                     $"The instance field '{key}' is marked private or unreadable in the gir, and such fields are "
-                    + "not exposed; a header that documents it as public API needs a key that says so.");
+                    + "not exposed; a header that documents it as public API needs the 'headerPublic' key to "
+                    + "say so.");
+                continue;
+            }
+
+            if (!hidden && entry.HeaderPublic is { Length: > 0 })
+            {
+                _diagnostics.Error(
+                    "GEN0060",
+                    $"The instance field '{key}' states 'headerPublic', but the gir marks the field public "
+                    + "already; the key is stale and has to go.");
                 continue;
             }
 
@@ -784,8 +804,12 @@ internal sealed class InstanceFieldEmitter
     /// <para>
     /// An alias is followed to an enumeration and to a callback only, so a field
     /// spelled <c>Gst.ClockTime</c> rather than <c>guint64</c> is an error until
-    /// the table names it. That is the first thing a wave on the codec classes has
-    /// to answer, and it is a line of this table rather than a rule.
+    /// the table names it. No class admitted so far carries such a field; the two
+    /// that would trip over it are <c>Gst.Element</c>, for <c>base_time</c> and
+    /// <c>start_time</c>, and <c>GstAudio.AudioBaseSrc</c>, for
+    /// <c>buffer_time</c> and <c>latency_time</c>, and neither has an admissible
+    /// field at all. Following an alias to a primitive is a line of this table
+    /// rather than a rule, whenever one of them gains a customer.
     /// </para>
     /// </remarks>
     private string ScalarOf(GirNamespace ns, GirField field, GirTypeRef type, string owner)

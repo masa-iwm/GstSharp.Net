@@ -322,6 +322,14 @@ internal sealed class FieldSkip
 /// accessor would document nothing, and an <c>overrides</c> list that is empty
 /// would say there is no window at all - which is a refusal, not an entry.
 /// </para>
+/// <para>
+/// <c>headerPublic</c> is optional and is evidence of a different kind: the
+/// line of the header that documents a field the gir hides, for the classes
+/// whose instance structure opens with a private marker and switches to a
+/// protected one, which the scanner does not read as public. It is never
+/// printed into generated code, and it goes stale the moment the gir catches
+/// up, which the emitter reports.
+/// </para>
 /// </remarks>
 internal sealed class InstanceField
 {
@@ -349,21 +357,29 @@ internal sealed class InstanceField
     public string? Name { get; set; }
 
     /// <summary>
+    /// Gets or sets the header file and line that documents the field as public
+    /// API, for a field the gir marks private.
+    /// </summary>
+    public string? HeaderPublic { get; set; }
+
+    /// <summary>
     /// Gets what is wrong with the shape of the entry, read off the entry alone
     /// and without asking what this run made of it.
     /// </summary>
     internal string? ShapeFault =>
-        Lock is not { Length: > 0 }
-            ? "states no 'lock'"
-            : Overrides is not { Count: > 0 }
-                ? "states no 'overrides'"
-                : Comment is not { Length: > 0 }
-                    ? "states no '$comment'"
-                    : Name is { Length: 0 }
-                        ? "states an empty 'name'"
-                        : Name is { } stem && !IsIdentifier(stem)
-                            ? $"states the 'name' '{stem}', which is no C# identifier"
-                            : null;
+        HeaderPublic is { Length: 0 }
+            ? "states an empty 'headerPublic'"
+            : Lock is not { Length: > 0 }
+                ? "states no 'lock'"
+                : Overrides is not { Count: > 0 }
+                    ? "states no 'overrides'"
+                    : Comment is not { Length: > 0 }
+                        ? "states no '$comment'"
+                        : Name is { Length: 0 }
+                            ? "states an empty 'name'"
+                            : Name is { } stem && !IsIdentifier(stem)
+                                ? $"states the 'name' '{stem}', which is no C# identifier"
+                                : null;
 
     /// <summary>
     /// Tests whether a stem can be pasted into the name of a generated member.

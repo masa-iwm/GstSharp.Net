@@ -37,7 +37,8 @@ public sealed class InstanceFieldDiagnosticTests
     /// <summary>
     /// The fields every fixture class carries: the instance structure of the base
     /// class, the one shape the allowlist admits, and the shapes it refuses that
-    /// a mirror can still lay out.
+    /// a mirror can still lay out. <c>hidden</c> is the admitted shape again, behind
+    /// the private marking a <c>headerPublic</c> key overrules.
     /// </summary>
     private const string CommonFields =
         """
@@ -59,14 +60,21 @@ public sealed class InstanceFieldDiagnosticTests
               <field name="priv" readable="0" private="1">
                 <type name="gpointer" c:type="gpointer"/>
               </field>
+              <field name="hidden" readable="0" private="1">
+                <type name="Gst.Segment" c:type="GstSegment"/>
+              </field>
         """;
 
     /// <summary>
     /// The shapes that are refused before a mirror is ever written: another
-    /// embedded structure, and a field of a version above the support floor.
+    /// embedded structure, a field of a version above the support floor, and the
+    /// reserved padding no key un-hides.
     /// </summary>
     private const string RefusedFields =
         """
+              <field name="_shadow" readable="0" private="1">
+                <type name="Gst.Segment" c:type="GstSegment"/>
+              </field>
               <field name="spec">
                 <type name="Gst.Spec" c:type="GstSpec"/>
               </field>
@@ -179,7 +187,21 @@ public sealed class InstanceFieldDiagnosticTests
     [InlineData(
         Entries + "{ \"GstWidget.priv\": { " + Window + " } } }",
         "GEN0061",
-        "is marked private or unreadable in the gir")]
+        "needs the 'headerPublic' key to say so")]
+    [InlineData(
+        Entries + "{ \"GstWidget._shadow\": { " + Window + ", \"headerPublic\": \"gstwidget.h:2\" } } }",
+        "GEN0061",
+        "is named the way the girs name reserved padding")]
+
+    // What 'headerPublic' says, against what the gir says.
+    [InlineData(
+        Entries + "{ \"GstWidget.segment\": { " + Window + ", \"headerPublic\": \"gstwidget.h:2\" } } }",
+        "GEN0060",
+        "but the gir marks the field public already; the key is stale")]
+    [InlineData(
+        Entries + "{ \"GstWidget.hidden\": { " + Window + ", \"headerPublic\": \"\" } } }",
+        "GEN0060",
+        "states an empty 'headerPublic'")]
     [InlineData(
         Entries + "{ \"GstWidget.data\": { " + Window + " } } }",
         "GEN0061",
@@ -294,6 +316,33 @@ public sealed class InstanceFieldDiagnosticTests
         Assert.Contains(
             "SegmentOffset = Gst.GObject.InstanceLayout.OffsetOf(ref probe, ref probe.Segment);",
             run.File("InstanceFields/GadgetOwnFieldsRaw.cs", "GstSharp.Net.Base"),
+            StringComparison.Ordinal);
+        Assert.Equal(1, run.Result.Census.EmittedCount("GstBase", "instance field"));
+    }
+
+    /// <summary>
+    /// A field the gir hides is admitted once the entry names the header line that
+    /// documents it, which is the one thing that overrules the marking.
+    /// </summary>
+    /// <remarks>
+    /// The scanner leaves the private state on for the rest of a structure that
+    /// switches from a private marker to a protected one, so the gir says private
+    /// about a field the header documents and the C library gives an accessor
+    /// macro. Nothing else changes: the mirror lays out a hidden field either way.
+    /// </remarks>
+    [Fact]
+    public void AHiddenFieldTheHeaderDocumentsIsAdmitted()
+    {
+        FixtureRun run = Run(
+            Entries + "{ \"GstGadget.hidden\": { " + Window + ", \"headerPublic\": \"gstwidget.h:2\" } } }",
+            allowErrors: false);
+
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static d => d.Code is "GEN0060" or "GEN0061" or "GEN0062" or "GEN0063");
+        Assert.Contains(
+            "public Gst.Segment GetHidden()",
+            run.File("Gadget.cs", "GstSharp.Net.Base"),
             StringComparison.Ordinal);
         Assert.Equal(1, run.Result.Census.EmittedCount("GstBase", "instance field"));
     }
