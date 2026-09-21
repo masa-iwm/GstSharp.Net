@@ -274,9 +274,10 @@ public unsafe partial class Asset
     /// The <see langword="null"/> id above is the spelling for a source or a
     /// clip. A <see cref="GES.Effect"/> or <see cref="GES.EffectClip"/> type
     /// takes its bin description as the id instead, and for one of those a
-    /// <see langword="null"/> id is fatal rather than merely wrong: the library
-    /// dereferences it (<c>ges-effect-asset.c:390-391</c>,
-    /// <c>ges-asset.c:752-766</c>).
+    /// <see langword="null"/> id would be fatal rather than merely wrong: the
+    /// library dereferences it (<c>ges-effect-asset.c:390-391</c>,
+    /// <c>ges-asset.c:752-766</c>), which is why the request refuses it with an
+    /// <see cref="ArgumentException"/> before the call.
     /// </para>
     /// <para>
     /// The library hands the instance back <em>floating</em>. The wrapper sinks

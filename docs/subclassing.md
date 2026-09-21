@@ -1533,7 +1533,10 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
 * **Built through an asset whose id is the description.** The spelling is
   `GES.Asset.Request(type.GType, "video <description>")!.Extract<T>()`. The id is
   never `null`: `GESEffectAsset` reads it with no check at all and the process
-  dies on the dereference (`ges-effect-asset.c:390-391`). Always give it the
+  would die on the dereference (`ges-effect-asset.c:390-391`), so the binding
+  refuses it first — `GES.Asset.Request`, `GES.Asset.RequestAsync` and
+  `GES.Asset.NeedsReload` throw `ArgumentException` for a `null` id on a
+  `GESEffect` type. Always give it the
   `audio ` or `video ` prefix, because without one the track type is guessed from
   the elements named and falls back to video (`:419-437`). And the description
   has to parse with installed elements even when `OnCreateElement` builds
@@ -1542,9 +1545,15 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   a managed type: both hardcode the native one (`ges-effect.c:382-403`,
   `ges-effect-clip.c:267-285`).
 * **Never `new`.** An assetless `GES.Effect` subtype added to a clip as a top
-  effect takes the process down: the add path reads the bin description of the
-  asset that is not there (`ges-clip.c:1786-1790`). The remove path guards
-  against it; the add path does not.
+  effect would take the process down: the add path reads the bin description of
+  the asset that is not there (`ges-clip.c:1786-1790`). The remove path guards
+  against it; the add path does not. The binding does, before the call:
+  `GES.Clip.AddTopEffect` and `GES.Container.Add` throw
+  `InvalidOperationException` for a `GESEffect` with no asset that a clip whose
+  class can add effects would take as a top effect. Nothing else is refused —
+  an effect the clip created itself is a core child and takes another branch,
+  and a direct `GES.BaseEffect` subtype never reaches the read, because the
+  branch is guarded by `GES_IS_EFFECT`.
 * **`IManagedSubclass<TSelf>` and the generic `DefineSubclass<TSelf>`.** The
   library copies an effect natively when a clip is added to more than one track,
   split or pasted (`ges-clip.c:2385-2407`), so the wrapper of a copy is
@@ -1596,8 +1605,9 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   (`ges-effect-asset.c:390-397`), which is why the library writes it without one
   itself (`ges-effect-clip.c:122-124`). It keeps the native `GESEffect` child
   unless it overrides `OnCreateTrackElement`, accepts `""` as "no description, no
-  child", and — like every `GESEffect` subtype — takes the process down on a
-  `null` id, this time in the hash of the asset key (`ges-asset.c:752-766`).
+  child", and — like every `GESEffect` subtype — would take the process down on a
+  `null` id, this time in the hash of the asset key (`ges-asset.c:752-766`); the
+  same `ArgumentException` refuses it first, so `""` is the emptiest id there is.
 * **Limits.** There is no rate-property registration:
   `ges_effect_class_register_rate_property` is unbound. Time effects are the
   native path only — a description naming `pitch`, `videorate` or `scaletempo`
@@ -1683,6 +1693,14 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   and `AudioSrc.OnRead` the whole range of its unsigned answer, both of which
   the thread of the ring buffer reads as the error it is, while a zero would
   make it ask for the same block again.
+* **Three shapes that crashed the editing services are refused before the
+  call.** A `null` asset id for a `GESEffect` or a `GESEffectClip` type throws
+  `ArgumentException` out of `GES.Asset.Request`, `GES.Asset.RequestAsync` and
+  `GES.Asset.NeedsReload`, and an asset-less `GESEffect` that would become a top
+  effect throws `InvalidOperationException` out of `GES.Clip.AddTopEffect` and
+  `GES.Container.Add`. The three rules above under *An effect for the editing
+  services* say why the library cannot be asked; the refusals are the rules made
+  into exceptions, and nothing wider is refused.
 
 ### The vfuncs that are bound
 
