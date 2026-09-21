@@ -1158,5 +1158,16 @@
     "gst_rtsp_mount_points_add_factory": ["\n\nOwnership is taken of the reference on @factory so that @factory should not be\nused after calling this function."],
     "gst_rtsp_session_manage_media": ["\n\nOwnership is taken from @media."],
     "gst_rtsp_session_media_new": ["\n\nOwnership is taken of @media."]
+  },
+
+  "$comment-type-doc-replace": "Substrings of the gir documentation of a CLASS and the text written in their place, keyed by qualified gir name with an old/new pair per replacement. It is the replacing counterpart of docStrip, one level up: for the upstream sentence that documents a string grammar the library itself does not write that way, where a removal would take the example away and a note beside it would leave the reader two grammars and no way to choose. Replacements are applied in the order they are written, each to the text the one before left behind, and every failure is GEN0064 and an error - an old standing nowhere or more than once, a class with no documentation at all, a key no rendered class read - so a gir refresh that corrects the sentence upstream stops the run instead of leaving the entry to rot. Only classes are covered, including the holder of a fundamental; records and interfaces obtain their type documentation on emitter paths of their own.",
+  "typeDocReplace": {
+    "GES.EffectClip": [
+      {
+        "$comment": "The documented asset id writes a space on both sides of the bar, and that id does not work: ges-effect-asset.c:390-397 splits the id with g_strsplit (id, \" \", 2), so the token after the bar is '||video' rather than 'video', the track type is neither audio nor video, and the whole string is parsed as one bin description - the second half is silently dropped. The library itself writes the form without that space: ges-effect-clip.c:122-124 appends \"audio %s ||\" and then \"video %s\", which is a space BEFORE the bar and none after it.",
+        "old": "|| video",
+        "new": "||video"
+      }
+    ]
   }
 }

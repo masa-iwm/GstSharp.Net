@@ -16,7 +16,7 @@ namespace GES;
 /// <para>The asset ID of an effect clip is in the form:</para>
 /// <para>
 /// <code>
-///   "audio ! bin ! description || video ! bin ! description"
+///   "audio ! bin ! description ||video ! bin ! description"
 /// </code>
 /// </para>
 /// </remarks>
