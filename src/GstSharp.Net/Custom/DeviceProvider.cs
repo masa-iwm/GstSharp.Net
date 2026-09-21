@@ -94,8 +94,11 @@ public abstract unsafe partial class DeviceProvider
     /// </para>
     /// <para>
     /// Answer devices that have no parent. One that is parented already is
-    /// refused with a warning on the start path, so a provider that keeps its
-    /// devices across a start has to withdraw them on the way out.
+    /// refused with a warning on the start path. <see cref="Stop"/> unparents
+    /// every device the provider holds (gstdeviceprovider.c:537), so a device
+    /// the provider keeps may be answered again by the next start; do not
+    /// answer a device that another provider, or an explicit
+    /// <see cref="DeviceAdd"/>, has parented.
     /// </para>
     /// <para>
     /// An exception that leaves this override is reported through the exception
@@ -124,6 +127,10 @@ public abstract unsafe partial class DeviceProvider
     /// </remarks>
     /// <exception cref="System.ObjectDisposedException">
     /// This wrapper was disposed.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// This instance is not of a registered managed subclass, so the class
+    /// below the override cannot be looked up.
     /// </exception>
     protected System.Collections.Generic.IReadOnlyList<Gst.Device> ChainUpProbe()
     {

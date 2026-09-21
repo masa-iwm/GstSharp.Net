@@ -52,7 +52,8 @@ public abstract unsafe partial class Container
     /// The containers the split produced, which the caller owns and disposes.
     /// A clip answers itself together with one new clip per further track type
     /// of its children; a group answers its children and is left empty; an
-    /// empty group answers an empty list.
+    /// empty group answers an empty list. That is what the implementations of
+    /// GES answer, unless a managed override of the slot answers otherwise.
     /// </returns>
     /// <exception cref="System.ObjectDisposedException">
     /// This wrapper was disposed.
@@ -66,7 +67,8 @@ public abstract unsafe partial class Container
     /// with a dangling pointer.
     /// </para>
     /// <para>
-    /// The original clip is always in the answer of a clip. The copies beside
+    /// The original clip is always in the answer of a clip, unless a managed
+    /// override of the slot answers otherwise. The copies beside
     /// it are made with <c>ges_timeline_element_copy</c>, which answers a
     /// floating instance, and GES only sinks one into a layer when the clip
     /// being split has one (ges-clip.c:2170-2177): a clip outside a layer
@@ -137,7 +139,10 @@ public abstract unsafe partial class Container
     /// </para>
     /// <para>
     /// An exception that leaves this override is reported through the exception
-    /// trap and the slot answers an empty list.
+    /// trap and the slot answers an empty list. What the override already did
+    /// is not undone: an override that chains up and then throws, or that
+    /// answers a null entry, has already moved the children and added the
+    /// copies to the layer, and its caller is told of no container at all.
     /// </para>
     /// </remarks>
     protected virtual System.Collections.Generic.IReadOnlyList<GES.Container> OnUngroup(bool recursive) =>
@@ -158,6 +163,10 @@ public abstract unsafe partial class Container
     /// </remarks>
     /// <exception cref="System.ObjectDisposedException">
     /// This wrapper was disposed.
+    /// </exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// This instance is not of a registered managed subclass, so the class
+    /// below the override cannot be looked up.
     /// </exception>
     protected System.Collections.Generic.IReadOnlyList<GES.Container> ChainUpUngroup(bool recursive) =>
         UngroupThrough(recursive, chainUp: true);
