@@ -43,18 +43,22 @@ namespace Gst;
 /// the wrapper - is a change like any other and is refused the same way.
 /// </para>
 /// <para>
-/// <b>A removal the library refuses does not end: the walk never leaves the
-/// entry.</b> The index is advanced only for an entry the function left behind
+/// <b>A removal the library refuses does not end while the function goes on
+/// answering <see langword="true"/>: the walk never leaves the entry.</b> The
+/// index is advanced only for an entry the function left behind
 /// (<c>gstbufferlist.c:318-320</c>), so a refused removal shows the same buffer
 /// under the same index again, and the CRITICAL is written once and then
-/// silenced - the walk spins with nothing said. Nothing in the binding can stop
-/// it, because the library goes on presenting the entry: a function that
-/// removes must know the list is writable.
+/// silenced - the walk spins with nothing said. A function that clears its slot
+/// and answers <see langword="false"/> ends the walk instead, because the
+/// answer is read before the index (<c>gstbufferlist.c:315-316</c>). Nothing in
+/// the binding can stop the spin, because the library goes on presenting the
+/// entry: a function that removes must know the list is writable.
 /// <see cref="Gst.MiniObject.IsWritable"/> answers that for any live wrapper,
 /// borrowed or not; <see cref="Gst.BufferList.MakeWritable"/> is the way to
 /// make it true, and it is available only on a wrapper that owns a reference -
-/// a borrowed list throws there. A function walking a list it cannot make
-/// writable and that answers <see langword="false"/> has to keep every entry.
+/// a borrowed list throws there. When <see cref="Gst.MiniObject.IsWritable"/>
+/// is <see langword="false"/> and the list cannot be made writable, the
+/// function has to keep every entry.
 /// </para>
 /// <para>
 /// The function must not touch the list itself while it runs: reading it,
@@ -108,8 +112,9 @@ public sealed unsafe partial class BufferList
     /// library refuses the removal, keeps the entry and does not advance the
     /// index (<c>gstbufferlist.c:284-292</c>, <c>:318-320</c>), so the same
     /// buffer is shown again under the same index for as long as the function
-    /// goes on clearing its slot - and after the first refusal the CRITICAL is
-    /// silenced, which leaves a walk that never returns and says nothing. Ask
+    /// goes on clearing its slot and answering <see langword="true"/> - and
+    /// after the first refusal the CRITICAL is silenced, which leaves a walk
+    /// that never returns and says nothing. Ask
     /// <see cref="Gst.MiniObject.IsWritable"/> first, which any live wrapper
     /// answers, and call <see cref="MakeWritable"/> before the walk when it is
     /// false - that one needs a wrapper that owns a reference, so a borrowed
