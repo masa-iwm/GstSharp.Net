@@ -158,6 +158,13 @@ public unsafe partial class AggregatorPad
     ///               to flush any information specific to the pad, it allows for individual
     ///               pads to be flushed while others might not be.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAggregatorPad leaves this slot empty and the caller treats an empty one as a
+    /// successful flush, whose result it ignores anyway (gstaggregator.c:327-330, :1845,
+    /// :2074). The classes of the library that fill it, the audio and the video aggregator pad
+    /// (gstaudioaggregator.c:195, gstvideoaggregator.c:310), are outside the subclassable set,
+    /// so a chain-up answers Ok rather than throwing.</para>
+    /// </remarks>
     /// <param name="aggregator">
     /// The <c>aggregator</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
@@ -172,6 +179,12 @@ public unsafe partial class AggregatorPad
     ///               Called before input buffers are queued in the pad, return %TRUE
     ///               if the buffer should be skipped.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAggregatorPad leaves this slot empty and the caller skips nothing for an empty one
+    /// (gstaggregator.c:1105-1106). The one class of the library that fills it, the video
+    /// aggregator pad (gstvideoaggregator.c:311), is outside the subclassable set, so a
+    /// chain-up answers false, which keeps the buffer, rather than throwing.</para>
+    /// </remarks>
     /// <param name="aggregator">
     /// The <c>aggregator</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
@@ -186,6 +199,13 @@ public unsafe partial class AggregatorPad
         ChainUpSkipBuffer(aggregator, buffer);
 
     /// <summary>Runs the implementation of <c>flush</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAggregatorPad leaves this slot empty and the caller treats an empty one as a
+    /// successful flush, whose result it ignores anyway (gstaggregator.c:327-330, :1845,
+    /// :2074). The classes of the library that fill it, the audio and the video aggregator pad
+    /// (gstaudioaggregator.c:195, gstvideoaggregator.c:310), are outside the subclassable set,
+    /// so a chain-up answers Ok rather than throwing.</para>
+    /// </remarks>
     /// <param name="aggregator">
     /// The <c>aggregator</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
@@ -202,6 +222,12 @@ public unsafe partial class AggregatorPad
     }
 
     /// <summary>Runs the implementation of <c>skip_buffer</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAggregatorPad leaves this slot empty and the caller skips nothing for an empty one
+    /// (gstaggregator.c:1105-1106). The one class of the library that fills it, the video
+    /// aggregator pad (gstvideoaggregator.c:311), is outside the subclassable set, so a
+    /// chain-up answers false, which keeps the buffer, rather than throwing.</para>
+    /// </remarks>
     /// <param name="aggregator">
     /// The <c>aggregator</c> argument.
     /// The element lends this for the duration of the call. Keeping the wrapper is
@@ -230,8 +256,7 @@ public unsafe partial class AggregatorPad
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AggregatorPad.flush has no parent implementation; override OnFlush.");
+            return Gst.FlowReturn.Ok;
         }
 
         return (Gst.FlowReturn)slot(aggpad, aggregator);
@@ -244,8 +269,7 @@ public unsafe partial class AggregatorPad
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AggregatorPad.skip_buffer has no parent implementation; override OnSkipBuffer.");
+            return false;
         }
 
         return slot(aggpad, aggregator, buffer) != 0;
