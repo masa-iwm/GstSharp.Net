@@ -49,11 +49,12 @@ namespace Gst;
 /// under the same index again, and the CRITICAL is written once and then
 /// silenced - the walk spins with nothing said. Nothing in the binding can stop
 /// it, because the library goes on presenting the entry: a function that
-/// removes must know the list is writable. Ask
-/// <see cref="Gst.MiniObject.IsWritable"/> on the list before the walk, or call
-/// <see cref="Gst.BufferList.MakeWritable"/> on it first - and note that a list
-/// handed to a callback of the binding is usually borrowed, so making it
-/// writable there is not possible and the function must keep every entry.
+/// removes must know the list is writable.
+/// <see cref="Gst.MiniObject.IsWritable"/> answers that for any live wrapper,
+/// borrowed or not; <see cref="Gst.BufferList.MakeWritable"/> is the way to
+/// make it true, and it is available only on a wrapper that owns a reference -
+/// a borrowed list throws there. A function walking a list it cannot make
+/// writable and that answers <see langword="false"/> has to keep every entry.
 /// </para>
 /// <para>
 /// The function must not touch the list itself while it runs: reading it,
@@ -109,9 +110,10 @@ public sealed unsafe partial class BufferList
     /// buffer is shown again under the same index for as long as the function
     /// goes on clearing its slot - and after the first refusal the CRITICAL is
     /// silenced, which leaves a walk that never returns and says nothing. Ask
-    /// <see cref="Gst.MiniObject.IsWritable"/> first, or call
-    /// <see cref="MakeWritable"/> before the walk; a borrowed list can be
-    /// neither, and a function walking one has to keep every entry.
+    /// <see cref="Gst.MiniObject.IsWritable"/> first, which any live wrapper
+    /// answers, and call <see cref="MakeWritable"/> before the walk when it is
+    /// false - that one needs a wrapper that owns a reference, so a borrowed
+    /// list is walked without removing anything.
     /// </para>
     /// <para>
     /// An exception thrown by the function is reported through

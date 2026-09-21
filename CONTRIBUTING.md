@@ -295,12 +295,7 @@ whose name is one the mirror gives a static of its own. All four are errors
 rather than truncations: a short mirror would still measure the right offset and
 would break the size probe instead. `GEN0063` reports an accessor whose name the
 class or a descendant of it already carries, which the field answers with a
-`name`. `GEN0064` reports a `typeDocReplace` entry that replaced nothing: an
-`old` standing nowhere or more than once in the documentation of the class, a
-class carrying no documentation at all, or a key naming no class this run
-rendered. It is an error, because the entry exists to keep a documented grammar
-that does not work out of the generated text. Every entry also joins the three
-probe layers of
+`name`. Every entry also joins the three probe layers of
 `InstanceFieldProbeTests`, and the meta test there fails for a field with no
 behavioural witness.
 
