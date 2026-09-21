@@ -32,7 +32,7 @@ public sealed class InstanceFieldDiagnosticTests
     /// </remarks>
     private const string Subclassable =
         "\"subclassable\": [\"GstBase.Widget\", \"GstBase.Gadget\", \"GstBase.Gizmo\", "
-        + "\"GstBase.Doodad\", \"GstBase.Thing\"]";
+        + "\"GstBase.Doodad\", \"GstBase.Thing\", \"GstBase.Trinket\", \"GstBase.Bauble\"]";
 
     /// <summary>
     /// The fields every fixture class carries: the instance structure of the base
@@ -211,7 +211,7 @@ public sealed class InstanceFieldDiagnosticTests
     [InlineData(
         Entries + "{ \"GstGizmo.segment\": { " + Window + " } } }",
         "GEN0062",
-        "The instance field 'stamp' has the type 'guint16'")]
+        "The instance field 'stamp' of 'GstGizmo' has the type 'guint16'")]
     [InlineData(
         Entries + "{ \"GstDoodad.segment\": { " + Window + " } } }",
         "GEN0062",
@@ -220,6 +220,18 @@ public sealed class InstanceFieldDiagnosticTests
         Entries + "{ \"GstThing.segment\": { " + Window + " } } }",
         "GEN0062",
         "declares the nested union 'ABI'")]
+
+    // The two static members of a mirror that a field of the class can take the
+    // name of: the offset the own fields begin at, and the offset of an exposed
+    // field.
+    [InlineData(
+        Entries + "{ \"GstTrinket.segment\": { " + Window + " } } }",
+        "GEN0062",
+        "The instance field 'OwnOffset' of 'GstTrinket' is laid out under the name")]
+    [InlineData(
+        Entries + "{ \"GstBauble.segment\": { " + Window + " } } }",
+        "GEN0062",
+        "The instance field 'segment' of 'GstBauble' measures its offset into a member named")]
     public void ARefusedEntryStopsTheRun(string entries, string code, string fragment)
     {
         FixtureRun run = Run(entries);
@@ -382,6 +394,22 @@ public sealed class InstanceFieldDiagnosticTests
                           </array>
                         </field>
                       </union>
+                """)
+            + "\n"
+            + Class(
+                "Trinket",
+                """
+                      <field name="own_offset">
+                        <type name="guint" c:type="guint"/>
+                      </field>
+                """)
+            + "\n"
+            + Class(
+                "Bauble",
+                """
+                      <field name="segment_offset">
+                        <type name="guint" c:type="guint"/>
+                      </field>
                 """);
 
         if (descendant)

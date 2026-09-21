@@ -269,10 +269,17 @@ internal sealed class InstanceFieldEmitter
             writer.WriteLine("/// the instance is gone, and writing into it changes nothing native.");
             writer.WriteLine("/// </para>");
             writer.WriteLine("/// <para>");
-            writer.WriteLine(
-                "/// The library rewrites the field under " + plan.Entry.Lock + ", which managed code cannot");
-            writer.WriteLine("/// take, so the copy is only guaranteed consistent when it is read on the");
-            writer.WriteLine("/// streaming thread, inside");
+            // The lock is free text of an overlay entry, so the sentence it
+            // stands in is wrapped rather than written out at whatever width
+            // the entry happens to give it.
+            foreach (string line in XmlDocWriter.Wrap(
+                "The library rewrites the field under " + plan.Entry.Lock + ", which managed code cannot "
+                + "take, so the copy is only guaranteed consistent when it is read on the streaming "
+                + "thread, inside"))
+            {
+                writer.WriteLine("/// " + line);
+            }
+
             writer.WriteLine("/// " + Links(plan.Overrides) + ".");
             writer.WriteLine("/// A read from any other thread may mix the fields of two segments; it is never");
             writer.WriteLine("/// unsafe, because the structure is flat and owns no pointer.");
@@ -384,14 +391,14 @@ internal sealed class InstanceFieldEmitter
             if (field.Type is GirArrayRef { FixedSize: > 0 } array)
             {
                 string arrayType = name + "Array";
-                inlineArrays.Add((arrayType, array.FixedSize.Value, ElementOf(array, ns, field)));
+                inlineArrays.Add((arrayType, array.FixedSize.Value, ElementOf(array, ns, field, cName)));
                 writer.WriteLine("/// <summary>The <c>" + field.Name + "</c> field.</summary>");
                 writer.WriteLine("private " + arrayType + " _" + char.ToLowerInvariant(name[0]) + name[1..] + ";");
                 continue;
             }
 
             writer.WriteLine("/// <summary>The <c>" + field.Name + "</c> field.</summary>");
-            writer.WriteLine("internal " + TypeOf(ns, field) + " " + name + ";");
+            writer.WriteLine("internal " + TypeOf(ns, field, cName) + " " + name + ";");
         }
 
         // The mirror carries statics beside its fields, and a field whose name is
@@ -724,15 +731,17 @@ internal sealed class InstanceFieldEmitter
     /// <param name="array">The array the field declares.</param>
     /// <param name="ns">The gir namespace of the class.</param>
     /// <param name="field">The field, for the diagnostic.</param>
+    /// <param name="owner">The C name of the class the field belongs to.</param>
     /// <returns>The C# type name.</returns>
-    private string ElementOf(GirArrayRef array, GirNamespace ns, GirField field) =>
-        array.ElementType is { } element ? ScalarOf(ns, field, element) : Unlayable(field);
+    private string ElementOf(GirArrayRef array, GirNamespace ns, GirField field, string owner) =>
+        array.ElementType is { } element ? ScalarOf(ns, field, element, owner) : Unlayable(field, owner);
 
     /// <summary>Maps the type of one field of a mirror onto the storage it occupies.</summary>
     /// <param name="ns">The gir namespace of the class.</param>
     /// <param name="field">The field to lay out.</param>
+    /// <param name="owner">The C name of the class the field belongs to.</param>
     /// <returns>The C# type name.</returns>
-    private string TypeOf(GirNamespace ns, GirField field)
+    private string TypeOf(GirNamespace ns, GirField field, string owner)
     {
         if (field.Callback is not null)
         {
@@ -753,7 +762,7 @@ internal sealed class InstanceFieldEmitter
             return "nint";
         }
 
-        return field.Type is { } type ? ScalarOf(ns, field, type) : Unlayable(field);
+        return field.Type is { } type ? ScalarOf(ns, field, type, owner) : Unlayable(field, owner);
     }
 
     /// <summary>
@@ -763,6 +772,7 @@ internal sealed class InstanceFieldEmitter
     /// <param name="ns">The gir namespace of the class.</param>
     /// <param name="field">The field, for the diagnostic.</param>
     /// <param name="type">The type to map.</param>
+    /// <param name="owner">The C name of the class the field belongs to.</param>
     /// <returns>The C# type name.</returns>
     /// <remarks>
     /// <para>
@@ -778,7 +788,7 @@ internal sealed class InstanceFieldEmitter
     /// to answer, and it is a line of this table rather than a rule.
     /// </para>
     /// </remarks>
-    private string ScalarOf(GirNamespace ns, GirField field, GirTypeRef type)
+    private string ScalarOf(GirNamespace ns, GirField field, GirTypeRef type, string owner)
     {
         if (type.CType is { Length: > 0 } pointer && pointer.EndsWith('*'))
         {
@@ -836,18 +846,20 @@ internal sealed class InstanceFieldEmitter
             }
         }
 
-        return Unlayable(field);
+        return Unlayable(field, owner);
     }
 
     /// <summary>Reports a field the closed table cannot type.</summary>
     /// <param name="field">The field.</param>
+    /// <param name="owner">The C name of the class the field belongs to.</param>
     /// <returns>A pointer, so that the emitter can finish writing the file the run discards.</returns>
-    private string Unlayable(GirField field)
+    private string Unlayable(GirField field, string owner)
     {
         _diagnostics.Error(
             "GEN0062",
-            $"The instance field '{field.Name}' has the type '{field.Type?.Name ?? "(none)"}', which the own "
-            + "fields mirror has no storage for; a mirror that guessed at it would move every field behind it.");
+            $"The instance field '{field.Name}' of '{owner}' has the type "
+            + $"'{field.Type?.Name ?? "(none)"}', which the own fields mirror has no storage for; a mirror that "
+            + "guessed at it would move every field behind it.");
         return "nint";
     }
 

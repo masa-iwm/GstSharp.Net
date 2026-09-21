@@ -673,6 +673,39 @@ internal static class XmlDocWriter
         line.TrimStart().StartsWith("```", StringComparison.Ordinal);
 
     /// <summary>
+    /// Breaks a sentence into lines short enough for the documentation comment,
+    /// so that what the overlays carry as one string does not become a line no
+    /// editor of this repository would leave alone.
+    /// </summary>
+    /// <param name="text">The sentence.</param>
+    /// <returns>The lines, at least one.</returns>
+    internal static List<string> Wrap(string text)
+    {
+        const int Width = 88;
+        List<string> lines = [];
+        string current = string.Empty;
+        foreach (string word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (current.Length == 0)
+            {
+                current = word;
+            }
+            else if (current.Length + 1 + word.Length <= Width)
+            {
+                current = current + " " + word;
+            }
+            else
+            {
+                lines.Add(current);
+                current = word;
+            }
+        }
+
+        lines.Add(current);
+        return lines;
+    }
+
+    /// <summary>
     /// One unit of gir documentation: a paragraph of prose, or the body of a
     /// fenced code block without its fence lines.
     /// </summary>

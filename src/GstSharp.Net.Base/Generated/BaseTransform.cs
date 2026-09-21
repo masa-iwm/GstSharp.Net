@@ -513,9 +513,8 @@ public abstract unsafe partial class BaseTransform : Gst.Element
     /// the instance is gone, and writing into it changes nothing native.
     /// </para>
     /// <para>
-    /// The library rewrites the field under STREAM_LOCK, which managed code cannot
-    /// take, so the copy is only guaranteed consistent when it is read on the
-    /// streaming thread, inside
+    /// The library rewrites the field under STREAM_LOCK, which managed code cannot take, so the
+    /// copy is only guaranteed consistent when it is read on the streaming thread, inside
     /// <see cref="OnTransform"/> or <see cref="OnTransformIp"/>.
     /// A read from any other thread may mix the fields of two segments; it is never
     /// unsafe, because the structure is flat and owns no pointer.

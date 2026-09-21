@@ -55,11 +55,30 @@ public sealed class InstanceFieldTests
     {
         string source = Source(fileName);
 
-        Assert.Contains(
-            "/// The library rewrites the field under " + @lock + ", which managed code cannot\n",
-            source,
-            StringComparison.Ordinal);
+        // The sentence is wrapped, because the lock is free text of an overlay
+        // entry: what the file carries is the words of it, in order, with a
+        // documentation prefix wherever the wrap broke the line.
+        string wrapped = string.Join(
+            " ",
+            ("The library rewrites the field under " + @lock + ", which managed code cannot take, so the "
+            + "copy is only guaranteed consistent when it is read on the streaming thread, inside")
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+
+        string written = string.Join(
+            " ",
+            source.Split('\n')
+                .Select(static line => line.Trim())
+                .Where(static line => line.StartsWith("/// ", StringComparison.Ordinal))
+                .SelectMany(static line => line[4..].Split(' ', StringSplitOptions.RemoveEmptyEntries)));
+
+        Assert.Contains(wrapped, written, StringComparison.Ordinal);
         Assert.Contains("/// " + window + ".\n", source, StringComparison.Ordinal);
+
+        // No line of the remark is wider than an editor of this repository
+        // leaves alone.
+        Assert.All(
+            source.Split('\n').Where(static line => line.Contains("rewrites the field under", StringComparison.Ordinal)),
+            static line => Assert.True(line.Length <= 120, line));
 
         // The window is worth nothing if the reader cannot tell what a read
         // outside it costs, and the answer is a torn value rather than a crash.

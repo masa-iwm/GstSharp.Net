@@ -728,7 +728,7 @@ internal sealed class VfuncEmitter
         List<string> lines = [];
         if (plan.DocNote is { } note)
         {
-            List<string> wrapped = Wrap(XmlDocWriter.Escape(note));
+            List<string> wrapped = XmlDocWriter.Wrap(XmlDocWriter.Escape(note));
             wrapped[0] = "<para>" + wrapped[0];
             wrapped[^1] += "</para>";
             lines.AddRange(wrapped);
@@ -2079,39 +2079,6 @@ internal sealed class VfuncEmitter
         {
             writer.CloseBlock();
         }
-    }
-
-    /// <summary>
-    /// Breaks a sentence into lines short enough for the documentation comment,
-    /// so that what the overlays carry as one string does not become a line no
-    /// editor of this repository would leave alone.
-    /// </summary>
-    /// <param name="text">The sentence.</param>
-    /// <returns>The lines, at least one.</returns>
-    private static List<string> Wrap(string text)
-    {
-        const int Width = 88;
-        List<string> lines = [];
-        string current = string.Empty;
-        foreach (string word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-        {
-            if (current.Length == 0)
-            {
-                current = word;
-            }
-            else if (current.Length + 1 + word.Length <= Width)
-            {
-                current = current + " " + word;
-            }
-            else
-            {
-                lines.Add(current);
-                current = word;
-            }
-        }
-
-        lines.Add(current);
-        return lines;
     }
 
     /// <summary>
