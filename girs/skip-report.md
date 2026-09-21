@@ -80,7 +80,7 @@ disappears shows up here as an added line.
 
 ## Gst
 
-### HandBound (71)
+### HandBound (72)
 
 - `Gst.Bus:enable-async`
 - `gst_buffer_copy`
@@ -135,6 +135,7 @@ disappears shows up here as an added line.
 - `gst_pad_push_event`
 - `gst_pad_send_event`
 - `gst_pad_set_event_full_function_full`
+- `gst_pad_sticky_events_foreach`
 - `gst_param_spec_array`
 - `gst_param_spec_fraction`
 - `gst_poll_get_read_gpollfd`
@@ -439,7 +440,7 @@ disappears shows up here as an added line.
 
 - `gst_bus_add_watch`
 
-### UnsupportedSignature (30)
+### UnsupportedSignature (29)
 
 - `gst_buffer_list_foreach`
 - `gst_buffer_list_replace`
@@ -457,7 +458,6 @@ disappears shows up here as an added line.
 - `gst_mini_object_take`
 - `gst_mini_object_unlock`
 - `gst_object_replace`
-- `gst_pad_sticky_events_foreach`
 - `gst_query_take`
 - `gst_structure_id_str_take_value`
 - `gst_structure_id_take_value`
