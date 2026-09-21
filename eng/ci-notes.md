@@ -353,7 +353,7 @@ either (48 s cold against 60 s warm on the MSVC leg), so the ILCompiler and
 runtime packs are not an argument for a cache on the other legs.
 
 Those numbers predate `samples/tutorials/BasicTutorial05`, which is the one
-project in the tree with a third-party runtime dependency. Avalonia brings the
+project under `samples/` that carries a third-party package. Avalonia brings the
 whole restore to about **42 package ids and ~318 MB** of `.nupkg`, dominated by
 the `SkiaSharp.NativeAssets.*` and `HarfBuzzSharp.NativeAssets.*` packages —
 including the WebAssembly ones, which are plain `<dependency>` entries rather

@@ -241,8 +241,9 @@ the ports add so that a tutorial can be run unattended.
 
 `BasicTutorial05`, the GUI toolkit integration tutorial, is the exception to
 "run unattended" and to more besides. It opens a window, it is the one project
-with a third-party runtime dependency — Avalonia — and it does not reproduce
-what upstream 1.28 does, which is to pack a GTK widget taken off `gtkglsink`:
+under `samples/` that carries a third-party package — Avalonia — and it does
+not reproduce what upstream 1.28 does, which is to pack a GTK widget taken off
+`gtkglsink`:
 GTK bindings would load a second GObject runtime next to this binding's own.
 It teaches the same lesson through `GstVideoOverlay` instead, handing the sink
 a window handle that an Avalonia `NativeControlHost` owns. What CI runs of it

@@ -349,7 +349,7 @@ in this process would mean a second GObject type registry beside this binding's
 own; the port therefore teaches the same lesson through `GstVideoOverlay` —
 the toolkit-neutral route the GStreamer documentation describes — with Avalonia
 as the toolkit and its `NativeControlHost` as the surface. It is also the only
-project in the tree with a third-party runtime dependency.
+project under `samples/` that carries a third-party package.
 
 ```sh
 dotnet run --project samples/tutorials/BasicTutorial02
