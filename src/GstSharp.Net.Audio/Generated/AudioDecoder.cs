@@ -801,6 +801,62 @@ public abstract unsafe partial class AudioDecoder : Gst.Element
     [LibraryImport("Gst", EntryPoint = "gst_allocation_params_new")]
     private static partial nint GstAllocationParamsNew();
 
+    /// <summary>Answers a copy of the <c>input_segment</c> field of <c>GstAudioDecoder</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the instance this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good after
+    /// the instance is gone, and writing into it changes nothing native.
+    /// </para>
+    /// <para>
+    /// The library rewrites the field under the STREAM_LOCK of the decoder, a recursive mutex of its own, and OBJECT_LOCK for the flags of an instant rate change, which managed code cannot
+    /// take, so the copy is only guaranteed consistent when it is read on the
+    /// streaming thread, inside
+    /// <see cref="OnHandleFrame"/> or <see cref="OnParse"/>.
+    /// A read from any other thread may mix the fields of two segments; it is never
+    /// unsafe, because the structure is flat and owns no pointer.
+    /// </para>
+    /// </remarks>
+    /// <returns>A copy of the <c>input_segment</c> field.</returns>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Segment GetInputSegment()
+    {
+        Gst.Segment value = Gst.Segment.FromNative(
+            Handle + Gst.Audio.AudioDecoderOwnFieldsRaw.OwnOffset + Gst.Audio.AudioDecoderOwnFieldsRaw.InputSegmentOffset,
+            Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'input_segment' field of GstAudioDecoder is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
+    /// <summary>Answers a copy of the <c>output_segment</c> field of <c>GstAudioDecoder</c>.</summary>
+    /// <remarks>
+    /// <para>
+    /// The structure is embedded in the instance this wrapper points at. What comes
+    /// back is a copy of it that the caller owns and disposes, so it stays good after
+    /// the instance is gone, and writing into it changes nothing native.
+    /// </para>
+    /// <para>
+    /// The library rewrites the field under the STREAM_LOCK of the decoder, a recursive mutex of its own, which managed code cannot
+    /// take, so the copy is only guaranteed consistent when it is read on the
+    /// streaming thread, inside
+    /// <see cref="OnHandleFrame"/> or <see cref="OnParse"/>.
+    /// A read from any other thread may mix the fields of two segments; it is never
+    /// unsafe, because the structure is flat and owns no pointer.
+    /// </para>
+    /// </remarks>
+    /// <returns>A copy of the <c>output_segment</c> field.</returns>
+    /// <exception cref="System.ObjectDisposedException">The wrapper was disposed.</exception>
+    public Gst.Segment GetOutputSegment()
+    {
+        Gst.Segment value = Gst.Segment.FromNative(
+            Handle + Gst.Audio.AudioDecoderOwnFieldsRaw.OwnOffset + Gst.Audio.AudioDecoderOwnFieldsRaw.OutputSegmentOffset,
+            Gst.Interop.Transfer.None)
+            ?? throw new System.InvalidOperationException("The 'output_segment' field of GstAudioDecoder is null.");
+        System.GC.KeepAlive(this);
+        return value;
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstAudioDecoder</c> under.</summary>
     /// <returns>The type of the instances of this wrapper.</returns>
     [LibraryImport("GstAudio", EntryPoint = "gst_audio_decoder_get_type")]

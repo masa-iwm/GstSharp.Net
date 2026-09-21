@@ -1481,7 +1481,7 @@ cover, and these are covered.
 
 - `WebRTCSessionDescription.sdp` — hand written
 
-## Class fields (205)
+## Class fields (201)
 
 Public instance fields of the GObject classes, with the shape of each. The
 generated wrapper of a class holds a native instance and nothing else: there is
@@ -1597,7 +1597,7 @@ field does.
 - `Task.state` — Scalar
 - `Task.user_data` — Pointer
 
-### GstAudio (40)
+### GstAudio (36)
 
 - `AudioAggregator.current_caps` — Pointer
 - `AudioAggregatorPad.info` — EmbeddedStruct
@@ -1616,13 +1616,9 @@ field does.
 - `AudioClock.destroy_notify` — Callback
 - `AudioClock.func` — Callback
 - `AudioClock.user_data` — Pointer
-- `AudioDecoder.input_segment` — EmbeddedStruct
-- `AudioDecoder.output_segment` — EmbeddedStruct
 - `AudioDecoder.sinkpad` — Pointer
 - `AudioDecoder.srcpad` — Pointer
 - `AudioDecoder.stream_lock` — EmbeddedStruct
-- `AudioEncoder.input_segment` — EmbeddedStruct
-- `AudioEncoder.output_segment` — EmbeddedStruct
 - `AudioEncoder.sinkpad` — Pointer
 - `AudioEncoder.srcpad` — Pointer
 - `AudioEncoder.stream_lock` — EmbeddedStruct

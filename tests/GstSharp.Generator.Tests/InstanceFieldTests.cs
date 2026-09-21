@@ -147,6 +147,14 @@ public sealed class InstanceFieldTests
         Assert.DoesNotContain("- `BaseSrc.segment`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `BaseTransform.segment`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `BaseParse.segment`", report, StringComparison.Ordinal);
+
+        // Wave 2 of the allowlist. The two Video classes move no line, because
+        // the gir marks every field of them private and the ledger never
+        // counted one of those.
+        Assert.DoesNotContain("- `AudioDecoder.input_segment`", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `AudioDecoder.output_segment`", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `AudioEncoder.input_segment`", report, StringComparison.Ordinal);
+        Assert.DoesNotContain("- `AudioEncoder.output_segment`", report, StringComparison.Ordinal);
         Assert.Equal(23, Generated.Census.ExposedFieldCount());
 
         // The one field of the same shape that wave 1 refused stays on it: no
@@ -165,6 +173,10 @@ public sealed class InstanceFieldTests
     {
         Assert.Equal(4, Generated.Census.EmittedCount("GstBase", "instance field"));
         Assert.Equal(4, Generated.Census.EmittedCount("GstBase", "instance field mirror"));
+        Assert.Equal(4, Generated.Census.EmittedCount("GstAudio", "instance field"));
+        Assert.Equal(2, Generated.Census.EmittedCount("GstAudio", "instance field mirror"));
+        Assert.Equal(4, Generated.Census.EmittedCount("GstVideo", "instance field"));
+        Assert.Equal(2, Generated.Census.EmittedCount("GstVideo", "instance field mirror"));
         Assert.Equal(0, Generated.Census.EmittedCount("Gst", "instance field mirror"));
     }
 

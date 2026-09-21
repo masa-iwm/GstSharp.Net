@@ -872,7 +872,7 @@ public sealed class ClassEmitterTests
     [Theory]
     [InlineData("Gst", 69)]
     [InlineData("GstBase", 38)]
-    [InlineData("GstAudio", 40)]
+    [InlineData("GstAudio", 36)]
     [InlineData("GstVideo", 8)]
     [InlineData("GstSdp", 0)]
     [InlineData("GstWebRTC", 11)]
@@ -904,8 +904,8 @@ public sealed class ClassEmitterTests
         string report = Generated.SkipReport;
         string ledger = ClassFieldLedger(report);
 
-        Assert.Equal(205, Generated.Census.ClassFieldCount());
-        Assert.Contains("## Class fields (205)\n", report, StringComparison.Ordinal);
+        Assert.Equal(201, Generated.Census.ClassFieldCount());
+        Assert.Contains("## Class fields (201)\n", report, StringComparison.Ordinal);
         Assert.Contains("### Gst (69)\n", ledger, StringComparison.Ordinal);
 
         // One line per shape the ledger measures. The shapes are what says how
