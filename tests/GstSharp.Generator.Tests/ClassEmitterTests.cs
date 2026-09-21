@@ -529,15 +529,16 @@ public sealed class ClassEmitterTests
         // classes: the nineteenth it emits is RtspServerGlobal, the static
         // holder of the namespace level calls, whose declaration carries the
         // static modifier the pattern here does not match.
-        // Thirty more since the subclassing surface landed: the
+        // Thirty six more since the subclassing surface landed: the
         // `*.Subclass.cs` partial of each allowlisted class opens with the same
         // `public unsafe partial class` the counting keys on, and the allowlist
-        // holds thirty classes - fourteen from stage 2a, the five codec
+        // holds thirty six classes - fourteen from stage 2a, the five codec
         // bases of stage 2b, Gst.Pad and GstBase.AggregatorPad of stage 3a, the
-        // seven GES classes of stage 3c, Gst.DeviceProvider and Gst.Device.
+        // seven GES classes of stage 3c, Gst.DeviceProvider and Gst.Device, and
+        // the six GES effect classes of stage 3d.
         // GES.Container is not among them: it is on the chain of GES.Clip, so
         // it gets a mirror and no managed surface of its own.
-        Assert.Equal(220, classes);
+        Assert.Equal(226, classes);
 
         // 127 rather than 123 since the field accessors of a string and of a
         // handle landed: GstSdp.SDPKey, GstSdp.SDPOrigin and

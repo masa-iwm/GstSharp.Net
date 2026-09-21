@@ -46,7 +46,7 @@ public sealed class SubclassCensusTests
     [InlineData("GstTag", 0, 0)]
     [InlineData("GstTranscoder", 0, 0)]
     [InlineData("GstPlay", 0, 0)]
-    [InlineData("GES", 8, 26)]
+    [InlineData("GES", 14, 26)]
     public void TheSubclassingCensusIsStable(string module, int classStructs, int vfuncs)
     {
         EmissionCensus census = Generated.Census;
@@ -56,11 +56,11 @@ public sealed class SubclassCensusTests
     }
 
     /// <summary>
-    /// The run as a whole: thirty two mirrors and two hundred and forty nine
+    /// The run as a whole: thirty eight mirrors and two hundred and forty nine
     /// slots, the numbers the release notes and <c>docs/subclassing.md</c> quote.
     /// </summary>
     [Fact]
-    public void TheRunEmitsThirtyTwoMirrorsAndTwoHundredAndFortyNineSlots()
+    public void TheRunEmitsThirtyEightMirrorsAndTwoHundredAndFortyNineSlots()
     {
         EmissionCensus census = Generated.Census;
         int mirrors = 0;
@@ -71,7 +71,7 @@ public sealed class SubclassCensusTests
             slots += census.EmittedCount(module, "vfunc");
         }
 
-        Assert.Equal(32, mirrors);
+        Assert.Equal(38, mirrors);
         Assert.Equal(249, slots);
     }
 

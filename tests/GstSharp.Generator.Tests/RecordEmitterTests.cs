@@ -1385,7 +1385,7 @@ public sealed class RecordEmitterTests
     [InlineData("GstSharp.Net.Tag", 6)]
     [InlineData("GstSharp.Net.Transcoder", 8)]
     [InlineData("GstSharp.Net.Play", 18)]
-    [InlineData("GstSharp.Net.GES", 82)]
+    [InlineData("GstSharp.Net.GES", 94)]
     public void EveryModuleEmitsItsOwnFiles(string projectDirectory, int count)
     {
         string prefix = projectDirectory + "/Generated/";
