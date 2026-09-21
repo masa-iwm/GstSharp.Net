@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GstSharp.Samples.BasicTutorial05</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <!-- Win32NativeControlHost refuses to create the child window the video
+         sink renders into unless the process has a manifest that declares the
+         operating systems it supports. Without this the first run throws
+         "Unable to create child window for native control host". -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Avalonia.BuildServices contributes a task, AvaloniaStats, that runs
+         before CoreCompile on every real build and reports build-time
+         telemetry. Its target is conditioned on this property being non-empty
+         and Avalonia.props sets it; emptying it here keeps the task from ever
+         being loaded, which needs no environment variable in CI and no second
+         version pin. Runtime behaviour is unaffected. -->
+    <UsedAvaloniaProducts></UsedAvaloniaProducts>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Avalonia is the only third-party runtime dependency under samples/. It
+         is here because this tutorial is about a widget toolkit and this
+         binding cannot host the one the C original uses; see the README. -->
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <!-- A code-only window has no control templates of its own, so the theme
+         is what gives the buttons and the slider a look. -->
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../src/GstSharp.Net/GstSharp.Net.csproj" />
+    <ProjectReference Include="../../../src/GstSharp.Net.Video/GstSharp.Net.Video.csproj" />
+  </ItemGroup>
+
+</Project>
