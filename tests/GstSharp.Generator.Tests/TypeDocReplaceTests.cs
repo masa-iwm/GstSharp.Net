@@ -20,7 +20,9 @@ public sealed class TypeDocReplaceTests
     /// <summary>
     /// One class whose documentation carries a written out identifier once, and
     /// one that carries the same text twice: the two occurrences a replacement
-    /// has to tell apart.
+    /// has to tell apart. Beside them a class that carries no documentation at
+    /// all, and a fundamental, whose holder takes its type documentation on a
+    /// call site of its own.
     /// </summary>
     private const string Body =
         """
@@ -34,6 +36,23 @@ public sealed class TypeDocReplaceTests
 
         Its identifier is written "audio bin || video bin", and the identifier of
         its parts is written "audio bin || video bin" as well.</doc>
+            </class>
+            <class name="Gizmo" c:type="GstGizmo" parent="GObject.Object" glib:type-name="GstGizmo" glib:get-type="gst_gizmo_get_type">
+            </class>
+            <class name="Knob" c:type="GstKnob" glib:type-name="GstKnob" glib:get-type="gst_knob_get_type" glib:fundamental="1">
+              <doc xml:space="preserve">A knob.
+
+        Its identifier is written "audio bin || video bin".</doc>
+              <function name="get_size" c:identifier="gst_knob_get_size">
+                <return-value transfer-ownership="none">
+                  <type name="guint" c:type="guint"/>
+                </return-value>
+                <parameters>
+                  <parameter name="value" transfer-ownership="none">
+                    <type name="GObject.Value" c:type="const GValue*"/>
+                  </parameter>
+                </parameters>
+              </function>
             </class>
         """;
 
@@ -114,6 +133,52 @@ public sealed class TypeDocReplaceTests
         Assert.Contains("Gst.Gadget", error.Message, StringComparison.Ordinal);
         Assert.Contains("more than once", error.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("||video", run.File("Gadget.cs"), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AClassWithoutAnyDocumentationIsReported()
+    {
+        // There is no text to replace part of, and rendering the class with the
+        // summary the emitter falls back to would say nothing about the entry.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "typeDocReplace": {
+                "Gst.Gizmo": [{ "old": "|| video", "new": "||video" }]
+              }
+            }
+            """);
+
+        Diagnostic error = Assert.Single(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0064", StringComparison.Ordinal));
+
+        Assert.Equal(DiagnosticSeverity.Error, error.Severity);
+        Assert.Contains("Gst.Gizmo", error.Message, StringComparison.Ordinal);
+        Assert.Contains("no documentation at all", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheHolderOfAFundamentalIsReplacedAsWell()
+    {
+        // The holder of a fundamental takes its type documentation on a call
+        // site of its own, so it is covered here rather than assumed.
+        FixtureRun run = RunWithOverlay(
+            """
+            {
+              "typeDocReplace": {
+                "Gst.Knob": [{ "old": "|| video", "new": "||video" }]
+              }
+            }
+            """);
+
+        string source = run.File("Knob.cs");
+
+        Assert.Contains("public static unsafe partial class Knob\n", source, StringComparison.Ordinal);
+        Assert.Contains("\"audio bin ||video bin\"", source, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            run.Result.Diagnostics,
+            static diagnostic => string.Equals(diagnostic.Code, "GEN0064", StringComparison.Ordinal));
     }
 
     [Fact]
