@@ -39,7 +39,15 @@ namespace Gst;
 /// <para>
 /// A change offered while the list itself is not writable is refused by the
 /// library with a GLib CRITICAL, and the buffer that was offered is released
-/// (<c>gstbufferlist.c:284-292</c>).
+/// (<c>gstbufferlist.c:284-292</c>). A removal - clearing the slot, or disposing
+/// the wrapper - is a change like any other and is refused the same way.
+/// </para>
+/// <para>
+/// The function must not touch the list itself while it runs: reading it,
+/// inserting into it or removing from it under the walk shows entries the walk
+/// is in the middle of settling, and the entry of a writable list is held by
+/// the wrapper alone, so reading it back after the wrapper was disposed or
+/// replaced reads memory that has been freed.
 /// </para>
 /// <para>
 /// An exception that leaves the function is reported through

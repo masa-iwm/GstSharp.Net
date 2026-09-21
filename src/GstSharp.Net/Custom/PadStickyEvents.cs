@@ -28,15 +28,17 @@ namespace Gst;
 /// </returns>
 /// <remarks>
 /// <para>
-/// The event is never writable in place, because the pad holds a second
-/// reference to it for as long as it is stored: change it by assigning a
-/// modified copy to the slot.
+/// The event is never editable in place, because the pad holds a second
+/// reference to it for as long as it is stored: <see cref="Gst.Event.MakeWritable"/>
+/// on the wrapper therefore always copies, and the copy becomes the entry, which
+/// is the same answer as assigning a modified copy to the slot.
 /// </para>
 /// <para>
 /// The object lock of the pad is not held while the function runs, so the
 /// sticky events may change underneath the walk; the library then restarts it
 /// from the first event, which is why a function can be shown the same event
-/// twice.
+/// twice. The answer of the invocation that saw the change is discarded, so a
+/// replacement handed over in it is released rather than stored.
 /// </para>
 /// <para>
 /// An exception that leaves the function is reported through

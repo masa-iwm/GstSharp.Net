@@ -1578,8 +1578,9 @@ instead — and the old object is released. Disposing the wrapper, or passing it
 to a member that consumes it, without clearing the slot is the same answer as
 clearing it: the entry is removed, because the wrapper owns nothing any more.
 The buffer of a writable list is writable inside the function, so
-`MakeWritable()` in place is a legal replace, while a sticky event never is: the
-pad keeps a second reference to it. This is the opposite of the identity slot of
+`MakeWritable()` in place is a legal replace. A sticky event can never be edited
+in place, because the pad keeps a second reference to it: `MakeWritable()` on it
+always copies, and the copy becomes the entry. This is the opposite of the identity slot of
 `PadGetRangeFunction`, where the `inout` buffer the puller lends has to be
 answered unchanged and any other pointer is refused.
 
