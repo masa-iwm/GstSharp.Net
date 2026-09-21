@@ -1580,7 +1580,7 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `Gst.Element` | `request_new_pad`, `release_pad`, `get_state`, `set_state`, `change_state`, `state_changed`, `set_bus`, `provide_clock`, `set_clock`, `send_event`, `query`, `post_message`, `set_context` |
 | `Gst.Bin` | `add_element`, `remove_element`, `handle_message`, `do_latency` |
 | `Gst.Pad` | `linked`, `unlinked` |
-| `Gst.DeviceProvider` | `start`, `stop` |
+| `Gst.DeviceProvider` | `start`, `stop`, `probe` (hand-written) |
 | `Gst.Base.BaseSrc` | `get_caps`, `negotiate`, `fixate`, `set_caps`, `decide_allocation`, `start`, `stop`, `get_times`, `get_size`, `is_seekable`, `prepare_seek_segment`, `do_seek`, `unlock`, `unlock_stop`, `query`, `event`, `create`, `alloc`, `fill` |
 | `Gst.Base.PushSrc` | `create`, `alloc`, `fill` |
 | `Gst.Base.BaseSink` | `get_caps`, `set_caps`, `fixate`, `activate_pull`, `get_times`, `propose_allocation`, `start`, `stop`, `unlock`, `unlock_stop`, `query`, `event`, `wait_event`, `prepare`, `prepare_list`, `preroll`, `render`, `render_list` |
@@ -1605,18 +1605,23 @@ managed `VideoSink` overrides `render` through `BaseSink.RenderOverride` and
 | `GES.Clip` | `create_track_element` |
 
 `Aggregator::create_new_pad` is bound as well, and is what a managed sink pad
-type is answered from. Eight slots of the GStreamer classes above carry no
-`OnX` member: seven are the signal class closures of `Element` and
+type is answered from. Seven slots of the GStreamer classes above carry no
+`OnX` member: they are the signal class closures of `Element` and
 `Bin`, which the base library never calls through the class pointer —
-subscribing to the signal is the same hook — and the eighth is
-`DeviceProvider::probe`, whose `GList` answer the reverse planner has no
-bucket for. Three slots of the editing
+subscribing to the signal is the same hook. Three slots of the editing
 services classes above are left out as well: the two dead `TrackElement` twins
 of the child property slots and `Clip::create_track_elements`.
 `girs/skip-report.md` lists all of them with their reason.
 
-`TimelineElement::set_child_property_full` is the one slot of the table whose
-three members are written by hand, in
+`GES.Container::ungroup` is bound by hand too, in
+`src/GstSharp.Net.GES/Custom/Container.cs`, although `GES.Container` is not one
+of the bases above: a managed clip declares `Container.UngroupOverride` through
+`GES.Clip.DefineSubclass` and the other clip bases, which is where a managed
+type may stand. `GES.Container` itself cannot be registered against.
+
+`TimelineElement::set_child_property_full`, `DeviceProvider::probe` and
+`Container::ungroup` are the three slots whose members are written by hand.
+`set_child_property_full` lives in
 `src/GstSharp.Net.GES/Custom/TimelineElement.cs`: it carries a `GError**`,
 which the generator refuses, so `OnSetChildPropertyFull` reports a refusal
 through an `out GException?` the way `SetUri` does, and the trampoline writes
@@ -1634,6 +1639,15 @@ under the same write rule, and any other exception is reported and leaves the
 error of the caller untouched. That is legal because callers in the editing
 services guard the pointer before they read it, where
 `gst_element_make_from_uri` dereferences it unconditionally.
+
+`DeviceProvider::probe` lives in `src/GstSharp.Net/Custom/DeviceProvider.cs` and
+`Container::ungroup` in `src/GstSharp.Net.GES/Custom/Container.cs`. Both answer
+a `GList` the caller takes over together with one reference per element, a shape
+the reverse planner has no bucket for, so `OnProbe()` and `OnUngroup(bool)` take
+and answer an `IReadOnlyList<T>` and the trampoline builds the list: every
+answered object keeps the reference its wrapper owns and gets one more for the
+caller, an empty answer crosses as `NULL`, and a null entry is refused before
+anything has been referenced.
 
 `AudioSink::stop` is the one slot whose managed name is not the one its gir
 name derives. It shares that name with the `stop` of `BaseSink` and answers
@@ -1701,7 +1715,7 @@ classes do not, and the registration says so before it takes the type name:
 
 | Class | Slot | Why |
 | --- | --- | --- |
-| `Gst.DeviceProvider` | `start` | `gst_device_provider_start` falls back to `klass->probe` with no NULL check, and `probe` carries no managed surface |
+| `Gst.DeviceProvider` | `start` **or** `probe` | `gst_device_provider_start` falls back to `klass->probe` with no NULL check when `start` is NULL, so a provider that declares neither crashes when it is started; either slot closes that call |
 | `Aggregator` | `aggregate` | the base class calls it unguarded |
 | `AudioBaseSink`, `AudioBaseSrc` | `create_ringbuffer` | without a ring buffer the element cannot leave the NULL state |
 | `AudioSink`, `AudioSrc` | `prepare`, `unprepare` | acquiring and releasing the ring buffer start out with a failure that only the slot turns into a success |
@@ -1709,17 +1723,23 @@ classes do not, and the registration says so before it takes the type name:
 | `AudioSrc` | `read` | the same |
 | `BaseParse`, `AudioDecoder`, `AudioEncoder`, `VideoDecoder`, `VideoEncoder` | `handle_frame` | the base class calls it for every frame, and for the drain at the end of the stream, unguarded |
 
-### Why `DeviceProvider::start` is on that table
+### Why `DeviceProvider::start` or `probe` is on that table
 
 `gst_device_provider_start` calls `klass->probe` **without a NULL check** when
-`klass->start` is NULL (`gstdeviceprovider.c:476-481`), and `probe` answers a
-`GList` the reverse planner has no bucket for — it is `introspectable="0"`, it
-is in the virtual ledger, and no managed provider ever installs it. Only
-declared slots are patched into the class (§4.2), so a provider that declares
-`StopOverride` alone would leave both slots that matter NULL, and the first
-`Start()` call on it would be a call through a NULL function pointer rather
-than an exception. `DefineSubclass` refuses that registration instead: declare
-`StartOverride` on every managed provider, even one with nothing to start.
+`klass->start` is NULL (`gstdeviceprovider.c:476-481`). Only declared slots are
+patched into the class (§4.2), so a provider that declares `StopOverride` alone
+would leave both slots that matter NULL, and the first `Start()` call on it
+would be a call through a NULL function pointer rather than an exception.
+`DefineSubclass` refuses that registration instead: declare `StartOverride` or
+`ProbeOverride` on every managed provider.
+
+Either one closes the call. With `start` declared, the unguarded branch is never
+taken and `probe` is only reached by `GetDevices()` on a provider that is not
+started; with `probe` declared and no `start`, that branch calls the managed
+slot, which is the C model for a provider that cannot monitor and can only
+enumerate what is there right now. `OnProbe` runs under the same start lock as
+`OnStart`, so the four members below deadlock inside it just as they do inside
+`OnStart`.
 
 Nothing below the slot implements `start` — no class in the chain does — so
 `ChainUpStart()` answers `true`, "nothing below the override refuses to
@@ -1746,7 +1766,12 @@ a `GstDevice` — `display-name`, `device-class`, `caps` and `properties` — ar
 `CONSTRUCT_ONLY` (`gstdevice.c:89-104`), so they are given while the instance
 is being built and nothing can write them afterwards: pass them to the
 dictionary overload of `NewInstance` (§11, "A managed pad type"), the same way a
-`GstPad` takes its `direction`. Neither slot is required.
+`GstPad` takes its `direction`. A provider can answer its own devices from
+`OnProbe()` instead of announcing them with `DeviceAdd()`: the caller of the
+slot receives a new list and one added reference per device, so every wrapper
+the override keeps stays usable and may be answered again, and an already
+parented device is refused with a warning on the start path. Neither slot of a
+device is required.
 `gst_device_create_element` answers NULL and
 `gst_device_reconfigure_element` answers `false` when the class leaves the
 slot empty (`gstdevice.c:210-215`, `:338-341`), and `ChainUpCreateElement()` /
@@ -1776,9 +1801,11 @@ under it.
   managed code yet.** Their required `create_ringbuffer` slot has to answer a
   `GstAudioRingBuffer` subclass, and `AudioRingBuffer` is not subclassable;
   derive from `AudioSink` / `AudioSrc`, which bring their own ring buffer.
-* **A managed `DeviceProvider` lists nothing until it is started.** `probe` is
-  unbound — its `GList` return has no managed shape — so the devices a provider
-  offers are the ones its `OnStart` override announced with `DeviceAdd()`.
+* **A direct managed `GES.Container` subclass is not supported.**
+  `ges_container_group` calls `->group` on every direct child class unguarded
+  (`ges-container.c:1026-1033`), and `group` can carry no managed surface, so
+  `GES.Container` stays off the allowlist. `Container.UngroupOverride` is
+  declared from a clip base instead.
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
   and a managed parent's slot would be the same trampoline (§4.4). The surface

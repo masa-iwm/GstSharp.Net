@@ -5,10 +5,12 @@ namespace GstSharp.IntegrationTests;
 
 /// <summary>
 /// A managed <c>GstDeviceProvider</c> subclass that takes over both
-/// <c>start</c> and <c>stop</c>, which is the pair a managed provider has to
-/// declare: <c>gst_device_provider_start</c> falls back to <c>klass-&gt;probe</c>
-/// with no NULL check when <c>start</c> is NULL, and no managed provider
-/// installs a <c>probe</c>.
+/// <c>start</c> and <c>stop</c>, which is one of the two shapes a managed
+/// provider may have: <c>gst_device_provider_start</c> falls back to
+/// <c>klass-&gt;probe</c> with no NULL check when <c>start</c> is NULL, so a
+/// provider declares <c>start</c> or <c>probe</c>. This one declares
+/// <c>start</c> and announces what it offers from the override;
+/// <see cref="ProbeOnlyDeviceProvider"/> is the other shape.
 /// </summary>
 internal sealed class ProbeDeviceProvider : DeviceProvider, IManagedSubclass<ProbeDeviceProvider>
 {

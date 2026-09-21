@@ -393,10 +393,10 @@ The gaps worth naming here:
   properties, define signals and implement `GstURIHandler`, so
   `gst_element_make_from_uri` finds it. What is not there yet: construct
   properties, interfaces other than `GstURIHandler`, and defining a new
-  interface from managed code. `Gst.DeviceProvider` carries one limit of its
-  own: `probe` is unbound, so a managed provider lists nothing until its
-  `OnStart` override has announced what it offers — devices of its own
-  included, now that `Gst.Device` is subclassable. See
+  interface from managed code. A managed `Gst.DeviceProvider`
+  declares `StartOverride` or `ProbeOverride`: it announces what it offers from
+  `OnStart` with `DeviceAdd()`, answers it from `OnProbe()`, or both — devices
+  of its own included, now that `Gst.Device` is subclassable. See
   [`docs/subclassing.md`](https://github.com/masa-iwm/GstSharp.Net/blob/main/docs/subclassing.md#11-using-it).
 * **Writing GValue-typed structures is incomplete.** Reading is covered —
   `Value.GetBoxed<T>()` for a boxed value and `Value.GetMiniObject<T>()` for a

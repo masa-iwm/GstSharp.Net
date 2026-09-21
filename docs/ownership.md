@@ -90,6 +90,14 @@ travel in:
   and element and wrapper co-own the object, which is the "returned GObject"
   case below. Answer an object that has no parent yet, keep no extra reference
   to it, and read it back from the element instead.
+* **A list the caller takes over, with one reference per element.**
+  `DeviceProvider.OnProbe` and `Container.OnUngroup` answer an
+  `IReadOnlyList<T>` the trampoline turns into a `GList` the caller owns: the
+  caller receives the nodes and **one added reference per element**, and every
+  wrapper keeps the reference it owns, stays usable, and may be answered again.
+  An empty answer crosses as `NULL`, a null entry is refused with an
+  `InvalidOperationException` before anything has been referenced, and the same
+  object may appear twice, which mints a reference per occurrence.
 * **An element the caller owns the floating reference of.**
   `Device.OnCreateElement` is the one slot whose caller takes over the answer
   *floating*: `gst_device_create_element` hands it on exactly as it came and

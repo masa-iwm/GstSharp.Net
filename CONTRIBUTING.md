@@ -319,7 +319,10 @@ gets mirrors as well. The other nine address a single slot, keyed
   `Virtuals` section of `girs/skip-report.md` prints. A slot the planner
   cannot project is *not* listed here: the run reports it as
   `UnsupportedSignature` on its own, so a shape that becomes bindable stops
-  being skipped without anybody editing the file.
+  being skipped without anybody editing the file. A key may also name one slot
+  of a chain-only mirror — a class that is not subclassable but whose mirror
+  lays the slots out — which is how a slot that is bound by hand for the classes
+  below it states its reason instead of the fixed "not subclassable" one.
 * `vfuncDefaults` — what a chain-up answers when the parent class leaves the
   slot NULL, which is the behaviour the base class documents for that case. A
   slot with no entry has no value a chain-up could invent and throws instead.
