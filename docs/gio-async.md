@@ -386,11 +386,19 @@ the `check_id` overrides in the editing services rather than read off the
 interface vtable, which managed code cannot reach; a managed subclass inherits
 the `check_id` of its native parent, so subclasses are covered by it.
 
+Two of those types are refused although their `check_id` survives a `NULL`:
+a `GESFormatter` type, because `ges_init` caches an asset for every concrete
+formatter (`ges-formatter.c:541`) and the entries table is therefore in place
+before the first request; and `GESTimeline`, which answers one request with an
+identifier the caller never named and dies on the next.
+
 The synchronous `GES.Asset.Request` and `GES.Asset.NeedsReload` guard only the
-`GESEffect` and `GESEffectClip` pair. They crash on a `null` identifier for the
-other refused types as well, through a different path
+`GESEffect` and `GESEffectClip` pair. They crash on a `null` identifier for
+`GESUriClip`, `GESAudioUriSource`, `GESVideoUriSource`, `GESMultiFileSource`,
+`GESSourceClip` and `GESTransitionClip` as well, through a different path
 (`_ensure_asset_for_wrong_id`, `ges-asset.c:1264-1268`); widening their guard is
-a separate change.
+a separate change. `GESFormatter` and `GESTimeline` are not among them: the
+synchronous request is how the library builds those itself.
 
 ## 9. Deliberate omissions
 

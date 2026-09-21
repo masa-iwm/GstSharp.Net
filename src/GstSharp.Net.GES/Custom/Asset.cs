@@ -300,10 +300,14 @@ public unsafe partial class Asset
     /// native parent, so the <c>is-a</c> tests cover managed types too.
     /// </para>
     /// <para>
-    /// The refusals are not new failures. Every type below either kills the
-    /// process on the asynchronous path or, for <c>GESFormatter</c> and
-    /// <c>GESTimeline</c>, hands back an identifier the caller never named and
-    /// then kills the process on the next request.
+    /// The refusals are not new failures. Every type below kills the process on
+    /// the asynchronous path: the ones whose <c>check_id</c> reads the
+    /// identifier through die on the first request, a <c>GESFormatter</c> type
+    /// dies on the first one too because <c>ges_init</c> caches an asset for
+    /// every concrete formatter (<c>ges-formatter.c:541</c>) and so leaves the
+    /// entries table in place, and a <c>GESTimeline</c> is the one type that
+    /// answers a first request — with a <c>project-&lt;n&gt;</c> the caller
+    /// never named — before the second one dies.
     /// </para>
     /// </remarks>
     /// <exception cref="ArgumentException">
@@ -350,8 +354,10 @@ public unsafe partial class Asset
 
 #pragma warning disable CS0618 // GESMultiFileSource is deprecated upstream, but its GType is still
         // requestable and a null id still kills the process, so the refusal has to name it.
-        if (extractableType.IsA(new Gst.GObject.GType(GES.MultiFileSource.GetGType())))
+        Gst.GObject.GType multiFileSource = new Gst.GObject.GType(GES.MultiFileSource.GetGType());
 #pragma warning restore CS0618
+
+        if (extractableType.IsA(multiFileSource))
         {
             throw Refuse(
                 extractableType,

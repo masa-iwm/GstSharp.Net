@@ -432,15 +432,17 @@ public sealed class GesAsyncTests
 
         // Asking each class for its GType is also what registers it, which
         // GType.FromName would depend on someone else having done.
+#pragma warning disable CS0618 // GESMultiFileSource is deprecated upstream and still requestable.
+        GType multiFileSource = new GType(MultiFileSource.GetGType());
+#pragma warning restore CS0618
+
         GType[] refused =
         [
             new GType(SourceClip.GetGType()),
             new GType(UriClip.GetGType()),
             new GType(AudioUriSource.GetGType()),
             new GType(VideoUriSource.GetGType()),
-#pragma warning disable CS0618 // GESMultiFileSource is deprecated upstream and still requestable.
-            new GType(MultiFileSource.GetGType()),
-#pragma warning restore CS0618
+            multiFileSource,
             new GType(TransitionClip.GetGType()),
             new GType(Formatter.GetGType()),
             new GType(Timeline.GetGType()),
