@@ -493,6 +493,14 @@ public sealed unsafe class SubclassNativeConstructionTests
         _output.WriteLine(FormattableString.Invariant(
             $"pad: flushed={managed.Flushed}, skipped={managed.Skipped}, lastFlush={managed.LastFlushAnswer}, lastSkip={managed.LastSkipAnswer}"));
 
+        // What the trap holds is asserted first: a slot that threw says so in
+        // its own words here, where a value assertion would only report that
+        // nothing was answered.
+        lock (reported)
+        {
+            Assert.Empty(reported);
+        }
+
         // skip_buffer is not reached by plain streaming through an aggregator
         // with a single sink pad, so the flush slot is what this asserts; both
         // are declared and both are dispatched the same way. Two flushes is the
@@ -505,11 +513,6 @@ public sealed unsafe class SubclassNativeConstructionTests
         // empty one as a successful flush, so that is what the chain-up answers
         // rather than throwing through the callback boundary.
         Assert.Equal(FlowReturn.Ok, managed.LastFlushAnswer);
-
-        lock (reported)
-        {
-            Assert.Empty(reported);
-        }
     }
 
     /// <summary>
