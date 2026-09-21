@@ -82,6 +82,14 @@ internal sealed class ManagedAudioEncoder : AudioEncoder
         Gst.Buffer output = Gst.Buffer.NewAllocate(null, 4, null)
             ?? throw new InvalidOperationException("The output buffer could not be allocated.");
 
+        // The one window the segment of the encoder is consistent in. The copy
+        // is the caller's, so it is disposed here; reading it is what compiles
+        // the instance field path of the Audio module under NativeAOT.
+        using (Segment input = GetInputSegment())
+        {
+            _ = input.Rate;
+        }
+
         _ = Interlocked.Increment(ref _encoded);
 
         // -1 consumes every sample the base class is holding for this call.
