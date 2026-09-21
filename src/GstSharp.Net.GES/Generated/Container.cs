@@ -63,12 +63,21 @@ public abstract unsafe partial class Container : GES.TimelineElement, GES.IExtra
     /// using ges_timeline_element_get_child_property() and
     /// ges_timeline_element_set_child_property() on the container.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException for a GESEffect that has no asset, when the
+    /// container is a clip whose class can add effects and the effect would become a top effect
+    /// of it. ges-container.c:733-736 dispatches to GESClip::_add_child without looking at the
+    /// asset, and the branch that takes the effect reads its bin description through
+    /// ges_asset_get_id (NULL) (ges-clip.c:1786-1790). Build the effect through its asset
+    /// instead: GES.Asset.Request(type.GType, "video &lt;description&gt;")!.Extract&lt;T&gt;().
+    /// </para>
     /// </remarks>
     /// <param name="child">The element to add as a child</param>
     /// <returns>%TRUE if @child was successfully added to @container.</returns>
     public bool Add(GES.TimelineElement child)
     {
         ArgumentNullException.ThrowIfNull(child);
+        GES.Clip.ThrowIfEffectHasNoAsset(this, child);
         int nativeResult = GesContainerAdd(Handle, child.Handle);
         bool result = nativeResult != 0;
         System.GC.KeepAlive(this);

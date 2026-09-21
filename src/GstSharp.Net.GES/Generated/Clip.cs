@@ -323,6 +323,14 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     /// Note, if the effect is a time effect, this may be refused if the clip
     /// would not be able to adapt itself once the effect is added.
     /// </para>
+    /// <para>
+    /// The binding throws InvalidOperationException for a GESEffect that has no asset. The call
+    /// forwards to ges_container_add (ges-clip.c:3113), whose top effect branch reads the bin
+    /// description of the asset of the effect with ges_asset_get_id (NULL) and hands the result
+    /// to strstr (:1786-1790), so an effect built with new takes the process down. Build one
+    /// through its asset instead: GES.Asset.Request(type.GType, "video
+    /// &lt;description&gt;")!.Extract&lt;T&gt;().
+    /// </para>
     /// </remarks>
     /// <param name="effect">A top effect to add</param>
     /// <param name="index">
@@ -334,6 +342,7 @@ public abstract unsafe partial class Clip : GES.Container, GES.IExtractable, GES
     public bool AddTopEffect(GES.BaseEffect effect, int index)
     {
         ArgumentNullException.ThrowIfNull(effect);
+        GES.Clip.ThrowIfEffectHasNoAsset(this, effect);
         nint errorNative = 0;
         int nativeResult = GesClipAddTopEffect(Handle, effect.Handle, index, &errorNative);
         Gst.GLib.GException.ThrowIfSet(ref errorNative);
