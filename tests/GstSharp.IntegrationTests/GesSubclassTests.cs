@@ -74,9 +74,9 @@ public sealed partial class GesSubclassTests
     /// empty one (<c>ges-timeline-element.c:995-1000</c>).
     /// </summary>
     /// <remarks>
-    /// <c>ges_container_add</c> is the caller of the slot — adding a clip to a
-    /// layer is not — so a group is what asks a clip for its parent. A refusal
-    /// there would not even roll the removal back
+    /// A clip a layer holds has no parent, as the test observes before it groups:
+    /// <c>ges_container_add</c> is what calls the slot, so a group is what gives a
+    /// clip a parent. A refusal there would not even roll the removal back
     /// (<c>ges-container.c:127-130</c>): the child would keep a parent pointer
     /// with no parent behind it.
     /// </remarks>
@@ -115,6 +115,9 @@ public sealed partial class GesSubclassTests
 
                 Assert.True(layer.AddClip(first));
                 Assert.True(layer.AddClip(second));
+
+                Assert.Null(first.Parent);
+                Assert.Equal(0, first.SetParentCalls);
 
                 Container grouped = Container.Group([first, second])
                     ?? throw new InvalidOperationException("The clips could not be grouped.");
