@@ -71,6 +71,8 @@ public sealed unsafe class InstanceFieldProbeTests
     private static readonly Func<InstanceMirrorProbe[]>[] Registries =
     [
         Gst.Base.InstanceFieldRegistry.CreateEntries,
+        Gst.Audio.InstanceFieldRegistry.CreateEntries,
+        Gst.Video.InstanceFieldRegistry.CreateEntries,
     ];
 
     private readonly ITestOutputHelper _output;
@@ -138,8 +140,9 @@ public sealed unsafe class InstanceFieldProbeTests
     /// <c>offsetof (&lt;class&gt;, &lt;field&gt;) - sizeof (GstElement)</c>.
     /// </param>
     /// <remarks>
-    /// The four classes carry no C <c>long</c> anywhere in their own fields or in
-    /// their parent chain, so these numbers hold on every 64 bit target; the
+    /// None of the classes carries a C <c>long</c>, a bitfield or a union anywhere
+    /// in its own fields or in its parent chain, so these numbers hold on every 64
+    /// bit target; the
     /// absolute offsets do not, which is why the first term of the arithmetic is
     /// read from the library rather than written here. <c>sizeof (GstSegment)</c>
     /// is 120, which is what the 120 bytes between the offsets below and the
@@ -150,6 +153,14 @@ public sealed unsafe class InstanceFieldProbeTests
     [InlineData("GstBaseSrc", "segment", 64)]
     [InlineData("GstBaseTransform", "segment", 24)]
     [InlineData("GstBaseParse", "segment", 24)]
+    [InlineData("GstAudioDecoder", "input_segment", 32)]
+    [InlineData("GstAudioDecoder", "output_segment", 152)]
+    [InlineData("GstAudioEncoder", "input_segment", 32)]
+    [InlineData("GstAudioEncoder", "output_segment", 152)]
+    [InlineData("GstVideoDecoder", "input_segment", 32)]
+    [InlineData("GstVideoDecoder", "output_segment", 152)]
+    [InlineData("GstVideoEncoder", "input_segment", 32)]
+    [InlineData("GstVideoEncoder", "output_segment", 152)]
     public void EveryExposedFieldSitsWhereACompilerMeasuredIt(string cName, string field, int offset)
     {
         InstanceMirrorProbe entry = Row(cName);
@@ -165,7 +176,7 @@ public sealed unsafe class InstanceFieldProbeTests
 
     /// <summary>
     /// The instance size the library reports for the parent is what the
-    /// accessors add, and <c>GstElement</c> is the parent of all four.
+    /// accessors add, and <c>GstElement</c> is the parent of every one of them.
     /// </summary>
     [Fact]
     public void TheParentTermComesFromTheLibrary()
@@ -299,6 +310,178 @@ public sealed unsafe class InstanceFieldProbeTests
     }
 
     /// <summary>
+    /// <c>gst_audio_decoder_sink_eventfunc</c> copies the segment of a TIME
+    /// segment event into the input field, at <c>gstaudiodecoder.c:2457</c>.
+    /// </summary>
+    /// <remarks>
+    /// The four codec base classes are minted by the test rather than borrowed
+    /// from the machine, so none of these witnesses needs a plugin beyond core,
+    /// and each of them keeps the source pad unlinked: every writer below runs
+    /// before the push that an unlinked pad refuses.
+    /// </remarks>
+    [InstanceFieldWitness("GstAudioDecoder.input_segment")]
+    [Fact]
+    public void TheAudioDecoderInputAccessorReadsWhatASegmentEventWrote()
+    {
+        using ProbeAudioDecoder decoder = new();
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(decoder, "sink", written, decoder.GetInputSegment);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
+    /// The audio decoder queues the segment event and forwards it when the
+    /// stream ends: EOS drains through <c>send_pending_events</c>
+    /// (<c>gstaudiodecoder.c:2528-2529</c>), which copies the segment into the
+    /// output field at <c>:641</c> before it pushes the event.
+    /// </summary>
+    [InstanceFieldWitness("GstAudioDecoder.output_segment")]
+    [Fact]
+    public void TheAudioDecoderOutputAccessorReadsWhatTheFlushedSegmentEventWrote()
+    {
+        using ProbeAudioDecoder decoder = new();
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(
+            decoder,
+            "sink",
+            written,
+            decoder.GetOutputSegment,
+            after: [Event.NewEos()]);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
+    /// <c>gst_audio_encoder_sink_event_default</c> copies the segment of a TIME
+    /// segment event into the input field, at <c>gstaudioencoder.c:1622</c>.
+    /// </summary>
+    [InstanceFieldWitness("GstAudioEncoder.input_segment")]
+    [Fact]
+    public void TheAudioEncoderInputAccessorReadsWhatASegmentEventWrote()
+    {
+        using ProbeAudioEncoder encoder = new();
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(encoder, "sink", written, encoder.GetInputSegment);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
+    /// The audio encoder queues the segment event rather than forwarding it
+    /// (<c>gstaudioencoder.c:1624</c> appends it to the early pending events) and
+    /// flushes the queue when the stream ends (<c>:1657</c>), which copies the
+    /// segment into the output field at <c>:611</c> before the push.
+    /// </summary>
+    [InstanceFieldWitness("GstAudioEncoder.output_segment")]
+    [Fact]
+    public void TheAudioEncoderOutputAccessorReadsWhatTheFlushedSegmentEventWrote()
+    {
+        using ProbeAudioEncoder encoder = new();
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(
+            encoder,
+            "sink",
+            written,
+            encoder.GetOutputSegment,
+            after: [Event.NewEos()]);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
+    /// <c>gst_video_decoder_sink_event_default</c> copies the segment of a TIME
+    /// segment event into the input field, at <c>gstvideodecoder.c:1598</c>.
+    /// </summary>
+    [InstanceFieldWitness("GstVideoDecoder.input_segment")]
+    [Fact]
+    public void TheVideoDecoderInputAccessorReadsWhatASegmentEventWrote()
+    {
+        using ProbeVideoDecoder decoder = new();
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(decoder, "sink", written, decoder.GetInputSegment);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
+    /// The video decoder does not flush its queued events at EOS - that path
+    /// only drains (<c>gstvideodecoder.c:1492-1499</c>) - so the witness sends a
+    /// gap: <c>gst_video_decoder_handle_gap</c> pushes the pending events
+    /// (<c>:1403-1417</c>), which copies the segment into the output field at
+    /// <c>:1107</c>.
+    /// </summary>
+    /// <remarks>
+    /// The gap path runs only once an output state exists, which the caps event
+    /// makes the probe set. Negotiating it on an unlinked source pad fails, and
+    /// the library logs a warning for that rather than refusing the caps, so
+    /// neither the caps nor the gap is asserted on.
+    /// </remarks>
+    [InstanceFieldWitness("GstVideoDecoder.output_segment")]
+    [Fact]
+    public void TheVideoDecoderOutputAccessorReadsWhatTheGapFlushedSegmentEventWrote()
+    {
+        using ProbeVideoDecoder decoder = new();
+        using Caps caps = Assert.IsType<Caps>(
+            Caps.FromString("video/x-raw,format=GRAY8,width=16,height=16,framerate=30/1"));
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(
+            decoder,
+            "sink",
+            written,
+            decoder.GetOutputSegment,
+            before: [Event.NewCaps(caps)],
+            after: [Event.NewGap(ClockTime.FromNanoseconds(13_000_000_000), ClockTime.FromNanoseconds(1_000_000_000))]);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
+    /// <c>gst_video_encoder_sink_event_default</c> copies the segment of a TIME
+    /// segment event into the input field, at <c>gstvideoencoder.c:1186</c>.
+    /// </summary>
+    [InstanceFieldWitness("GstVideoEncoder.input_segment")]
+    [Fact]
+    public void TheVideoEncoderInputAccessorReadsWhatASegmentEventWrote()
+    {
+        using ProbeVideoEncoder encoder = new();
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(encoder, "sink", written, encoder.GetInputSegment);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
+    /// The video encoder queues the segment event and pushes it when the stream
+    /// ends (<c>gstvideoencoder.c:1151-1157</c>), which copies it into the output
+    /// field at <c>:1062</c>. No time adjustment is applied, because none was set
+    /// (<c>:482</c>).
+    /// </summary>
+    [InstanceFieldWitness("GstVideoEncoder.output_segment")]
+    [Fact]
+    public void TheVideoEncoderOutputAccessorReadsWhatTheFlushedSegmentEventWrote()
+    {
+        using ProbeVideoEncoder encoder = new();
+
+        using Segment written = Distinctive();
+        using Segment read = Witness(
+            encoder,
+            "sink",
+            written,
+            encoder.GetOutputSegment,
+            after: [Event.NewEos()]);
+
+        AssertSame(written, read);
+    }
+
+    /// <summary>
     /// Takes one element to PAUSED, pushes a stream start and a segment at the
     /// named pad of it, and reads the field back.
     /// </summary>
@@ -306,8 +489,11 @@ public sealed unsafe class InstanceFieldProbeTests
     /// <param name="padName">The pad the events are sent to.</param>
     /// <param name="segment">The segment the event carries.</param>
     /// <param name="read">The accessor under test.</param>
+    /// <param name="before">Events to send between the stream start and the segment.</param>
+    /// <param name="after">Events to send after the segment, to make a base class act on it.</param>
     /// <returns>What the accessor answered while the element was still in PAUSED.</returns>
     /// <remarks>
+    /// <para>
     /// The read happens before the element goes back to NULL, because the
     /// downward state change resets the segment of a base class that keeps one:
     /// a parser initialises the field in PAUSED to READY, so a read afterwards
@@ -315,8 +501,23 @@ public sealed unsafe class InstanceFieldProbeTests
     /// all the same before it is disposed, because a disposal from PAUSED logs a
     /// critical - which this suite does not make fatal - and leaks the pads with
     /// it.
+    /// </para>
+    /// <para>
+    /// The result of an event of <paramref name="before"/> or
+    /// <paramref name="after"/> is written down and not asserted. The source pad
+    /// is left unlinked on purpose, which a sticky event does not mind but an EOS
+    /// and a gap do: <c>gst_pad_push_event</c> answers FALSE for them on a pad
+    /// nothing is linked to, long after the base class has copied the segment it
+    /// was flushing. What the field holds is the assertion.
+    /// </para>
     /// </remarks>
-    private Segment Witness(Element element, string padName, Segment segment, Func<Segment> read)
+    private Segment Witness(
+        Element element,
+        string padName,
+        Segment segment,
+        Func<Segment> read,
+        Event[]? before = null,
+        Event[]? after = null)
     {
         StateChangeReturn changed = element.SetState(State.Paused);
         _output.WriteLine(FormattableString.Invariant($"{element.Name}: set_state(PAUSED) = {changed}"));
@@ -327,7 +528,9 @@ public sealed unsafe class InstanceFieldProbeTests
             using Pad pad = Assert.IsAssignableFrom<Pad>(element.GetStaticPad(padName));
 
             Assert.True(pad.SendEvent(Event.NewStreamStart("instance-field-witness")));
+            Send(pad, before);
             Assert.True(pad.SendEvent(Event.NewSegment(segment)));
+            Send(pad, after);
 
             return read();
         }
@@ -335,6 +538,19 @@ public sealed unsafe class InstanceFieldProbeTests
         {
             _ = element.SetState(State.Null);
             _ = element.GetState(out State _, out State _, StateTimeout);
+        }
+    }
+
+    /// <summary>Sends events at a pad and writes down what each of them answered.</summary>
+    /// <param name="pad">The pad the events are sent to.</param>
+    /// <param name="events">The events, or <see langword="null"/> for none.</param>
+    private void Send(Pad pad, Event[]? events)
+    {
+        foreach (Event sent in events ?? [])
+        {
+            EventType type = sent.Type;
+            bool answered = pad.SendEvent(sent);
+            _output.WriteLine(FormattableString.Invariant($"{pad.Name}: send_event({type}) = {answered}"));
         }
     }
 
