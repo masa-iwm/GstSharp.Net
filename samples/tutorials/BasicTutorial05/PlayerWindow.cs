@@ -44,7 +44,10 @@ internal sealed class PlayerWindow : Window, IDisposable
     /// <summary>The once-a-second tick that refreshes the interface.</summary>
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
 
-    /// <summary>How long the process has been running, for <c>--timeout</c>.</summary>
+    /// <summary>
+    /// How long <c>--timeout</c> has left to run: from process start until the
+    /// pipeline first reaches PLAYING, and from that moment afterwards.
+    /// </summary>
     private readonly Stopwatch _elapsed = Stopwatch.StartNew();
 
     /// <summary>
@@ -67,6 +70,9 @@ internal sealed class PlayerWindow : Window, IDisposable
 
     /// <summary>Whether the pipeline has been started.</summary>
     private bool _started;
+
+    /// <summary>Whether the pipeline has reached PLAYING at least once.</summary>
+    private bool _playing;
 
     /// <summary>Whether the pipeline has been brought to rest.</summary>
     private bool _stopped;
@@ -398,8 +404,15 @@ internal sealed class PlayerWindow : Window, IDisposable
         if (_playbin.SetState(State.Playing) == StateChangeReturn.Failure)
         {
             Console.Error.WriteLine("BasicTutorial05: the pipeline refused to go to PLAYING.");
+
+            // The timer never started, so nothing else will read the bus, and
+            // the error message on it is the only thing that says why. Closing
+            // is posted rather than called: this runs inside the toolkit's
+            // create-native-control path, and a window that closes from under
+            // it would be closing while it is still being built.
+            PumpBus();
             ToolkitIntegration.ExitCode = 1;
-            Close();
+            Dispatcher.UIThread.Post(Close);
             return;
         }
 
@@ -534,6 +547,17 @@ internal sealed class PlayerWindow : Window, IDisposable
 
         message.ParseStateChanged(out State old, out _state, out _);
         Console.WriteLine($"state:       {old} -> {_state}");
+
+        if (old == State.Paused && _state == State.Playing && !_playing)
+        {
+            // --timeout is meant to bound the playback, not the start-up, and
+            // opening a window and prerolling a stream can take seconds. The
+            // clock therefore restarts the first time there is something to
+            // watch; before that it runs from process start, so a run that
+            // never reaches PLAYING is still bounded.
+            _playing = true;
+            _elapsed.Restart();
+        }
 
         if (old == State.Ready && _state == State.Paused)
         {

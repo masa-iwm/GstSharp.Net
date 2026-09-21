@@ -52,7 +52,10 @@
 //     starts no toolkit: it initializes GStreamer, makes a playbin, asserts
 //     that the playbin proxies GstVideoOverlay and exits. That is what CI runs,
 //     because none of the runners has a display. --timeout is the other
-//     addition: with no window to close by hand, it bounds a run.
+//     addition: with no window to close by hand, it bounds a run. It counts
+//     from the moment the pipeline first reaches PLAYING, so that opening a
+//     window and prerolling a stream does not eat the playback it was meant to
+//     bound; a run that never gets there is bounded from process start instead.
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Avalonia;
@@ -183,7 +186,8 @@ internal static class ToolkitIntegration
         internal bool SelfTest { get; private set; }
 
         /// <summary>
-        /// Gets how long the run may take, or <see cref="TimeSpan.Zero"/> when
+        /// Gets how long the run may play, measured from the first time the
+        /// pipeline reaches PLAYING, or <see cref="TimeSpan.Zero"/> when
         /// nothing but the window closing ends it.
         /// </summary>
         internal TimeSpan Timeout { get; private set; } = TimeSpan.Zero;

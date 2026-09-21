@@ -127,7 +127,11 @@ it only prints the decoder ranking.
 `BasicTutorial05` is the one project whose `--timeout` has no default: a window
 is closed when whoever opened it says so, and nothing else ends that run. Give
 it a bound to run it unattended, or `--headless-selftest` to skip the window
-altogether.
+altogether. Its `--timeout` is also the one that is measured from the first
+time the pipeline reaches PLAYING rather than from process start, because
+opening a window and prerolling a stream can take seconds and would otherwise
+be most of a short bound; a run that never reaches PLAYING is still bounded
+from process start.
 
 `PlaybackTutorial06` keeps the upstream default of
 `http://radio.hbr1.com:19800/ambient.ogg`, a radio station that stopped
