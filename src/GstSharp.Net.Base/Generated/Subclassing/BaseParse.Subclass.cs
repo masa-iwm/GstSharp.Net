@@ -271,6 +271,11 @@ public unsafe partial class BaseParse
     ///                  Called when the element starts processing.
     ///                  Allows opening external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstBaseParse leaves this slot empty and gst_base_parse_activate answers TRUE for an
+    /// empty one (gstbaseparse.c:3855, :3862-3863), so a chain-up answers true rather than
+    /// throwing. The slot runs once, when the sink pad is activated and has no mode yet.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected virtual bool OnStart() =>
         ChainUpStart();
@@ -280,6 +285,12 @@ public unsafe partial class BaseParse
     ///                  Called when the element stops processing.
     ///                  Allows closing external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstBaseParse leaves this slot empty and gst_base_parse_activate answers TRUE for an
+    /// empty one (gstbaseparse.c:3855, :3874-3875), so a chain-up answers true rather than
+    /// throwing. The slot runs when the sink pad is deactivated, after the streaming thread has
+    /// finished.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected virtual bool OnStop() =>
         ChainUpStop();
@@ -288,6 +299,12 @@ public unsafe partial class BaseParse
     /// Optional.
     ///                  Allows the subclass to be notified of the actual caps set.
     /// </summary>
+    /// <remarks>
+    /// <para>GstBaseParse leaves this slot empty and the caller accepts the caps for an empty one
+    /// (gstbaseparse.c:1304-1307); the caps event is consumed either way, because the parser
+    /// sends caps of its own downstream (:1310). So a chain-up answers true, meaning the caps
+    /// are accepted, rather than throwing.</para>
+    /// </remarks>
     /// <param name="caps">
     /// The <c>caps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -456,6 +473,11 @@ public unsafe partial class BaseParse
         ChainUpSrcQuery(query);
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstBaseParse leaves this slot empty and gst_base_parse_activate answers TRUE for an
+    /// empty one (gstbaseparse.c:3855, :3862-3863), so a chain-up answers true rather than
+    /// throwing. The slot runs once, when the sink pad is activated and has no mode yet.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected bool ChainUpStart()
     {
@@ -465,6 +487,12 @@ public unsafe partial class BaseParse
     }
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstBaseParse leaves this slot empty and gst_base_parse_activate answers TRUE for an
+    /// empty one (gstbaseparse.c:3855, :3874-3875), so a chain-up answers true rather than
+    /// throwing. The slot runs when the sink pad is deactivated, after the streaming thread has
+    /// finished.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected bool ChainUpStop()
     {
@@ -474,6 +502,12 @@ public unsafe partial class BaseParse
     }
 
     /// <summary>Runs the implementation of <c>set_sink_caps</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstBaseParse leaves this slot empty and the caller accepts the caps for an empty one
+    /// (gstbaseparse.c:1304-1307); the caps event is consumed either way, because the parser
+    /// sends caps of its own downstream (:1310). So a chain-up answers true, meaning the caps
+    /// are accepted, rather than throwing.</para>
+    /// </remarks>
     /// <param name="caps">
     /// The <c>caps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -671,8 +705,7 @@ public unsafe partial class BaseParse
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseParse.start has no parent implementation; override OnStart.");
+            return true;
         }
 
         return slot(parse) != 0;
@@ -685,8 +718,7 @@ public unsafe partial class BaseParse
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseParse.stop has no parent implementation; override OnStop.");
+            return true;
         }
 
         return slot(parse) != 0;
@@ -699,8 +731,7 @@ public unsafe partial class BaseParse
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseParse.set_sink_caps has no parent implementation; override OnSetSinkCaps.");
+            return true;
         }
 
         return slot(parse, caps) != 0;

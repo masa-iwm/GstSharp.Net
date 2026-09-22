@@ -334,6 +334,11 @@ public unsafe partial class VideoEncoder
     ///                  Called when the element changes to GST_STATE_READY.
     ///                  Allows opening external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstvideoencoder.c:1765), so a chain-up answers true rather than throwing. Answer false
+    /// to refuse the NULL to READY change.</para>
+    /// </remarks>
     /// <returns>What <c>open</c> answers.</returns>
     protected virtual bool OnOpen() =>
         ChainUpOpen();
@@ -343,6 +348,11 @@ public unsafe partial class VideoEncoder
     ///                  Called when the element changes to GST_STATE_NULL.
     ///                  Allows closing external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstvideoencoder.c:1800), so a chain-up answers true rather than throwing. Answer false
+    /// to fail the READY to NULL change.</para>
+    /// </remarks>
     /// <returns>What <c>close</c> answers.</returns>
     protected virtual bool OnClose() =>
         ChainUpClose();
@@ -352,6 +362,11 @@ public unsafe partial class VideoEncoder
     ///                  Called when the element starts processing.
     ///                  Allows opening external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstvideoencoder.c:1774), so a chain-up answers true rather than throwing. Answer false
+    /// to fail the READY to PAUSED change.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected virtual bool OnStart() =>
         ChainUpStart();
@@ -361,6 +376,11 @@ public unsafe partial class VideoEncoder
     ///                  Called when the element stops processing.
     ///                  Allows closing external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change answers TRUE for an empty
+    /// one (gstvideoencoder.c:1785, :1787-1788), resetting the encoder after the call either
+    /// way (:1791). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected virtual bool OnStop() =>
         ChainUpStop();
@@ -371,6 +391,12 @@ public unsafe partial class VideoEncoder
     ///                  GstVideoCodecState fields have already been
     ///                  set according to provided caps.
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the caller accepts the state for an empty one
+    /// (gstvideoencoder.c:737, :770-771), storing it as the input state on a true answer
+    /// (:773-776). So a chain-up answers true, meaning the format is accepted, rather than
+    /// throwing; an override that answers false refuses the caps event.</para>
+    /// </remarks>
     /// <param name="state">
     /// The <c>state</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -404,6 +430,12 @@ public unsafe partial class VideoEncoder
     ///                  Allows subclass (encoder) to perform post-seek semantics reset.
     ///                  Deprecated.
     /// </summary>
+    /// <remarks>
+    /// <para>Deprecated: the gir says so in prose and the base class prints a FIXME each time it
+    /// calls the slot (gstvideoencoder.c:765). GstVideoEncoder leaves it empty, calls it bare
+    /// before every format change and discards what it answers (:764-767), so a chain-up
+    /// answers true, meaning nothing below the override refused, rather than throwing.</para>
+    /// </remarks>
     /// <param name="hard">The <c>hard</c> argument.</param>
     /// <returns>What <c>reset</c> answers.</returns>
     protected virtual bool OnReset(bool hard) =>
@@ -414,6 +446,11 @@ public unsafe partial class VideoEncoder
     ///                  Called to request subclass to dispatch any pending remaining
     ///                  data (e.g. at EOS).
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the end-of-stream handling answers Ok for an
+    /// empty one (gstvideoencoder.c:1145-1149), so a chain-up answers Ok, meaning nothing below
+    /// the override had anything left to push, rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>finish</c> answers.</returns>
     protected virtual Gst.FlowReturn OnFinish() =>
         ChainUpFinish();
@@ -424,6 +461,12 @@ public unsafe partial class VideoEncoder
     ///                  shape or form it deems appropriate.  If not provided,
     ///                  provided encoded frame data is simply pushed downstream.
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and both callers push the frame as it is for an
+    /// empty one (gstvideoencoder.c:2626, :2726-2727 and :2784, :2864-2866), so a chain-up
+    /// answers Ok and leaves the frame untouched rather than throwing. The frame is lent: what
+    /// the override changes on it before chaining up is what gets pushed.</para>
+    /// </remarks>
     /// <param name="frame">
     /// The <c>frame</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -538,6 +581,11 @@ public unsafe partial class VideoEncoder
     ///                      Flush all remaining data from the encoder without
     ///                      pushing it downstream. Since: 1.2
     /// </summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and gst_video_encoder_flush answers TRUE for an
+    /// empty one (gstvideoencoder.c:556-559); its one caller, the flush-stop handling, ignores
+    /// the answer anyway (:1271). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>flush</c> answers.</returns>
     protected virtual bool OnFlush() =>
         ChainUpFlush();
@@ -600,6 +648,11 @@ public unsafe partial class VideoEncoder
         ChainUpTransformMeta(frame, meta);
 
     /// <summary>Runs the implementation of <c>open</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstvideoencoder.c:1765), so a chain-up answers true rather than throwing. Answer false
+    /// to refuse the NULL to READY change.</para>
+    /// </remarks>
     /// <returns>What <c>open</c> answers.</returns>
     protected bool ChainUpOpen()
     {
@@ -609,6 +662,11 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>close</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstvideoencoder.c:1800), so a chain-up answers true rather than throwing. Answer false
+    /// to fail the READY to NULL change.</para>
+    /// </remarks>
     /// <returns>What <c>close</c> answers.</returns>
     protected bool ChainUpClose()
     {
@@ -618,6 +676,11 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstvideoencoder.c:1774), so a chain-up answers true rather than throwing. Answer false
+    /// to fail the READY to PAUSED change.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected bool ChainUpStart()
     {
@@ -627,6 +690,11 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the state change answers TRUE for an empty
+    /// one (gstvideoencoder.c:1785, :1787-1788), resetting the encoder after the call either
+    /// way (:1791). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected bool ChainUpStop()
     {
@@ -636,6 +704,12 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>set_format</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the caller accepts the state for an empty one
+    /// (gstvideoencoder.c:737, :770-771), storing it as the input state on a true answer
+    /// (:773-776). So a chain-up answers true, meaning the format is accepted, rather than
+    /// throwing; an override that answers false refuses the caps event.</para>
+    /// </remarks>
     /// <param name="state">
     /// The <c>state</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -677,6 +751,12 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>reset</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>Deprecated: the gir says so in prose and the base class prints a FIXME each time it
+    /// calls the slot (gstvideoencoder.c:765). GstVideoEncoder leaves it empty, calls it bare
+    /// before every format change and discards what it answers (:764-767), so a chain-up
+    /// answers true, meaning nothing below the override refused, rather than throwing.</para>
+    /// </remarks>
     /// <param name="hard">The <c>hard</c> argument.</param>
     /// <returns>What <c>reset</c> answers.</returns>
     protected bool ChainUpReset(bool hard)
@@ -687,6 +767,11 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>finish</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and the end-of-stream handling answers Ok for an
+    /// empty one (gstvideoencoder.c:1145-1149), so a chain-up answers Ok, meaning nothing below
+    /// the override had anything left to push, rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>finish</c> answers.</returns>
     protected Gst.FlowReturn ChainUpFinish()
     {
@@ -696,6 +781,12 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>pre_push</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and both callers push the frame as it is for an
+    /// empty one (gstvideoencoder.c:2626, :2726-2727 and :2784, :2864-2866), so a chain-up
+    /// answers Ok and leaves the frame untouched rather than throwing. The frame is lent: what
+    /// the override changes on it before chaining up is what gets pushed.</para>
+    /// </remarks>
     /// <param name="frame">
     /// The <c>frame</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -818,6 +909,11 @@ public unsafe partial class VideoEncoder
     }
 
     /// <summary>Runs the implementation of <c>flush</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoEncoder leaves this slot empty and gst_video_encoder_flush answers TRUE for an
+    /// empty one (gstvideoencoder.c:556-559); its one caller, the flush-stop handling, ignores
+    /// the answer anyway (:1271). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>flush</c> answers.</returns>
     protected bool ChainUpFlush()
     {
@@ -892,8 +988,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.open has no parent implementation; override OnOpen.");
+            return true;
         }
 
         return slot(encoder) != 0;
@@ -906,8 +1001,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.close has no parent implementation; override OnClose.");
+            return true;
         }
 
         return slot(encoder) != 0;
@@ -920,8 +1014,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.start has no parent implementation; override OnStart.");
+            return true;
         }
 
         return slot(encoder) != 0;
@@ -934,8 +1027,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.stop has no parent implementation; override OnStop.");
+            return true;
         }
 
         return slot(encoder) != 0;
@@ -948,8 +1040,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.set_format has no parent implementation; override OnSetFormat.");
+            return true;
         }
 
         return slot(encoder, state) != 0;
@@ -977,8 +1068,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.reset has no parent implementation; override OnReset.");
+            return true;
         }
 
         return slot(encoder, hard) != 0;
@@ -991,8 +1081,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.finish has no parent implementation; override OnFinish.");
+            return Gst.FlowReturn.Ok;
         }
 
         return (Gst.FlowReturn)slot(encoder);
@@ -1005,8 +1094,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.pre_push has no parent implementation; override OnPrePush.");
+            return Gst.FlowReturn.Ok;
         }
 
         return (Gst.FlowReturn)slot(encoder, frame);
@@ -1104,8 +1192,7 @@ public unsafe partial class VideoEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoEncoder.flush has no parent implementation; override OnFlush.");
+            return true;
         }
 
         return slot(encoder) != 0;

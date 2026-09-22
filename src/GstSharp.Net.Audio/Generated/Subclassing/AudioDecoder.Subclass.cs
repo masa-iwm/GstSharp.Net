@@ -325,6 +325,12 @@ public unsafe partial class AudioDecoder
     ///                  Called when the element starts processing.
     ///                  Allows opening external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and gst_audio_decoder_start answers TRUE for an
+    /// empty one (gstaudiodecoder.c:3135, :3144-3145); the base class resets its state before
+    /// the call and marks itself active after a true answer either way (:3142, :3148-3149). So
+    /// a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected virtual bool OnStart() =>
         ChainUpStart();
@@ -334,11 +340,22 @@ public unsafe partial class AudioDecoder
     ///                  Called when the element stops processing.
     ///                  Allows closing external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and gst_audio_decoder_stop answers TRUE for an
+    /// empty one (gstaudiodecoder.c:3112, :3118-3119); the base class resets its state after
+    /// the call either way (:3123). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected virtual bool OnStop() =>
         ChainUpStop();
 
     /// <summary>Notifies subclass of incoming data format (caps).</summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and the caller accepts the caps for an empty one
+    /// (gstaudiodecoder.c:907, :932-933), storing them as the input caps on a true answer
+    /// (:935-936). So a chain-up answers true, meaning the caps are accepted, rather than
+    /// throwing; an override that answers false refuses the caps event.</para>
+    /// </remarks>
     /// <param name="caps">
     /// The <c>caps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -445,6 +462,11 @@ public unsafe partial class AudioDecoder
     ///                  Called when the element changes to GST_STATE_READY.
     ///                  Allows opening external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudiodecoder.c:3220-3222), so a chain-up answers true rather than throwing. Answer
+    /// false to refuse the NULL to READY change.</para>
+    /// </remarks>
     /// <returns>What <c>open</c> answers.</returns>
     protected virtual bool OnOpen() =>
         ChainUpOpen();
@@ -454,6 +476,11 @@ public unsafe partial class AudioDecoder
     ///                  Called when the element changes to GST_STATE_NULL.
     ///                  Allows closing external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudiodecoder.c:3247-3249), so a chain-up answers true rather than throwing. Answer
+    /// false to fail the READY to NULL change.</para>
+    /// </remarks>
     /// <returns>What <c>close</c> answers.</returns>
     protected virtual bool OnClose() =>
         ChainUpClose();
@@ -577,6 +604,12 @@ public unsafe partial class AudioDecoder
         ChainUpTransformMeta(outbuf, meta, inbuf);
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and gst_audio_decoder_start answers TRUE for an
+    /// empty one (gstaudiodecoder.c:3135, :3144-3145); the base class resets its state before
+    /// the call and marks itself active after a true answer either way (:3142, :3148-3149). So
+    /// a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected bool ChainUpStart()
     {
@@ -586,6 +619,11 @@ public unsafe partial class AudioDecoder
     }
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and gst_audio_decoder_stop answers TRUE for an
+    /// empty one (gstaudiodecoder.c:3112, :3118-3119); the base class resets its state after
+    /// the call either way (:3123). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected bool ChainUpStop()
     {
@@ -595,6 +633,12 @@ public unsafe partial class AudioDecoder
     }
 
     /// <summary>Runs the implementation of <c>set_format</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and the caller accepts the caps for an empty one
+    /// (gstaudiodecoder.c:907, :932-933), storing them as the input caps on a true answer
+    /// (:935-936). So a chain-up answers true, meaning the caps are accepted, rather than
+    /// throwing; an override that answers false refuses the caps event.</para>
+    /// </remarks>
     /// <param name="caps">
     /// The <c>caps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -726,6 +770,11 @@ public unsafe partial class AudioDecoder
     }
 
     /// <summary>Runs the implementation of <c>open</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudiodecoder.c:3220-3222), so a chain-up answers true rather than throwing. Answer
+    /// false to refuse the NULL to READY change.</para>
+    /// </remarks>
     /// <returns>What <c>open</c> answers.</returns>
     protected bool ChainUpOpen()
     {
@@ -735,6 +784,11 @@ public unsafe partial class AudioDecoder
     }
 
     /// <summary>Runs the implementation of <c>close</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioDecoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudiodecoder.c:3247-3249), so a chain-up answers true rather than throwing. Answer
+    /// false to fail the READY to NULL change.</para>
+    /// </remarks>
     /// <returns>What <c>close</c> answers.</returns>
     protected bool ChainUpClose()
     {
@@ -874,8 +928,7 @@ public unsafe partial class AudioDecoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioDecoder.start has no parent implementation; override OnStart.");
+            return true;
         }
 
         return slot(dec) != 0;
@@ -888,8 +941,7 @@ public unsafe partial class AudioDecoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioDecoder.stop has no parent implementation; override OnStop.");
+            return true;
         }
 
         return slot(dec) != 0;
@@ -902,8 +954,7 @@ public unsafe partial class AudioDecoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioDecoder.set_format has no parent implementation; override OnSetFormat.");
+            return true;
         }
 
         return slot(dec, caps) != 0;
@@ -1002,8 +1053,7 @@ public unsafe partial class AudioDecoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioDecoder.open has no parent implementation; override OnOpen.");
+            return true;
         }
 
         return slot(dec) != 0;
@@ -1016,8 +1066,7 @@ public unsafe partial class AudioDecoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioDecoder.close has no parent implementation; override OnClose.");
+            return true;
         }
 
         return slot(dec) != 0;

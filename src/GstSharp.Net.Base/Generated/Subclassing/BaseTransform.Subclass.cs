@@ -450,6 +450,14 @@ public unsafe partial class BaseTransform
     ///               upstream allocation query. The default implementation is %NULL
     ///               and will cause all metadata to be removed.
     /// </summary>
+    /// <remarks>
+    /// <para>GstBaseTransform leaves this slot empty and the allocation query handling removes every
+    /// metadata an empty one would have been asked about (gstbasetransform.c:821-826), which is
+    /// what a slot answering false does (:823); memory dependent metadata is removed before the
+    /// slot is asked at all (:814-820). So a chain-up answers false, meaning the metadata is
+    /// removed from the query, rather than throwing. Neither the audio filter nor the video
+    /// filter fills the slot, so the same answer holds below them.</para>
+    /// </remarks>
     /// <param name="query">
     /// The <c>query</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -827,6 +835,14 @@ public unsafe partial class BaseTransform
     }
 
     /// <summary>Runs the implementation of <c>filter_meta</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstBaseTransform leaves this slot empty and the allocation query handling removes every
+    /// metadata an empty one would have been asked about (gstbasetransform.c:821-826), which is
+    /// what a slot answering false does (:823); memory dependent metadata is removed before the
+    /// slot is asked at all (:814-820). So a chain-up answers false, meaning the metadata is
+    /// removed from the query, rather than throwing. Neither the audio filter nor the video
+    /// filter fills the slot, so the same answer holds below them.</para>
+    /// </remarks>
     /// <param name="query">
     /// The <c>query</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -1233,8 +1249,7 @@ public unsafe partial class BaseTransform
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "BaseTransform.filter_meta has no parent implementation; override OnFilterMeta.");
+            return false;
         }
 
         return slot(trans, query, api, @params) != 0;

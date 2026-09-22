@@ -156,7 +156,12 @@ public unsafe partial class Source
     /// <remarks>
     /// <para>This slot may run on the thread that emits the pad-added of the sub element
     /// (ges-source.c:126, 190, 240), which is a streaming thread when the source is a dynamic
-    /// one.</para>
+    /// one. GESSource leaves the slot empty and the caller accepts the pad for an empty one -
+    /// only a slot that answers false makes it ignore the pad (ges-source.c:126). The classes
+    /// of the library that fill it, the audio and the video uri source
+    /// (ges-audio-uri-source.c:157, ges-video-uri-source.c:334), are outside the subclassable
+    /// set, so a chain-up answers true below a managed audio or video source rather than
+    /// throwing.</para>
     /// </remarks>
     /// <param name="pad">
     /// The <c>pad</c> argument.
@@ -206,7 +211,12 @@ public unsafe partial class Source
     /// <remarks>
     /// <para>This slot may run on the thread that emits the pad-added of the sub element
     /// (ges-source.c:126, 190, 240), which is a streaming thread when the source is a dynamic
-    /// one.</para>
+    /// one. GESSource leaves the slot empty and the caller accepts the pad for an empty one -
+    /// only a slot that answers false makes it ignore the pad (ges-source.c:126). The classes
+    /// of the library that fill it, the audio and the video uri source
+    /// (ges-audio-uri-source.c:157, ges-video-uri-source.c:334), are outside the subclassable
+    /// set, so a chain-up answers true below a managed audio or video source rather than
+    /// throwing.</para>
     /// </remarks>
     /// <param name="pad">
     /// The <c>pad</c> argument.
@@ -268,8 +278,7 @@ public unsafe partial class Source
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "Source.select_pad has no parent implementation; override OnSelectPad.");
+            return true;
         }
 
         return slot(source, pad) != 0;

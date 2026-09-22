@@ -173,6 +173,12 @@ public unsafe partial class VideoSink
         ChainUpShowFrame(buf);
 
     /// <summary>Notifies the subclass of changed #GstVideoInfo.</summary>
+    /// <remarks>
+    /// <para>GstVideoSink leaves this slot empty and gst_video_sink_set_caps answers TRUE for an
+    /// empty one (gstvideosink.c:252-255); the info is stored on the sink before the slot runs
+    /// either way (:250). So a chain-up answers true, meaning the caps are accepted, rather
+    /// than throwing.</para>
+    /// </remarks>
     /// <param name="caps">
     /// The <c>caps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -206,6 +212,12 @@ public unsafe partial class VideoSink
     }
 
     /// <summary>Runs the implementation of <c>set_info</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoSink leaves this slot empty and gst_video_sink_set_caps answers TRUE for an
+    /// empty one (gstvideosink.c:252-255); the info is stored on the sink before the slot runs
+    /// either way (:250). So a chain-up answers true, meaning the caps are accepted, rather
+    /// than throwing.</para>
+    /// </remarks>
     /// <param name="caps">
     /// The <c>caps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -251,8 +263,7 @@ public unsafe partial class VideoSink
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoSink.set_info has no parent implementation; override OnSetInfo.");
+            return true;
         }
 
         return slot(videoSink, caps, info) != 0;

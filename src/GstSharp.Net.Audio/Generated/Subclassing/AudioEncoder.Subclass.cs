@@ -316,6 +316,12 @@ public unsafe partial class AudioEncoder
     ///                  Called when the element starts processing.
     ///                  Allows opening external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and gst_audio_encoder_activate answers TRUE for
+    /// an empty one (gstaudioencoder.c:2145, :2157-2158); the slot runs when the sink pad is
+    /// activated and the encoder is not active yet, after the base class reset its state
+    /// (:2155). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected virtual bool OnStart() =>
         ChainUpStart();
@@ -325,6 +331,12 @@ public unsafe partial class AudioEncoder
     ///                  Called when the element stops processing.
     ///                  Allows closing external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and gst_audio_encoder_activate answers TRUE for
+    /// an empty one (gstaudioencoder.c:2145, :2165-2166); the slot runs when the sink pad of an
+    /// active encoder is deactivated, after the streaming thread finished and before the base
+    /// class resets its state (:2169). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected virtual bool OnStop() =>
         ChainUpStop();
@@ -333,6 +345,14 @@ public unsafe partial class AudioEncoder
     /// Notifies subclass of incoming data format.
     ///                  GstAudioInfo contains the format according to provided caps.
     /// </summary>
+    /// <remarks>
+    /// <para>This slot has no implementation below it: gst_audio_encoder_sink_setcaps opens with
+    /// g_return_val_if_fail (klass-&gt;set_format != NULL, FALSE) (gstaudioencoder.c:1464), so
+    /// an encoder without it fails every caps event with a critical, and the guarded call after
+    /// it (:1504-1505) is never reached with an empty slot. A chain-up therefore throws; an
+    /// override implements the format setup - SetOutputFormat with the caps it produces -
+    /// rather than extending one.</para>
+    /// </remarks>
     /// <param name="info">
     /// The <c>info</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -448,6 +468,11 @@ public unsafe partial class AudioEncoder
     ///                  Called when the element changes to GST_STATE_READY.
     ///                  Allows opening external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudioencoder.c:565-567), so a chain-up answers true rather than throwing. Answer
+    /// false to refuse the NULL to READY change.</para>
+    /// </remarks>
     /// <returns>What <c>open</c> answers.</returns>
     protected virtual bool OnOpen() =>
         ChainUpOpen();
@@ -457,6 +482,11 @@ public unsafe partial class AudioEncoder
     ///                  Called when the element changes to GST_STATE_NULL.
     ///                  Allows closing external resources.
     /// </summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudioencoder.c:577-579), so a chain-up answers true rather than throwing. Answer
+    /// false to fail the READY to NULL change.</para>
+    /// </remarks>
     /// <returns>What <c>close</c> answers.</returns>
     protected virtual bool OnClose() =>
         ChainUpClose();
@@ -557,6 +587,12 @@ public unsafe partial class AudioEncoder
         ChainUpSrcQuery(query);
 
     /// <summary>Runs the implementation of <c>start</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and gst_audio_encoder_activate answers TRUE for
+    /// an empty one (gstaudioencoder.c:2145, :2157-2158); the slot runs when the sink pad is
+    /// activated and the encoder is not active yet, after the base class reset its state
+    /// (:2155). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>start</c> answers.</returns>
     protected bool ChainUpStart()
     {
@@ -566,6 +602,12 @@ public unsafe partial class AudioEncoder
     }
 
     /// <summary>Runs the implementation of <c>stop</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and gst_audio_encoder_activate answers TRUE for
+    /// an empty one (gstaudioencoder.c:2145, :2165-2166); the slot runs when the sink pad of an
+    /// active encoder is deactivated, after the streaming thread finished and before the base
+    /// class resets its state (:2169). So a chain-up answers true rather than throwing.</para>
+    /// </remarks>
     /// <returns>What <c>stop</c> answers.</returns>
     protected bool ChainUpStop()
     {
@@ -575,6 +617,14 @@ public unsafe partial class AudioEncoder
     }
 
     /// <summary>Runs the implementation of <c>set_format</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>This slot has no implementation below it: gst_audio_encoder_sink_setcaps opens with
+    /// g_return_val_if_fail (klass-&gt;set_format != NULL, FALSE) (gstaudioencoder.c:1464), so
+    /// an encoder without it fails every caps event with a critical, and the guarded call after
+    /// it (:1504-1505) is never reached with an empty slot. A chain-up therefore throws; an
+    /// override implements the format setup - SetOutputFormat with the caps it produces -
+    /// rather than extending one.</para>
+    /// </remarks>
     /// <param name="info">
     /// The <c>info</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -708,6 +758,11 @@ public unsafe partial class AudioEncoder
     }
 
     /// <summary>Runs the implementation of <c>open</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudioencoder.c:565-567), so a chain-up answers true rather than throwing. Answer
+    /// false to refuse the NULL to READY change.</para>
+    /// </remarks>
     /// <returns>What <c>open</c> answers.</returns>
     protected bool ChainUpOpen()
     {
@@ -717,6 +772,11 @@ public unsafe partial class AudioEncoder
     }
 
     /// <summary>Runs the implementation of <c>close</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioEncoder leaves this slot empty and the state change skips an empty one
+    /// (gstaudioencoder.c:577-579), so a chain-up answers true rather than throwing. Answer
+    /// false to fail the READY to NULL change.</para>
+    /// </remarks>
     /// <returns>What <c>close</c> answers.</returns>
     protected bool ChainUpClose()
     {
@@ -831,8 +891,7 @@ public unsafe partial class AudioEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioEncoder.start has no parent implementation; override OnStart.");
+            return true;
         }
 
         return slot(enc) != 0;
@@ -845,8 +904,7 @@ public unsafe partial class AudioEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioEncoder.stop has no parent implementation; override OnStop.");
+            return true;
         }
 
         return slot(enc) != 0;
@@ -956,8 +1014,7 @@ public unsafe partial class AudioEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioEncoder.open has no parent implementation; override OnOpen.");
+            return true;
         }
 
         return slot(enc) != 0;
@@ -970,8 +1027,7 @@ public unsafe partial class AudioEncoder
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioEncoder.close has no parent implementation; override OnClose.");
+            return true;
         }
 
         return slot(enc) != 0;

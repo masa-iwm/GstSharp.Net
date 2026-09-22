@@ -168,6 +168,12 @@ public unsafe partial class VideoFilter
     }
 
     /// <summary>function to be called with the negotiated caps and video infos</summary>
+    /// <remarks>
+    /// <para>GstVideoFilter leaves this slot empty and gst_video_filter_set_caps answers TRUE for an
+    /// empty one (gstvideofilter.c:245-248), storing both infos on the filter on a true answer
+    /// (:250-252). So a chain-up answers true, meaning the formats are accepted, rather than
+    /// throwing.</para>
+    /// </remarks>
     /// <param name="incaps">
     /// The <c>incaps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -230,6 +236,12 @@ public unsafe partial class VideoFilter
         ChainUpTransformFrameIp(frame);
 
     /// <summary>Runs the implementation of <c>set_info</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstVideoFilter leaves this slot empty and gst_video_filter_set_caps answers TRUE for an
+    /// empty one (gstvideofilter.c:245-248), storing both infos on the filter on a true answer
+    /// (:250-252). So a chain-up answers true, meaning the formats are accepted, rather than
+    /// throwing.</para>
+    /// </remarks>
     /// <param name="incaps">
     /// The <c>incaps</c> argument.
     /// The element lends this for the duration of the call; keep a copy to retain it.
@@ -324,8 +336,7 @@ public unsafe partial class VideoFilter
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "VideoFilter.set_info has no parent implementation; override OnSetInfo.");
+            return true;
         }
 
         return slot(filter, incaps, inInfo, outcaps, outInfo) != 0;

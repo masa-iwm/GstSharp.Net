@@ -150,6 +150,12 @@ public unsafe partial class AudioFilter
     }
 
     /// <summary>virtual function called whenever the format changes</summary>
+    /// <remarks>
+    /// <para>GstAudioFilter leaves this slot empty and gst_audio_filter_set_caps answers TRUE for an
+    /// empty one (gstaudiofilter.c:148, :158-159), storing the info on the filter on a true
+    /// answer (:161-164). So a chain-up answers true, meaning the format is accepted, rather
+    /// than throwing.</para>
+    /// </remarks>
     /// <param name="info">
     /// The <c>info</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -164,6 +170,12 @@ public unsafe partial class AudioFilter
         ChainUpSetup(info);
 
     /// <summary>Runs the implementation of <c>setup</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GstAudioFilter leaves this slot empty and gst_audio_filter_set_caps answers TRUE for an
+    /// empty one (gstaudiofilter.c:148, :158-159), storing the info on the filter on a true
+    /// answer (:161-164). So a chain-up answers true, meaning the format is accepted, rather
+    /// than throwing.</para>
+    /// </remarks>
     /// <param name="info">
     /// The <c>info</c> argument.
     /// The caller lends this for the duration of the call and reads back what the
@@ -190,8 +202,7 @@ public unsafe partial class AudioFilter
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "AudioFilter.setup has no parent implementation; override OnSetup.");
+            return true;
         }
 
         return slot(filter, info) != 0;
