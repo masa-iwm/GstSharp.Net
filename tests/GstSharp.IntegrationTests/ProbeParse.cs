@@ -26,6 +26,8 @@ internal sealed class ProbeParse : BaseParse
         ConfigureClass,
         HandleFrameOverride,
         SetSinkCapsOverride,
+        StartOverride,
+        StopOverride,
         SinkEventOverride);
 
     private readonly List<EventType> _events = [];
@@ -52,6 +54,22 @@ internal sealed class ProbeParse : BaseParse
     /// <summary>Gets whether every call was handed a usable frame.</summary>
     internal bool EveryFrameCarriedABuffer { get; private set; } = true;
 
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>start</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStartForTest() => ChainUpStart();
+
+    /// <summary>Chains the <c>stop</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStopForTest() => ChainUpStop();
+
+    /// <summary>Chains the <c>set_sink_caps</c> slot up from outside a slot call.</summary>
+    /// <param name="caps">The caps the answer is about.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpSetSinkCapsForTest(Caps caps) => ChainUpSetSinkCaps(caps);
+
     /// <summary>Gets the events the sink pad of the parser saw, oldest first.</summary>
     internal IReadOnlyList<EventType> Events
     {
@@ -65,9 +83,19 @@ internal sealed class ProbeParse : BaseParse
     }
 
     /// <inheritdoc/>
+    protected override bool OnStart() => ChainUpAnswers.Record("start", ChainUpStart());
+
+    /// <inheritdoc/>
+    protected override bool OnStop() => ChainUpAnswers.Record("stop", ChainUpStop());
+
+    /// <inheritdoc/>
     protected override bool OnSetSinkCaps(Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
+
+        // GstBaseParse leaves the slot empty, so this is the value the library
+        // reads an empty one as rather than an implementation being extended.
+        _ = ChainUpAnswers.Record("set_sink_caps", ChainUpSetSinkCaps(caps));
 
         // GstBaseParse pushes nothing until the src pad has caps of its own; a
         // parser that does not change the format says so by handing the sink

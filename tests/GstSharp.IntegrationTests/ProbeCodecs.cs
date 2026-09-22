@@ -53,6 +53,10 @@ internal sealed class ProbeAudioEncoder : AudioEncoder
         HandleFrameOverride,
         SetFormatOverride,
         PrePushOverride,
+        OpenOverride,
+        CloseOverride,
+        StartOverride,
+        StopOverride,
         SinkEventOverride);
 
     private readonly List<EventType> _events = [];
@@ -94,9 +98,43 @@ internal sealed class ProbeAudioEncoder : AudioEncoder
         }
     }
 
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>open</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpOpenForTest() => ChainUpOpen();
+
+    /// <summary>Chains the <c>close</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpCloseForTest() => ChainUpClose();
+
+    /// <summary>Chains the <c>start</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStartForTest() => ChainUpStart();
+
+    /// <summary>Chains the <c>stop</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStopForTest() => ChainUpStop();
+
+    /// <inheritdoc/>
+    protected override bool OnOpen() => ChainUpAnswers.Record("open", ChainUpOpen());
+
+    /// <inheritdoc/>
+    protected override bool OnClose() => ChainUpAnswers.Record("close", ChainUpClose());
+
+    /// <inheritdoc/>
+    protected override bool OnStart() => ChainUpAnswers.Record("start", ChainUpStart());
+
+    /// <inheritdoc/>
+    protected override bool OnStop() => ChainUpAnswers.Record("stop", ChainUpStop());
+
     /// <inheritdoc/>
     protected override bool OnSetFormat(AudioInfo info)
     {
+        // set_format is not chained up here on purpose: the C refuses an empty
+        // slot with g_return_val_if_fail (gstaudioencoder.c:1464), so an
+        // encoder implements the format setup rather than extending one.
         ArgumentNullException.ThrowIfNull(info);
 
         // The info is lent for the length of the call; what has to outlive it
@@ -210,7 +248,11 @@ internal sealed class ProbeAudioDecoder : AudioDecoder
         GTypeName,
         ConfigureClass,
         HandleFrameOverride,
-        SetFormatOverride);
+        SetFormatOverride,
+        OpenOverride,
+        CloseOverride,
+        StartOverride,
+        StopOverride);
 
     private int _decoded;
 
@@ -228,10 +270,50 @@ internal sealed class ProbeAudioDecoder : AudioDecoder
     /// <summary>Gets how often the base class asked for a drain with no buffer.</summary>
     internal int Drains => Volatile.Read(ref _drains);
 
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>open</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpOpenForTest() => ChainUpOpen();
+
+    /// <summary>Chains the <c>close</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpCloseForTest() => ChainUpClose();
+
+    /// <summary>Chains the <c>start</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStartForTest() => ChainUpStart();
+
+    /// <summary>Chains the <c>stop</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStopForTest() => ChainUpStop();
+
+    /// <summary>Chains the <c>set_format</c> slot up from outside a slot call.</summary>
+    /// <param name="caps">The caps the answer is about.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpSetFormatForTest(Caps caps) => ChainUpSetFormat(caps);
+
+    /// <inheritdoc/>
+    protected override bool OnOpen() => ChainUpAnswers.Record("open", ChainUpOpen());
+
+    /// <inheritdoc/>
+    protected override bool OnClose() => ChainUpAnswers.Record("close", ChainUpClose());
+
+    /// <inheritdoc/>
+    protected override bool OnStart() => ChainUpAnswers.Record("start", ChainUpStart());
+
+    /// <inheritdoc/>
+    protected override bool OnStop() => ChainUpAnswers.Record("stop", ChainUpStop());
+
     /// <inheritdoc/>
     protected override bool OnSetFormat(Caps caps)
     {
         ArgumentNullException.ThrowIfNull(caps);
+
+        // The slot is empty below the override: what this records is the value
+        // GstAudioDecoder reads an empty one as.
+        _ = ChainUpAnswers.Record("set_format", ChainUpSetFormat(caps));
 
         using AudioInfo? info = AudioInfo.NewFromCaps(caps);
 
@@ -291,7 +373,13 @@ internal sealed class ProbeVideoEncoder : VideoEncoder
         GTypeName,
         ConfigureClass,
         HandleFrameOverride,
-        SetFormatOverride);
+        SetFormatOverride,
+        OpenOverride,
+        CloseOverride,
+        StartOverride,
+        StopOverride,
+        PrePushOverride,
+        FinishOverride);
 
     private int _encoded;
 
@@ -303,6 +391,38 @@ internal sealed class ProbeVideoEncoder : VideoEncoder
     {
     }
 
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>open</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpOpenForTest() => ChainUpOpen();
+
+    /// <summary>Chains the <c>close</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpCloseForTest() => ChainUpClose();
+
+    /// <summary>Chains the <c>start</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStartForTest() => ChainUpStart();
+
+    /// <summary>Chains the <c>stop</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStopForTest() => ChainUpStop();
+
+    /// <summary>Chains the <c>flush</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpFlushForTest() => ChainUpFlush();
+
+    /// <summary>Chains the deprecated <c>reset</c> slot up from outside a slot call.</summary>
+    /// <param name="hard">Whether the reset is the hard one.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpResetForTest(bool hard) => ChainUpReset(hard);
+
+    /// <summary>Chains the <c>finish</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal FlowReturn ChainUpFinishForTest() => ChainUpFinish();
+
     /// <summary>Gets how many frames the override encoded.</summary>
     internal int Encoded => Volatile.Read(ref _encoded);
 
@@ -313,9 +433,36 @@ internal sealed class ProbeVideoEncoder : VideoEncoder
     internal int Width { get; private set; }
 
     /// <inheritdoc/>
+    protected override bool OnOpen() => ChainUpAnswers.Record("open", ChainUpOpen());
+
+    /// <inheritdoc/>
+    protected override bool OnClose() => ChainUpAnswers.Record("close", ChainUpClose());
+
+    /// <inheritdoc/>
+    protected override bool OnStart() => ChainUpAnswers.Record("start", ChainUpStart());
+
+    /// <inheritdoc/>
+    protected override bool OnStop() => ChainUpAnswers.Record("stop", ChainUpStop());
+
+    /// <inheritdoc/>
+    protected override FlowReturn OnFinish() => ChainUpAnswers.Record("finish", ChainUpFinish());
+
+    /// <inheritdoc/>
+    protected override FlowReturn OnPrePush(VideoCodecFrame frame)
+    {
+        ArgumentNullException.ThrowIfNull(frame);
+
+        // The frame is lent and left as it is: what this records is the value
+        // GstVideoEncoder reads an empty slot as.
+        return ChainUpAnswers.Record("pre_push", ChainUpPrePush(frame));
+    }
+
+    /// <inheritdoc/>
     protected override bool OnSetFormat(VideoCodecState state)
     {
         ArgumentNullException.ThrowIfNull(state);
+
+        _ = ChainUpAnswers.Record("set_format", ChainUpSetFormat(state));
 
         using VideoInfo info = state.GetInfo();
         Width = info.Width;
@@ -386,6 +533,11 @@ internal sealed class ProbeVideoDecoder : VideoDecoder
         ConfigureClass,
         HandleFrameOverride,
         SetFormatOverride,
+        OpenOverride,
+        CloseOverride,
+        StartOverride,
+        StopOverride,
+        FinishOverride,
         SinkEventOverride);
 
     private readonly List<EventType> _events = [];
@@ -422,10 +574,68 @@ internal sealed class ProbeVideoDecoder : VideoDecoder
         }
     }
 
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>open</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpOpenForTest() => ChainUpOpen();
+
+    /// <summary>Chains the <c>close</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpCloseForTest() => ChainUpClose();
+
+    /// <summary>Chains the <c>start</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStartForTest() => ChainUpStart();
+
+    /// <summary>Chains the <c>stop</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpStopForTest() => ChainUpStop();
+
+    /// <summary>Chains the <c>flush</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpFlushForTest() => ChainUpFlush();
+
+    /// <summary>Chains the deprecated <c>reset</c> slot up from outside a slot call.</summary>
+    /// <param name="hard">Whether the reset is the hard one.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpResetForTest(bool hard) => ChainUpReset(hard);
+
+    /// <summary>Chains the <c>finish</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    internal FlowReturn ChainUpFinishForTest() => ChainUpFinish();
+
+    /// <summary>Chains the <c>drain</c> slot up from outside a slot call.</summary>
+    /// <returns>What the class below the override answers.</returns>
+    /// <remarks>
+    /// The probe declares no <c>drain</c> override: doing so would replace the
+    /// fallback the base class takes in reverse playback, where it calls
+    /// <c>finish</c> only for an empty drain slot.
+    /// </remarks>
+    internal FlowReturn ChainUpDrainForTest() => ChainUpDrain();
+
+    /// <inheritdoc/>
+    protected override bool OnOpen() => ChainUpAnswers.Record("open", ChainUpOpen());
+
+    /// <inheritdoc/>
+    protected override bool OnClose() => ChainUpAnswers.Record("close", ChainUpClose());
+
+    /// <inheritdoc/>
+    protected override bool OnStart() => ChainUpAnswers.Record("start", ChainUpStart());
+
+    /// <inheritdoc/>
+    protected override bool OnStop() => ChainUpAnswers.Record("stop", ChainUpStop());
+
+    /// <inheritdoc/>
+    protected override FlowReturn OnFinish() => ChainUpAnswers.Record("finish", ChainUpFinish());
+
     /// <inheritdoc/>
     protected override bool OnSetFormat(VideoCodecState state)
     {
         ArgumentNullException.ThrowIfNull(state);
+
+        _ = ChainUpAnswers.Record("set_format", ChainUpSetFormat(state));
 
         using VideoInfo info = state.GetInfo();
 

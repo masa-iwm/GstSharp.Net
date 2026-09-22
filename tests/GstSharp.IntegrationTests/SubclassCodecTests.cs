@@ -46,7 +46,16 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(parser));
         Assert.True(parser.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        // The trap is watched across the transition to NULL: stop fires on the
+        // way there, and a chain-up that threw would be reported here rather
+        // than failing the stream.
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        // The lifecycle slots are empty below the parser, and the chain-ups
+        // answer what GstBaseParse reads an empty one as.
+        parser.ChainUpAnswers.AssertAnswered("start", true);
+        parser.ChainUpAnswers.AssertAnswered("set_sink_caps", true);
+        parser.ChainUpAnswers.AssertAnswered("stop", true);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed parser: framed={parser.Framed}, fed back={parser.FedBack}, ")
@@ -91,7 +100,14 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(encoder));
         Assert.True(encoder.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        // set_format is the one slot of the four that is not chained up: the C
+        // refuses an empty one with g_return_val_if_fail.
+        encoder.ChainUpAnswers.AssertAnswered("open", true);
+        encoder.ChainUpAnswers.AssertAnswered("start", true);
+        encoder.ChainUpAnswers.AssertAnswered("stop", true);
+        encoder.ChainUpAnswers.AssertAnswered("close", true);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed audio encoder: encoded={encoder.Encoded}, drains={encoder.Drains}, ")
@@ -130,7 +146,13 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(decoder));
         Assert.True(decoder.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        decoder.ChainUpAnswers.AssertAnswered("open", true);
+        decoder.ChainUpAnswers.AssertAnswered("start", true);
+        decoder.ChainUpAnswers.AssertAnswered("set_format", true);
+        decoder.ChainUpAnswers.AssertAnswered("stop", true);
+        decoder.ChainUpAnswers.AssertAnswered("close", true);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed audio decoder: decoded={decoder.Decoded}, drains={decoder.Drains}, ")
@@ -162,7 +184,15 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(encoder));
         Assert.True(encoder.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        encoder.ChainUpAnswers.AssertAnswered("open", true);
+        encoder.ChainUpAnswers.AssertAnswered("start", true);
+        encoder.ChainUpAnswers.AssertAnswered("set_format", true);
+        encoder.ChainUpAnswers.AssertAnswered("pre_push", FlowReturn.Ok);
+        encoder.ChainUpAnswers.AssertAnswered("finish", FlowReturn.Ok);
+        encoder.ChainUpAnswers.AssertAnswered("stop", true);
+        encoder.ChainUpAnswers.AssertAnswered("close", true);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed video encoder: encoded={encoder.Encoded}, released={encoder.Released}, ")
@@ -196,7 +226,14 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(decoder));
         Assert.True(decoder.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        decoder.ChainUpAnswers.AssertAnswered("open", true);
+        decoder.ChainUpAnswers.AssertAnswered("start", true);
+        decoder.ChainUpAnswers.AssertAnswered("set_format", true);
+        decoder.ChainUpAnswers.AssertAnswered("finish", FlowReturn.Ok);
+        decoder.ChainUpAnswers.AssertAnswered("stop", true);
+        decoder.ChainUpAnswers.AssertAnswered("close", true);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed video decoder: decoded={decoder.Decoded}, released={decoder.Released}, ")
