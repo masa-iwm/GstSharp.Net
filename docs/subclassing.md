@@ -1794,6 +1794,14 @@ takes in reverse playback, which calls `finish` only when the drain slot is
 empty, so an override that relied on that fallback has to call `OnFinish`
 itself.
 
+`GES.TimelineElement.get_layer_priority` is empty in its base class too, and
+the library answers the element's own `priority` for it
+(`ges-timeline-element.c:2439-2440`), so `ChainUpGetLayerPriority` answers
+`Priority` directly below `TimelineElement`; below a clip or a track element it
+runs the C implementation those classes install (`ges-clip.c:2678`,
+`ges-track-element.c:493`), which answers the layer's priority or
+`GES_TIMELINE_ELEMENT_NO_LAYER_PRIORITY`.
+
 The five edit slots — `ripple`, `ripple_end`, `roll_start`, `roll_end` and
 `trim` — are empty on every class of the editing services as well, but an empty
 one of those is a dispatch rather than a value: the caller falls through to
