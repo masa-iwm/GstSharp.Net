@@ -305,6 +305,23 @@ public unsafe partial class AudioEncoder
                 nameof(overrides));
         }
 
+        bool declaredSetFormat = false;
+        foreach (Gst.GObject.VfuncOverride candidate in overrides)
+        {
+            if (candidate.Function == SetFormatOverride.Function)
+            {
+                declaredSetFormat = true;
+                break;
+            }
+        }
+
+        if (!declaredSetFormat)
+        {
+            throw new ArgumentException(
+                "A managed GstAudioEncoder has to declare SetFormatOverride: gst_audio_encoder_sink_setcaps refuses an empty slot with g_return_val_if_fail (klass->set_format != NULL, FALSE) before it reads the caps (gstaudioencoder.c:1464), so an encoder without it fails every caps event with a critical and never negotiates.",
+                nameof(overrides));
+        }
+
         Gst.GObject.SubclassType type = Gst.GObject.SubclassType.Define(
             new Gst.GObject.GType(GetGType()), typeName, configureClass, overrides, wrapFactory, options,
             requiredPadTemplates: new[] { "sink", "src" });
@@ -349,9 +366,10 @@ public unsafe partial class AudioEncoder
     /// <para>This slot has no implementation below it: gst_audio_encoder_sink_setcaps opens with
     /// g_return_val_if_fail (klass-&gt;set_format != NULL, FALSE) (gstaudioencoder.c:1464), so
     /// an encoder without it fails every caps event with a critical, and the guarded call after
-    /// it (:1504-1505) is never reached with an empty slot. A chain-up therefore throws; an
-    /// override implements the format setup - SetOutputFormat with the caps it produces -
-    /// rather than extending one.</para>
+    /// it (:1504-1505) is never reached with an empty slot. A managed encoder therefore has to
+    /// declare it, which DefineSubclass checks for, and a chain-up throws; the override
+    /// implements the format setup - SetOutputFormat with the caps it produces - rather than
+    /// extending one.</para>
     /// </remarks>
     /// <param name="info">
     /// The <c>info</c> argument.
@@ -621,9 +639,10 @@ public unsafe partial class AudioEncoder
     /// <para>This slot has no implementation below it: gst_audio_encoder_sink_setcaps opens with
     /// g_return_val_if_fail (klass-&gt;set_format != NULL, FALSE) (gstaudioencoder.c:1464), so
     /// an encoder without it fails every caps event with a critical, and the guarded call after
-    /// it (:1504-1505) is never reached with an empty slot. A chain-up therefore throws; an
-    /// override implements the format setup - SetOutputFormat with the caps it produces -
-    /// rather than extending one.</para>
+    /// it (:1504-1505) is never reached with an empty slot. A managed encoder therefore has to
+    /// declare it, which DefineSubclass checks for, and a chain-up throws; the override
+    /// implements the format setup - SetOutputFormat with the caps it produces - rather than
+    /// extending one.</para>
     /// </remarks>
     /// <param name="info">
     /// The <c>info</c> argument.

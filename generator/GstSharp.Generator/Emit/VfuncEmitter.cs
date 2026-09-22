@@ -28,7 +28,8 @@ internal sealed class VfuncEmitter
     /// <summary>
     /// The per class facts about registering a subclass that no gir states: the
     /// pad templates the base class needs to find on the class, and the slot a
-    /// subclass has to declare because the base class calls it unguarded.
+    /// subclass has to declare because the base class calls it unguarded or
+    /// refuses to run without it.
     /// </summary>
     private static readonly Dictionary<string, SubclassBaseRule> BaseRules =
         new(StringComparer.Ordinal)
@@ -106,6 +107,11 @@ internal sealed class VfuncEmitter
                         "handle_frame",
                         "the base class calls it for every block of samples and for the drain at the end of "
                         + "the stream, unguarded - an encoder without it encodes nothing"),
+                    new(
+                        "set_format",
+                        "gst_audio_encoder_sink_setcaps refuses an empty slot with g_return_val_if_fail "
+                        + "(klass->set_format != NULL, FALSE) before it reads the caps (gstaudioencoder.c:1464), so an "
+                        + "encoder without it fails every caps event with a critical and never negotiates"),
                 ]),
             ["GstBase.BaseParse"] = new(
                 ["sink", "src"],
