@@ -635,6 +635,15 @@ public unsafe partial class TimelineElement
     /// several layers, so this would return the highest priority (numerically,
     /// the smallest) amongst them.
     /// </summary>
+    /// <remarks>
+    /// <para>GESTimelineElement leaves this slot empty and ges_timeline_element_get_layer_priority
+    /// answers the priority of the element itself for an empty one
+    /// (ges-timeline-element.c:2439-2440) - not GES_TIMELINE_ELEMENT_NO_LAYER_PRIORITY, which
+    /// is what GESClip and GESTrackElement answer when they are in no layer and no parent
+    /// (ges-clip.c:1551-1559, ges-track-element.c:162-168). Those two classes fill the slot, so
+    /// a chain-up below a clip or a track element runs their implementation; directly below
+    /// GESTimelineElement it answers Priority rather than throwing.</para>
+    /// </remarks>
     /// <returns>
     /// The priority of the layer @self is in, or
     /// #GES_TIMELINE_ELEMENT_NO_LAYER_PRIORITY if @self does not exist in a
@@ -992,6 +1001,15 @@ public unsafe partial class TimelineElement
     }
 
     /// <summary>Runs the implementation of <c>get_layer_priority</c> below the managed override.</summary>
+    /// <remarks>
+    /// <para>GESTimelineElement leaves this slot empty and ges_timeline_element_get_layer_priority
+    /// answers the priority of the element itself for an empty one
+    /// (ges-timeline-element.c:2439-2440) - not GES_TIMELINE_ELEMENT_NO_LAYER_PRIORITY, which
+    /// is what GESClip and GESTrackElement answer when they are in no layer and no parent
+    /// (ges-clip.c:1551-1559, ges-track-element.c:162-168). Those two classes fill the slot, so
+    /// a chain-up below a clip or a track element runs their implementation; directly below
+    /// GESTimelineElement it answers Priority rather than throwing.</para>
+    /// </remarks>
     /// <returns>
     /// The priority of the layer @self is in, or
     /// #GES_TIMELINE_ELEMENT_NO_LAYER_PRIORITY if @self does not exist in a
@@ -1275,8 +1293,11 @@ public unsafe partial class TimelineElement
 
         if (slot is null)
         {
-            throw new InvalidOperationException(
-                "TimelineElement.get_layer_priority has no parent implementation; override OnGetLayerPriority.");
+            // The C answers the priority of the element itself for an empty
+            // slot (ges-timeline-element.c:2439-2440), which is the field the
+            // priority getter reads (:1444-1449): the element is in no layer, so
+            // its own priority is the only one it has.
+            return GesTimelineElementGetPriority(self);
         }
 
         return slot(self);

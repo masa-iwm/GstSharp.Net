@@ -1268,8 +1268,9 @@ internal sealed class VfuncEmitter
     /// <remarks>
     /// An overlay default that opens with <c>{</c> is a statement block the
     /// branch consists of, written out verbatim: a slot that hands one of its
-    /// arguments back, or that fills its <c>out</c> parameters with something
-    /// the emitter cannot derive, says so itself. Everything else is an
+    /// arguments back, that fills its <c>out</c> parameters with something
+    /// the emitter cannot derive, or whose answer is read off the instance,
+    /// says so itself. Everything else is an
     /// expression the branch answers after it has released what it was handed.
     /// </remarks>
     private static void WriteNullSlotBranch(CodeWriter writer, VirtualMethodPlan plan, ClassStructModel model)
