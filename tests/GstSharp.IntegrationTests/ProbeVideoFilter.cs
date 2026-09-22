@@ -12,9 +12,9 @@ namespace GstSharp.IntegrationTests;
 /// <remarks>
 /// The frame wrapper only holds the address of a <c>GstVideoFrame</c> the base
 /// class mapped on its own stack, so nothing is read out of it after the call
-/// returns. <c>set_info</c> is not part of the surface - it lends a boxed video
-/// info, which has no borrow mode - but the base class fills the info of the
-/// filter without it.
+/// returns. <c>set_info</c> is declared for its chain-up alone: the slot is
+/// empty below the filter, and what the override records is the answer the base
+/// class reads an empty one as.
 /// </remarks>
 internal sealed class ProbeVideoFilter : VideoFilter
 {
@@ -28,7 +28,8 @@ internal sealed class ProbeVideoFilter : VideoFilter
     private static readonly SubclassType Definition = DefineSubclass(
         GTypeName,
         ConfigureClass,
-        TransformFrameIpOverride);
+        TransformFrameIpOverride,
+        SetInfoOverride);
 
     private readonly object _lifecycleLock = new();
 
@@ -55,6 +56,26 @@ internal sealed class ProbeVideoFilter : VideoFilter
                 return _flags;
             }
         }
+    }
+
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>set_info</c> slot up from outside a slot call.</summary>
+    /// <param name="incaps">The caps of the sink pad.</param>
+    /// <param name="inInfo">The info the base class read out of them.</param>
+    /// <param name="outcaps">The caps of the src pad.</param>
+    /// <param name="outInfo">The info the base class read out of those.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpSetInfoForTest(Caps incaps, VideoInfo inInfo, Caps outcaps, VideoInfo outInfo) =>
+        ChainUpSetInfo(incaps, inInfo, outcaps, outInfo);
+
+    /// <inheritdoc/>
+    protected override bool OnSetInfo(Caps incaps, VideoInfo inInfo, Caps outcaps, VideoInfo outInfo)
+    {
+        // GstVideoFilter leaves the slot empty and stores both infos on a true
+        // answer; what this records is the answer of the empty one.
+        return ChainUpAnswers.Record("set_info", ChainUpSetInfo(incaps, inInfo, outcaps, outInfo));
     }
 
     /// <inheritdoc/>

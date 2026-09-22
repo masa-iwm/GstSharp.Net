@@ -67,6 +67,17 @@ internal class ProbeTransform : BaseTransform
         }
     }
 
+    /// <summary>Chains the <c>filter_meta</c> slot up from outside a slot call.</summary>
+    /// <param name="query">The allocation query the decision is about.</param>
+    /// <param name="api">The metadata api the decision is about.</param>
+    /// <param name="params">
+    /// The parameters of that api. The C allows NULL here, but the generated
+    /// parameter is not nullable, so an empty structure stands for none.
+    /// </param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpFilterMetaForTest(Query query, GType api, Structure @params) =>
+        ChainUpFilterMeta(query, api, @params);
+
     /// <inheritdoc/>
     protected override bool OnStart()
     {

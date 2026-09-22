@@ -454,7 +454,9 @@ public sealed unsafe class SubclassCodecTests
         Assert.True(source.Link(filter));
         Assert.True(filter.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        filter.ChainUpAnswers.AssertAnswered("setup", true);
 
         _output.WriteLine(
             FormattableString.Invariant($"managed audio filter: rate={filter.SetupRate}, channels={filter.SetupChannels}, ")

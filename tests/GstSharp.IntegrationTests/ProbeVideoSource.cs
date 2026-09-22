@@ -64,6 +64,7 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
         GTypeName,
         ConfigureClass,
         CreateSourceOverride,
+        SelectPadOverride,
         SetMaxDurationOverride,
         SetParentOverride,
         ListChildrenPropertiesOverride,
@@ -203,6 +204,23 @@ internal sealed class ProbeVideoSource : GES.VideoSource, IManagedSubclass<Probe
         ProbeVideoSource wrapper = new(args);
         _ = Interlocked.Increment(ref _wrappersBuilt);
         return wrapper;
+    }
+
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>select_pad</c> slot up from outside a slot call.</summary>
+    /// <param name="pad">The pad the decision is about.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpSelectPadForTest(Gst.Pad pad) => ChainUpSelectPad(pad);
+
+    /// <inheritdoc/>
+    protected override bool OnSelectPad(Gst.Pad pad)
+    {
+        // GESSource leaves the slot empty and accepts the pad for an empty
+        // one; what this records is that answer, and it may arrive on the
+        // thread that emits the pad-added of the sub element.
+        return ChainUpAnswers.Record("select_pad", ChainUpSelectPad(pad));
     }
 
     /// <inheritdoc/>

@@ -55,10 +55,22 @@ internal sealed class ProbeAudioFilter : AudioFilter
     /// </summary>
     internal Gst.Audio.AudioInfo? EscapedInfo { get; private set; }
 
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>setup</c> slot up from outside a slot call.</summary>
+    /// <param name="info">The audio info the answer is about.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpSetupForTest(Gst.Audio.AudioInfo info) => ChainUpSetup(info);
+
     /// <inheritdoc/>
     protected override bool OnSetup(Gst.Audio.AudioInfo info)
     {
         ArgumentNullException.ThrowIfNull(info);
+
+        // GstAudioFilter leaves the slot empty: what this records is the value
+        // it reads an empty one as.
+        _ = ChainUpAnswers.Record("setup", ChainUpSetup(info));
 
         SetupRate = info.Rate;
         SetupChannels = info.Channels;

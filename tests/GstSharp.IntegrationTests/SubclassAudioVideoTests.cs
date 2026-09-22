@@ -99,7 +99,11 @@ public sealed class SubclassAudioVideoTests
         Assert.True(pipeline.AddMany(source, sink));
         Assert.True(source.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        // GstVideoSink leaves set_info empty, so the chain-up answers what the
+        // library reads an empty one as rather than throwing.
+        sink.ChainUpAnswers.AssertAnswered("set_info", true);
 
         _output.WriteLine(FormattableString.Invariant(
             $"managed video sink: shown={sink.Shown}, bytes={sink.Bytes}"));
@@ -131,7 +135,9 @@ public sealed class SubclassAudioVideoTests
         Assert.True(source.Link(filter));
         Assert.True(filter.Link(sink));
 
-        BusPump.RunToEos(pipeline, BusTimeout, _output);
+        TrapWatch.NothingIsReported(() => BusPump.RunToEos(pipeline, BusTimeout, _output));
+
+        filter.ChainUpAnswers.AssertAnswered("set_info", true);
 
         _output.WriteLine(FormattableString.Invariant(
             $"managed video filter: transformed={filter.Transformed}, flags={filter.FrameFlags}"));

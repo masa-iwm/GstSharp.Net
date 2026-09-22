@@ -24,7 +24,8 @@ internal sealed class ProbeVideoSink : VideoSink
     private static readonly SubclassType Definition = DefineSubclass(
         GTypeName,
         ConfigureClass,
-        ShowFrameOverride);
+        ShowFrameOverride,
+        SetInfoOverride);
 
     private int _shown;
 
@@ -41,6 +42,23 @@ internal sealed class ProbeVideoSink : VideoSink
 
     /// <summary>Gets how many bytes those frames carried.</summary>
     internal long Bytes => Interlocked.Read(ref _bytes);
+
+    /// <summary>Gets what the chain-up of each lifecycle slot answered.</summary>
+    internal ChainUpRecord ChainUpAnswers { get; } = new();
+
+    /// <summary>Chains the <c>set_info</c> slot up from outside a slot call.</summary>
+    /// <param name="caps">The caps the answer is about.</param>
+    /// <param name="info">The info the base class read out of them.</param>
+    /// <returns>What the class below the override answers.</returns>
+    internal bool ChainUpSetInfoForTest(Caps caps, VideoInfo info) => ChainUpSetInfo(caps, info);
+
+    /// <inheritdoc/>
+    protected override bool OnSetInfo(Caps caps, VideoInfo info)
+    {
+        // GstVideoSink leaves the slot empty and stores the info before it
+        // runs either way; what this records is the answer of the empty one.
+        return ChainUpAnswers.Record("set_info", ChainUpSetInfo(caps, info));
+    }
 
     /// <inheritdoc/>
     protected override FlowReturn OnShowFrame(Gst.Buffer buf)

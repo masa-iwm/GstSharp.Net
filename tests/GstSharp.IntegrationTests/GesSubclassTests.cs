@@ -61,6 +61,11 @@ public sealed partial class GesSubclassTests
             Assert.Equal(1, ProbeVideoSource.WrappersBuilt);
             Assert.Equal(TrackType.Video, child.TrackType);
 
+            // GESSource leaves select_pad empty and accepts the pad for an
+            // empty one; the static src pad of the element the override built
+            // fires the slot at create_element time (ges-source.c:234-236).
+            child.ChainUpAnswers.AssertAnswered("select_pad", true);
+
             // The library built this wrapper; it holds the toggle reference
             // until it is disposed, so it goes before the timeline does.
             child.Dispose();
