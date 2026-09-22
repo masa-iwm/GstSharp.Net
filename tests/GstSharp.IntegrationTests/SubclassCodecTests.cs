@@ -502,6 +502,35 @@ public sealed unsafe class SubclassCodecTests
             name => VideoEncoder.DefineSubclass(name, _ => { }, VideoEncoder.StartOverride));
     }
 
+    /// <summary>
+    /// An audio encoder is the one codec with a second required slot:
+    /// <c>gst_audio_encoder_sink_setcaps</c> refuses an empty
+    /// <c>set_format</c> with <c>g_return_val_if_fail</c>
+    /// (<c>gstaudioencoder.c:1464</c>), so an encoder without it would register
+    /// and then fail every caps event with a critical. The registration says so
+    /// instead, before the type name is taken.
+    /// </summary>
+    /// <remarks>
+    /// The message names <c>SetFormatOverride</c> alone: <c>handle_frame</c> is
+    /// declared here, and the slots are checked in the order their rule lists
+    /// them, so the refusal is about the one that is missing.
+    /// </remarks>
+    [Fact]
+    public void AnAudioEncoderWithoutTheSetFormatSlotIsRefused()
+    {
+        const string TypeName = "GstSharpTestAudioEncoderWithoutSetFormat";
+
+        Assert.False(GType.FromName(TypeName).IsValid);
+
+        ArgumentException error = Assert.Throws<ArgumentException>(
+            () => AudioEncoder.DefineSubclass(TypeName, _ => { }, AudioEncoder.HandleFrameOverride));
+
+        _output.WriteLine(error.Message);
+        Assert.Contains("SetFormatOverride", error.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("HandleFrameOverride", error.Message, StringComparison.Ordinal);
+        Assert.False(GType.FromName(TypeName).IsValid);
+    }
+
     private static int Refcount(nint handle) => ((MiniObjectRaw*)handle)->Refcount;
 
     private static nint ClassOf(Gst.GObject.Object instance) => *(nint*)instance.Handle;

@@ -1772,7 +1772,8 @@ The lifecycle slots of `BaseParse` (`start`, `stop`, `set_sink_caps`),
 `AudioDecoder` (`open`, `close`, `start`, `stop`, `set_format`), `AudioEncoder`
 (`open`, `close`, `start`, `stop` — not `set_format`, which
 `gst_audio_encoder_sink_setcaps` refuses with `g_return_val_if_fail` and which
-an encoder therefore has to implement), `AudioFilter.setup`, `VideoDecoder`
+`DefineSubclass` therefore requires, see *Slots a subclass has to declare*),
+`AudioFilter.setup`, `VideoDecoder`
 (`open`, `close`, `start`, `stop`, `set_format`, `flush`, `reset`, `finish`,
 `drain`), `VideoEncoder` (`open`, `close`, `start`, `stop`, `set_format`,
 `flush`, `reset`, `finish`, `pre_push`), `VideoFilter.set_info`,
@@ -1916,7 +1917,7 @@ no longer, which is the boxed-borrow rule above.
 ### Slots a subclass has to declare
 
 Most slots have an answer for a NULL parent that the element survives, and
-`DefineSubclass` accepts a registration without them. Fifteen slots on eleven
+`DefineSubclass` accepts a registration without them. Sixteen slots on eleven
 classes do not, and the registration says so before it takes the type name:
 
 | Class | Slot | Why |
@@ -1928,6 +1929,7 @@ classes do not, and the registration says so before it takes the type name:
 | `AudioSink` | `write` | the thread of the ring buffer stops before it starts when the slot is NULL |
 | `AudioSrc` | `read` | the same |
 | `BaseParse`, `AudioDecoder`, `AudioEncoder`, `VideoDecoder`, `VideoEncoder` | `handle_frame` | the base class calls it for every frame, and for the drain at the end of the stream, unguarded |
+| `AudioEncoder` | `set_format` | `gst_audio_encoder_sink_setcaps` opens with `g_return_val_if_fail (klass->set_format != NULL, FALSE)` (`gstaudioencoder.c:1464`), so an encoder without it refuses every caps event with a critical and never negotiates |
 
 A direct `GES.BaseEffect` or `GES.Operation` subclass gets no row of its own: the
 library guards its NULL `create_element` (`ges-track-element.c:1024`), so a
