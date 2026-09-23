@@ -534,34 +534,13 @@ public sealed unsafe class SubclassNativeConstructionTests
 
         ProbeManagedAggregatorPad managed = Assert.IsType<ProbeManagedAggregatorPad>(requested);
 
-        List<Exception> reported = [];
+        // The chain-ups run on this thread with no trampoline in between, so
+        // a throw fails the test directly; there is nothing for the exception
+        // trap to observe.
+        using Gst.Buffer buffer = Gst.Buffer.New();
 
-        void OnFailure(Exception exception)
-        {
-            lock (reported)
-            {
-                reported.Add(exception);
-            }
-        }
-
-        ExceptionTrap.UnhandledException += OnFailure;
-
-        try
-        {
-            using Gst.Buffer buffer = Gst.Buffer.New();
-
-            Assert.Equal(FlowReturn.Ok, managed.ChainUpFlushForTest(aggregator));
-            Assert.False(managed.ChainUpSkipBufferForTest(aggregator, buffer));
-        }
-        finally
-        {
-            ExceptionTrap.UnhandledException -= OnFailure;
-        }
-
-        lock (reported)
-        {
-            Assert.Empty(reported);
-        }
+        Assert.Equal(FlowReturn.Ok, managed.ChainUpFlushForTest(aggregator));
+        Assert.False(managed.ChainUpSkipBufferForTest(aggregator, buffer));
     }
 
     /// <summary>
