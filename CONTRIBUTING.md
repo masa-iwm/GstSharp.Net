@@ -449,8 +449,9 @@ The remaining keys address a callback type and a member rather than a slot:
   can sit inside the entry — is refused while the overlays load, and a removal
   is written out as `"new": ""`. Every failure of a loaded entry is `GEN0064`
   and an error: an `old` that stands nowhere or more than once, a class with no
-  documentation at all, and an entry that names no rendered class. Only classes are covered — records and interfaces obtain their type
-  documentation on emitter paths of their own.
+  documentation at all, and an entry that names no rendered class. Only
+  classes are covered — records and interfaces obtain their type documentation
+  on emitter paths of their own.
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter

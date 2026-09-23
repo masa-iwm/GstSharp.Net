@@ -370,6 +370,7 @@ public sealed unsafe partial class StickyEventsForeachTests
         using Pad pad = NewPadWithStickyEvents();
         using Event held = Hold(pad, EventType.StreamStart);
         nint slot = held.Handle;
+        uint before = RefCountOf(held.Handle);
         GCHandle other = GCHandle.Alloc(new object());
         try
         {
@@ -378,6 +379,9 @@ public sealed unsafe partial class StickyEventsForeachTests
 
             Assert.Equal(0, entry(pad.Handle, &slot, GCHandle.ToIntPtr(other)));
             Assert.Equal(held.Handle, slot);
+
+            // The lent reference was neither taken nor given back.
+            Assert.Equal(before, RefCountOf(held.Handle));
         }
         finally
         {

@@ -1626,12 +1626,13 @@ under the same index, again and again, while it goes on answering `true` — a
 function that clears its slot and answers `false` ends the walk instead, because
 the answer is read before the index (`gstbufferlist.c:315-316`). The refusal
 writes one GLib CRITICAL and then silences itself (`gstbufferlist.c:284-292`),
-which leaves a walk that never returns and says nothing about why. The binding cannot guard it — the library
-goes on presenting the entry — so a function that removes has to know the list
-is writable. `MiniObject.IsWritable` answers that for any live wrapper,
-borrowed or not; `BufferList.MakeWritable()` is how to make it true, and it
-needs a wrapper that owns a reference, so a borrowed list — the one a callback
-is lent — is either writable already or walked without removing anything.
+which leaves a walk that never returns and says nothing about why. The binding
+cannot guard it — the library goes on presenting the entry — so a function that
+removes has to know the list is writable. `MiniObject.IsWritable` answers that
+for any live wrapper, borrowed or not; `BufferList.MakeWritable()` is how to
+make it true, and it needs a wrapper that owns a reference, so a borrowed list —
+the one a callback is lent — is either writable already or walked without
+removing anything.
 
 The buffer of a writable list is writable inside the function, so
 `MakeWritable()` in place is a legal replace. A sticky event can never be edited

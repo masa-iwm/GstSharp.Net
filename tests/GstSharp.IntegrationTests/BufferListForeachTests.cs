@@ -407,6 +407,7 @@ public sealed unsafe partial class BufferListForeachTests
     {
         using Buffer buffer = Buffer.New();
         nint slot = buffer.Handle;
+        uint before = RefCountOf(buffer.Handle);
         GCHandle other = GCHandle.Alloc(new object());
         try
         {
@@ -415,6 +416,9 @@ public sealed unsafe partial class BufferListForeachTests
 
             Assert.Equal(0, entry(&slot, 0, GCHandle.ToIntPtr(other)));
             Assert.Equal(buffer.Handle, slot);
+
+            // The lent reference was neither taken nor given back.
+            Assert.Equal(before, RefCountOf(buffer.Handle));
         }
         finally
         {
