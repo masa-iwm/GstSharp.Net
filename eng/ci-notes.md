@@ -353,8 +353,8 @@ either (48 s cold against 60 s warm on the MSVC leg), so the ILCompiler and
 runtime packs are not an argument for a cache on the other legs.
 
 Those numbers predate `samples/tutorials/BasicTutorial05`, which is the one
-project under `samples/` that carries a third-party package. Avalonia brings the
-whole restore to **about 300 MB (25 package ids for this project alone)** of
+project under `samples/` that carries a third-party package. Avalonia adds
+**about 300 MB (25 package ids)** to the restore, in
 `.nupkg`, measured by summing the package files in the NuGet cache for the ids
 that project's own `project.assets.json` lists after a restore. It is dominated by
 the `SkiaSharp.NativeAssets.*` and `HarfBuzzSharp.NativeAssets.*` packages —

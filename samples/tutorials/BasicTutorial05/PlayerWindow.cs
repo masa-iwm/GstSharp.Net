@@ -47,7 +47,8 @@ internal sealed class PlayerWindow : Window, IDisposable
     /// <summary>
     /// How long <c>--timeout</c> has left to run: from the moment this window
     /// was built until the pipeline first reaches PLAYING, and from that
-    /// moment afterwards.
+    /// moment afterwards. Before the pipeline starts the bound is kept by a
+    /// one-shot timer armed in the constructor instead.
     /// </summary>
     private readonly Stopwatch _elapsed = Stopwatch.StartNew();
 
@@ -105,6 +106,38 @@ internal sealed class PlayerWindow : Window, IDisposable
         _host.HandleChanged += OnHandleChanged;
         _slider.ValueChanged += OnSliderMoved;
         _timer.Tick += OnTick;
+
+        // OnTick is what enforces --timeout, and the timer only starts with the
+        // pipeline, once the video area has a native handle. A window that is
+        // never given one would never tick, so the bound is armed here as well,
+        // from the moment the window is built.
+        TimeSpan bound = ToolkitIntegration.Current.Timeout;
+
+        if (bound > TimeSpan.Zero)
+        {
+            _ = DispatcherTimer.RunOnce(OnStartupTimeout, bound);
+        }
+    }
+
+    /// <summary>
+    /// Closes a window whose pipeline was never started within
+    /// <c>--timeout</c> of the window being built.
+    /// </summary>
+    /// <remarks>
+    /// Once the pipeline has started, <see cref="OnTick"/> owns the bound and
+    /// this does nothing.
+    /// </remarks>
+    private void OnStartupTimeout()
+    {
+        if (_started || _stopped)
+        {
+            return;
+        }
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"timeout:     {ToolkitIntegration.Current.Timeout.TotalSeconds:F0} s elapsed before the video area had a handle, closing"));
+        Close();
     }
 
     /// <summary>
