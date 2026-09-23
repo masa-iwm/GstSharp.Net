@@ -1431,12 +1431,13 @@ internal sealed class CounterPad : AggregatorPad, IManagedSubclass<CounterPad>
 }
 ```
 
-`GstAggregatorPad` fills neither `flush` nor `skip_buffer`, and the library reads
-an empty `flush` as a successful flush — whose result it ignores anyway — and an
-empty `skip_buffer` as "keep the buffer". `ChainUpFlush` and `ChainUpSkipBuffer`
-answer exactly that below a managed pad type registered directly on
-`GstAggregatorPad`, `FlowReturn.Ok` and `false`, instead of throwing; below a native pad class that does fill the
-slot, the chain-up reaches that implementation as usual.
+`GstAggregatorPad` fills neither `flush` nor `skip_buffer`, and the library
+reads an empty `flush` as a successful flush — whose result it ignores anyway —
+and an empty `skip_buffer` as "keep the buffer". `ChainUpFlush` and
+`ChainUpSkipBuffer` answer exactly that below a managed pad type registered
+directly on `GstAggregatorPad`, `FlowReturn.Ok` and `false`, instead of
+throwing; below a native pad class that does fill the slot, the chain-up reaches
+that implementation as usual.
 
 The dictionary overload of `NewInstance` is not a convenience: `GstPad:direction`
 is `CONSTRUCT_ONLY`, so it can only be given while the instance is being built.
