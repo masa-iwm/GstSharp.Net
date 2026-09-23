@@ -742,21 +742,22 @@ more than a lock on four of them.
   `OnHandleFrame`, or inside `OnParse` on a decoder
   (`gstaudiodecoder.h:161-173`, `gstaudioencoder.h:99-119`,
   `gstvideodecoder.h:177-188`, `gstvideoencoder.h:140-151`). The output segment
-  lags the input one: it is written only when the base class applies the queued
-  segment event (`gstaudioencoder.c:611`, `gstaudiodecoder.c:641`,
-  `gstvideoencoder.c:1062`, `gstvideodecoder.c:1107`, each inside that class's
-  `push_event`, and two reverse playback paths, `gstaudiodecoder.c:1173` and
-  `gstvideodecoder.c:2675`), so inside the first `OnHandleFrame` after a new segment
-  `GetOutputSegment()` still answers the previous value — the default
-  `gst_segment_init` left, on a fresh stream. The input segment has a gap of its
-  own: the audio encoder ignores a segment event whose format is not TIME
+  is written only when the base class applies the queued segment event
+  (`gstaudioencoder.c:611`, `gstaudiodecoder.c:641`, `gstvideoencoder.c:1062`,
+  `gstvideodecoder.c:1107`, each inside that class's `push_event`; the audio
+  decoder's drain, `gstaudiodecoder.c:1173`, and the video decoder's reverse
+  playback parse, `gstvideodecoder.c:2675`, apply it before the frames they hand
+  over), so on the ordinary forward path, outside a drain, it lags the input
+  one: inside the first `OnHandleFrame` after a new segment `GetOutputSegment()`
+  still answers the previous value — the default `gst_segment_init` left, on a
+  fresh stream. The input segment has a gap of its own: the audio encoder
+  ignores a segment event whose format is not TIME
   (`gstaudioencoder.c:1605-1613`) and the audio decoder ignores one it cannot
   convert to TIME from bytes (`gstaudiodecoder.c:2404-2435`, the refusal at
   `:2429-2434`), so `GetInputSegment()` keeps the value the previous segment
-  left. The two video
-  headers mark the segments `/*< protected >*/` behind a `/*< private >*/` the
-  scanner never leaves, which is why their overlay entries state the header line
-  the gir contradicts.
+  left. The two video headers mark the segments `/*< protected >*/` behind a
+  `/*< private >*/` the scanner never leaves, which is why their overlay entries
+  state the header line the gir contradicts.
 * `Buffer.Pool` — as long as the buffer reference lives: the field holds a
   strong reference (`gstbufferpool.c:1285`), and the only thing that clears it
   is the compare and exchange in `gst_buffer_pool_release_buffer`
