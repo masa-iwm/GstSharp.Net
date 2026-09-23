@@ -371,10 +371,10 @@ public unsafe partial class Asset : Gst.GObject.Object, GES.IMetaContainer
     /// The binding throws ArgumentException for a null id on a GESEffect, GESEffectClip,
     /// GESUriClip, GESAudioUriSource, GESVideoUriSource, GESMultiFileSource or
     /// GESTransitionClip type, and on GESSourceClip itself - never on one of its subclasses,
-    /// which chain to the default check_id. ges-asset.c:1263 hands the id to check_id
-    /// unguarded. A GESEffect type reads the first token out of the NULL that splitting it
-    /// answers (ges-effect-asset.c:390-391). The other seven answer NULL from check_id, which
-    /// sends the call to _ensure_asset_for_wrong_id with the id as it was given
+    /// which chain to the parent check_id unless they override it. ges-asset.c:1263 hands the
+    /// id to check_id unguarded. A GESEffect type reads the first token out of the NULL that
+    /// splitting it answers (ges-effect-asset.c:390-391). The other seven answer NULL from
+    /// check_id, which sends the call to _ensure_asset_for_wrong_id with the id as it was given
     /// (ges-asset.c:1264-1268) and on to ges_asset_cache_put, where the null becomes the key of
     /// a g_str_hash table (ges-asset.c:745-766). All eight take the process down, so the id is
     /// refused before the call. Every other extractable type still takes a null id, which the
