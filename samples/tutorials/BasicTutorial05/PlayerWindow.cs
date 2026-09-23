@@ -47,10 +47,17 @@ internal sealed class PlayerWindow : Window, IDisposable
     /// <summary>
     /// How long <c>--timeout</c> has left to run: from the moment this window
     /// was built until the pipeline first reaches PLAYING, and from that
-    /// moment afterwards. Before the pipeline starts the bound is kept by a
-    /// one-shot timer armed in the constructor instead.
+    /// moment afterwards. Until the pipeline starts, a one-shot timer armed in
+    /// the constructor bounds the run as well, because nothing reads this
+    /// before the first tick.
     /// </summary>
     private readonly Stopwatch _elapsed = Stopwatch.StartNew();
+
+    /// <summary>
+    /// The one-shot timer that bounds a run whose pipeline never starts, or
+    /// null when <c>--timeout</c> sets no bound.
+    /// </summary>
+    private IDisposable? _startupTimeout;
 
     /// <summary>
     /// The native window handle of <see cref="_host"/>, or zero when there is
@@ -115,7 +122,13 @@ internal sealed class PlayerWindow : Window, IDisposable
 
         if (bound > TimeSpan.Zero)
         {
-            _ = DispatcherTimer.RunOnce(OnStartupTimeout, bound);
+            // DispatcherTimer refuses an interval above Int32.MaxValue
+            // milliseconds, which a large --timeout would otherwise reach.
+            TimeSpan longest = TimeSpan.FromMilliseconds(int.MaxValue);
+
+            _startupTimeout = DispatcherTimer.RunOnce(
+                OnStartupTimeout,
+                bound < longest ? bound : longest);
         }
     }
 
@@ -137,6 +150,9 @@ internal sealed class PlayerWindow : Window, IDisposable
         Console.WriteLine(string.Create(
             CultureInfo.InvariantCulture,
             $"timeout:     {ToolkitIntegration.Current.Timeout.TotalSeconds:F0} s elapsed before the video area had a handle, closing"));
+
+        // A timeout is never a failure, here as in OnTick: the exit code is
+        // left alone, so only a refused PLAYING or an error on the bus fails.
         Close();
     }
 
@@ -799,6 +815,7 @@ internal sealed class PlayerWindow : Window, IDisposable
 
         _stopped = true;
         _timer.Stop();
+        _startupTimeout?.Dispose();
 
         // One last read, because the timer will not tick again: an error posted
         // after the final tick would otherwise never be printed and never reach
