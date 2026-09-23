@@ -742,10 +742,11 @@ more than a lock on four of them.
   `OnHandleFrame`, or inside `OnParse` on a decoder
   (`gstaudiodecoder.h:161-173`, `gstaudioencoder.h:99-119`,
   `gstvideodecoder.h:177-188`, `gstvideoencoder.h:140-151`). The output segment
-  lags the input one: it is written only when the base class pushes the queued
-  segment event downstream (`gstaudioencoder.c:611`, `gstaudiodecoder.c:641`,
+  lags the input one: it is written only when the base class applies the queued
+  segment event (`gstaudioencoder.c:611`, `gstaudiodecoder.c:641`,
   `gstvideoencoder.c:1062`, `gstvideodecoder.c:1107`, each inside that class's
-  `push_event`), so inside the first `OnHandleFrame` after a new segment
+  `push_event`, and two reverse playback paths, `gstaudiodecoder.c:1173` and
+  `gstvideodecoder.c:2675`), so inside the first `OnHandleFrame` after a new segment
   `GetOutputSegment()` still answers the previous value — the default
   `gst_segment_init` left, on a fresh stream. The input segment has a gap of its
   own: the audio encoder ignores a segment event whose format is not TIME
