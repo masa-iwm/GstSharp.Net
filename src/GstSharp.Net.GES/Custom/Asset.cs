@@ -317,7 +317,8 @@ public unsafe partial class Asset
         // type to the check_id of the parent interface. GESTitleClip installs
         // none of its own, so it reaches that parent through this one;
         // GESTestClip and GESUriClip install their own (ges-test-clip.c:240,
-        // ges-uri-clip.c:450), and GESUriClip is refused below for that reason.
+        // ges-uri-clip.c:450). GESUriClip is refused below because its own
+        // answers NULL for a null id (ges-uri-clip.c:198-205).
         if (extractableType.Value == GES.SourceClip.GetGType())
         {
             throw Refuse(
