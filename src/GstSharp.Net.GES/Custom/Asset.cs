@@ -313,9 +313,11 @@ public unsafe partial class Asset
         }
 
         // The exact type rather than a subtype: GESSourceClip refuses every
-        // identifier of its own (ges-source-clip.c:59-69), while its subclasses
-        // — GESTestClip, GESTitleClip, GESUriClip — chain to the check_id of
-        // the parent interface.
+        // identifier of its own (ges-source-clip.c:59-69) and hands every other
+        // type to the check_id of the parent interface. GESTitleClip installs
+        // none of its own, so it reaches that parent through this one;
+        // GESTestClip and GESUriClip install their own (ges-test-clip.c:240,
+        // ges-uri-clip.c:450), and GESUriClip is refused below for that reason.
         if (extractableType.Value == GES.SourceClip.GetGType())
         {
             throw Refuse(

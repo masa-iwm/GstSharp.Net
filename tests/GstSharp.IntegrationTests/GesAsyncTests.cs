@@ -467,10 +467,10 @@ public sealed class GesAsyncTests
             Assert.Equal("id", borrowed.ParamName);
         }
 
-        // The negative boundary: GESTitleClip is a GESSourceClip subclass, and
-        // a subclass chains to the default check_id rather than to the refusal
-        // its parent installs, so a null identifier is answered rather than
-        // refused.
+        // The negative boundary: GESTitleClip is a GESSourceClip subclass with
+        // no check_id of its own, and the one it inherits refuses only
+        // GESSourceClip itself and hands every other type on to the default
+        // check_id, so a null identifier is answered rather than refused.
         GType titleClip = new GType(TitleClip.GetGType());
 
         Task<Asset> allowed = Asset.RequestAsync(titleClip, null);
@@ -591,9 +591,9 @@ public sealed class GesAsyncTests
             Assert.Contains(type.Name, reload.Message, StringComparison.Ordinal);
         }
 
-        // The negative boundary, as in the asynchronous test: GESTitleClip is a
-        // GESSourceClip subclass and chains to the default check_id, so it is
-        // answered rather than refused.
+        // The negative boundary, as in the asynchronous test: GESTitleClip
+        // installs no check_id of its own and reaches the default one through
+        // GESSourceClip's, so it is answered rather than refused.
         using Asset allowed = Assert.IsAssignableFrom<Asset>(
             Asset.Request(new GType(TitleClip.GetGType()), null));
 
