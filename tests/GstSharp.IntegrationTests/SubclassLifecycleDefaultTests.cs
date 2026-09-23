@@ -14,9 +14,10 @@ namespace GstSharp.IntegrationTests;
 /// </summary>
 /// <remarks>
 /// A chain-up reads the slot of the parent class, which is the base class
-/// itself for every probe here, so no pipeline and no declared override is
-/// needed to reach one. The slots a stream does reach are witnessed a second
-/// time by the pipeline tests of the same probes.
+/// itself for every probe here, so no pipeline is needed to reach one, and
+/// the call does not go through the override the probe declares. Those
+/// overrides are there for the pipeline tests of the same probes, which
+/// witness the slots a stream does reach a second time.
 /// </remarks>
 [Collection(GstCollection.Name)]
 public sealed class SubclassLifecycleDefaultTests

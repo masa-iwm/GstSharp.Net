@@ -1781,11 +1781,11 @@ The lifecycle slots of `BaseParse` (`start`, `stop`, `set_sink_caps`),
 are empty in their base class as well, and the library reads an empty one as
 `TRUE`, as `GST_FLOW_OK`, or — for `filter_meta` — as removing the metadata
 from the allocation query; the `ChainUpX` members of these slots answer
-exactly that instead of throwing (`gstbaseparse.c`, `gstaudiodecoder.c`,
-`gstaudioencoder.c`, `gstaudiofilter.c`, `gstvideodecoder.c`,
-`gstvideoencoder.c`, `gstvideofilter.c`, `gstvideosink.c`, `ges-source.c` and
-`gstbasetransform.c` carry the lines, cited once here and noted again beside
-each slot's `vfuncDocNotes` entry). Three of them are readings of a different
+exactly that instead of throwing (the readings are in `gstbaseparse.c`,
+`gstaudiodecoder.c`, `gstaudioencoder.c`, `gstaudiofilter.c`,
+`gstvideodecoder.c`, `gstvideoencoder.c`, `gstvideofilter.c`, `gstvideosink.c`,
+`ges-source.c` and `gstbasetransform.c`; the line of each is cited beside the
+slot's `vfuncDocNotes` entry). Three of them are readings of a different
 kind: `VideoDecoder.flush`, `VideoDecoder.reset` and `VideoEncoder.reset` are
 called bare by the base class with their answer discarded, so the `true` a
 chain-up answers there means "nothing below the override refused" rather than

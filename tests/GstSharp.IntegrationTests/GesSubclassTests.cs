@@ -50,7 +50,11 @@ public sealed partial class GesSubclassTests
         using (clip)
         {
             PrepareForVideo(clip);
-            Assert.True(layer.AddClip(clip));
+
+            // Adding the clip is what fires select_pad on the child below, so
+            // the trap is watched across it: a throwing chain-up is swallowed
+            // at the callback boundary and would only be reported there.
+            TrapWatch.NothingIsReported(() => Assert.True(layer.AddClip(clip)));
 
             TimelineElement only = Assert.Single(clip.GetChildren(false));
             ProbeVideoSource child = Assert.IsType<ProbeVideoSource>(only);
