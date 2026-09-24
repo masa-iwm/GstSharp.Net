@@ -493,6 +493,42 @@ on the parameter either the consumption — a mini object or a boxed value is
 disposed when the member returns — or the handover, a GObject wrapper being
 interned and staying the caller's.
 
+## Traps in hand-written glue
+
+Three traps that the build and the tests do not explain on their own:
+
+* **A `GValue` crosses an assembly boundary as a pointer.** The `LibraryImport`
+  generator accepts a struct by `ref` only when it can prove the struct
+  strictly blittable, and a struct declared in a referenced assembly never
+  qualifies (`SYSLIB1051`, whose message suggests disabling runtime
+  marshalling for the assembly, which this repository does not do).
+  An import declared outside the `GstSharp.Net` assembly therefore takes a
+  `Gst.GObject.GValueNative*`, and the caller hands it the address of the
+  value's `NativeValue`, pinned with `fixed` when the value is an `in` or `ref`
+  parameter; the generated members do the same. The internal imports of
+  `GstSharp.Net` itself keep their `ref GValueNative` parameters and can be
+  called from any assembly the runtime grants its internals to.
+* **A string the library keeps by pointer cannot go through marshalling.** The
+  `*_static_str` family stores the caller's pointer rather than a copy of the
+  string, while the marshalled string lives in a buffer that is released when
+  the call returns. Whether the stored pointer dangles depends on the length of
+  the string: `GstIdStr` copies a name of at most 15 bytes into its inline
+  buffer and keeps only the pointer of a longer one, so a test that uses short
+  names passes over the bug. These symbols are skipped in
+  `girs/overlays/fixups.json`; glue that binds one has to hand over an interned
+  copy, and its tests have to use names of 16 bytes or more.
+* **A write to a frozen caps or structure is refused differently on the two
+  sides.** This is an exception to the `preconditions` rule above: the C call
+  logs a critical and writes nothing, and a generated member keeps that
+  behaviour instead of growing a guard, as `gst_caps_append_structure` always
+  has. The members listed in `WritableTargets`
+  (`generator/GstSharp.Generator/Emit/CallableRenderer.cs`) say so in their
+  documentation. A
+  hand written member checks first and throws `InvalidOperationException`, as
+  `Structure.SetValue` does. The split is deliberate: do not add a
+  `preconditions` guard to a generated writer to make the two match, and do not
+  let new glue fail silently.
+
 ## Commits and pull requests
 
 Imperative mood, concise, English, one logical change per commit. A pull request
