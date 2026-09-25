@@ -6,8 +6,10 @@ namespace Gst.Video;
 /// <remarks>
 /// The slots are <see cref="nint"/> rather than typed function pointers, the
 /// way the class struct mirrors of the binding spell theirs: the runtime only
-/// writes them, and it casts at the point of use. The offsets are asserted
-/// against the running library by the ABI probe tests. See
+/// writes them, and it casts at the point of use. The ABI probe tests assert
+/// the managed layout against the offsets of <c>colorbalance.h</c> on a 64 bit
+/// platform; the running library cannot be asked, because
+/// <c>g_type_query</c> answers nothing for an interface type. See
 /// <c>docs/subclassing.md</c> §5.7.
 /// </remarks>
 [StructLayout(LayoutKind.Sequential)]

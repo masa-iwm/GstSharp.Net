@@ -25,10 +25,21 @@ public static unsafe class ColorBalanceImplementation
 
     /// <summary>Serialises the reads and writes of the channel lists of every element.</summary>
     /// <remarks>
-    /// <c>list_channels</c> is rare - an application asks when it builds a
-    /// user interface, <c>playsink</c> when it sets a video chain up - and the
-    /// lock is never held while managed code of an implementation runs, so one
-    /// lock for the process costs nothing and cannot deadlock.
+    /// <para>
+    /// <c>list_channels</c> is not rare: besides an application building a
+    /// user interface and <c>playsink</c> setting a video chain up,
+    /// <c>playsink</c> asks again on every value set on one of its proxy
+    /// channels (<c>gstplaysink.c:5538</c>). What the lock covers is short,
+    /// though - a comparison of handles and, when the channels changed, one
+    /// list built - so one lock for the process is enough.
+    /// </para>
+    /// <para>
+    /// It is a leaf lock. The members of an implementation run before it is
+    /// taken, and nothing that runs under it takes it again: the
+    /// <c>g_object_ref</c> of a channel can run the toggle notification of its
+    /// wrapper, which only switches the wrapper between a strong and a weak
+    /// handle. So it cannot deadlock.
+    /// </para>
     /// </remarks>
     private static readonly System.Threading.Lock ListsGate = new();
 
@@ -129,18 +140,37 @@ public static unsafe class ColorBalanceImplementation
                 return newest;
             }
 
-            // Everything that can fail is allocated first and the references
-            // are taken last, so a failure on the way leaves no reference
-            // behind and the element keeps the list it had.
-            ListNode* node = (ListNode*)NativeMemory.AllocZeroed((nuint)sizeof(ListNode));
+            // Everything that can fail is built first and attached to the
+            // element only once it all exists, and the references are taken
+            // last, so a failure on the way leaves nothing allocated and no
+            // reference behind, and the element keeps the list it had.
+            nint spine = GListMarshal.BuildSpine(handles, singly: false);
+            ListNode* node = null;
+            ChannelLists* created = null;
 
-            if (lists is null)
+            try
             {
-                lists = (ChannelLists*)NativeMemory.AllocZeroed((nuint)sizeof(ChannelLists));
-                GObjectNative.ObjectSetQdataFull(balance, ListsQuark, (nint)lists, &ReleaseLists);
+                node = (ListNode*)NativeMemory.AllocZeroed((nuint)sizeof(ListNode));
+
+                if (lists is null)
+                {
+                    created = (ChannelLists*)NativeMemory.AllocZeroed((nuint)sizeof(ChannelLists));
+                }
+            }
+            catch
+            {
+                NativeMemory.Free(node);
+                GListMarshal.FreeSpine(spine, singly: false);
+                throw;
             }
 
-            node->List = GListMarshal.BuildSpine(handles, singly: false);
+            node->List = spine;
+
+            if (created is not null)
+            {
+                GObjectNative.ObjectSetQdataFull(balance, ListsQuark, (nint)created, &ReleaseLists);
+                lists = created;
+            }
 
             for (int i = 0; i < handles.Length; i++)
             {
@@ -253,7 +283,10 @@ public static unsafe class ColorBalanceImplementation
     /// Returns the managed channel a slot was handed, as the element holds it.
     /// </summary>
     /// <param name="channel">The native channel, which is not null.</param>
-    /// <returns>The interned wrapper, or a new one that borrows a reference.</returns>
+    /// <returns>
+    /// The interned wrapper, or a new one, which takes a reference of its own
+    /// the way every wrapper of an object does.
+    /// </returns>
     private static ColorBalanceChannel? ChannelOf(nint channel) =>
         Gst.GObject.Object.FromNative<ColorBalanceChannel>(channel, Transfer.None);
 
