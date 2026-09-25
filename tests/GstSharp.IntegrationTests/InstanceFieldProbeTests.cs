@@ -175,6 +175,38 @@ public sealed unsafe class InstanceFieldProbeTests
     }
 
     /// <summary>
+    /// The two fields of <c>GstBaseSink</c> that hand written members reach
+    /// through the mirror, against what a C compiler measured for them.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Neither is an <c>instanceFields</c> entry, so the registry above has no
+    /// row for them: <c>preroll_lock</c> is taken by
+    /// <c>BaseSink.PrerollLock</c> and <c>flushing</c>, which the header
+    /// marks private, is read by <c>BaseSink.IsFlushing</c>. The numbers are
+    /// <c>offsetof (GstBaseSink, x) - sizeof (GstElement)</c>: a pointer, a
+    /// padded enumeration, a 64 bit offset and two booleans put the lock at
+    /// 32, and the condition (16), five booleans, padding to the segment at 80
+    /// (the row above), the segment (120), the clock id and <c>sync</c> put
+    /// <c>flushing</c> at 212.
+    /// </para>
+    /// <para>
+    /// The running library confirms them through the size check of the mirror
+    /// and through <c>BaseSinkDoPrerollTests</c>, whose pulling thread takes
+    /// the lock at this offset and stops on this flag.
+    /// </para>
+    /// </remarks>
+    [Fact]
+    public void TheHandBoundFieldsOfABaseSinkSitWhereACompilerMeasuredThem()
+    {
+        _output.WriteLine(FormattableString.Invariant(
+            $"preroll_lock = {BaseSink.PrerollLockOffset}, flushing = {BaseSink.FlushingOffset}"));
+
+        Assert.Equal(32, BaseSink.PrerollLockOffset);
+        Assert.Equal(212, BaseSink.FlushingOffset);
+    }
+
+    /// <summary>
     /// The instance size the library reports for the parent is what the
     /// accessors add, and <c>GstElement</c> is the parent of every one of them.
     /// </summary>
