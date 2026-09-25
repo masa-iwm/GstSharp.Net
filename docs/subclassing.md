@@ -1536,7 +1536,7 @@ A managed effect is a subclass of `GES.Effect`, of `GES.BaseEffect` or of
 `GES.BaseEffectClip`, of `GES.EffectClip` or of `GES.OperationClip`. None of the
 six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
 `GES.TimelineElement` or — for a clip — to `GES.Clip` and
-`GES.Container.UngroupOverride`. Nine rules are particular to them.
+`GES.Container.UngroupOverride`. Ten rules are particular to them.
 
 * **Built through an asset whose id is the description.** The spelling is
   `GES.Asset.Request(type.GType, "video <description>")!.Extract<T>()`. The id is
@@ -1616,13 +1616,71 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
   child", and — like every `GESEffect` subtype — would take the process down on a
   `null` id, this time in the hash of the asset key (`ges-asset.c:752-766`); the
   same `ArgumentException` refuses it first, so `""` is the emptiest id there is.
+* **A time effect is made in `OnCreateElement`.** The override builds the
+  element, calls `AddChildrenProps(element, ...)`, then
+  `RegisterTimeProperty("<child property>")`, then
+  `SetTimeTranslationFuncs(...)`, and returns the element — the order
+  `ges_effect_create_element` uses itself (`ges-effect.c:338-355`). Both calls
+  need an effect with no parent and no internal source
+  (`ges-base-effect.c:217-223`, `:304-311`), and inside the override both hold:
+  `set_asset` runs the slot once per instance (`ges-track-element.c:295`,
+  `:1008-1009`, `:1026-1028`) before anything can add the effect, and
+  `constructed` has already reset `has-internal-source` to the class default,
+  FALSE for every operation (`:330-333`; only `GESSource` defaults to TRUE,
+  `ges-source.c:332`).
+  - *Why there and not after `Extract<T>()`.* A copy — a split, a paste, a
+    second track — is a fresh extraction (`ges-timeline-element.c:1676`) that
+    runs the slot again and carries no registration and no functions, which
+    are private to the instance (`ges-base-effect.c:104-111`); and a clip
+    listens to a time property only if the effect was a time effect when it
+    was added (`ges-clip.c:2041-2043`).
+  - *The functions are static*, or lambdas that capture nothing: they read
+    the `effect` argument, which is the interned wrapper (cast it to the
+    subclass). An instance method roots the wrapper through the functions
+    until the effect is disposed explicitly, and the functions outlive a
+    disposed wrapper: they are native state (`ges-base-effect.c:144-145`) and
+    then see a re-fabricated wrapper with default state (§8).
+  - *What the clip does with it.* The two `Clip.Get*TimeFrom*Time` conversions
+    apply the functions (`ges-clip.c:4127-4134`, `:4271-4278`). `DurationLimit`
+    is the core child's `max-duration - in-point` pushed through sink-to-source
+    (`:393-395`, `:478`), and the clip trims itself to it (`:561-576`). A write
+    of a registered property is vetoed only when the timeline tree refuses the
+    shorter clip (`:1255-1290`, `:591-606`). `None` from a function means "no
+    limit" for that track's limit and "cannot convert" in the conversions. A
+    time effect is a top effect of a source clip only; `BaseEffectClip`
+    refuses it (`ges-base-effect-clip.c:57-67`).
+  - *The video shape on 1.28.* On the video track, answer a bin that ends in a
+    `capsfilter` named `___ges__effectcapsfilter`, for example
+    `Gst.Global.ParseBinFromDescription("videorate ! capsfilter name=___ges__effectcapsfilter", true)`.
+    It matches what the library builds for its own video effects in 1.28
+    (`ges-effect-asset.c:249`), and the frame positioner of 1.28 looks the
+    capsfilter up by that name on the first time effect of the track
+    (`gstframepositioner.c:394-401` via `ges-clip.c:1932-1955`). Without it
+    a bare element costs one GLib critical and one `GST_ERROR` per lookup,
+    a bin without that name the `GST_ERROR` alone; neither crashes. The name
+    is an upstream internal; releases before 1.28 (the 1.24 floor included)
+    have neither the builder nor the lookup. Blacklist `capsfilter` in
+    `AddChildrenProps` so that its `caps` is no child property on releases
+    before 1.28, which lack the `___ges__` name skip
+    (`ges-track-element.c:1183`).
+  - *Too late.* Once the effect has a parent, `SetTimeTranslationFuncs`
+    answers `false`; `RegisterTimeProperty` is generated and lets the C's
+    critical through (`ges-base-effect.c:221`).
+  - *Exceptions.* One thrown by `OnCreateElement` substitutes an `identity`
+    and skips the registration, so the effect is then silently not a time
+    effect; one thrown by a function is reported and answered with the
+    identity, as `BaseEffectTimeTranslationFunc` documents.
 * **Limits.** There is no rate-property registration:
   `ges_effect_class_register_rate_property` is unbound, so there is no
   class-level time effect — a description naming `pitch`, `videorate` or
-  `scaletempo` works through the inherited slot. Any effect instance, a
-  managed one included, becomes a time effect by calling
-  `BaseEffect.SetTimeTranslationFuncs` on itself before it joins a clip;
-  fuller guidance for managed time effects comes in a later change.
+  `scaletempo` works through the inherited slot. A `GES.Effect` subtype that
+  chains up with such a description is a time effect already, because the
+  inherited slot reads the native class's list whatever the instance type
+  (`ges-effect.c:341-355`); `SetTimeTranslationFuncs` after the chain-up
+  replaces the native functions, while `RegisterTimeProperty` on the same
+  property is refused as already registered (`ges-base-effect.c:228-235`).
+  Every other effect becomes one in `OnCreateElement`, as the previous rule
+  describes.
   The transition classes — `Transition`, `VideoTransition`, `AudioTransition`,
   `BaseTransitionClip` and `TransitionClip` — are not subclassable and will not
   be: the library only ever builds the native transition types
@@ -2031,10 +2089,11 @@ under it.
   `AudioTransition`, `BaseTransitionClip` and `TransitionClip` stay off the
   allowlist because the library only ever builds the native transition types
   (`ges-transition-clip.c:359, 372`). Beside them,
-  `ges_effect_class_register_rate_property` is unbound, so a managed effect
-  class is a time effect only through a description the inherited slot
-  builds; an instance of it becomes one by calling
-  `SetTimeTranslationFuncs` on itself before it joins a clip.
+  `ges_effect_class_register_rate_property` is unbound: there is no
+  class-level registration, so a managed class is a time effect through the
+  chain-up with a rate-carrying description or through the per-instance calls
+  in `OnCreateElement` (§11, "A time effect is made in `OnCreateElement`"),
+  never through a static declaration.
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
   and a managed parent's slot would be the same trampoline (§4.4). The surface
