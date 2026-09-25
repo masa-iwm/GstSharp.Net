@@ -1125,7 +1125,9 @@ exception to the paragraph above. The contract:
   object lock is held.
 * On a thread the subclass owns, the shape is the one of
   `gstaudiobasesink.c:2296-2346`: `PrerollLock()`, then if `IsFlushing`
-  `PrerollUnlock()` and stop, else `DoPreroll(buffer)` and `PrerollUnlock()`.
+  `PrerollUnlock()` and stop, else `DoPreroll(buffer)` and `PrerollUnlock()`;
+  release the lock in a `finally`, so an exception between the two does not
+  leave it held.
   `IsFlushing` is load-bearing: `do_preroll` has no flushing check of its own,
   so a call after the flush was set waits for a signal that never comes. It is
   a raw read of a field the library reads and writes under this lock (writes

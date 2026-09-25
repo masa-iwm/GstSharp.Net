@@ -105,10 +105,10 @@ internal sealed class PullThreadSink : BaseSink
             return true;
         }
 
-        // The base class set the flush before this call, on this very thread
-        // (gstbasesink.c:4936-4938), so the thread leaves DoPreroll or its pull
-        // with Flushing, and the flag reads set here without the lock.
-        Record("activate-pull:false flushing=" + (IsFlushing ? "yes" : "no"));
+        // The base class set the flush before this call (gstbasesink.c:4936-4938),
+        // so the thread leaves DoPreroll or its pull with Flushing; it records
+        // the flag itself, under the lock.
+        Record("activate-pull:false");
         bool joined = _thread is null || _thread.Join(TimeSpan.FromSeconds(10));
         Volatile.Write(ref _joined, joined ? 1 : 0);
         _thread = null;
@@ -152,6 +152,25 @@ internal sealed class PullThreadSink : BaseSink
 
     private void Loop()
     {
+        try
+        {
+            Pull();
+        }
+        catch (Exception e)
+        {
+            // An exception that escaped a background thread would end the
+            // test host; the test asserts on this entry instead.
+            Record("exception:" + e.GetType().Name);
+        }
+        finally
+        {
+            Record("exit");
+            Exited.Set();
+        }
+    }
+
+    private void Pull()
+    {
         using Pad pad = GetStaticPad("sink")
             ?? throw new InvalidOperationException("The sink has no sink pad.");
         ulong offset = 0;
@@ -163,7 +182,7 @@ internal sealed class PullThreadSink : BaseSink
             {
                 buffer?.Dispose();
                 Record("pull:" + pulled);
-                break;
+                return;
             }
 
             using (buffer)
@@ -171,30 +190,34 @@ internal sealed class PullThreadSink : BaseSink
                 offset += buffer.GetSize();
 
                 PrerollLock();
-                if (IsFlushing)
+                try
                 {
-                    PrerollUnlock();
-                    Record("flushing");
-                    break;
+                    if (IsFlushing)
+                    {
+                        Record("flushing");
+                        return;
+                    }
+
+                    Volatile.Write(ref _inside, 1);
+                    FlowReturn result = DoPreroll(buffer);
+
+                    if (result != FlowReturn.Ok)
+                    {
+                        // Still under the lock, so the flag is the one that
+                        // ended the preroll.
+                        Record("preroll:" + result + " flushing=" + (IsFlushing ? "yes" : "no"));
+                        return;
+                    }
                 }
-
-                Volatile.Write(ref _inside, 1);
-                FlowReturn result = DoPreroll(buffer);
-                Volatile.Write(ref _inside, 0);
-                PrerollUnlock();
-
-                if (result != FlowReturn.Ok)
+                finally
                 {
-                    Record("preroll:" + result);
-                    break;
+                    Volatile.Write(ref _inside, 0);
+                    PrerollUnlock();
                 }
 
                 Interlocked.Increment(ref _prerolled);
             }
         }
-
-        Record("exit");
-        Exited.Set();
     }
 
     private void Record(string entry)

@@ -193,7 +193,8 @@ public sealed unsafe class InstanceFieldProbeTests
     /// <para>
     /// The running library confirms them through the size check of the mirror
     /// and through <c>BaseSinkDoPrerollTests</c>, whose pulling thread takes
-    /// the lock at this offset and stops on this flag.
+    /// the lock at this offset and, still holding it after the preroll
+    /// returned Flushing, reads this flag as set.
     /// </para>
     /// </remarks>
     [Fact]

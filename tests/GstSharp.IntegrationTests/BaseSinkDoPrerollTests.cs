@@ -159,7 +159,7 @@ public sealed class BaseSinkDoPrerollTests
             // lock, which wakes the preroll, and only then asks the override
             // to stop the thread. The woken thread and the override race to
             // record what they saw, so the order of those two entries is not
-            // asserted; the flag the override reads is.
+            // asserted; the flag the thread reads under the lock is.
             sink.ClearLog();
             Assert.Equal(StateChangeReturn.Success, pipeline.SetState(State.Ready));
             Assert.True(sink.Exited.Wait(WaitTimeout), "The thread did not end.");
@@ -169,11 +169,12 @@ public sealed class BaseSinkDoPrerollTests
             _output.WriteLine(string.Join(", ", log));
 
             int unlock = IndexOf(log, "unlock");
-            int flushed = IndexOf(log, "preroll:" + FlowReturn.Flushing);
-            int deactivated = IndexOf(log, "activate-pull:false flushing=yes");
+            int flushed = IndexOf(log, "preroll:" + FlowReturn.Flushing + " flushing=yes");
+            int deactivated = IndexOf(log, "activate-pull:false");
             Assert.True(unlock >= 0, "The unlock override was not called.");
-            Assert.True(flushed > unlock, "DoPreroll did not return Flushing after the unlock.");
-            Assert.True(deactivated > unlock, "The override was not asked to stop, with the flush set, after the unlock.");
+            Assert.True(flushed > unlock, "DoPreroll did not return Flushing, with the flush set, after the unlock.");
+            Assert.True(deactivated > unlock, "The override was not asked to stop after the unlock.");
+            Assert.DoesNotContain(log, entry => entry.StartsWith("exception:", StringComparison.Ordinal));
         }
         finally
         {
