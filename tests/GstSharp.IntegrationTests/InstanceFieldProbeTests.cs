@@ -180,7 +180,7 @@ public sealed unsafe class InstanceFieldProbeTests
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Neither is an <c>instanceFields</c> entry, so the registry above has no
+    /// None of them is an <c>instanceFields</c> entry, so the registry above has no
     /// row for them: <c>preroll_lock</c> is taken by
     /// <c>BaseSink.PrerollLock</c>, <c>flushing</c>, which the header
     /// marks private, is read by <c>BaseSink.IsFlushing</c>, and
@@ -188,9 +188,9 @@ public sealed unsafe class InstanceFieldProbeTests
     /// <c>BaseSink.CanActivatePull</c>. The numbers are
     /// <c>offsetof (GstBaseSink, x) - sizeof (GstElement)</c>: a pointer, a
     /// padded enumeration and a 64 bit offset put <c>can_activate_pull</c> at
-    /// 24, two booleans put the lock at 32, and the condition (16), five booleans, padding to the segment at 80
-    /// (the row above), the segment (120), the clock id and <c>sync</c> put
-    /// <c>flushing</c> at 212.
+    /// 24, two booleans put the lock at 32, and the condition (16), five
+    /// booleans, padding to the segment at 80 (the row above), the segment
+    /// (120), the clock id and <c>sync</c> put <c>flushing</c> at 212.
     /// </para>
     /// <para>
     /// The running library confirms them through the size check of the mirror

@@ -56,9 +56,13 @@ public unsafe partial class BaseSink
     /// activation that already happened.
     /// </para>
     /// <para>
-    /// The value is a plain read and write of the field, with no lock: the
-    /// library reads it only during pad activation, and a constructor runs
-    /// before anything else holds the instance. <c>GstAudioBaseSink</c> writes the
+    /// The value is a plain read and write of the field, with no lock.
+    /// <c>GstBaseSink</c> reads it only while it activates the sink pad
+    /// (<c>gstbasesink.c:711</c>, <c>:4738</c>), and a constructor runs before
+    /// anything else holds the instance; <c>gstaudiobasesink.c:887</c> also
+    /// reads it, in <c>get_property</c>. The header marks the field
+    /// <c>with LOCK</c> (<c>gstbasesink.h:91</c>), but the base class reads it
+    /// at activation without taking that lock. <c>GstAudioBaseSink</c> writes the
     /// same field through its <c>can-activate-pull</c> property
     /// (<c>gstaudiobasesink.c:846-847</c>), which is why
     /// <c>AudioBaseSink.CanActivatePull</c> hides this member.
@@ -128,8 +132,8 @@ public unsafe partial class BaseSink
     /// (<c>gstbasesink.c:2484-2504</c>); a list must not be empty, or the
     /// library aborts (<c>gstbasesink.c:2496</c>). The call borrows it: the
     /// wrapper keeps its reference, and the sink may take one of its own on
-    /// the buffer as the last sample (<c>gstbasesink.c:2493-2499</c>,
-    /// <c>:1053</c>), after which the buffer is no longer writable in place.
+    /// the buffer as the last sample (<c>gstbasesink.c:2494</c>,
+    /// <c>:2500</c>, <c>:1053</c>), after which the buffer is no longer writable in place.
     /// </param>
     /// <returns>
     /// <see cref="Gst.FlowReturn.Ok"/> when the preroll completed, or at once

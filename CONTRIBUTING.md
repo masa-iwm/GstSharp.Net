@@ -452,6 +452,17 @@ The remaining keys address a callback type and a member rather than a slot:
   documentation at all, and an entry that names no rendered class. Only
   classes are covered — records and interfaces obtain their type documentation
   on emitter paths of their own.
+* `handWrittenMembers` — the C# names of the members a `Custom/` partial of a
+  GObject class declares by hand, keyed by the `c:type` of the class
+  (`GstBaseSink`). The generator never reads `Custom/`, so a generated member
+  of the same name on a derived class would hide the hand-written one without
+  `new`, which is `CS0108` and so a build failure. A listed name counts as a
+  member of that class for the hiding rules of every descendant, and a value
+  backed property over it is emitted with `new`. List only names a generated
+  descendant would actually hide: a listed method name puts `new` on every
+  overload of that name, and on one of a different signature that is
+  `CS0109`. An empty list or a blank name is refused while the overlays load,
+  and a key that names no rendered class is `GEN0065`.
 
 Every entry cites the C file and line its claim rests on in a `$comment` or in
 the `$comment-` block of the key. An entry that names no slot or no parameter

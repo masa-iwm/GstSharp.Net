@@ -1095,6 +1095,11 @@ internal sealed class SurfaceBuilder
         /// </summary>
         /// <param name="plan">The method to test.</param>
         /// <returns><see langword="true"/> when the member needs <c>new</c>.</returns>
+        // A listed hand written name puts 'new' on every generated method of
+        // that name, including an overload of a different signature, where
+        // 'new' is CS0109. The handWrittenMembers overlay is therefore meant for
+        // properties and same-signature members; only the property path is
+        // exercised today.
         internal bool HidesMethod(MarshalPlan plan) =>
             _signatures.Contains(MethodKey(plan))
             || _properties.Contains(plan.Name)
