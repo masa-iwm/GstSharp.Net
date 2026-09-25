@@ -37,15 +37,18 @@ namespace Gst.Base;
 /// <see cref="Gst.Buffer.Offset"/> is neither <c>GST_BUFFER_OFFSET_NONE</c>
 /// (<see cref="ulong.MaxValue"/>) nor equal to <paramref name="offset"/>
 /// (<c>gsttypefindhelper.c:165-181</c>). A function that reads with a shifted
-/// offset has to set <c>Offset</c> back to <paramref name="offset"/>, as
-/// <c>gsttagdemux.c</c> does.
+/// offset has to set the offset back to <paramref name="offset"/> with
+/// <see cref="Gst.Buffer.SetOffset"/>, as <c>gsttagdemux.c</c> does.
 /// </para>
 /// <para>
-/// A function should call <see cref="Gst.Buffer.SetOffset"/> with
-/// <paramref name="offset"/> on the buffer it hands out rather than leave it at
-/// <c>GST_BUFFER_OFFSET_NONE</c>. The helper keeps every buffer it was handed
-/// until it returns and serves later reads of the same range from them, but
-/// only from a buffer whose offset it knows (<c>gsttypefindhelper.c:124</c>,
+/// A function should set the offset of the buffer it hands out to
+/// <paramref name="offset"/> rather than leave it at
+/// <c>GST_BUFFER_OFFSET_NONE</c>. <see cref="Gst.Buffer.SetOffset"/> needs a
+/// writable buffer and throws on a shared one; call
+/// <see cref="Gst.Buffer.MakeWritable"/> first when the buffer may be shared,
+/// for example one pulled from upstream. The helper keeps every buffer it was
+/// handed until it returns and serves later reads of the same range from
+/// them, but only from a buffer whose offset it knows (<c>gsttypefindhelper.c:124</c>,
 /// <c>:197</c>). With the offset left unset every read calls the function
 /// again, for at least 4096 bytes each time.
 /// </para>
@@ -95,7 +98,7 @@ public static unsafe partial class BaseGlobal
     /// <param name="obj">The object the typefinding is for, handed back to <paramref name="func"/>.</param>
     /// <param name="parent">The parent of <paramref name="obj"/>, handed back to <paramref name="func"/>, or <see langword="null"/>.</param>
     /// <param name="func">The function that reads the data; see <see cref="Gst.Base.TypeFindHelperGetRangeFunction"/>.</param>
-    /// <param name="size">The length of the data in bytes, or <c>0</c> or <see cref="ulong.MaxValue"/> when it is unknown; typefinders are then told no length (<c>gsttypefindhelper.c:404-408</c>).</param>
+    /// <param name="size">The length of the data in bytes, or <c>0</c> or <see cref="ulong.MaxValue"/> when it is unknown; typefinders are then told no length (<c>gsttypefindhelper.c:406-410</c>).</param>
     /// <param name="extension">The extension of the data, or <see langword="null"/>; typefinders that claim it are tried first.</param>
     /// <param name="prob">The probability of the caps that were found.</param>
     /// <returns>The caps of the data, or <see langword="null"/> when no type was found.</returns>
@@ -144,7 +147,7 @@ public static unsafe partial class BaseGlobal
     /// <param name="obj">The object the typefinding is for, handed back to <paramref name="func"/>.</param>
     /// <param name="parent">The parent of <paramref name="obj"/>, handed back to <paramref name="func"/>, or <see langword="null"/>.</param>
     /// <param name="func">The function that reads the data; see <see cref="Gst.Base.TypeFindHelperGetRangeFunction"/>.</param>
-    /// <param name="size">The length of the data in bytes, or <c>0</c> or <see cref="ulong.MaxValue"/> when it is unknown; typefinders are then told no length (<c>gsttypefindhelper.c:404-408</c>).</param>
+    /// <param name="size">The length of the data in bytes, or <c>0</c> or <see cref="ulong.MaxValue"/> when it is unknown; typefinders are then told no length (<c>gsttypefindhelper.c:406-410</c>).</param>
     /// <param name="extension">The extension of the data, or <see langword="null"/>; typefinders that claim it are tried first.</param>
     /// <param name="caps">The caps of the data, or <see langword="null"/> when no type was found.</param>
     /// <param name="prob">The probability of <paramref name="caps"/>.</param>
