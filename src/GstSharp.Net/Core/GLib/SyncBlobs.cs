@@ -7,10 +7,11 @@ namespace Gst.GLib;
 /// <para>
 /// GLib declares it a <c>union { gpointer p; guint i[2]; }</c>
 /// (<c>glib/gthread.h</c>), so it is one pointer wide and pointer aligned on
-/// every 64 bit target of this binding. Only the storage matters here: nothing
-/// managed ever locks one, and the blob exists so that a mirror of a structure
-/// that embeds a lock lays the fields behind it out where the C compiler put
-/// them.
+/// every 64 bit target of this binding. Only the storage matters here: the one
+/// managed member that locks one is <c>Gst.Base.BaseSink.PrerollLock</c>, from a
+/// thread the subclass owns, and otherwise the blob exists so that a mirror of
+/// a structure that embeds a lock lays the fields behind it out where the C
+/// compiler put them.
 /// </para>
 /// <para>
 /// The member is spelled as a pointer rather than as bytes on purpose: a

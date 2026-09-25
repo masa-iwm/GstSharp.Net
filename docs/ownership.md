@@ -719,9 +719,11 @@ the whole cost of the accessor taking no lock, which it cannot: every one of
 these locks is a C macro with no exported function, `OBJECT_LOCK` is a non
 recursive `GMutex` that item 8 of `docs/modules.md` forbids a member to take, and
 the `STREAM_LOCK` of the GstBase classes lives inside `GstPad`, whose layout
-differs between ABIs, while `PREROLL_LOCK` is a `GstBaseSink` field that no
-member of the binding takes. The codec classes are the one place where the
-obstacle is the binding rather than the ABI: their `STREAM_LOCK` is a
+differs between ABIs, while `PREROLL_LOCK` is a `GstBaseSink` field that only
+`BaseSink.PrerollLock()` takes, and only on a thread the subclass owns
+("Prerolling from a thread of your own" in
+[`docs/subclassing.md`](subclassing.md)). The codec classes are the one place
+where the obstacle is the binding rather than the ABI: their `STREAM_LOCK` is a
 `GRecMutex` of their own, at a mirrored offset, and `g_rec_mutex_lock` is
 exported, but the binding offers no way to take it — and would not use one if it
 did, because the chain function holds that lock across the push

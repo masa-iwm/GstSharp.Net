@@ -32,7 +32,10 @@ public sealed class BaseSinkDoPrerollTests
     /// PAUSED change made meanwhile: its preroll blocks in PAUSED, returns
     /// <see cref="FlowReturn.Ok"/> once the pipeline plays again, and
     /// <see cref="FlowReturn.Flushing"/> when the pipeline goes to READY
-    /// instead (<c>gstbasesink.c:1812-1819</c>, <c>:2525-2528</c>).
+    /// instead: the pad deactivation sets the flush (<c>gstbasesink.c:4667</c>),
+    /// the wait returns <see cref="FlowReturn.Flushing"/>
+    /// (<c>:2442-2443</c>, <c>:2454</c>) and the preroll hands it on
+    /// (<c>:2559-2563</c>).
     /// </summary>
     [Fact]
     public void ARenderOverridePrerollsAfterAClockWait()

@@ -10,7 +10,7 @@ namespace Gst.Base;
 /// <para>
 /// <c>gst_base_sink_do_preroll</c> is bound by hand because the planner does
 /// not marshal a bare <c>GstMiniObject*</c>. The lock is a macro in C
-/// (<c>GST_BASE_SINK_PREROLL_LOCK</c>, <c>gstbasesink.h:50-51</c>) over the
+/// (<c>GST_BASE_SINK_PREROLL_LOCK</c>, <c>gstbasesink.h:49-51</c>) over the
 /// <c>preroll_lock</c> field, and <c>flushing</c> is a field the header marks
 /// private; both are read at the offsets of the generated mirror
 /// <see cref="BaseSinkOwnFieldsRaw"/>.
@@ -36,13 +36,16 @@ public unsafe partial class BaseSink
     internal static int FlushingOffset { get; } = MeasureFlushing();
 
     /// <summary>
-    /// Gets a value indicating whether the sink is flushing: its pad is being
-    /// deactivated or a flush is in progress.
+    /// Gets a value indicating whether the sink is flushing or shutting down:
+    /// a flush is in progress, its pad is being deactivated or inactive, or
+    /// the state is going down to READY (<c>gstbasesink.c:1796</c>,
+    /// <c>:1817</c>).
     /// </summary>
     /// <remarks>
     /// <para>
     /// The value is a plain read of the <c>flushing</c> field, which the
-    /// library writes under PREROLL_LOCK (<c>gstbasesink.c:4667</c>,
+    /// library reads and writes under PREROLL_LOCK (writes at
+    /// <c>gstbasesink.c:4667</c>, <c>:1796</c>, <c>:1817</c>; reads at
     /// <c>:3776</c>, <c>:2442</c>, <c>:1760</c>; the <c>with LOCK</c> of
     /// <c>gstbasesink.h:108</c> is stale). It is only meaningful between
     /// <see cref="PrerollLock"/> and <see cref="PrerollUnlock"/>.
@@ -76,8 +79,11 @@ public unsafe partial class BaseSink
     /// <see langword="null"/>. A buffer, or the first buffer of a list, is
     /// handed to <see cref="OnPrepare"/> and <see cref="OnPreroll"/> first; an
     /// event or <see langword="null"/> only commits the state and waits
-    /// (<c>gstbasesink.c:2484-2504</c>). The call borrows it and keeps no
-    /// reference.
+    /// (<c>gstbasesink.c:2484-2504</c>); a list must not be empty, or the
+    /// library aborts (<c>gstbasesink.c:2496</c>). The call borrows it: the
+    /// wrapper keeps its reference, and the sink may take one of its own on
+    /// the buffer as the last sample (<c>gstbasesink.c:2493-2499</c>,
+    /// <c>:1053</c>), after which the buffer is no longer writable in place.
     /// </param>
     /// <returns>
     /// <see cref="Gst.FlowReturn.Ok"/> when the preroll completed, or at once
@@ -94,13 +100,15 @@ public unsafe partial class BaseSink
     /// <see cref="OnPrepare"/>, <see cref="OnPreroll"/>,
     /// <see cref="OnWaitEvent"/>, a serialized <see cref="OnEvent"/>,
     /// <see cref="OnUnlockStop"/>, <see cref="OnSetCaps"/> and
-    /// <see cref="OnGetTimes"/>, so an override calls this directly. A thread
+    /// <see cref="OnGetTimes"/> (<c>gstbasesink.c:2153</c>, <c>:3822</c>), so
+    /// an override calls this directly. A thread
     /// the subclass owns wraps it in <see cref="PrerollLock"/> and
     /// <see cref="PrerollUnlock"/> after a look at <see cref="IsFlushing"/>.
     /// </para>
     /// <para>
     /// The call may release the lock and take it again while it waits
-    /// (<c>gstbasesink.c:1751-1757</c>), so nothing the lock guards is held
+    /// (<c>gstbasesink.c:1751-1757</c>, <c>:2440</c>; the wait family at
+    /// <c>:2379-2383</c>), so nothing the lock guards is held
     /// still across it. A render override that waited on the clock calls it
     /// to catch a PLAYING to PAUSED change made while the lock was released
     /// (<c>gstbasesink.c:2412-2421</c>).
@@ -117,7 +125,7 @@ public unsafe partial class BaseSink
 
     /// <summary>
     /// Takes PREROLL_LOCK, the <c>GST_BASE_SINK_PREROLL_LOCK</c> macro of
-    /// <c>gstbasesink.h:50</c>.
+    /// <c>gstbasesink.h:49</c>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -127,7 +135,8 @@ public unsafe partial class BaseSink
     /// override does not reach for a lock. The lock is not held in
     /// <see cref="OnUnlock"/>, a non-serialized <see cref="OnEvent"/> or
     /// FLUSH_STOP, <see cref="OnStart"/>, <see cref="OnStop"/>,
-    /// <see cref="OnQuery"/>, <see cref="OnActivatePull"/>,
+    /// the <c>query</c> virtual method, which the binding does not expose
+    /// (<c>gstbasesink.c:5665</c>), <see cref="OnActivatePull"/>,
     /// <see cref="OnProposeAllocation"/> or an override of
     /// <c>OnChangeState</c>, and it is held in every override listed on
     /// <see cref="DoPreroll"/>.

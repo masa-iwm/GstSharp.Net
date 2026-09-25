@@ -155,7 +155,7 @@ public sealed class InstanceFieldTests
         Assert.DoesNotContain("- `AudioDecoder.output_segment`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `AudioEncoder.input_segment`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `AudioEncoder.output_segment`", report, StringComparison.Ordinal);
-        // The preroll lock of a base sink is the one class field a hand written
+        // The preroll lock of a base sink is one more class field a hand written
         // member answers instead, so it counts among the exposed ones.
         Assert.Equal(24, Generated.Census.ExposedFieldCount());
 

@@ -1103,7 +1103,7 @@ exception to the paragraph above. The contract:
   (`gstbasesink.c:3955-3966`), `OnPrepare` and `OnPreroll` (`:2512-2518`,
   `:3901-3908`), `OnWaitEvent` (`:3316`), a serialized `OnEvent`
   (`:3673-3683`), `OnUnlockStop` (`:4413`, `:4670`, `:5802`), `OnSetCaps`
-  (`:3419`) and `OnGetTimes`. An override there calls `DoPreroll` directly.
+  (`:3419`) and `OnGetTimes` (`:2153`, `:3822`). An override there calls `DoPreroll` directly.
   Calling `PrerollLock()` there deadlocks the thread on a non-recursive
   `GMutex`, and nothing detects it (`gthread.c:1275-1278`). A render override
   that waited on the clock calls `DoPreroll` to catch a PLAYING to PAUSED change
@@ -1111,7 +1111,8 @@ exception to the paragraph above. The contract:
   (`gstbasesink.c:2375-2383`, `:2412-2421`).
 * It is not held in `OnUnlock` (`gstbasesink.c:4406-4411`, `:4660-4666`,
   `:5794-5799`), a non-serialized `OnEvent` or FLUSH_STOP (`:3661-3666`,
-  `:3684-3687`), `OnStart`, `OnStop`, `OnQuery`, `OnActivatePull`,
+  `:3684-3687`), `OnStart`, `OnStop`, the `query` virtual method (not exposed,
+  `:5665`), `OnActivatePull`,
   `OnProposeAllocation`, an override of `OnChangeState`, or on a thread the
   subclass owns.
 * All four calls may release the lock and take it again inside
@@ -1127,9 +1128,9 @@ exception to the paragraph above. The contract:
   `PrerollUnlock()` and stop, else `DoPreroll(buffer)` and `PrerollUnlock()`.
   `IsFlushing` is load-bearing: `do_preroll` has no flushing check of its own,
   so a call after the flush was set waits for a signal that never comes. It is
-  a raw read of a field the library writes under this lock
-  (`gstbasesink.c:4667`, `:3776`, `:2442`, `:1760`), so it is only meaningful
-  while the lock is held. Pad deactivation sets the flush before it calls
+  a raw read of a field the library reads and writes under this lock (writes
+  at `gstbasesink.c:4667`, `:1796`, `:1817`; reads at `:3776`, `:2442`,
+  `:1760`), so it is only meaningful while the lock is held. Pad deactivation sets the flush before it calls
   `OnActivatePull(false)` (`gstbasesink.c:4936-4938`), so a thread parked in
   `DoPreroll` returns `FlowReturn.Flushing` before that override joins it. A
   base class path that needs the lock calls `OnUnlock` first, without it, then
