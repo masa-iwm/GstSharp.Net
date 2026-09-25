@@ -221,9 +221,10 @@ public sealed class ClassEmitterTests
     [Theory]
     // gst_pad_sticky_events_foreach and gst_buffer_list_foreach left the
     // unsupported signatures for the hand bound ledger when the two walks over
-    // a lent slot were written.
+    // a lent slot were written. gst_type_find_helper_get_range and _full
+    // left them for the same ledger when they were written by hand.
     [InlineData("Gst", 1, 90, 53, 110, 28, 10)]
-    [InlineData("GstBase", 0, 11, 0, 20, 3, 0)]
+    [InlineData("GstBase", 0, 11, 0, 20, 1, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 0, 1)]
     [InlineData("GstAudio", 0, 22, 0, 7, 1, 0)]
     [InlineData("GstVideo", 0, 96, 1, 6, 2, 0)]
@@ -1342,9 +1343,10 @@ public sealed class ClassEmitterTests
     /// fall by the number of its hand bound entries that reach the census through the skip list.</param>
     [Theory]
     // The hand bound ledger grew by the two walks over a lent slot, the sticky
-    // events of a pad and the buffers of a list.
+    // events of a pad and the buffers of a list, and by the two typefind
+    // helpers over a range reading function.
     [InlineData("Gst", 28, 0, 21, 0, 0, 5, 76)]
-    [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 3)]
+    [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 5)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 7)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 9)]
     [InlineData("GstVideo", 9, 0, 10, 0, 0, 0, 14)]

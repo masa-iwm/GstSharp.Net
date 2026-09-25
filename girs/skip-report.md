@@ -644,11 +644,13 @@ disappears shows up here as an added line.
 
 ## GstBase
 
-### HandBound (3)
+### HandBound (5)
 
 - `gst_adapter_copy_bytes`
 - `gst_adapter_map`
 - `gst_adapter_unmap`
+- `gst_type_find_helper_get_range`
+- `gst_type_find_helper_get_range_full`
 
 ### LifetimePrimitive (4)
 
@@ -704,11 +706,9 @@ disappears shows up here as an added line.
 - `GstBase.BaseSink:last-sample`
 - `GstBase.BaseSink:stats`
 
-### UnsupportedSignature (3)
+### UnsupportedSignature (1)
 
 - `gst_base_sink_do_preroll`
-- `gst_type_find_helper_get_range`
-- `gst_type_find_helper_get_range_full`
 
 ## GstNet
 

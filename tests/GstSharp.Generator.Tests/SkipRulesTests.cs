@@ -528,7 +528,10 @@ public sealed class SkipRulesTests
         // an action signal normally doubles a C function - and these four
         // double nothing, so the emission is the only way in and AddExtension
         // and ClearExtensions in the same two files are it. They are the four
-        // signals of this list that no skip list carries.
+        // signals of this list that no skip list carries. The two
+        // gst_type_find_helper_get_range entries are refused on the out
+        // GstBuffer** of a callback that carries no closure, and are written
+        // by hand in src/GstSharp.Net.Base/Custom/BaseGlobal.cs.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
@@ -673,6 +676,8 @@ public sealed class SkipRulesTests
                 "gst_tag_list_get_value_index",
                 "gst_transcoder_message_parse_error",
                 "gst_transcoder_message_parse_warning",
+                "gst_type_find_helper_get_range",
+                "gst_type_find_helper_get_range_full",
                 "gst_type_find_peek",
                 "gst_value_compare",
                 "gst_value_serialize",
