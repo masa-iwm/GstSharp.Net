@@ -13,6 +13,13 @@ namespace Gst.Video;
 /// They have to be safe to call concurrently.
 /// </para>
 /// <para>
+/// <c>playsink</c> calls <see cref="ListChannels"/> and
+/// <see cref="BalanceType"/> while it holds its own object lock
+/// (<c>gstplaysink.c:1927-1940</c> and <c>:2135-2148</c>). Answer from state
+/// the element already holds; do not post a message, change a state or call
+/// back into the pipeline from them.
+/// </para>
+/// <para>
 /// Declaring the interface to GObject is a separate step:
 /// <c>Gst.Video.ColorBalanceImplementation.For&lt;TSelf&gt;()</c> builds the
 /// entry that goes into <c>SubclassOptions.Interfaces</c> when the subclass is
@@ -32,9 +39,11 @@ public interface IColorBalanceImplementation
     /// software.
     /// </summary>
     /// <remarks>
-    /// <c>playsink</c> prefers an element that answers
-    /// <see cref="ColorBalanceType.Hardware"/> when it finds more than one that
-    /// offers the four channels it proxies.
+    /// When <c>playsink</c> finds more than one element that offers the four
+    /// channels it proxies, it keeps the first one and replaces it with a
+    /// later one only while the one it keeps answers
+    /// <see cref="ColorBalanceType.Software"/>
+    /// (<c>gstplaysink.c:1622-1629</c>).
     /// </remarks>
     ColorBalanceType BalanceType { get; }
 
@@ -65,17 +74,17 @@ public interface IColorBalanceImplementation
     /// it finds its channel again by that substring and asserts that it did
     /// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> when it sets its
     /// video chain up and <c>:5548</c> whenever a value is set on one of its
-    /// own channels). An element whose channels stop
-    /// carrying the label <c>playsink</c> chose it for aborts the process
-    /// there, which nothing in this binding can prevent.
+    /// own channels). An element whose channels stop carrying the label
+    /// <c>playsink</c> chose it for aborts the process there, which nothing in
+    /// this binding can prevent.
     /// </para>
     /// <para>
     /// An empty list is how C spells no channels. An answer that is
     /// <see langword="null"/> or holds a <see langword="null"/> or disposed
-    /// entry, or a member that throws, is
-    /// reported to <see cref="Gst.Interop.ExceptionTrap"/>, and the caller is
-    /// given the list answered before, so a channel it already found does not
-    /// disappear from under it.
+    /// entry, or a member that throws, is reported to
+    /// <see cref="Gst.Interop.ExceptionTrap"/>, and the caller is given the
+    /// list answered before, so a channel it already found does not disappear
+    /// from under it.
     /// </para>
     /// </remarks>
     IReadOnlyList<ColorBalanceChannel> ListChannels();
@@ -85,9 +94,13 @@ public interface IColorBalanceImplementation
     /// </summary>
     /// <param name="channel">
     /// One of the channels <see cref="ListChannels"/> answered, as the caller
-    /// passed it. The runtime hands over the wrapper the element holds, so it
-    /// can be compared by reference as long as the element has not disposed
-    /// it.
+    /// passed it. The runtime hands over the interned wrapper of the channel,
+    /// so it can be compared by reference for as long as nobody disposed that
+    /// wrapper: the element that made it, or a consumer that got the same
+    /// wrapper from <see cref="ColorBalanceExtensions.ListChannels"/>. Once it
+    /// is disposed, the next call brings a new wrapper of the same channel, so
+    /// compare <see cref="Gst.GObject.Object.Handle"/> or the label when that
+    /// can happen.
     /// </param>
     /// <param name="value">
     /// The new value, which the caller is asked to keep between
