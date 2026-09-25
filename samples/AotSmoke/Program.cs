@@ -11,6 +11,7 @@ using Gst;
 using Gst.Base;
 using Gst.Controller;
 using Gst.Interop;
+using Gst.Video;
 
 return Smoke.Run(args);
 
@@ -60,7 +61,7 @@ internal static partial class Smoke
             if (!RunManagedSubclass() || !RunManagedPipeline() || !RunManagedAudioAndVideoSinks()
                 || !RunManagedAudioEncoder() || !RunBindingModule() || !RunPropertiesByName()
                 || !RunPadChainFunction() || !RunFactoryMadeManagedElement()
-                || !RunManagedPropertySignalAndUri())
+                || !RunManagedPropertySignalAndUri() || !RunManagedColorBalance())
             {
                 return 1;
             }
@@ -581,6 +582,52 @@ internal static partial class Smoke
             || uri != $"{ManagedUriSource.Protocol}://smoke")
         {
             Console.Error.WriteLine("AotSmoke: the property, the signal or the URI handler did not answer.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Drives the <c>GstColorBalance</c> a managed sink was defined with
+    /// through the C entry points, so that the four slots of its vtable, the
+    /// channel list the runtime lends on its behalf and the notification that
+    /// releases that list are all compiled ahead of time.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when the channel was listed, its value round
+    /// tripped and the balance type came back.
+    /// </returns>
+    private static bool RunManagedColorBalance()
+    {
+        Console.WriteLine($"balance:     {ManagedColorBalanceSink.RegisteredType.Name}");
+
+        using ManagedColorBalanceSink sink = new();
+
+        if (sink.As<IColorBalance>() is not { } balance)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed sink is not a color balance.");
+            return false;
+        }
+
+        IReadOnlyList<ColorBalanceChannel> channels = balance.ListChannels();
+        if (channels.Count != 1)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed color balance listed no channel.");
+            return false;
+        }
+
+        balance.SetValue(channels[0], 42);
+        int value = balance.GetValue(channels[0]);
+        ColorBalanceType type = balance.GetBalanceType();
+
+        Console.WriteLine(string.Create(
+            CultureInfo.InvariantCulture,
+            $"balanced:    {channels[0].Label}={value}, {type}"));
+
+        if (value != 42 || type != ColorBalanceType.Software)
+        {
+            Console.Error.WriteLine("AotSmoke: the managed color balance did not answer.");
             return false;
         }
 
