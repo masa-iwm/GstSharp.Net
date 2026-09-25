@@ -80,6 +80,19 @@ internal static unsafe partial class GObjectNative
     [LibraryImport("GObject", EntryPoint = "g_object_set_qdata")]
     internal static partial void ObjectSetQdata(nint instance, uint quark, nint data);
 
+    /// <summary>
+    /// Attaches native memory to an object under a quark, with the
+    /// <c>GDestroyNotify</c> that releases it when the object is finalized or
+    /// the entry is replaced. The data and the notification must be native: a
+    /// managed object reached from here would be rooted by the instance.
+    /// </summary>
+    [LibraryImport("GObject", EntryPoint = "g_object_set_qdata_full")]
+    internal static partial void ObjectSetQdataFull(
+        nint instance,
+        uint quark,
+        nint data,
+        delegate* unmanaged[Cdecl]<nint, void> destroy);
+
     /// <summary>Reads back what <see cref="ObjectSetQdata"/> attached.</summary>
     [LibraryImport("GObject", EntryPoint = "g_object_get_qdata")]
     internal static partial nint ObjectGetQdata(nint instance, uint quark);

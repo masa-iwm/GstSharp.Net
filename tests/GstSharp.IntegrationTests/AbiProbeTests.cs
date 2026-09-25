@@ -374,6 +374,46 @@ public sealed class AbiProbeTests
     }
 
     /// <summary>
+    /// The vtable of <c>GstColorBalance</c>, which a managed element fills in:
+    /// four slots, the class handler of <c>value-changed</c> and
+    /// <c>GST_PADDING</c> reserved pointers after the 16 byte
+    /// <c>GTypeInterface</c>.
+    /// </summary>
+    [Fact]
+    public unsafe void ColorBalanceInterfaceRawMatchesTheHeaderLayout()
+    {
+        Gst.Video.GstColorBalanceInterfaceRaw raw = default;
+
+        _output.WriteLine(
+            Format("GstColorBalanceInterfaceRaw", Unsafe.SizeOf<Gst.Video.GstColorBalanceInterfaceRaw>()));
+        _output.WriteLine(
+            Format(
+                "GstColorBalanceInterfaceRaw.list_channels",
+                Gst.Video.GstColorBalanceInterfaceRaw.ListChannelsOffset));
+        _output.WriteLine(
+            Format("GstColorBalanceInterfaceRaw.set_value", Gst.Video.GstColorBalanceInterfaceRaw.SetValueOffset));
+        _output.WriteLine(
+            Format("GstColorBalanceInterfaceRaw.get_value", Gst.Video.GstColorBalanceInterfaceRaw.GetValueOffset));
+        _output.WriteLine(
+            Format(
+                "GstColorBalanceInterfaceRaw.get_balance_type",
+                Gst.Video.GstColorBalanceInterfaceRaw.GetBalanceTypeOffset));
+
+        Assert.Equal(88, Unsafe.SizeOf<Gst.Video.GstColorBalanceInterfaceRaw>());
+        Assert.Equal(0L, Offset(&raw, &raw.Parent));
+        Assert.Equal(16L, Offset(&raw, &raw.ListChannels));
+        Assert.Equal(24L, Offset(&raw, &raw.SetValue));
+        Assert.Equal(32L, Offset(&raw, &raw.GetValue));
+        Assert.Equal(40L, Offset(&raw, &raw.GetBalanceType));
+        Assert.Equal(48L, Offset(&raw, &raw.ValueChanged));
+        Assert.Equal(56L, Offset(&raw, raw.GstReserved));
+        Assert.Equal(16, Gst.Video.GstColorBalanceInterfaceRaw.ListChannelsOffset);
+        Assert.Equal(24, Gst.Video.GstColorBalanceInterfaceRaw.SetValueOffset);
+        Assert.Equal(32, Gst.Video.GstColorBalanceInterfaceRaw.GetValueOffset);
+        Assert.Equal(40, Gst.Video.GstColorBalanceInterfaceRaw.GetBalanceTypeOffset);
+    }
+
+    /// <summary>
     /// The class struct chain of <c>GstElement</c>:
     /// <c>GTypeClass</c> is one <c>GType</c>, so 8 bytes; <c>GObjectClass</c>
     /// adds <c>construct_properties</c>, eight slots, <c>flags</c>,
