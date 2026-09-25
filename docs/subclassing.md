@@ -1090,6 +1090,63 @@ An override must not reach for a lock instead; see item 8 of
 [`docs/modules.md`](modules.md) and `## Fields the library rewrites` in
 [`docs/ownership.md`](ownership.md).
 
+**Prerolling from a thread of your own.** `BaseSink.DoPreroll(obj)` binds
+`gst_base_sink_do_preroll`: a buffer, or the first buffer of a list, goes
+through `OnPrepare` and `OnPreroll`, an event or `null` only commits the state,
+and then the call waits until the state changes (`gstbasesink.c:2484-2504`). It
+is the one member of this chapter that comes with a lock, and the lock is the
+exception to the paragraph above. The contract:
+
+* `DoPreroll`, `Wait`, `WaitPreroll` and `WaitClock` all need `PREROLL_LOCK`
+  on entry (`gstbasesink.c:2474`, `:2428`, `:2577`, `:2321`).
+* The library already holds it inside `OnRender` and `OnRenderList`
+  (`gstbasesink.c:3955-3966`), `OnPrepare` and `OnPreroll` (`:2512-2518`,
+  `:3901-3908`), `OnWaitEvent` (`:3316`), a serialized `OnEvent`
+  (`:3673-3683`), `OnUnlockStop` (`:4413`, `:4670`, `:5802`), `OnSetCaps`
+  (`:3419`) and `OnGetTimes`. An override there calls `DoPreroll` directly.
+  Calling `PrerollLock()` there deadlocks the thread on a non-recursive
+  `GMutex`, and nothing detects it (`gthread.c:1275-1278`). A render override
+  that waited on the clock calls `DoPreroll` to catch a PLAYING to PAUSED change
+  made while the wait released the lock, which is what the decklink sinks do
+  (`gstbasesink.c:2375-2383`, `:2412-2421`).
+* It is not held in `OnUnlock` (`gstbasesink.c:4406-4411`, `:4660-4666`,
+  `:5794-5799`), a non-serialized `OnEvent` or FLUSH_STOP (`:3661-3666`,
+  `:3684-3687`), `OnStart`, `OnStop`, `OnQuery`, `OnActivatePull`,
+  `OnProposeAllocation`, an override of `OnChangeState`, or on a thread the
+  subclass owns.
+* All four calls may release the lock and take it again inside
+  (`gstbasesink.c:2379-2383`, `:1751-1757`, `:2440`), so managed state is not
+  protected across them. `GMutex` belongs to the thread that took it: no
+  `await` between `PrerollLock()` and `PrerollUnlock()`, because a release by
+  another thread is undefined (`gthread.c:1293-1294`).
+* The order is `STREAM_LOCK`, then `PREROLL_LOCK`, then the object lock
+  (`gstbasesink.c:4089`, `:1684`, `:2343`, `:2274`): never take it while the
+  object lock is held.
+* On a thread the subclass owns, the shape is the one of
+  `gstaudiobasesink.c:2296-2346`: `PrerollLock()`, then if `IsFlushing`
+  `PrerollUnlock()` and stop, else `DoPreroll(buffer)` and `PrerollUnlock()`.
+  `IsFlushing` is load-bearing: `do_preroll` has no flushing check of its own,
+  so a call after the flush was set waits for a signal that never comes. It is
+  a raw read of a field the library writes under this lock
+  (`gstbasesink.c:4667`, `:3776`, `:2442`, `:1760`), so it is only meaningful
+  while the lock is held. Pad deactivation sets the flush before it calls
+  `OnActivatePull(false)` (`gstbasesink.c:4936-4938`), so a thread parked in
+  `DoPreroll` returns `FlowReturn.Flushing` before that override joins it. A
+  base class path that needs the lock calls `OnUnlock` first, without it, then
+  takes it, then calls `OnUnlockStop` (`gstbasesink.c:4406-4413`,
+  `:4660-4671`, `:5794-5803`): an `OnUnlock` override has to wake whatever
+  else that thread may block in.
+* The binding has no accessor for the stream lock of a pad, so a managed
+  pulling thread pulls without `STREAM_LOCK`, where `gstaudiobasesink.c:2308`
+  takes it. That is a divergence from the C shape, not an oversight in it.
+
+`PrerollLock()`, `PrerollUnlock()` and `IsFlushing` are `protected`, and they
+are for a thread the subclass owns, outside every override, and for nothing
+else. That carves them out of the rule above and of item 8 of
+[`docs/modules.md`](modules.md); every other override keeps to both.
+`BaseSinkDoPrerollTests` in the integration tests drives the two shapes: a
+render override after a clock wait, and a pull mode sink with its own thread.
+
 ---
 
 ## 8. Lifecycle: interaction with toggle refs and the finalizer queue

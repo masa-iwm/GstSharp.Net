@@ -410,7 +410,10 @@ asserts the crossing the hierarchy makes possible: the same source handed to
    holds `GST_OBJECT_LOCK` itself — a ring buffer's `acquire` runs the sink's
    `prepare` under the object lock, so `AudioRingBuffer.SetChannelPositions`
    reads the acquired flag raw instead of calling `IsAcquired()`, which would
-   wait for the lock the caller already holds.
+   wait for the lock the caller already holds. The one managed lock-taking
+   member is the carve-out that `BaseSink.PrerollLock()` makes for a thread a
+   sink owns, outside every override; see "Prerolling from a thread of your
+   own" in [`docs/subclassing.md`](subclassing.md).
 9. A public instance field of a GObject read without an accessor goes through a
    `[StructLayout(LayoutKind.Sequential)]` mirror of the instance head, with the
    offset derivation written next to it and an integration test that drives the

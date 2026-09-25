@@ -125,10 +125,20 @@ public unsafe partial class BaseSink
     /// override already runs either under the lock or where the library does
     /// not want it taken, and docs/subclassing.md keeps the rule that an
     /// override does not reach for a lock. The lock is not held in
-    /// <see cref="OnUnlock"/>, a non-serialized <see cref="OnEvent"/>,
-    /// <see cref="OnStart"/>, <see cref="OnStop"/>, <see cref="OnQuery"/>,
-    /// <see cref="OnActivatePull"/> or <see cref="OnProposeAllocation"/>, and
-    /// it is held in every override listed on <see cref="DoPreroll"/>.
+    /// <see cref="OnUnlock"/>, a non-serialized <see cref="OnEvent"/> or
+    /// FLUSH_STOP, <see cref="OnStart"/>, <see cref="OnStop"/>,
+    /// <see cref="OnQuery"/>, <see cref="OnActivatePull"/>,
+    /// <see cref="OnProposeAllocation"/> or an override of
+    /// <c>OnChangeState</c>, and it is held in every override listed on
+    /// <see cref="DoPreroll"/>.
+    /// </para>
+    /// <para>
+    /// On such a thread the shape is the one of
+    /// <c>gstaudiobasesink.c:2296-2346</c>: take the lock, stop if
+    /// <see cref="IsFlushing"/>, otherwise call <see cref="DoPreroll"/>, then
+    /// release it. The binding has no accessor for the stream lock of a pad,
+    /// so a managed thread pulls without STREAM_LOCK, where
+    /// <c>gstaudiobasesink.c:2308</c> takes it.
     /// </para>
     /// <para>
     /// The lock is a non-recursive <c>GMutex</c>: taking it where it is
