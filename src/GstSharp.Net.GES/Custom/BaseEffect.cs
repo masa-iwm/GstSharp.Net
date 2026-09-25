@@ -116,17 +116,20 @@ public abstract unsafe partial class BaseEffect
             return false;
         }
 
+        // Read before anything is allocated, so that nothing can throw between
+        // the allocation of the handle and the call that takes it over.
+        nint self = Handle;
         int ret;
         if (sourceToSink is null && sinkToSource is null)
         {
-            ret = GesBaseEffectSetTimeTranslationFuncs(Handle, 0, 0, 0, 0);
+            ret = GesBaseEffectSetTimeTranslationFuncs(self, 0, 0, 0, 0);
         }
         else
         {
             Gst.Interop.CallbackHandle handle =
                 Gst.Interop.CallbackHandle.Alloc(new TimeTranslationState(sourceToSink, sinkToSource));
             ret = GesBaseEffectSetTimeTranslationFuncs(
-                Handle,
+                self,
                 sourceToSink is null ? 0 : SourceToSinkTrampoline.Pointer,
                 sinkToSource is null ? 0 : SinkToSourceTrampoline.Pointer,
                 handle.UserData,
@@ -135,6 +138,9 @@ public abstract unsafe partial class BaseEffect
             {
                 // The C refused before it stored the user data
                 // (ges-base-effect.c:304-311), so the destroy never runs.
+                // The pre-check above answers both refusals first, so this is
+                // reached only if the effect changed in between; no test can
+                // reach it without bypassing the pre-check.
                 handle.Free();
             }
         }
@@ -161,7 +167,12 @@ public abstract unsafe partial class BaseEffect
         Dictionary<string, Gst.GObject.Value> values = Gst.Interop.HashTableMarshal.ToValueDictionary(table);
         try
         {
-            return function(effectValue, new Gst.ClockTime(time), values).Nanoseconds;
+            // A read-only view, so that the function cannot take a copy out of
+            // the dictionary the loop below disposes.
+            return function(
+                effectValue,
+                new Gst.ClockTime(time),
+                new System.Collections.ObjectModel.ReadOnlyDictionary<string, Gst.GObject.Value>(values)).Nanoseconds;
         }
         finally
         {

@@ -326,6 +326,10 @@ public sealed class TypeFindHelperGetRangeTests
             _output.WriteLine($"full: {result}, calls: {calls}");
             Assert.True(calls > 0);
             Assert.Null(caps);
+
+            // Every answer becomes Error, and the first typefinder that reads
+            // ends the walk with it (gsttypefindhelper.c:422-428).
+            Assert.Equal(FlowReturn.Error, result);
         }
     }
 
@@ -388,6 +392,10 @@ public sealed class TypeFindHelperGetRangeTests
 
         int count = (int)Math.Min(length, (ulong)data.Length - offset);
         buffer = Buffer.NewMemdup(data.AsSpan((int)offset, count));
+
+        // A buffer that says where it starts lets the helper serve later reads
+        // of the same range from it instead of calling again.
+        buffer.SetOffset(offset);
         return FlowReturn.Ok;
     }
 

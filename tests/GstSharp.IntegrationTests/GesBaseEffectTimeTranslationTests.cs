@@ -155,7 +155,7 @@ public sealed class GesBaseEffectTimeTranslationTests
         Assert.True(clip.AddTopEffect(effect, -1));
         Assert.NotNull(effect.Parent);
 
-        WeakReference refused = TryInstall(effect, out bool accepted);
+        WeakReference refused = TryInstallQuietly(effect, out bool accepted);
         Assert.False(accepted);
 
         Collect();
@@ -185,7 +185,7 @@ public sealed class GesBaseEffectTimeTranslationTests
             return;
         }
 
-        WeakReference refused = TryInstall(effect, out bool accepted);
+        WeakReference refused = TryInstallQuietly(effect, out bool accepted);
         Assert.False(accepted);
 
         Collect();
@@ -329,6 +329,37 @@ public sealed class GesBaseEffectTimeTranslationTests
             (e, time, values) => marker.GetHashCode() >= 0 ? time : time,
             (e, time, values) => marker.GetHashCode() >= 0 ? time : time);
         return new WeakReference(marker);
+    }
+
+    /// <summary>
+    /// Tries to set functions the effect is expected to refuse, and checks
+    /// that the refusal came from the binding rather than from the C.
+    /// </summary>
+    /// <remarks>
+    /// The C refuses the same effects with a critical
+    /// (<c>ges-base-effect.c:309-311</c>) and returns before it stores the
+    /// functions, so only the absence of that critical tells the pre-check of
+    /// <see cref="BaseEffect.SetTimeTranslationFuncs"/> apart from the C. The
+    /// net behind the pre-check, which frees the functions when the C refuses
+    /// after all, is not reached by any test: the pre-check refuses first.
+    /// </remarks>
+    private WeakReference TryInstallQuietly(BaseEffect effect, out bool accepted)
+    {
+        WeakReference? refused = null;
+        bool answer = true;
+        IReadOnlyList<string> logged = InitializeLogProbe.CaptureWhile(
+            () => refused = TryInstall(effect, out answer));
+        accepted = answer;
+
+        _output.WriteLine($"log probe installed: {InitializeLogProbe.IsInstalled}, logged: {logged.Count}");
+        if (InitializeLogProbe.IsInstalled)
+        {
+            Assert.DoesNotContain(
+                logged,
+                message => message.Contains("CRITICAL", StringComparison.Ordinal));
+        }
+
+        return refused!;
     }
 
     private static void Collect()

@@ -1179,6 +1179,15 @@ Three things follow, and all three are enforced rather than documented:
   type the value already holds: a wrapper of another boxed type would be handed
   to the wrong copy function, silently, rather than be refused.
 
+**One callback is the exception, and there the rules are documented rather
+than enforced.** `GES.BaseEffectTimeTranslationFunc` is lent a whole table of
+`GValue`s, and it is handed them as an `IReadOnlyDictionary<string, Value>`,
+because a dictionary cannot hold a `ref struct` view. The values are owned
+`Value` copies that stay valid only for the callback: the binding disposes
+every one of them after the call, whether it returned or threw. The callback
+therefore never disposes a value it was handed, and never keeps one past the
+call; `Copy()` makes one it may keep and has to dispose.
+
 An exception a handler throws does not reach the caller of the walk. A managed
 exception must never unwind through a native frame, so the trampoline catches
 it, reports it through `Gst.Interop.ExceptionTrap` and answers the call with the

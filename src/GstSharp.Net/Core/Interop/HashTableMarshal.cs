@@ -202,8 +202,10 @@ internal static unsafe partial class HashTableMarshal
         }
 
         // The same two passes as ToObjectDictionary: the iterator is closed
-        // before any value is copied, because a copy can run code of the
-        // library that edits the table.
+        // before any value is copied, so that nothing but the walk itself runs
+        // while it is open. g_value_copy does not touch the table, but the copy
+        // function of a boxed or object value is code of its own, and the
+        // shape stays the one ToObjectDictionary needs.
         int count = (int)Size(table);
         (nint Key, nint Value)[] entries = new (nint, nint)[count];
         int taken = 0;
