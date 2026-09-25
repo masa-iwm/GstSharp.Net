@@ -757,7 +757,9 @@ public sealed class HashTableArgumentTests
     /// member that installs it out with it, a signal that carries one is not
     /// emitted, and a virtual slot that receives one is not overridable: all
     /// three would have to project a table into managed code from a trampoline,
-    /// which is the return side shape and not this one.
+    /// which is the return side shape and not this one. The one corpus case,
+    /// <c>GESBaseEffectTimeTranslationFunc</c>, is bound by hand in
+    /// <c>src/GstSharp.Net.GES/Custom/BaseEffect.cs</c>.
     /// </summary>
     [Fact]
     public void ATableAnInboundPositionIsHandedStaysUnbound()
@@ -767,19 +769,6 @@ public sealed class HashTableArgumentTests
         Assert.DoesNotContain("ApplyTags", Run.File("Widget.cs"), StringComparison.Ordinal);
         Assert.False(Run.HasFile("Callbacks.cs"));
     }
-
-    /// <summary>
-    /// The real callback of the corpus: <c>GESBaseEffectTimeTranslationFunc</c>
-    /// is handed a table of <c>GValue</c> values, which is both an inbound
-    /// position and a value type this refuses, so the member that installs it
-    /// stays where the ledger has it.
-    /// </summary>
-    [Fact]
-    public void TheTimeTranslationFunctionsOfGesStayUnbound() =>
-        Assert.Contains(
-            "- `ges_base_effect_set_time_translation_funcs`",
-            Generated.Census.SkipReport(),
-            StringComparison.Ordinal);
 
     /// <summary>
     /// The same three positions on the way back. A table a trampoline would

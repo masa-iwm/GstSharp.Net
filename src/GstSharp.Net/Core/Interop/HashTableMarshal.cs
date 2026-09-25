@@ -175,6 +175,85 @@ internal static unsafe partial class HashTableMarshal
     }
 
     /// <summary>
+    /// Copies a table of <c>GValue</c>s keyed by strings into a dictionary of
+    /// independent values.
+    /// </summary>
+    /// <param name="table">The table to read, may be <see cref="nint.Zero"/>.</param>
+    /// <returns>
+    /// The entries, each a copy the caller has to dispose; an entry whose
+    /// <c>GValue</c> is uninitialised reads as the empty value, which disposes
+    /// as a no-op.
+    /// </returns>
+    /// <remarks>
+    /// Nothing is released: this reads a table the library keeps owning, which
+    /// is what the <c>GESBaseEffectTimeTranslationFunc</c> trampolines are
+    /// lent. A <see cref="nint.Zero"/> table reads as the empty dictionary,
+    /// like <see cref="ToObjectDictionary{T}"/>.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// An entry carries no key or no value. Every copy made before the entry
+    /// was reached is disposed first.
+    /// </exception>
+    internal static Dictionary<string, Gst.GObject.Value> ToValueDictionary(nint table)
+    {
+        if (table == nint.Zero)
+        {
+            return new Dictionary<string, Gst.GObject.Value>(StringComparer.Ordinal);
+        }
+
+        // The same two passes as ToObjectDictionary: the iterator is closed
+        // before any value is copied, because a copy can run code of the
+        // library that edits the table.
+        int count = (int)Size(table);
+        (nint Key, nint Value)[] entries = new (nint, nint)[count];
+        int taken = 0;
+
+        HashTableIter iterator = default;
+        IterInit(&iterator, table);
+
+        nint key;
+        nint value;
+        while (taken < count && IterNext(&iterator, &key, &value) != 0)
+        {
+            entries[taken++] = (key, value);
+        }
+
+        Dictionary<string, Gst.GObject.Value> result = new(taken, StringComparer.Ordinal);
+        try
+        {
+            for (int i = 0; i < taken; i++)
+            {
+                (nint entryKey, nint entryValue) = entries[i];
+                if (GMarshal.PtrToStringUtf8(entryKey) is not { } name || entryValue == nint.Zero)
+                {
+                    throw new InvalidOperationException(
+                        "An entry of the table carries no key or no value, " +
+                        "so the table cannot be read into a dictionary.");
+                }
+
+                Gst.GObject.Value copy = Gst.GObject.Value.CopyFrom(ref *(Gst.GObject.GValueNative*)entryValue);
+                if (result.Remove(name, out Gst.GObject.Value replaced))
+                {
+                    replaced.Dispose();
+                }
+
+                result[name] = copy;
+            }
+        }
+        catch
+        {
+            foreach (Gst.GObject.Value made in result.Values)
+            {
+                made.Dispose();
+            }
+
+            throw;
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Builds the table a native call is given, for the length of that call.
     /// </summary>
     /// <param name="values">The entries to copy, may be <see langword="null"/>.</param>

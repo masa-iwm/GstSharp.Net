@@ -1619,9 +1619,10 @@ six declares a slot: what an effect overrides belongs to `GES.TrackElement`, to
 * **Limits.** There is no rate-property registration:
   `ges_effect_class_register_rate_property` is unbound. Time effects are the
   native path only — a description naming `pitch`, `videorate` or `scaletempo`
-  works through the inherited slot, while custom time translation needs
-  `ges_base_effect_set_time_translation_funcs`, which is unbound. The transition
-  classes — `Transition`, `VideoTransition`, `AudioTransition`,
+  works through the inherited slot. Custom time translation of a native effect
+  is bound as `BaseEffect.SetTimeTranslationFuncs`, which has to be called
+  before the effect joins a clip; a managed time effect is not available yet.
+  The transition classes — `Transition`, `VideoTransition`, `AudioTransition`,
   `BaseTransitionClip` and `TransitionClip` — are not subclassable and will not
   be: the library only ever builds the native transition types
   (`ges-transition-clip.c:359, 372`).
@@ -2024,14 +2025,13 @@ under it.
   (`ges-container.c:1026-1033`), and `group` can carry no managed surface, so
   `GES.Container` stays off the allowlist. `Container.UngroupOverride` is
   declared from a clip base instead.
-* **The GES transition classes are not subclassable, and no rate or time effect
-  is configurable from managed code.** `Transition`, `VideoTransition`,
-  `AudioTransition`, `BaseTransitionClip` and `TransitionClip` stay off the
-  allowlist because the library only ever builds the native transition types
+* **The GES transition classes are not subclassable, and a managed effect is
+  not yet a time effect.** `Transition`, `VideoTransition`, `AudioTransition`,
+  `BaseTransitionClip` and `TransitionClip` stay off the allowlist because the
+  library only ever builds the native transition types
   (`ges-transition-clip.c:359, 372`). Beside them,
-  `ges_effect_class_register_rate_property` and
-  `ges_base_effect_set_time_translation_funcs` are unbound, so a managed effect
-  is a time effect only through a description the inherited slot builds.
+  `ges_effect_class_register_rate_property` is unbound, so a managed effect is
+  a time effect only through a description the inherited slot builds.
 * **A managed subclass cannot be derived from by another managed subclass.**
   One level only: the chain-up resolves the parent class of the registration,
   and a managed parent's slot would be the same trampoline (§4.4). The surface

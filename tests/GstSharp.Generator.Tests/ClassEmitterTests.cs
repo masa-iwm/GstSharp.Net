@@ -222,7 +222,8 @@ public sealed class ClassEmitterTests
     // gst_pad_sticky_events_foreach and gst_buffer_list_foreach left the
     // unsupported signatures for the hand bound ledger when the two walks over
     // a lent slot were written. gst_type_find_helper_get_range and _full
-    // left them for the same ledger when they were written by hand.
+    // left them for the same ledger when they were written by hand, and so
+    // did ges_base_effect_set_time_translation_funcs.
     [InlineData("Gst", 1, 90, 53, 110, 28, 10)]
     [InlineData("GstBase", 0, 11, 0, 20, 1, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 0, 1)]
@@ -243,7 +244,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstPlay", 0, 23, 0, 0, 0, 0)]
     // ges_meta_container_foreach left the unsupported signatures for the hand
     // bound ledger when the walk over the metadata of a container was written.
-    [InlineData("GES", 6, 3, 4, 10, 4, 2)]
+    [InlineData("GES", 6, 3, 4, 10, 3, 2)]
     public void TheSkipCensusIsStable(
         string module,
         int shadowed,
@@ -1344,7 +1345,8 @@ public sealed class ClassEmitterTests
     [Theory]
     // The hand bound ledger grew by the two walks over a lent slot, the sticky
     // events of a pad and the buffers of a list, and by the two typefind
-    // helpers over a range reading function.
+    // helpers over a range reading function and the time translation of a
+    // GES effect.
     [InlineData("Gst", 28, 0, 21, 0, 0, 5, 76)]
     [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 5)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 7)]
@@ -1362,7 +1364,7 @@ public sealed class ClassEmitterTests
     [InlineData("GstTranscoder", 0, 0, 0, 0, 0, 0, 4)]
     [InlineData("GstPlay", 6, 0, 1, 0, 0, 0, 16)]
     // The hand bound ledger grew by the walk over the metadata of a container.
-    [InlineData("GES", 3, 0, 0, 0, 0, 2, 9)]
+    [InlineData("GES", 3, 0, 0, 0, 0, 2, 10)]
     public void TheRejectionCensusIsStable(
         string module,
         int overlaySkip,

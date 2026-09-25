@@ -531,7 +531,10 @@ public sealed class SkipRulesTests
         // signals of this list that no skip list carries. The two
         // gst_type_find_helper_get_range entries are refused on the out
         // GstBuffer** of a callback that carries no closure, and are written
-        // by hand in src/GstSharp.Net.Base/Custom/BaseGlobal.cs.
+        // by hand in src/GstSharp.Net.Base/Custom/BaseGlobal.cs;
+        // ges_base_effect_set_time_translation_funcs is refused on the table
+        // of GValues its callback is lent, and is written by hand in
+        // src/GstSharp.Net.GES/Custom/BaseEffect.cs.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
@@ -545,6 +548,7 @@ public sealed class SkipRulesTests
                 "ges_asset_extract",
                 "ges_asset_request_async",
                 "ges_asset_request_finish",
+                "ges_base_effect_set_time_translation_funcs",
                 "ges_container_ungroup",
                 "ges_meta_container_foreach",
                 "ges_timeline_element_get_child_property",
