@@ -139,7 +139,6 @@ public sealed unsafe partial class SubclassColorBalanceTests
     [Fact]
     public void TheListsHoldTheirChannelsUntilTheElementIsFinalized()
     {
-        nint element;
         nint channel;
         uint listed;
 
@@ -158,7 +157,6 @@ public sealed unsafe partial class SubclassColorBalanceTests
             _ = ColorBalanceListChannels(sink.Handle);
             Assert.Equal(listed + 1, RefCountOf(channel));
 
-            element = sink.Handle;
             _ = GObjectNative.ObjectRef(channel);
         }
 
@@ -168,7 +166,6 @@ public sealed unsafe partial class SubclassColorBalanceTests
         // for, and the one taken above to keep the channel readable here.
         Assert.Equal(listed, RefCountOf(channel));
         GObjectNative.ObjectUnref(channel);
-        _ = element;
     }
 
     /// <summary>
@@ -220,6 +217,101 @@ public sealed unsafe partial class SubclassColorBalanceTests
         {
             Assert.Equal(3, reported.Count);
             Assert.All(reported, exception => Assert.IsType<InvalidOperationException>(exception));
+        }
+    }
+
+    /// <summary>
+    /// A failed answer after a rebuild gets the newest list, not the first
+    /// one: a disposed channel in the answer is reported and the caller is
+    /// given the list that replaced the original.
+    /// </summary>
+    [Fact]
+    public void AFailureAfterARebuildKeepsTheNewestList()
+    {
+        using ProbeColorBalanceSink sink = new();
+        nint first = ColorBalanceListChannels(sink.Handle);
+
+        sink.Answer = [sink.Channels[2]];
+        nint newest = ColorBalanceListChannels(sink.Handle);
+        Assert.NotEqual(first, newest);
+
+        ColorBalanceChannel gone = ColorBalanceChannel.New("GONE", 0, 1);
+        gone.Dispose();
+
+        List<Exception> reported = [];
+        void OnFailure(Exception exception)
+        {
+            lock (reported)
+            {
+                reported.Add(exception);
+            }
+        }
+
+        nint answered;
+        ExceptionTrap.UnhandledException += OnFailure;
+        try
+        {
+            sink.Answer = [sink.Channels[2], gone];
+            answered = ColorBalanceListChannels(sink.Handle);
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        Assert.Equal(newest, answered);
+
+        lock (reported)
+        {
+            Assert.Contains(reported, exception => exception is ObjectDisposedException);
+        }
+    }
+
+    /// <summary>
+    /// A <c>BalanceType</c> that throws is reported and the caller is told
+    /// software, and a <c>SetValue</c> that throws is reported and changes
+    /// nothing.
+    /// </summary>
+    [Fact]
+    public void AThrowingBalanceTypeOrSetValueIsReported()
+    {
+        using ProbeColorBalanceSink sink = new();
+        IColorBalance balance = sink.As<IColorBalance>()
+            ?? throw new InvalidOperationException("The managed element is not a color balance.");
+        ColorBalanceChannel brightness = sink.Channels[0];
+
+        List<Exception> reported = [];
+        void OnFailure(Exception exception)
+        {
+            lock (reported)
+            {
+                reported.Add(exception);
+            }
+        }
+
+        ColorBalanceType type;
+        ExceptionTrap.UnhandledException += OnFailure;
+        try
+        {
+            sink.ThrowOnBalanceType = true;
+            type = balance.GetBalanceType();
+
+            sink.ThrowOnSetValue = true;
+            balance.SetValue(brightness, 300);
+        }
+        finally
+        {
+            ExceptionTrap.UnhandledException -= OnFailure;
+        }
+
+        Assert.Equal(ColorBalanceType.Software, type);
+        Assert.Equal(1, sink.SetValueCalls);
+        Assert.Equal(0, sink.GetValue(brightness));
+
+        lock (reported)
+        {
+            Assert.Contains(reported, exception => exception.Message.Contains("BalanceType", StringComparison.Ordinal));
+            Assert.Contains(reported, exception => exception.Message.Contains("SetValue", StringComparison.Ordinal));
         }
     }
 
