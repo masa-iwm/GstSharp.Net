@@ -12,7 +12,7 @@ namespace GstSharp.IntegrationTests;
 /// <remarks>
 /// The values live in the element and every change is announced through
 /// <see cref="ColorBalanceExtensions.ValueChanged"/>, the way
-/// <c>videobalance</c> does it (<c>gstvideobalance.c:731-734</c>).
+/// <c>videobalance</c> does it (<c>gstvideobalance.c:732-734</c>).
 /// </remarks>
 internal sealed class ProbeColorBalanceSink : VideoSink, IManagedSubclass<ProbeColorBalanceSink>,
     IColorBalanceImplementation
@@ -38,6 +38,8 @@ internal sealed class ProbeColorBalanceSink : VideoSink, IManagedSubclass<ProbeC
     private readonly Dictionary<ColorBalanceChannel, int> _values = new(ReferenceEqualityComparer.Instance);
 
     private IReadOnlyList<ColorBalanceChannel>? _answer;
+
+    private ColorBalanceType _balanceType = ColorBalanceType.Hardware;
 
     private int _listCalls;
 
@@ -82,6 +84,12 @@ internal sealed class ProbeColorBalanceSink : VideoSink, IManagedSubclass<ProbeC
     /// <summary>Gets or sets a value indicating whether <see cref="GetValue"/> throws.</summary>
     internal bool ThrowOnGetValue { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether <see cref="SetValue"/> throws.</summary>
+    internal bool ThrowOnSetValue { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether <see cref="BalanceType"/> throws.</summary>
+    internal bool ThrowOnBalanceType { get; set; }
+
     /// <summary>Gets how often <see cref="ListChannels"/> was called.</summary>
     internal int ListCalls => Volatile.Read(ref _listCalls);
 
@@ -95,7 +103,13 @@ internal sealed class ProbeColorBalanceSink : VideoSink, IManagedSubclass<ProbeC
     internal int LastSetValue => Volatile.Read(ref _lastSetValue);
 
     /// <inheritdoc/>
-    public ColorBalanceType BalanceType { get; set; } = ColorBalanceType.Hardware;
+    public ColorBalanceType BalanceType
+    {
+        get => ThrowOnBalanceType
+            ? throw new InvalidOperationException("The probe was told to throw from BalanceType.")
+            : _balanceType;
+        set => _balanceType = value;
+    }
 
     /// <summary>Builds the wrapper of an instance native code created.</summary>
     /// <param name="args">What the runtime says about the instance.</param>
@@ -121,6 +135,12 @@ internal sealed class ProbeColorBalanceSink : VideoSink, IManagedSubclass<ProbeC
         ArgumentNullException.ThrowIfNull(channel);
 
         _ = Interlocked.Increment(ref _setValueCalls);
+
+        if (ThrowOnSetValue)
+        {
+            throw new InvalidOperationException("The probe was told to throw from SetValue.");
+        }
+
         Volatile.Write(ref _lastSetLabel, channel.Label);
         Volatile.Write(ref _lastSetValue, value);
 
