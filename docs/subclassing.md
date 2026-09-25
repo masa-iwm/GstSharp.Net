@@ -829,6 +829,79 @@ table and never fabricate a wrapper, which is what lets `gst_element_register`
 interrogate the type while no instance exists. That registration also refuses a
 type without metadata, so a URI handler still calls `ClassConfig.SetMetadata`.
 
+`GstColorBalance` is the second, and its shape is the opposite one: all four
+slots (`colorbalance.h:75-82`) are handed an instance, so
+`IColorBalanceImplementation` has four instance members and nothing static,
+and `ColorBalanceImplementation.For<TSelf>()` has nothing to validate or pin:
+
+```csharp
+internal sealed class BalancedSink : VideoSink, IManagedSubclass<BalancedSink>, IColorBalanceImplementation
+{
+    private static readonly SubclassType Definition = DefineSubclass<BalancedSink>(
+        "BalancedSink",
+        ConfigureClass,
+        new SubclassOptions { Interfaces = [ColorBalanceImplementation.For<BalancedSink>()] });
+
+    private readonly ColorBalanceChannel[] _channels =
+        [ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000), ColorBalanceChannel.New("CONTRAST", -1000, 1000)];
+
+    public ColorBalanceType BalanceType => ColorBalanceType.Software;
+
+    public IReadOnlyList<ColorBalanceChannel> ListChannels() => _channels;
+
+    public void SetValue(ColorBalanceChannel channel, int value)
+    {
+        // Store the value, then announce it: GStreamer fires nothing itself.
+        As<IColorBalance>()!.ValueChanged(channel, value);
+    }
+
+    public int GetValue(ColorBalanceChannel channel) => /* the stored value */ 0;
+}
+```
+
+Four facts of the C interface show through:
+
+* **`list_channels` lends a list the element owns** (`transfer none`), and C
+  has no way to say when a caller is done with it. The runtime therefore keeps
+  the `GList` per instance, as native memory hung off the element with a
+  `GDestroyNotify`, holding a reference to every channel in it. The same
+  channels in the same order are answered with the same list; any other answer
+  gets a new one, and the lists it replaced stay valid until the element is
+  finalized, because a caller on another thread may still be walking one. The
+  channels of an element change rarely (a device opened, a format negotiated),
+  so what that keeps is a few nodes per change - unless the implementation
+  makes new channels on every call, which leaks a list per call, and
+  `playsink` asks on every value it sets.
+* **A failed answer keeps the previous list.** A `ListChannels` that throws,
+  answers `null` or holds a `null` or disposed entry is reported to the trap,
+  and the caller gets the list it got before rather than none. `playsink`
+  finds its channel in that list by label and then `g_assert`s that it did
+  (`gstplaysink.c:1720` when it sets its video chain up, `:5548` whenever a
+  value is set on one of its own channels), so a list that suddenly came back
+  empty would abort the process there. The same assert is why the labels
+  matter: `playsink` only uses an element that offers channels whose labels
+  contain `BRIGHTNESS`, `CONTRAST`, `HUE` and `SATURATION`, and an element
+  whose channels stop carrying the label it was chosen for takes the process
+  down, which no binding can prevent.
+* **Nothing is announced for the implementation.** `gst_color_balance_set_value`
+  only calls the slot; firing `value-changed` is the implementation's job, the
+  way `videobalance` does it after a change (`gstvideobalance.c:731-734`), and
+  `playsink` listens for it to keep its own channels in step. The class handler
+  slot of that signal, `value_changed`, is left as the interface initialised it.
+* **An empty answer is the C default.** Without a wrapper to answer - the
+  window of §5.4 - or when a member throws, `get_value` answers the minimum of
+  the channel and `get_balance_type` answers software, which is what
+  `gst_color_balance_get_value` and `gst_color_balance_get_balance_type` answer
+  for an element that implements neither (`colorbalance.c:192`, `:213-214`);
+  `set_value` does nothing. A declaration put into the registration of a type
+  that does not implement the interface answers the same and warns, naming the
+  type the declaration was made for.
+
+The managed type is presented to consumers the way any other is:
+`As<IColorBalance>()` hands out a view the generated `ColorBalanceExtensions`
+work on, and `playsink` drives the element through its own proxy channels,
+rescaling each value into the range of the channel it found.
+
 An interface an ancestor already implements is refused. GLib would allow it and
 hand the subclass a copy of the ancestor's slots, but a managed implementation
 has no way to chain up through those, so what would look like an override would
@@ -1088,11 +1161,11 @@ document spells it out because the failure modes are subtle:
    decide when the registration API is reviewed.
 9. **Interfaces**: settled in stage 3b and landed. `GstURIHandler` is the
    first concrete consumer of `g_type_add_interface_static` +
-   `GInterfaceInfo.interface_init`, and it follows the same
-   patch-declared-slots pattern on the interface vtable — but only at Define
-   time, for the reason given in §5.7. `InterfaceEmitter` still binds no vfuncs
-   of its own: what a managed type implements is a hand-written
-   `InterfaceImplementation` per interface, not generated code.
+   `GInterfaceInfo.interface_init`, and `GstColorBalance` the second; both
+   follow the same patch-declared-slots pattern on the interface vtable — but
+   only at Define time, for the reason given in §5.7. `InterfaceEmitter`
+   still binds no vfuncs of its own: what a managed type implements is a
+   hand-written `InterfaceImplementation` per interface, not generated code.
 10. **Properties on managed types**: settled in stage 3b and landed, on
     `ObjectClassConfig` rather than only on `ClassConfig` —
     `InstallProperty` (`g_object_class_install_property` inside `ClassInit`)
@@ -2127,10 +2200,10 @@ under it.
   `ObjectClassConfig`, which is what the class initialiser of `Gst.Pad` and
   `GstBase.AggregatorPad` is given, so a pad type is not a special case here.
 * **An interface can only be declared when the type is defined**, and only
-  one the binding provides an implementation of — `GstURIHandler` today. There
-  is no way to add one from the class initialiser or afterwards: GObject
-  refuses it (§5.7). Defining a new interface from managed code stays out
-  entirely.
+  one the binding provides an implementation of — `GstURIHandler` and
+  `GstColorBalance` today. There is no way to add one from the class
+  initialiser or afterwards: GObject refuses it (§5.7). Defining a new
+  interface from managed code stays out entirely.
 * **No `dispose` or `finalize` override**, by design (§1): teardown belongs in
   the `READY` to `NULL` transition of `OnChangeState`, or in `OnStop`.
 * **Disposing a managed element that GStreamer still drives** does not crash,
