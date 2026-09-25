@@ -644,11 +644,12 @@ disappears shows up here as an added line.
 
 ## GstBase
 
-### HandBound (5)
+### HandBound (6)
 
 - `gst_adapter_copy_bytes`
 - `gst_adapter_map`
 - `gst_adapter_unmap`
+- `gst_base_sink_do_preroll`
 - `gst_type_find_helper_get_range`
 - `gst_type_find_helper_get_range_full`
 
@@ -705,10 +706,6 @@ disappears shows up here as an added line.
 
 - `GstBase.BaseSink:last-sample`
 - `GstBase.BaseSink:stats`
-
-### UnsupportedSignature (1)
-
-- `gst_base_sink_do_preroll`
 
 ## GstNet
 
@@ -1429,7 +1426,7 @@ it unbound, and this ledger is where that is counted.
 - `VideoSEIUserDataUnregisteredMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 
-## Fields exposed elsewhere (23)
+## Fields exposed elsewhere (24)
 
 Public fields of a record or of a class that another member of the binding
 answers, with the member that answers them. They are declared in
@@ -1453,8 +1450,9 @@ cover, and these are covered.
 - `AudioBuffer.info` — hand written
 - `AudioInfo.finfo` — hand written
 
-### GstBase (1)
+### GstBase (2)
 
+- `BaseSink.preroll_lock` — hand written
 - `CollectData.buffer` — CollectPads.Peek
 
 ### GstPlay (2)
@@ -1481,7 +1479,7 @@ cover, and these are covered.
 
 - `WebRTCSessionDescription.sdp` — hand written
 
-## Class fields (201)
+## Class fields (200)
 
 Public instance fields of the GObject classes, with the shape of each. The
 generated wrapper of a class holds a native instance and nothing else: there is
@@ -1636,7 +1634,7 @@ field does.
 - `AudioRingBuffer.state` — Scalar
 - `AudioRingBuffer.waiting` — Scalar
 
-### GstBase (38)
+### GstBase (37)
 
 - `Aggregator.srcpad` — Pointer
 - `AggregatorPad.segment` — EmbeddedStruct
@@ -1653,7 +1651,6 @@ field does.
 - `BaseSink.pad_mode` — Scalar
 - `BaseSink.playing_async` — Scalar
 - `BaseSink.preroll_cond` — EmbeddedStruct
-- `BaseSink.preroll_lock` — EmbeddedStruct
 - `BaseSink.sinkpad` — Pointer
 - `BaseSrc.blocksize` — Scalar
 - `BaseSrc.can_activate_push` — Scalar

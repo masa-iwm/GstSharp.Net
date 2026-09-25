@@ -223,9 +223,10 @@ public sealed class ClassEmitterTests
     // unsupported signatures for the hand bound ledger when the two walks over
     // a lent slot were written. gst_type_find_helper_get_range and _full
     // left them for the same ledger when they were written by hand, and so
-    // did ges_base_effect_set_time_translation_funcs.
+    // did ges_base_effect_set_time_translation_funcs and
+    // gst_base_sink_do_preroll.
     [InlineData("Gst", 1, 90, 53, 110, 28, 10)]
-    [InlineData("GstBase", 0, 11, 0, 20, 1, 0)]
+    [InlineData("GstBase", 0, 11, 0, 20, 0, 0)]
     [InlineData("GstApp", 1, 0, 0, 2, 0, 1)]
     [InlineData("GstAudio", 0, 22, 0, 7, 1, 0)]
     [InlineData("GstVideo", 0, 96, 1, 6, 2, 0)]
@@ -822,8 +823,8 @@ public sealed class ClassEmitterTests
         // C accessor already answers.
         string report = Generated.SkipReport;
 
-        Assert.Equal(23, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (23)\n", report, StringComparison.Ordinal);
+        Assert.Equal(24, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (24)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### Gst (7)\n\n- `CustomMeta.structure` — GetStructure\n"
             + "- `Message.src` — hand written\n"
@@ -843,8 +844,11 @@ public sealed class ClassEmitterTests
         // The buffer of a collect data is the other shape an entry answers: a
         // generated member of another wrapper reads the field, under the lock
         // the C accessor takes, so the field carries no accessor of its own.
+        // The preroll lock of a base sink beside it is taken and released by
+        // hand written members, at the offset of the generated mirror.
         Assert.Contains(
-            "### GstBase (1)\n\n- `CollectData.buffer` — CollectPads.Peek\n",
+            "### GstBase (2)\n\n- `BaseSink.preroll_lock` — hand written\n"
+            + "- `CollectData.buffer` — CollectPads.Peek\n",
             report,
             StringComparison.Ordinal);
         Assert.Contains(
@@ -865,6 +869,7 @@ public sealed class ClassEmitterTests
             report,
             StringComparison.Ordinal);
         Assert.DoesNotContain("- `ColorBalanceChannel.", ClassFieldLedger(report), StringComparison.Ordinal);
+        Assert.DoesNotContain("- `BaseSink.preroll_lock`", ClassFieldLedger(report), StringComparison.Ordinal);
 
         // The accessor is not emitted either, which is what lets an entry
         // answer a name a hand written member already carries.
@@ -873,7 +878,7 @@ public sealed class ClassEmitterTests
 
     [Theory]
     [InlineData("Gst", 69)]
-    [InlineData("GstBase", 38)]
+    [InlineData("GstBase", 37)]
     [InlineData("GstAudio", 36)]
     [InlineData("GstVideo", 8)]
     [InlineData("GstSdp", 0)]
@@ -906,8 +911,8 @@ public sealed class ClassEmitterTests
         string report = Generated.SkipReport;
         string ledger = ClassFieldLedger(report);
 
-        Assert.Equal(201, Generated.Census.ClassFieldCount());
-        Assert.Contains("## Class fields (201)\n", report, StringComparison.Ordinal);
+        Assert.Equal(200, Generated.Census.ClassFieldCount());
+        Assert.Contains("## Class fields (200)\n", report, StringComparison.Ordinal);
         Assert.Contains("### Gst (69)\n", ledger, StringComparison.Ordinal);
 
         // One line per shape the ledger measures. The shapes are what says how
@@ -1345,10 +1350,10 @@ public sealed class ClassEmitterTests
     [Theory]
     // The hand bound ledger grew by the two walks over a lent slot, the sticky
     // events of a pad and the buffers of a list, and by the two typefind
-    // helpers over a range reading function and the time translation of a
-    // GES effect.
+    // helpers over a range reading function, the time translation of a
+    // GES effect and the preroll of a base sink.
     [InlineData("Gst", 28, 0, 21, 0, 0, 5, 76)]
-    [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 5)]
+    [InlineData("GstBase", 2, 0, 4, 0, 0, 2, 6)]
     [InlineData("GstApp", 0, 0, 2, 0, 9, 2, 7)]
     [InlineData("GstAudio", 9, 0, 4, 0, 0, 0, 9)]
     [InlineData("GstVideo", 9, 0, 10, 0, 0, 0, 14)]

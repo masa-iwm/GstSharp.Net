@@ -534,7 +534,9 @@ public sealed class SkipRulesTests
         // by hand in src/GstSharp.Net.Base/Custom/BaseGlobal.cs;
         // ges_base_effect_set_time_translation_funcs is refused on the table
         // of GValues its callback is lent, and is written by hand in
-        // src/GstSharp.Net.GES/Custom/BaseEffect.cs.
+        // src/GstSharp.Net.GES/Custom/BaseEffect.cs. gst_base_sink_do_preroll
+        // is refused on its bare GstMiniObject* and is written by hand in
+        // src/GstSharp.Net.Base/Custom/BaseSink.cs.
         Assert.Equal(
             [
                 "Gst.Bus:enable-async",
@@ -570,6 +572,7 @@ public sealed class SkipRulesTests
                 "gst_audio_buffer_unmap",
                 "gst_audio_ring_buffer_read",
                 "gst_audio_ring_buffer_set_channel_positions",
+                "gst_base_sink_do_preroll",
                 "gst_buffer_add_audio_downmix_meta",
                 "gst_buffer_add_audio_meta",
                 "gst_buffer_add_rtp_source_meta",
