@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Gst;
 using Gst.Base;
 using Gst.GObject;
@@ -18,8 +17,8 @@ namespace GstSharp.IntegrationTests;
 /// </para>
 /// <para>
 /// <c>GstBaseSink</c> refuses pull mode unless <c>can_activate_pull</c> is
-/// set, and a bare subclass has no member that sets it; the fixture writes the
-/// field at the offset of the generated mirror, which only a test may do.
+/// set, so the constructor sets <see cref="BaseSink.CanActivatePull"/> before
+/// the sink pad is activated.
 /// </para>
 /// </remarks>
 internal sealed class PullThreadSink : BaseSink
@@ -51,10 +50,7 @@ internal sealed class PullThreadSink : BaseSink
         : base(Definition.NewInstance())
     {
         SetSync(false);
-
-        BaseSinkOwnFieldsRaw probe = default;
-        int offset = InstanceLayout.OffsetOf(ref probe, ref probe.CanActivatePull);
-        Marshal.WriteInt32(Handle + BaseSinkOwnFieldsRaw.OwnOffset + offset, 1);
+        CanActivatePull = true;
     }
 
     /// <summary>Gets the event the thread sets when it ends.</summary>

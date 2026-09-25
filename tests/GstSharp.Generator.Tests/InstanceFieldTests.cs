@@ -155,9 +155,10 @@ public sealed class InstanceFieldTests
         Assert.DoesNotContain("- `AudioDecoder.output_segment`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `AudioEncoder.input_segment`", report, StringComparison.Ordinal);
         Assert.DoesNotContain("- `AudioEncoder.output_segment`", report, StringComparison.Ordinal);
-        // The preroll lock of a base sink is one more class field a hand written
-        // member answers instead, so it counts among the exposed ones.
-        Assert.Equal(24, Generated.Census.ExposedFieldCount());
+        // The preroll lock and the pull mode flag of a base sink are two more
+        // class fields a hand written member answers instead, so they count
+        // among the exposed ones.
+        Assert.Equal(25, Generated.Census.ExposedFieldCount());
 
         // The one field of the same shape that wave 1 refused stays on it: no
         // override of an aggregator runs under the lock its writer takes.

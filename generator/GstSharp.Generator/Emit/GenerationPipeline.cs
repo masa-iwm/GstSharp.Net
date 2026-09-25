@@ -109,6 +109,7 @@ internal static class GenerationPipeline
         HashSet<string> consumedHandOverRefusals = new(StringComparer.Ordinal);
         HashSet<string> consumedDocStrips = new(StringComparer.Ordinal);
         HashSet<string> consumedTypeDocReplacements = new(StringComparer.Ordinal);
+        HashSet<string> consumedHandWrittenMembers = new(StringComparer.Ordinal);
         HashSet<string> consumedSiblingArguments = new(StringComparer.Ordinal);
         HashSet<string> lentOpaqueRecords = new(StringComparer.Ordinal);
 
@@ -160,7 +161,8 @@ internal static class GenerationPipeline
                     consumedSkips,
                     subclasses,
                     emittedVirtuals,
-                    consumedTypeDocReplacements),
+                    consumedTypeDocReplacements,
+                    consumedHandWrittenMembers),
                 module,
                 ns));
         }
@@ -358,6 +360,28 @@ internal static class GenerationPipeline
                 "GEN0064",
                 $"The type documentation replacement entry '{key}' names no class that was rendered "
                 + "by this run; the entry is stale.");
+        }
+
+        // A hand written member entry that no rendered class read is an error
+        // for the same reason: the entry exists because a generated member of a
+        // descendant would otherwise hide the hand written one without 'new',
+        // and a key nothing read means that protection is gone.
+        List<string> staleHandWrittenMembers = [];
+        foreach (string key in overlays.HandWrittenMemberKeys)
+        {
+            if (!consumedHandWrittenMembers.Contains(key))
+            {
+                staleHandWrittenMembers.Add(key);
+            }
+        }
+
+        staleHandWrittenMembers.Sort(StringComparer.Ordinal);
+        foreach (string key in staleHandWrittenMembers)
+        {
+            diagnostics.Error(
+                "GEN0065",
+                $"The hand written member entry '{key}' names no class that was rendered by this run; "
+                + "the entry is stale.");
         }
 
         // A sibling argument entry is only consumed where it named the shape it
@@ -673,7 +697,8 @@ internal static class GenerationPipeline
             registry,
             shared.Inherited,
             shared.EmittedVirtuals,
-            shared.ConsumedTypeDocReplacements);
+            shared.ConsumedTypeDocReplacements,
+            shared.ConsumedHandWrittenMembers);
 
         List<InterfaceRegistryEntry> interfaceRegistry = [];
         InterfaceEmitter interfaceEmitter = new(
@@ -803,6 +828,10 @@ internal static class GenerationPipeline
     /// The keys of the type documentation replacements the run has read, shared
     /// for the same reason.
     /// </param>
+    /// <param name="ConsumedHandWrittenMembers">
+    /// The keys of the hand written member entries the run has read, shared for
+    /// the same reason.
+    /// </param>
     private sealed record ModuleEmitters(
         Repository Repository,
         Classifier Classifier,
@@ -827,7 +856,8 @@ internal static class GenerationPipeline
         HashSet<string> ConsumedSkips,
         SubclassModel Subclasses,
         Dictionary<string, HashSet<string>> EmittedVirtuals,
-        HashSet<string> ConsumedTypeDocReplacements);
+        HashSet<string> ConsumedTypeDocReplacements,
+        HashSet<string> ConsumedHandWrittenMembers);
 
     /// <summary>
     /// Reports the overlay entries about virtual methods that name no slot of

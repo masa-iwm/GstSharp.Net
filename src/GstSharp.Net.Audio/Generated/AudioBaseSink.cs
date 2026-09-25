@@ -249,7 +249,7 @@ public unsafe partial class AudioBaseSink : Gst.Base.BaseSink
     /// The installed GStreamer declares no such property on this class, or
     /// declares it read-only.
     /// </exception>
-    public bool CanActivatePull
+    public new bool CanActivatePull
     {
         get
         {

@@ -823,8 +823,8 @@ public sealed class ClassEmitterTests
         // C accessor already answers.
         string report = Generated.SkipReport;
 
-        Assert.Equal(24, Generated.Census.ExposedFieldCount());
-        Assert.Contains("## Fields exposed elsewhere (24)\n", report, StringComparison.Ordinal);
+        Assert.Equal(25, Generated.Census.ExposedFieldCount());
+        Assert.Contains("## Fields exposed elsewhere (25)\n", report, StringComparison.Ordinal);
         Assert.Contains(
             "### Gst (7)\n\n- `CustomMeta.structure` — GetStructure\n"
             + "- `Message.src` — hand written\n"
@@ -845,9 +845,11 @@ public sealed class ClassEmitterTests
         // generated member of another wrapper reads the field, under the lock
         // the C accessor takes, so the field carries no accessor of its own.
         // The preroll lock of a base sink beside it is taken and released by
-        // hand written members, at the offset of the generated mirror.
+        // hand written members, and its pull mode flag is read and written by
+        // one, at the offsets of the generated mirror.
         Assert.Contains(
-            "### GstBase (2)\n\n- `BaseSink.preroll_lock` — hand written\n"
+            "### GstBase (3)\n\n- `BaseSink.can_activate_pull` — hand written\n"
+            + "- `BaseSink.preroll_lock` — hand written\n"
             + "- `CollectData.buffer` — CollectPads.Peek\n",
             report,
             StringComparison.Ordinal);
@@ -870,6 +872,7 @@ public sealed class ClassEmitterTests
             StringComparison.Ordinal);
         Assert.DoesNotContain("- `ColorBalanceChannel.", ClassFieldLedger(report), StringComparison.Ordinal);
         Assert.DoesNotContain("- `BaseSink.preroll_lock`", ClassFieldLedger(report), StringComparison.Ordinal);
+        Assert.DoesNotContain("- `BaseSink.can_activate_pull`", ClassFieldLedger(report), StringComparison.Ordinal);
 
         // The accessor is not emitted either, which is what lets an entry
         // answer a name a hand written member already carries.
@@ -878,7 +881,7 @@ public sealed class ClassEmitterTests
 
     [Theory]
     [InlineData("Gst", 69)]
-    [InlineData("GstBase", 37)]
+    [InlineData("GstBase", 36)]
     [InlineData("GstAudio", 36)]
     [InlineData("GstVideo", 8)]
     [InlineData("GstSdp", 0)]
@@ -911,8 +914,8 @@ public sealed class ClassEmitterTests
         string report = Generated.SkipReport;
         string ledger = ClassFieldLedger(report);
 
-        Assert.Equal(200, Generated.Census.ClassFieldCount());
-        Assert.Contains("## Class fields (200)\n", report, StringComparison.Ordinal);
+        Assert.Equal(199, Generated.Census.ClassFieldCount());
+        Assert.Contains("## Class fields (199)\n", report, StringComparison.Ordinal);
         Assert.Contains("### Gst (69)\n", ledger, StringComparison.Ordinal);
 
         // One line per shape the ledger measures. The shapes are what says how

@@ -601,6 +601,16 @@ internal sealed class PlatformSupport
 /// <c>name</c> renames the accessor the way <c>fieldAnnotations</c> does. The
 /// shapes the allowlist admits are closed, and an entry is an error rather than
 /// a warning: the accessor is public surface.</description></item>
+/// <item><description><c>handWrittenMembers</c>: the <c>c:type</c> of a GObject
+/// class (<c>GstBaseSink</c>) mapped onto the C# names of the members its
+/// <c>Custom/</c> partial declares by hand. The generator never reads
+/// <c>Custom/</c>, so without the list a generated member of the same name on a
+/// derived class would hide the hand written one with no <c>new</c>, which is a
+/// build failure. A listed name counts as a member of that class for the hiding
+/// rules of every descendant, and it is the one inherited name a value backed
+/// property is emitted with <c>new</c> over rather than dropped for. An entry
+/// that names no member or a blank one is refused while the overlays load, and
+/// a key that named no rendered class is an error.</description></item>
 /// <item><description><c>forceOpaque</c>: qualified gir name of a record
 /// (<c>Gst.DebugCategory</c>) that must be wrapped behind a pointer rather
 /// than copied by value.</description></item>
@@ -709,6 +719,7 @@ internal sealed class Overlays
     private readonly Dictionary<string, string> _handOverRefusals;
     private readonly Dictionary<string, IReadOnlyList<string>> _docStrips;
     private readonly Dictionary<string, IReadOnlyList<DocReplacement>> _typeDocReplacements;
+    private readonly Dictionary<string, IReadOnlyList<string>> _handWrittenMembers;
 
     private Overlays(
         HashSet<string> skip,
@@ -739,7 +750,8 @@ internal sealed class Overlays
         Dictionary<string, IReadOnlyList<string>> preconditions,
         Dictionary<string, string> handOverRefusals,
         Dictionary<string, IReadOnlyList<string>> docStrips,
-        Dictionary<string, IReadOnlyList<DocReplacement>> typeDocReplacements)
+        Dictionary<string, IReadOnlyList<DocReplacement>> typeDocReplacements,
+        Dictionary<string, IReadOnlyList<string>> handWrittenMembers)
     {
         _skip = skip;
         _handBound = handBound;
@@ -770,6 +782,7 @@ internal sealed class Overlays
         _handOverRefusals = handOverRefusals;
         _docStrips = docStrips;
         _typeDocReplacements = typeDocReplacements;
+        _handWrittenMembers = handWrittenMembers;
     }
 
     /// <summary>Gets an overlay set without any correction.</summary>
@@ -802,7 +815,8 @@ internal sealed class Overlays
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
         new Dictionary<string, string>(StringComparer.Ordinal),
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal),
-        new Dictionary<string, IReadOnlyList<DocReplacement>>(StringComparer.Ordinal));
+        new Dictionary<string, IReadOnlyList<DocReplacement>>(StringComparer.Ordinal),
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
 
     /// <summary>Gets the skipped identifiers, ordered for reporting.</summary>
     internal IReadOnlyCollection<string> SkippedIdentifiers => _skip;
@@ -923,6 +937,9 @@ internal sealed class Overlays
 
     /// <summary>Gets the types part of whose gir documentation is written differently.</summary>
     internal IReadOnlyCollection<string> TypeDocReplaceKeys => _typeDocReplacements.Keys;
+
+    /// <summary>Gets the classes whose <c>Custom/</c> partial declares members the generator has to know.</summary>
+    internal IReadOnlyCollection<string> HandWrittenMemberKeys => _handWrittenMembers.Keys;
 
     /// <summary>
     /// Loads <c>fixups.json</c> and <c>platform-symbols.json</c> from an overlay
@@ -1201,6 +1218,30 @@ internal sealed class Overlays
             typeDocReplacements[entry.Key] = [.. replacements];
         }
 
+        Dictionary<string, IReadOnlyList<string>> handWrittenMembers = new(StringComparer.Ordinal);
+        foreach (KeyValuePair<string, List<string>> entry in fixups.HandWrittenMembers ?? [])
+        {
+            // An entry that names no member tells the hiding rules nothing, and
+            // a blank name matches no member at all: both read as a statement
+            // about the Custom/ partial and change no emitted line, which the
+            // stale key report cannot catch because the class is rendered.
+            if (entry.Value is not { Count: > 0 } names)
+            {
+                throw new InvalidDataException(
+                    $"The hand written member entry '{entry.Key}' names no member; "
+                    + "an entry that names nothing changes nothing.");
+            }
+
+            if (names.Any(static name => string.IsNullOrWhiteSpace(name)))
+            {
+                throw new InvalidDataException(
+                    $"The hand written member entry '{entry.Key}' names a blank member; "
+                    + "an entry that names nothing changes nothing.");
+            }
+
+            handWrittenMembers[entry.Key] = [.. names];
+        }
+
         HashSet<string> vfuncIdentityBuffers = new(StringComparer.Ordinal);
         foreach (string key in fixups.VfuncIdentityBuffers ?? [])
         {
@@ -1236,7 +1277,8 @@ internal sealed class Overlays
             preconditions,
             handOverRefusals,
             docStrips,
-            typeDocReplacements);
+            typeDocReplacements,
+            handWrittenMembers);
     }
 
     /// <summary>Tests whether a symbol is skipped by the overlays.</summary>
@@ -1544,6 +1586,18 @@ internal sealed class Overlays
         [NotNullWhen(true)] out IReadOnlyList<DocReplacement>? replacements) =>
         _typeDocReplacements.TryGetValue(qualifiedName, out replacements);
 
+    /// <summary>
+    /// Looks up the members the <c>Custom/</c> partial of a class declares by
+    /// hand, which the generator cannot see on its own.
+    /// </summary>
+    /// <param name="cType">The <c>c:type</c> of the class.</param>
+    /// <param name="names">Receives the C# names of the members.</param>
+    /// <returns>Whether the class carries hand written members the hiding rules have to know.</returns>
+    internal bool TryGetHandWrittenMembers(
+        string cType,
+        [NotNullWhen(true)] out IReadOnlyList<string>? names) =>
+        _handWrittenMembers.TryGetValue(cType, out names);
+
     /// <summary>Looks up the platform availability of a native symbol.</summary>
     /// <param name="cIdentifier">The <c>c:identifier</c> of the symbol.</param>
     /// <returns>The availability, or <see langword="null"/> when the symbol is portable.</returns>
@@ -1619,6 +1673,8 @@ internal sealed class Overlays
         public Dictionary<string, List<string>>? DocStrip { get; set; }
 
         public Dictionary<string, List<DocReplacement>>? TypeDocReplace { get; set; }
+
+        public Dictionary<string, List<string>>? HandWrittenMembers { get; set; }
     }
 
     private sealed class PlatformSymbolsFile

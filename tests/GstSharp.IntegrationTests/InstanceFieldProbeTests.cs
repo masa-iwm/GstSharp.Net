@@ -175,18 +175,20 @@ public sealed unsafe class InstanceFieldProbeTests
     }
 
     /// <summary>
-    /// The two fields of <c>GstBaseSink</c> that hand written members reach
+    /// The three fields of <c>GstBaseSink</c> that hand written members reach
     /// through the mirror, against what a C compiler measured for them.
     /// </summary>
     /// <remarks>
     /// <para>
     /// Neither is an <c>instanceFields</c> entry, so the registry above has no
     /// row for them: <c>preroll_lock</c> is taken by
-    /// <c>BaseSink.PrerollLock</c> and <c>flushing</c>, which the header
-    /// marks private, is read by <c>BaseSink.IsFlushing</c>. The numbers are
+    /// <c>BaseSink.PrerollLock</c>, <c>flushing</c>, which the header
+    /// marks private, is read by <c>BaseSink.IsFlushing</c>, and
+    /// <c>can_activate_pull</c> is read and written by
+    /// <c>BaseSink.CanActivatePull</c>. The numbers are
     /// <c>offsetof (GstBaseSink, x) - sizeof (GstElement)</c>: a pointer, a
-    /// padded enumeration, a 64 bit offset and two booleans put the lock at
-    /// 32, and the condition (16), five booleans, padding to the segment at 80
+    /// padded enumeration and a 64 bit offset put <c>can_activate_pull</c> at
+    /// 24, two booleans put the lock at 32, and the condition (16), five booleans, padding to the segment at 80
     /// (the row above), the segment (120), the clock id and <c>sync</c> put
     /// <c>flushing</c> at 212.
     /// </para>
@@ -194,15 +196,17 @@ public sealed unsafe class InstanceFieldProbeTests
     /// The running library confirms them through the size check of the mirror
     /// and through <c>BaseSinkDoPrerollTests</c>, whose pulling thread takes
     /// the lock at this offset and, still holding it after the preroll
-    /// returned Flushing, reads this flag as set.
+    /// returned Flushing, reads this flag as set, and which only reaches pull
+    /// mode because its constructor set <c>can_activate_pull</c>.
     /// </para>
     /// </remarks>
     [Fact]
     public void TheHandBoundFieldsOfABaseSinkSitWhereACompilerMeasuredThem()
     {
         _output.WriteLine(FormattableString.Invariant(
-            $"preroll_lock = {BaseSink.PrerollLockOffset}, flushing = {BaseSink.FlushingOffset}"));
+            $"can_activate_pull = {BaseSink.CanActivatePullOffset}, preroll_lock = {BaseSink.PrerollLockOffset}, flushing = {BaseSink.FlushingOffset}"));
 
+        Assert.Equal(24, BaseSink.CanActivatePullOffset);
         Assert.Equal(32, BaseSink.PrerollLockOffset);
         Assert.Equal(212, BaseSink.FlushingOffset);
     }

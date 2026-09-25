@@ -58,8 +58,9 @@ internal sealed record ValueBackedProperty(
 /// <param name="IsNew">Whether the property hides an inherited generated member.</param>
 /// <param name="ValueBacked">
 /// How the property is read and written when no bound C getter backs it. A
-/// value backed property never hides an inherited member: it is skipped
-/// instead, so <paramref name="IsNew"/> is always <see langword="false"/> here.
+/// value backed property never hides an inherited generated member: it is
+/// skipped instead, so <paramref name="IsNew"/> is only <see langword="true"/>
+/// here over a member the <c>handWrittenMembers</c> overlay lists.
 /// </param>
 internal sealed record PropertyEmission(
     GirProperty Property,
@@ -885,8 +886,11 @@ internal sealed class SurfaceBuilder
             // a property that reads the GObject property system is not what a
             // caller of the hidden member asked for: GstAppSrc declares an
             // "is-live" property and GstBaseSrc binds gst_base_src_is_live, so
-            // the property is dropped and IsLive() stays the one answer.
-            if (hidden.HidesName(name))
+            // the property is dropped and IsLive() stays the one answer. A
+            // member the Custom/ partial of a base class declares by hand is
+            // the exception: it is not the binding of a C accessor either, and
+            // the property is emitted over it with 'new'.
+            if (hidden.HidesGeneratedName(name))
             {
                 _census.Skipped(module, SkipReason.ShadowedBy, symbol);
                 continue;
@@ -917,7 +921,7 @@ internal sealed class SurfaceBuilder
                 access.Type,
                 Getter: null,
                 setter,
-                IsNew: false,
+                IsNew: hidden.HidesHandWritten(name),
                 new ValueBackedProperty(property.Name, access, writesValue, property.IsConstructOnly)));
             _census.Emitted(module, "property");
         }
@@ -1047,6 +1051,7 @@ internal sealed class SurfaceBuilder
         private readonly HashSet<string> _signatures = new(StringComparer.Ordinal);
         private readonly HashSet<string> _names = new(StringComparer.Ordinal);
         private readonly HashSet<string> _properties = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _handWritten = new(StringComparer.Ordinal);
 
         /// <summary>Reads the keys a base class contributed.</summary>
         /// <param name="keys">The keys, as produced by <see cref="TypeSurface.MemberKeys"/>.</param>
@@ -1056,6 +1061,12 @@ internal sealed class SurfaceBuilder
             HiddenMembers members = new();
             foreach (string key in keys)
             {
+                if (key.StartsWith(ClassEmitter.HandWrittenMarker, StringComparison.Ordinal))
+                {
+                    members._handWritten.Add(key[ClassEmitter.HandWrittenMarker.Length..]);
+                    continue;
+                }
+
                 if (key.StartsWith("P:", StringComparison.Ordinal))
                 {
                     members._properties.Add(key[2..]);
@@ -1079,17 +1090,33 @@ internal sealed class SurfaceBuilder
         /// <summary>
         /// Tests whether a method hides an inherited member. A method only hides
         /// another method when their signatures agree, but it hides a property
-        /// of the same name whatever it takes.
+        /// of the same name whatever it takes, and a hand written member of the
+        /// same name, whose signature the generator does not know.
         /// </summary>
         /// <param name="plan">The method to test.</param>
         /// <returns><see langword="true"/> when the member needs <c>new</c>.</returns>
         internal bool HidesMethod(MarshalPlan plan) =>
-            _signatures.Contains(MethodKey(plan)) || _properties.Contains(plan.Name);
+            _signatures.Contains(MethodKey(plan))
+            || _properties.Contains(plan.Name)
+            || _handWritten.Contains(plan.Name);
 
         /// <summary>Tests whether a member hides an inherited one of the same name.</summary>
         /// <param name="name">The C# name of the member.</param>
         /// <returns><see langword="true"/> when the member needs <c>new</c>.</returns>
-        internal bool HidesName(string name) => _names.Contains(name);
+        internal bool HidesName(string name) => _names.Contains(name) || _handWritten.Contains(name);
+
+        /// <summary>Tests whether a member hides an inherited generated one of the same name.</summary>
+        /// <param name="name">The C# name of the member.</param>
+        /// <returns><see langword="true"/> when a generated base class carries the name.</returns>
+        internal bool HidesGeneratedName(string name) => _names.Contains(name);
+
+        /// <summary>
+        /// Tests whether a member hides one the <c>Custom/</c> partial of a base
+        /// class declares by hand, as the <c>handWrittenMembers</c> overlay lists it.
+        /// </summary>
+        /// <param name="name">The C# name of the member.</param>
+        /// <returns><see langword="true"/> when the member needs <c>new</c>.</returns>
+        internal bool HidesHandWritten(string name) => _handWritten.Contains(name);
     }
 
     private static string SetterType(MarshalPlan setter)

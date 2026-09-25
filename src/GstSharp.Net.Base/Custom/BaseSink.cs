@@ -11,9 +11,9 @@ namespace Gst.Base;
 /// <c>gst_base_sink_do_preroll</c> is bound by hand because the planner does
 /// not marshal a bare <c>GstMiniObject*</c>. The lock is a macro in C
 /// (<c>GST_BASE_SINK_PREROLL_LOCK</c>, <c>gstbasesink.h:49-51</c>) over the
-/// <c>preroll_lock</c> field, and <c>flushing</c> is a field the header marks
-/// private; both are read at the offsets of the generated mirror
-/// <see cref="BaseSinkOwnFieldsRaw"/>.
+/// <c>preroll_lock</c> field, <c>flushing</c> is a field the header marks
+/// private, and <c>can_activate_pull</c> has no C accessor; all three are read
+/// at the offsets of the generated mirror <see cref="BaseSinkOwnFieldsRaw"/>.
 /// </para>
 /// <para>
 /// This is the one place where managed code takes a GLib lock of the library,
@@ -34,6 +34,52 @@ public unsafe partial class BaseSink
     /// instance.
     /// </summary>
     internal static int FlushingOffset { get; } = MeasureFlushing();
+
+    /// <summary>
+    /// Gets the offset of <c>can_activate_pull</c> from the first own field of
+    /// the instance.
+    /// </summary>
+    internal static int CanActivatePullOffset { get; } = MeasureCanActivatePull();
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the sink pad may be activated in
+    /// pull mode: the <c>can_activate_pull</c> field
+    /// (<c>gstbasesink.h:93</c>), which is <see langword="false"/> unless a
+    /// subclass sets it (<c>gstbasesink.c:711</c>).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Set it in the constructor of the subclass, before the sink pad is
+    /// activated: <c>gst_base_sink_pad_activate</c> reads it when it chooses the
+    /// scheduling mode and falls back to push mode when it is not set
+    /// (<c>gstbasesink.c:4738</c>). A write made after that has no effect on the
+    /// activation that already happened.
+    /// </para>
+    /// <para>
+    /// The value is a plain read and write of the field, with no lock: the
+    /// library reads it only during pad activation, and a constructor runs
+    /// before anything else holds the instance. <c>GstAudioBaseSink</c> writes the
+    /// same field through its <c>can-activate-pull</c> property
+    /// (<c>gstaudiobasesink.c:846-847</c>), which is why
+    /// <c>AudioBaseSink.CanActivatePull</c> hides this member.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="ObjectDisposedException">The wrapper was disposed.</exception>
+    protected bool CanActivatePull
+    {
+        get
+        {
+            bool value = *(int*)FieldAddress(CanActivatePullOffset) != 0;
+            GC.KeepAlive(this);
+            return value;
+        }
+
+        set
+        {
+            *(int*)FieldAddress(CanActivatePullOffset) = value ? 1 : 0;
+            GC.KeepAlive(this);
+        }
+    }
 
     /// <summary>
     /// Gets a value indicating whether the sink is flushing or shutting down:
@@ -208,6 +254,14 @@ public unsafe partial class BaseSink
     {
         BaseSinkOwnFieldsRaw probe = default;
         return Gst.GObject.InstanceLayout.OffsetOf(ref probe, ref probe.Flushing);
+    }
+
+    /// <summary>Measures where <c>can_activate_pull</c> sits in the mirror.</summary>
+    /// <returns>The offset from the first own field.</returns>
+    private static int MeasureCanActivatePull()
+    {
+        BaseSinkOwnFieldsRaw probe = default;
+        return Gst.GObject.InstanceLayout.OffsetOf(ref probe, ref probe.CanActivatePull);
     }
 
     /// <summary>The address of an own field of this instance.</summary>

@@ -1426,7 +1426,7 @@ it unbound, and this ledger is where that is counted.
 - `VideoSEIUserDataUnregisteredMeta.meta` — EmbeddedStruct
 - `VideoTimeCodeMeta.meta` — EmbeddedStruct
 
-## Fields exposed elsewhere (24)
+## Fields exposed elsewhere (25)
 
 Public fields of a record or of a class that another member of the binding
 answers, with the member that answers them. They are declared in
@@ -1450,8 +1450,9 @@ cover, and these are covered.
 - `AudioBuffer.info` — hand written
 - `AudioInfo.finfo` — hand written
 
-### GstBase (2)
+### GstBase (3)
 
+- `BaseSink.can_activate_pull` — hand written
 - `BaseSink.preroll_lock` — hand written
 - `CollectData.buffer` — CollectPads.Peek
 
@@ -1479,7 +1480,7 @@ cover, and these are covered.
 
 - `WebRTCSessionDescription.sdp` — hand written
 
-## Class fields (200)
+## Class fields (199)
 
 Public instance fields of the GObject classes, with the shape of each. The
 generated wrapper of a class holds a native instance and nothing else: there is
@@ -1634,14 +1635,13 @@ field does.
 - `AudioRingBuffer.state` — Scalar
 - `AudioRingBuffer.waiting` — Scalar
 
-### GstBase (37)
+### GstBase (36)
 
 - `Aggregator.srcpad` — Pointer
 - `AggregatorPad.segment` — EmbeddedStruct
 - `BaseParse.flags` — Scalar
 - `BaseParse.sinkpad` — Pointer
 - `BaseParse.srcpad` — Pointer
-- `BaseSink.can_activate_pull` — Scalar
 - `BaseSink.can_activate_push` — Scalar
 - `BaseSink.eos` — Scalar
 - `BaseSink.have_newsegment` — Scalar

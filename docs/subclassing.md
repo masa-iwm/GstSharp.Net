@@ -1142,6 +1142,9 @@ exception to the paragraph above. The contract:
 * The binding has no accessor for the stream lock of a pad, so a managed
   pulling thread pulls without `STREAM_LOCK`, where `gstaudiobasesink.c:2308`
   takes it. That is a divergence from the C shape, not an oversight in it.
+* A pull mode sink sets the protected `CanActivatePull` to `true` in its
+  constructor, before the sink pad is activated: `gst_base_sink_pad_activate`
+  reads the flag and falls back to push mode without it (`gstbasesink.c:4738`).
 
 `PrerollLock()`, `PrerollUnlock()` and `IsFlushing` are `protected`, and they
 are for a thread the subclass owns, outside every override, and for nothing

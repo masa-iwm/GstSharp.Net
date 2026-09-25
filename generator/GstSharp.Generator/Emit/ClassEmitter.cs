@@ -49,6 +49,19 @@ internal sealed class ClassEmitter
     private const string InstanceFieldMarker = "I:";
 
     /// <summary>
+    /// The prefix the inherited table remembers a member the <c>Custom/</c>
+    /// partial of a class declares by hand under, as the
+    /// <c>handWrittenMembers</c> overlay lists it.
+    /// </summary>
+    /// <remarks>
+    /// It is not a <c>P:</c> key, because a value backed property of a
+    /// descendant drops itself for an inherited generated member of its name;
+    /// over a hand written one it is emitted with <c>new</c> instead, and the
+    /// hiding rules need the marker to tell the two apart.
+    /// </remarks>
+    internal const string HandWrittenMarker = "H:";
+
+    /// <summary>
     /// The bound field names of a class, which are none: a wrapper mirrors no
     /// part of the instance structure.
     /// </summary>
@@ -66,6 +79,7 @@ internal sealed class ClassEmitter
     private readonly FieldShapes _shapes;
     private readonly InstanceFieldEmitter _instanceFields;
     private readonly HashSet<string> _consumedTypeDocReplacements;
+    private readonly HashSet<string> _consumedHandWrittenMembers;
     private readonly List<GeneratedFile> _mirrors = [];
     private readonly HashSet<string> _exposedFields = new(StringComparer.Ordinal);
 
@@ -92,6 +106,10 @@ internal sealed class ClassEmitter
     /// Receives the keys of the <c>typeDocReplace</c> entries this emitter read,
     /// so that the run can report the ones that named no rendered class.
     /// </param>
+    /// <param name="consumedHandWrittenMembers">
+    /// Receives the keys of the <c>handWrittenMembers</c> entries this emitter
+    /// read, so that the run can report the ones that named no rendered class.
+    /// </param>
     internal ClassEmitter(
         Repository repository,
         Classifier classifier,
@@ -104,9 +122,11 @@ internal sealed class ClassEmitter
         List<RegistryEntry> registry,
         Dictionary<string, List<string>> inherited,
         Dictionary<string, HashSet<string>> emittedVirtuals,
-        HashSet<string> consumedTypeDocReplacements)
+        HashSet<string> consumedTypeDocReplacements,
+        HashSet<string> consumedHandWrittenMembers)
     {
         _consumedTypeDocReplacements = consumedTypeDocReplacements;
+        _consumedHandWrittenMembers = consumedHandWrittenMembers;
         _repository = repository;
         _classifier = classifier;
         _names = names;
@@ -538,7 +558,8 @@ internal sealed class ClassEmitter
         XmlDocWriter.WriteObsolete(writer, Deprecation(property));
 
         string name = "\"" + property.Property.Name + "\"";
-        writer.WriteLine("public " + property.Type + " " + property.Name);
+        writer.WriteLine(
+            "public " + (property.IsNew ? "new " : string.Empty) + property.Type + " " + property.Name);
         writer.OpenBlock();
         writer.WriteLine("get");
         writer.OpenBlock();
@@ -984,6 +1005,19 @@ internal sealed class ClassEmitter
 
         List<string> members = [.. inherited];
         members.AddRange(surface.MemberKeys);
+
+        // The members the Custom/ partial declares are added after the surface
+        // was built, so that the class itself does not see them as inherited;
+        // only a descendant has to hide them.
+        if (_overlays.TryGetHandWrittenMembers(CTypeOf(declaration), out IReadOnlyList<string>? handWritten))
+        {
+            _ = _consumedHandWrittenMembers.Add(CTypeOf(declaration));
+            foreach (string name in handWritten)
+            {
+                members.Add(HandWrittenMarker + name);
+            }
+        }
+
         _inherited[qualifiedName] = members;
 
         // The accessor of an instance field is added beside the planned surface,
