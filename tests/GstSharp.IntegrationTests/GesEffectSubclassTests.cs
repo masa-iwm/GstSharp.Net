@@ -553,6 +553,31 @@ public sealed class GesEffectSubclassTests
     }
 
     /// <summary>
+    /// The same with a managed time effect that registers itself in its
+    /// <c>create_element</c> override.
+    /// </summary>
+    /// <remarks>
+    /// The rate stays 1.0, so the clip keeps its length; what the test proves is
+    /// that a timeline with the managed time effect renders to EOS. The bin ends
+    /// in the capsfilter the frame positioner of 1.28 looks up
+    /// (<c>ges-clip.c:1932-1955</c>), but a failed lookup would only be logged,
+    /// which this test does not observe. Nothing here asserts that the effect is
+    /// collected afterwards: on that path 1.28 keeps a reference per top effect
+    /// (<c>ges-clip.c:1948</c> skips <c>:1952</c>).
+    /// </remarks>
+    [RequiresElementFact("videorate", "capsfilter", "videoconvert", "videotestsrc", "audiotestsrc", "fakesink")]
+    public void ATimelineWithAManagedTimeEffectRendersToTheEnd()
+    {
+        GstGES.Initialize();
+        ProbeTimeEffect.Reset();
+
+        AssertATimelineRendersWith(static () => ProbeTimeEffect.New());
+
+        Assert.True(ProbeTimeEffect.CreateElementCalls >= 1);
+        Assert.True(ProbeTimeEffect.SetTranslationFuncs);
+    }
+
+    /// <summary>
     /// Plays a one-second timeline whose only clip carries the effect the factory
     /// answers, and asserts that it reaches the end of stream.
     /// </summary>

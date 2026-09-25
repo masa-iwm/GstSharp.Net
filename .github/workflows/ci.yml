@@ -278,7 +278,8 @@ jobs:
       # tests read as an RTPBasePayload, and alsasink for the audio sink the
       # AudioBaseSink tests build theirs out of, which they only ever
       # construct — the device is opened by the ring buffer on the way out of
-      # NULL and those tests never take the sink there — so the day
+      # NULL and those tests never take the sink there — and videorate for
+      # the managed time effect the GES subclass tests build, so the day
       # gstreamer1.0-plugins-bad, gstreamer1.0-nice, gstreamer1.0-alsa,
       # gstreamer1.0-plugins-good or gstreamer1.0-plugins-base stops
       # providing one of them this step turns
@@ -328,6 +329,9 @@ jobs:
       # tests end in without gating on it at all. An installation that lost one
       # of them would take a large part of the suite with it, silently for the
       # gated tests, so they are named here for the same reason as the rest.
+      # capsfilter, which the managed time effect of the GES subclass tests
+      # ends its video bin in, comes from the same coreelements plugin and is
+      # named for the same reason.
       #
       # --blame-hang names the test that stopped making progress: without it a
       # hung leg is killed by timeout-minutes, and the upload steps are gated
@@ -347,7 +351,7 @@ jobs:
       # upload step already takes.
       - name: Test against the installation
         env:
-          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtpL16depay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert,gesdemux,opusenc,opusdec,rtpopuspay,rtpopusdepay,videobalance,playbin,rtphdrextclientaudiolevel,videotestsrc,audiotestsrc,identity,fakesink
+          GSTSHARP_REQUIRED_ELEMENTS: webrtcbin,nicesrc,dtlssrtpenc,audiomixer,theoraenc,theoradec,vorbisenc,uritranscodebin,transcodebin,oggmux,rtpL16pay,rtpL16depay,rtspsrc,alsasink,volume,videoconvert,rawaudioparse,vorbisdec,audioconvert,gesdemux,opusenc,opusdec,rtpopuspay,rtpopusdepay,videobalance,playbin,rtphdrextclientaudiolevel,videotestsrc,audiotestsrc,identity,fakesink,videorate,capsfilter
         run: dotnet test tests/GstSharp.IntegrationTests --no-build --logger "trx;LogFileName=integration.trx" --results-directory artifacts/test-results --blame-hang --blame-hang-timeout 5m --blame-hang-dump-type mini
 
       # The whole consumer path without AOT: parse a pipeline, cast the sink
