@@ -34,11 +34,11 @@ public static unsafe class ColorBalanceImplementation
     /// list built - so one lock for the process is enough.
     /// </para>
     /// <para>
-    /// It is a leaf lock. The members of an implementation run before it is
-    /// taken, and nothing that runs under it takes it again: the
-    /// <c>g_object_ref</c> of a channel can run the toggle notification of its
-    /// wrapper, which only switches the wrapper between a strong and a weak
-    /// handle. So it cannot deadlock.
+    /// Only leaf locks are taken under it. The members of an implementation
+    /// run before it is taken; the <c>g_object_ref</c> of a channel can run
+    /// the toggle notification of its wrapper, which takes that wrapper's own
+    /// lock and nothing else to switch it between a strong and a weak handle;
+    /// and nothing that runs under it takes it again. So it cannot deadlock.
     /// </para>
     /// </remarks>
     private static readonly System.Threading.Lock ListsGate = new();

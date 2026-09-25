@@ -843,15 +843,15 @@ internal sealed class BalancedSink : VideoSink, IManagedSubclass<BalancedSink>, 
         new SubclassOptions { Interfaces = [ColorBalanceImplementation.For<BalancedSink>()] });
 
     // The four labels playsink needs before it uses an element at all.
-    private readonly ColorBalanceChannel[] _channels =
-    [
-        ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000),
-        ColorBalanceChannel.New("CONTRAST", -1000, 1000),
-        ColorBalanceChannel.New("HUE", -1000, 1000),
-        ColorBalanceChannel.New("SATURATION", -1000, 1000),
-    ];
+    private static readonly string[] Labels = ["BRIGHTNESS", "CONTRAST", "HUE", "SATURATION"];
 
-    private readonly ConcurrentDictionary<ColorBalanceChannel, int> _values = new();
+    private readonly ColorBalanceChannel[] _channels =
+        Array.ConvertAll(Labels, label => ColorBalanceChannel.New(label, -1000, 1000));
+
+    // Keyed by the labels captured at creation, not by the wrappers: a consumer
+    // that disposes a wrapper it was handed disposes these very instances.
+    private readonly ConcurrentDictionary<string, int> _values =
+        new(Array.ConvertAll(Labels, label => KeyValuePair.Create(label, 0)));
 
     public ColorBalanceType BalanceType => ColorBalanceType.Software;
 
@@ -859,18 +859,19 @@ internal sealed class BalancedSink : VideoSink, IManagedSubclass<BalancedSink>, 
 
     public void SetValue(ColorBalanceChannel channel, int value)
     {
+        string label = channel.Label ?? string.Empty;
         int clamped = Math.Clamp(value, channel.MinValue, channel.MaxValue);
-        if (_values.TryGetValue(channel, out int previous) && previous == clamped)
+        if (!_values.TryGetValue(label, out int previous) || previous == clamped)
         {
             return;
         }
 
         // Store the value, then announce the change: GStreamer fires nothing itself.
-        _values[channel] = clamped;
+        _values[label] = clamped;
         As<IColorBalance>()!.ValueChanged(channel, clamped);
     }
 
-    public int GetValue(ColorBalanceChannel channel) => _values.GetValueOrDefault(channel);
+    public int GetValue(ColorBalanceChannel channel) => _values.GetValueOrDefault(channel.Label ?? string.Empty);
 }
 ```
 

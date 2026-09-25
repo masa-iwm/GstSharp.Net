@@ -98,9 +98,11 @@ public interface IColorBalanceImplementation
     /// so it can be compared by reference for as long as nobody disposed that
     /// wrapper: the element that made it, or a consumer that got the same
     /// wrapper from <see cref="ColorBalanceExtensions.ListChannels"/>. Once it
-    /// is disposed, the next call brings a new wrapper of the same channel, so
-    /// compare <see cref="Gst.GObject.Object.Handle"/> or the label when that
-    /// can happen.
+    /// is disposed, the next call brings a new wrapper of the same channel,
+    /// and the instance the element stored is disposed with it, so its own
+    /// <see cref="Gst.GObject.Object.Handle"/> and label can no longer be
+    /// read. When that can happen, keep each channel's handle or label when
+    /// the channel is created and compare the channel handed in against that.
     /// </param>
     /// <param name="value">
     /// The new value, which the caller is asked to keep between
