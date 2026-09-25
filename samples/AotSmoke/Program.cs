@@ -613,7 +613,9 @@ internal static partial class Smoke
         IReadOnlyList<ColorBalanceChannel> channels = balance.ListChannels();
         if (channels.Count != 1)
         {
-            Console.Error.WriteLine("AotSmoke: the managed color balance listed no channel.");
+            Console.Error.WriteLine(string.Create(
+                CultureInfo.InvariantCulture,
+                $"AotSmoke: the managed color balance listed {channels.Count} channels instead of one."));
             return false;
         }
 

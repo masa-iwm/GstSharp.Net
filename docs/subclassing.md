@@ -842,8 +842,16 @@ internal sealed class BalancedSink : VideoSink, IManagedSubclass<BalancedSink>, 
         ConfigureClass,
         new SubclassOptions { Interfaces = [ColorBalanceImplementation.For<BalancedSink>()] });
 
+    // The four labels playsink needs before it uses an element at all.
     private readonly ColorBalanceChannel[] _channels =
-        [ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000), ColorBalanceChannel.New("CONTRAST", -1000, 1000)];
+    [
+        ColorBalanceChannel.New("BRIGHTNESS", -1000, 1000),
+        ColorBalanceChannel.New("CONTRAST", -1000, 1000),
+        ColorBalanceChannel.New("HUE", -1000, 1000),
+        ColorBalanceChannel.New("SATURATION", -1000, 1000),
+    ];
+
+    private readonly ConcurrentDictionary<ColorBalanceChannel, int> _values = new();
 
     public ColorBalanceType BalanceType => ColorBalanceType.Software;
 
@@ -851,15 +859,25 @@ internal sealed class BalancedSink : VideoSink, IManagedSubclass<BalancedSink>, 
 
     public void SetValue(ColorBalanceChannel channel, int value)
     {
-        // Store the value, then announce it: GStreamer fires nothing itself.
-        As<IColorBalance>()!.ValueChanged(channel, value);
+        int clamped = Math.Clamp(value, channel.MinValue, channel.MaxValue);
+        if (_values.TryGetValue(channel, out int previous) && previous == clamped)
+        {
+            return;
+        }
+
+        // Store the value, then announce the change: GStreamer fires nothing itself.
+        _values[channel] = clamped;
+        As<IColorBalance>()!.ValueChanged(channel, clamped);
     }
 
-    public int GetValue(ColorBalanceChannel channel) => /* the stored value */ 0;
+    public int GetValue(ColorBalanceChannel channel) => _values.GetValueOrDefault(channel);
 }
 ```
 
-Four facts of the C interface show through:
+`playsink` uses an element only when its channels carry all four labels
+(`gstplaysink.c:1600-1606`), which is why the sample lists them.
+
+Five facts of the C interface show through:
 
 * **`list_channels` lends a list the element owns** (`transfer none`), and C
   has no way to say when a caller is done with it. The runtime therefore keeps
@@ -885,9 +903,15 @@ Four facts of the C interface show through:
   down, which no binding can prevent.
 * **Nothing is announced for the implementation.** `gst_color_balance_set_value`
   only calls the slot; firing `value-changed` is the implementation's job, the
-  way `videobalance` does it after a change (`gstvideobalance.c:731-734`), and
+  way `videobalance` does it after a change (`gstvideobalance.c:732-734`), and
   `playsink` listens for it to keep its own channels in step. The class handler
   slot of that signal, `value_changed`, is left as the interface initialised it.
+* **`playsink` asks under its own object lock.** It calls `list_channels` and
+  `get_balance_type` while it holds the lock of the `playsink` itself
+  (`gstplaysink.c:1927-1940`, `:2135-2148`), so an implementation answers
+  from state it already holds and does not post a message, change a state or
+  call back into the pipeline from them - the same rule as "store the URI; do
+  not open anything" above.
 * **An empty answer is the C default.** Without a wrapper to answer - the
   window of §5.4 - or when a member throws, `get_value` answers the minimum of
   the channel and `get_balance_type` answers software, which is what
