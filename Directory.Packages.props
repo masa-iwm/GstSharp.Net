@@ -21,8 +21,8 @@
        is the port of the toolkit-integration tutorial, and a toolkit is what
        it needs; see samples/tutorials/README.md for why this one. -->
   <ItemGroup Label="Samples (GUI)">
-    <PackageVersion Include="Avalonia" Version="12.1.2" />
-    <PackageVersion Include="Avalonia.Desktop" Version="12.1.2" />
+    <PackageVersion Include="Avalonia" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.2" />
   </ItemGroup>
 
