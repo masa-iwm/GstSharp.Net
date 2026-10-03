@@ -1070,30 +1070,32 @@ them that `AudioDecoder`, `AudioEncoder`, `VideoDecoder` and `VideoEncoder`
 keep, as `GetInputSegment()` and `GetOutputSegment()`. Each method answers a copy
 the caller disposes and takes no lock, which is what makes *where* it is called
 the whole contract. The base class holds the locks its own writers take, save
-one, around the overrides that may read the field: the pad holds `STREAM_LOCK`
+two, around the overrides that may read the field: the pad holds `STREAM_LOCK`
 around a chain, a getrange and a serialized event, and `BaseSink` holds
 `PREROLL_LOCK` for the whole of its chain function, which is the lock an instant
 rate change takes to rewrite the segment from the thread that sent the event
 (`gstbasesink.c:4500-4562`). The four codec classes hold a `STREAM_LOCK` of
 their own, a `GRecMutex` the class carries, around the frame slots for the same
-reason. The one write no lock covers while an override can run is a pull-mode
+reason. The two writes no lock covers while an override can run are a pull-mode
 duration query, which rewrites the `duration` of the `BaseSink` segment from
-whichever thread sends it (`gstbasesink.c:5410`); that is one aligned 64 bit
-word, so a copy holds the old duration or the new one and never a mix. So the
-read is consistent inside one of those overrides: `OnRender` or `OnPreroll`,
-`OnCreate` or `OnFill`, `OnTransform` or `OnTransformIp`, `OnHandleFrame`, and
-`OnParse` on the two decoders. Consistent
+whichever thread sends it (`gstbasesink.c:5410`), and an instant rate change on
+the two decoders, which rewrites the `flags` of the input segment under
+`OBJECT_LOCK` alone (`gstaudiodecoder.c:2479-2481`,
+`gstvideodecoder.c:1618-1620`); each is one word, so a copy holds the old value
+or the new one and never a mix. So the read is consistent inside one of those
+overrides: `OnRender` or `OnPreroll`, `OnCreate` or `OnFill`, `OnTransform` or
+`OnTransformIp`, `OnHandleFrame`, and `OnParse` on the two decoders. Consistent
 is not the same as current for the output segment of a codec class: the base
 class writes it only as it pushes the queued segment event downstream, so the
 first `OnHandleFrame` after a new segment reads the previous value.
 [`docs/ownership.md`](ownership.md) cites the four writers, and the two places a
 segment event leaves the input segment untouched as well. Called from anywhere
-else — a property setter, a bus handler, a thread of the subclass's own — it still answers a segment and
-is still memory safe, but the segment may mix the fields of two: `GstSegment` is
-flat and owns no pointer, so a racing rewrite tears the value and nothing else.
-An override must not reach for a lock instead; see item 8 of
-[`docs/modules.md`](modules.md) and `## Fields the library rewrites` in
-[`docs/ownership.md`](ownership.md).
+else — a property setter, a bus handler, a thread of the subclass's own — it
+still answers a segment and is still memory safe, but the segment may mix the
+fields of two: `GstSegment` is flat and owns no pointer, so a racing rewrite
+tears the value and nothing else. An override must not reach for a lock instead;
+see item 8 of [`docs/modules.md`](modules.md) and
+`## Fields the library rewrites` in [`docs/ownership.md`](ownership.md).
 
 **Prerolling from a thread of your own.** `BaseSink.DoPreroll(obj)` binds
 `gst_base_sink_do_preroll`: a buffer, or the first buffer of a list, goes
