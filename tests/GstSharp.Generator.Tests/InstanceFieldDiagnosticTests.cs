@@ -233,6 +233,14 @@ public sealed class InstanceFieldDiagnosticTests
         "GEN0063",
         "The accessor 'GetShape' of the instance field 'GstWidget.segment' collides")]
 
+    // A member the Custom/ partial declares is taken as well, though only the
+    // handWrittenMembers overlay names it.
+    [InlineData(
+        Entries + "{ \"GstWidget.segment\": { " + Window + ", \"name\": \"Polish\" } }, "
+        + "\"handWrittenMembers\": { \"GstWidget\": [\"GetPolish\"] } }",
+        "GEN0063",
+        "The accessor 'GetPolish' of the instance field 'GstWidget.segment' collides")]
+
     // The mirror the offset is measured from.
     [InlineData(
         Entries + "{ \"GstGizmo.segment\": { " + Window + " } } }",

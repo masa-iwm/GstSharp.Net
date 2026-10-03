@@ -716,12 +716,17 @@ internal sealed class InstanceFieldEmitter
     /// The accessor is added beside the planned surface rather than through it,
     /// so it has no signature the <c>new</c> rule could compare: a member of its
     /// name collides whatever shape it has, which is what the key test answers.
+    /// A member the <c>Custom/</c> partial declares is in the list under the
+    /// marker of the <c>handWrittenMembers</c> overlay, which the key test does
+    /// not read, so it is matched here by its bare name.
     /// </remarks>
     private static bool IsTaken(string member, IReadOnlyCollection<string> taken)
     {
+        string handWritten = ClassEmitter.HandWrittenMarker + member;
         foreach (string key in taken)
         {
-            if (SurfaceBuilder.KeyNames(key, member))
+            if (SurfaceBuilder.KeyNames(key, member)
+                || string.Equals(key, handWritten, StringComparison.Ordinal))
             {
                 return true;
             }
