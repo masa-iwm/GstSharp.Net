@@ -74,9 +74,9 @@ public interface IColorBalanceImplementation
     /// it finds its channel again by that substring and asserts that it did
     /// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> when it sets its
     /// video chain up and <c>:5548</c> in the <c>set_value</c> of its proxy
-    /// channels, whenever a value is set on one of them). An element whose channels stop carrying the label
-    /// <c>playsink</c> chose it for aborts the process there, which nothing in
-    /// this binding can prevent.
+    /// channels, whenever a value is set on one of them). An element whose
+    /// channels stop carrying the label <c>playsink</c> chose it for aborts the
+    /// process there, which nothing in this binding can prevent.
     /// </para>
     /// <para>
     /// An empty list is how C spells no channels. An answer that is

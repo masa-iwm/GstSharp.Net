@@ -29,9 +29,8 @@ namespace Gst.Video;
 /// content of its label, <c>playsink</c> asserts that the search found one
 /// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> when it sets its video
 /// chain up and <c>:5548</c> in the <c>set_value</c> of its proxy channels)
-/// and aborts the process when it did not, and
-/// the write frees the previous string while the element may be reading it on
-/// another thread.
+/// and aborts the process when it did not, and the write frees the previous
+/// string while the element may be reading it on another thread.
 /// </para>
 /// <para>
 /// There is no lock on either side: the fields are plain struct fields, and the
@@ -71,11 +70,11 @@ public unsafe partial class ColorBalanceChannel
     /// whose <c>label</c> contains the proxy's label, and then asserts that it
     /// found one (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> when it
     /// sets its video chain up and <c>:5548</c> in the <c>set_value</c> of its
-    /// proxy channels). A channel whose label is
-    /// <see langword="null"/>, or which lacks the substring a proxy expects,
-    /// aborts the process there. Nothing in this binding can guard against
-    /// that, so a channel handed to <c>playsink</c> has to carry a label that
-    /// contains the name it looks for.
+    /// proxy channels). A channel whose label is <see langword="null"/>, or
+    /// which lacks the substring a proxy expects, aborts the process there.
+    /// Nothing in this binding can guard against that, so a channel handed
+    /// to <c>playsink</c> has to carry a label that contains the name it
+    /// looks for.
     /// </para>
     /// <para>
     /// The instance is marked as one of this binding's own, which is what the

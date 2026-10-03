@@ -732,7 +732,9 @@ internal static class SignalEmitter
         // would take the connection record with it once collected, while the
         // native handler stayed connected. The owner is also the very instance
         // the identity remark promises, so a second view removes what the first
-        // one added.
+        // one added. Any other implementer of the interface, a managed class
+        // that is neither an object wrapper nor such a view, has no wrapper to
+        // record the connection on and is refused with an ArgumentException.
         writer.WriteLine(
             "/// <summary>Returns the wrapper a handler of a signal of the interface is remembered on.</summary>");
         writer.WriteLine("/// <param name=\"self\">The instance, or the view of it, the handler is added to or removed from.</param>");
