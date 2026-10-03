@@ -46,10 +46,11 @@ public sealed class InstanceFieldTests
     [Theory]
     [InlineData(
         "BaseSink.cs",
-        "STREAM_LOCK, PREROLL_LOCK or both depending on the path",
+        "STREAM_LOCK, PREROLL_LOCK, both, or in pull mode neither, depending on the path",
         "<see cref=\"OnRender\"/> or <see cref=\"OnPreroll\"/>",
-        ", and no single lock covers every write (a FLUSH_STOP reset and the pull-mode seek, loop and "
-        + "duration-query paths bypass PREROLL_LOCK, while an instant rate change bypasses STREAM_LOCK),")]
+        ", and no single lock covers every write (a FLUSH_STOP reset and the pull-mode seek and loop bypass "
+        + "PREROLL_LOCK, an instant rate change bypasses STREAM_LOCK, and a pull-mode duration query rewrites "
+        + "`duration`, one aligned 64-bit word, under neither lock),")]
     [InlineData("BaseSrc.cs", "STREAM_LOCK and OBJECT_LOCK", "<see cref=\"OnCreate\"/> or <see cref=\"OnFill\"/>", null)]
     [InlineData("BaseTransform.cs", "STREAM_LOCK", "<see cref=\"OnTransform\"/> or <see cref=\"OnTransformIp\"/>", null)]
     [InlineData("BaseParse.cs", "STREAM_LOCK", "<see cref=\"OnHandleFrame\"/>", null)]

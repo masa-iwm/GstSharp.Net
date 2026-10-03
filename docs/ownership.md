@@ -703,7 +703,7 @@ the base class calls with the locks its own writers take already held —
 `OnParse` for the two decoders. The pad holds `STREAM_LOCK` around a chain, a getrange and a
 serialized event (`gstpad.c:4554`, `:5072`, `:6053`), and the codec classes take
 a `STREAM_LOCK` of their own around the same calls, which together cover the
-writers the twelve overlay entries cite save two. One: an instant rate change rewrites
+writers the twelve overlay entries cite save three. One: an instant rate change rewrites
 `GstBaseSink.segment` from the thread that sent the event and holds
 `PREROLL_LOCK` alone to do it (`gstbasesink.c:4500-4562`), and that lock is held
 for the whole of the chain function `OnRender` and `OnPreroll` run inside. Two:
@@ -711,7 +711,13 @@ the same kind of event rewrites the `flags` of `AudioDecoder.input_segment` and
 `VideoDecoder.input_segment` from the sending thread under `OBJECT_LOCK` alone
 (`gstaudiodecoder.c:2479-2481`, `gstvideodecoder.c:1618-1620`); `flags` is one
 32 bit word, so a copy holds the old value or the new one and never a mix, and
-the in tree C decoders read it on the same terms.
+the in tree C decoders read it on the same terms. Three: in pull mode a duration
+query rewrites the `duration` of `GstBaseSink.segment` from whichever thread
+sends it, under neither lock (`gstbasesink.c:5410`, reached from the element
+query at `:5468` and `:5487-5499`), while the pull loop may be rendering;
+`duration` is one aligned 64 bit word, so the same argument holds. Pull
+activation writes the segment under neither lock as well (`:4908`, `:4918`), but
+before the task that renders starts, so no override can be reading it.
 Outside it the read is still memory safe and still answers a segment: a
 `GstSegment` is 120 flat bytes and owns no pointer, so the worst a racing
 rewrite can produce is a value that mixes the fields of two segments. That is
