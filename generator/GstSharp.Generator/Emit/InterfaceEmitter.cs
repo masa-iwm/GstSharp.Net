@@ -107,7 +107,7 @@ internal sealed class InterfaceEmitter
             declaration,
             context,
             CallableForm.ExtensionMethod,
-            [typeName, extensionsName, .. SurfaceBuilder.WrapperNames],
+            [typeName, extensionsName, SignalEmitter.SignalOwnerName, .. SurfaceBuilder.WrapperNames],
             [],
             includeProperties: false,
             includeSignals: true);

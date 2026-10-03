@@ -274,10 +274,13 @@ states three things and all three are required: `lock`, the lock the library
 rewrites the field under, which the generated remark prints; `overrides`, the gir
 virtual methods the base class calls on the streaming thread, which is the window
 a read is consistent in, because managed code can take none of the locks a writer
-of such a field holds; and a `$comment` with the header file and line. An
-optional `name` renames the accessor. The class has to be on `subclassable`:
-without a subclassing surface there is no override to read the field inside, so
-there is no window to state.
+of such a field holds save `PREROLL_LOCK` of `GstBaseSink`, which does not cover
+every write; and a `$comment` with the header file and line. An optional `name`
+renames the accessor. An optional `lockRemark` replaces the clause saying managed
+code cannot take the lock, for an entry whose lock it can take after all
+(`GstBaseSink.segment`); it is printed as written and refused when empty. The
+class has to be on `subclassable`: without a subclassing surface there is no
+override to read the field inside, so there is no window to state.
 
 The refusals are errors rather than warnings, because an entry is the only reason
 a piece of public surface exists. `GEN0060` reports an entry that matched no
