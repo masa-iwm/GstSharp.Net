@@ -27,8 +27,9 @@ namespace Gst.Video;
 /// write with an <see cref="InvalidOperationException"/>. Writing one would
 /// break the element that owns it: elements find their own channel by the
 /// content of its label, <c>playsink</c> asserts that the search found one
-/// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> on the video path and
-/// <c>:5548</c> on the audio one) and aborts the process when it did not, and
+/// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> when it sets its video
+/// chain up and <c>:5548</c> in the <c>set_value</c> of its proxy channels)
+/// and aborts the process when it did not, and
 /// the write frees the previous string while the element may be reading it on
 /// another thread.
 /// </para>
@@ -68,9 +69,10 @@ public unsafe partial class ColorBalanceChannel
     /// the channels of another one looks its own channel up by substring:
     /// <c>playsink</c> walks the real channel list, keeps the first channel
     /// whose <c>label</c> contains the proxy's label, and then asserts that it
-    /// found one (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> on the
-    /// video path and <c>:5548</c> on the audio one). A channel whose label is
-    /// <see langword="null"/>, or which lacks the substring that side expects,
+    /// found one (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> when it
+    /// sets its video chain up and <c>:5548</c> in the <c>set_value</c> of its
+    /// proxy channels). A channel whose label is
+    /// <see langword="null"/>, or which lacks the substring a proxy expects,
     /// aborts the process there. Nothing in this binding can guard against
     /// that, so a channel handed to <c>playsink</c> has to carry a label that
     /// contains the name it looks for.
@@ -173,7 +175,8 @@ public unsafe partial class ColorBalanceChannel
     /// that owns the channel finds it again by the content of its label, so a
     /// rewritten label silently disables the element's own <c>set_value</c> and
     /// <c>get_value</c>, aborts the process under <c>playsink</c>
-    /// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> and <c>:5548</c>),
+    /// (<c>g_assert (channel)</c>, <c>gstplaysink.c:1720</c> as it sets its video
+    /// chain up and <c>:5548</c> in the <c>set_value</c> of its proxy channels),
     /// and frees the previous string under a reader on another thread, there
     /// being no lock on either side.
     /// </remarks>
@@ -229,9 +232,10 @@ public unsafe partial class ColorBalanceChannel
     /// <strong>The label is not decoration.</strong> <c>playsink</c> matches
     /// its proxy channels against the real ones by substring and then asserts
     /// that it found one (<c>g_assert (channel)</c>,
-    /// <c>gstplaysink.c:1720</c> on the video path and <c>:5548</c> on the
-    /// audio one), so a channel whose label is <see langword="null"/>, or which
-    /// lacks the substring that side expects, aborts the process there.
+    /// <c>gstplaysink.c:1720</c> when it sets its video chain up and
+    /// <c>:5548</c> in the <c>set_value</c> of its proxy channels), so a channel
+    /// whose label is <see langword="null"/>, or which lacks the substring a
+    /// proxy expects, aborts the process there.
     /// </para>
     /// <para>
     /// The gir carries no nullable annotation on the field, which the generator

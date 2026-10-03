@@ -895,8 +895,8 @@ Five facts of the C interface show through:
   answers `null` or holds a `null` or disposed entry is reported to the trap,
   and the caller gets the list it got before rather than none. `playsink`
   finds its channel in that list by label and then `g_assert`s that it did
-  (`gstplaysink.c:1720` when it sets its video chain up, `:5548` whenever a
-  value is set on one of its own channels), so a list that suddenly came back
+  (`gstplaysink.c:1720` when it sets its video chain up, `:5548` in the
+  `set_value` of its proxy channels, whenever a value is set on one of them), so a list that suddenly came back
   empty would abort the process there. The same assert is why the labels
   matter: `playsink` only uses an element that offers channels whose labels
   contain `BRIGHTNESS`, `CONTRAST`, `HUE` and `SATURATION`, and an element
