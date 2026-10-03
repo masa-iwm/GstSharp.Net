@@ -331,9 +331,9 @@ jobs:
       # of the suite builds its pipelines out of. They are not exotic — the two
       # test sources come from gstreamer1.0-plugins-base and the other two from
       # the coreelements plugin of libgstreamer1.0-0, both of which this leg
-      # installs by name in the step above — but seven tests gate on
-      # videotestsrc, five on identity and two on audiotestsrc with
-      # RequiresElementFact, and fakesink is the sink most of the pipeline
+      # installs by name in the step above — but many tests gate on
+      # videotestsrc, identity or audiotestsrc with RequiresElementFact, and
+      # fakesink is the sink most of the pipeline
       # tests end in without gating on it at all. An installation that lost one
       # of them would take a large part of the suite with it, silently for the
       # gated tests, so they are named here for the same reason as the rest.
