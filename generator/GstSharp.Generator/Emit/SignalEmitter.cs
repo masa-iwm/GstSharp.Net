@@ -51,6 +51,9 @@ internal static class SignalEmitter
     /// <summary>The name of the generated holder of the connected handlers.</summary>
     internal const string ConnectionsName = "SignalConnections";
 
+    /// <summary>The name of the helper that resolves the receiver of an interface signal accessor.</summary>
+    internal const string SignalOwnerName = "SignalOwnerOf";
+
     /// <summary>The parameter of a trampoline that receives the emitting instance.</summary>
     private const string InstanceParameter = "instance";
 
@@ -621,13 +624,13 @@ internal static class SignalEmitter
         }
 
         WriteDocNoteRemark(writer, plan);
-        WriteRemovalIdentityRemark(writer);
+        WriteRemovalIdentityRemark(writer, forInterface: true);
         XmlDocWriter.WriteObsolete(writer, plan.Signal);
         writer.WriteLine(
             "public static void " + AddMethodName(plan) + "(this " + interfaceType + " self, "
             + plan.EventType + " handler) =>");
         writer.WriteLine(
-            "    " + connections + ".Add((Gst.GObject.Object)self, \"" + plan.SignalName + "\", (nint)("
+            "    " + connections + ".Add(" + SignalOwnerName + "(self), \"" + plan.SignalName + "\", (nint)("
             + PointerType(plan) + ")&" + plan.TrampolineName + ", handler);");
         writer.WriteLine();
         writer.WriteLine(
@@ -635,13 +638,13 @@ internal static class SignalEmitter
             + Describe(plan, cType) + ".</summary>");
         writer.WriteLine("/// <param name=\"self\">The instance the handler was connected to.</param>");
         writer.WriteLine("/// <param name=\"handler\">The handler to disconnect.</param>");
-        WriteRemovalIdentityRemark(writer);
+        WriteRemovalIdentityRemark(writer, forInterface: true);
         XmlDocWriter.WriteObsolete(writer, plan.Signal);
         writer.WriteLine(
             "public static void " + RemoveMethodName(plan) + "(this " + interfaceType + " self, "
             + plan.EventType + " handler) =>");
         writer.WriteLine(
-            "    " + connections + ".Remove((Gst.GObject.Object)self, \"" + plan.SignalName + "\", handler);");
+            "    " + connections + ".Remove(" + SignalOwnerName + "(self), \"" + plan.SignalName + "\", handler);");
     }
 
     /// <summary>
@@ -676,6 +679,10 @@ internal static class SignalEmitter
     /// from.
     /// </summary>
     /// <param name="writer">The writer of the file being emitted.</param>
+    /// <param name="forInterface">
+    /// Whether the remark documents the accessors of an interface signal, whose
+    /// receiver can be a view rather than the wrapper itself.
+    /// </param>
     /// <remarks>
     /// The connected handlers are held in a table that is keyed by the wrapper,
     /// so adding and removing are only a pair when both see the same instance.
@@ -684,14 +691,70 @@ internal static class SignalEmitter
     /// rather than of the object, and a wrapper that was disposed in between is
     /// replaced by one that knows nothing of the handler.
     /// </remarks>
-    private static void WriteRemovalIdentityRemark(CodeWriter writer)
+    private static void WriteRemovalIdentityRemark(CodeWriter writer, bool forInterface = false)
     {
         writer.WriteLine("/// <remarks>");
         writer.WriteLine("/// The handler is remembered on the wrapper it was added to and has to be");
         writer.WriteLine("/// removed from that same instance. Looking the object up again normally");
         writer.WriteLine("/// hands the same wrapper out, but one that was disposed in between is");
         writer.WriteLine("/// replaced by a new one, which knows nothing of the handler.");
+        if (forInterface)
+        {
+            writer.WriteLine("/// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was");
+            writer.WriteLine("/// taken from, so a handler added through one view is found through another.");
+        }
+
         writer.WriteLine("/// </remarks>");
+    }
+
+    /// <summary>
+    /// Writes the private helper of an interface extension class that resolves
+    /// the receiver of a signal accessor to the wrapper the handler is
+    /// remembered on.
+    /// </summary>
+    /// <param name="writer">The writer of the file being emitted.</param>
+    /// <param name="interfaceType">The C# interface the accessors extend.</param>
+    /// <param name="hasAdapter">
+    /// Whether the extension class holds the nested <c>Adapter</c> that
+    /// <c>Gst.GObject.Object.As</c> hands out for the interface.
+    /// </param>
+    /// <remarks>
+    /// The receiver is either a wrapper whose class declares the interface or
+    /// the view that <c>As</c> returns for a native instance that implements it
+    /// without its wrapper class declaring it, and the view is not an object
+    /// wrapper, so a cast would throw.
+    /// </remarks>
+    internal static void WriteSignalOwnerHelper(CodeWriter writer, string interfaceType, bool hasAdapter)
+    {
+        // The view resolves to the wrapper it was taken from rather than to one
+        // looked up from its handle: the connection table is a weak table keyed
+        // on the wrapper, and a transient wrapper that a lookup could hand back
+        // would take the connection record with it once collected, while the
+        // native handler stayed connected. The owner is also the very instance
+        // the identity remark promises, so a second view removes what the first
+        // one added.
+        writer.WriteLine(
+            "/// <summary>Returns the wrapper a handler of a signal of the interface is remembered on.</summary>");
+        writer.WriteLine("/// <param name=\"self\">The instance, or the view of it, the handler is added to or removed from.</param>");
+        writer.WriteLine("/// <returns>The wrapper the connection is recorded on.</returns>");
+        writer.WriteLine("private static Gst.GObject.Object " + SignalOwnerName + "(" + interfaceType + " self)");
+        writer.OpenBlock();
+        writer.WriteLine("ArgumentNullException.ThrowIfNull(self);");
+        writer.WriteLine("return self switch");
+        writer.WriteLine("{");
+        writer.WriteLine("    Gst.GObject.Object wrapper => wrapper,");
+        if (hasAdapter)
+        {
+            writer.WriteLine("    Adapter adapter => adapter.Owner,");
+        }
+
+        writer.WriteLine("    _ => throw new ArgumentException(");
+        writer.WriteLine(
+            "        \"The instance is neither an object wrapper nor a view that As<T>() returned, "
+            + "so it has no wrapper to remember the handler on.\",");
+        writer.WriteLine("        nameof(self)),");
+        writer.WriteLine("};");
+        writer.CloseBlock();
     }
 
     /// <summary>Returns the function pointer type of the trampoline of a signal.</summary>

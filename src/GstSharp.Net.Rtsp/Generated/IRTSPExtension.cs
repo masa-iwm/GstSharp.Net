@@ -216,9 +216,11 @@ public static unsafe partial class RTSPExtensionExtensions
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is
     /// replaced by a new one, which knows nothing of the handler.
+    /// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was
+    /// taken from, so a handler added through one view is found through another.
     /// </remarks>
     public static void AddSendHandler(this Gst.Rtsp.IRTSPExtension self, Gst.Rtsp.RTSPExtensionExtensions.SendHandler handler) =>
-        Gst.Rtsp.SignalConnections.Add((Gst.GObject.Object)self, "send", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)&SendTrampoline, handler);
+        Gst.Rtsp.SignalConnections.Add(SignalOwnerOf(self), "send", (nint)(delegate* unmanaged[Cdecl]<nint, nint, nint, nint, int>)&SendTrampoline, handler);
 
     /// <summary>Disconnects the handler that was connected last for a delegate of the <c>send</c> signal of <c>GstRTSPExtension</c>.</summary>
     /// <param name="self">The instance the handler was connected to.</param>
@@ -228,9 +230,11 @@ public static unsafe partial class RTSPExtensionExtensions
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is
     /// replaced by a new one, which knows nothing of the handler.
+    /// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was
+    /// taken from, so a handler added through one view is found through another.
     /// </remarks>
     public static void RemoveSendHandler(this Gst.Rtsp.IRTSPExtension self, Gst.Rtsp.RTSPExtensionExtensions.SendHandler handler) =>
-        Gst.Rtsp.SignalConnections.Remove((Gst.GObject.Object)self, "send", handler);
+        Gst.Rtsp.SignalConnections.Remove(SignalOwnerOf(self), "send", handler);
 
     /// <summary>The native handler of the <c>send</c> signal of <c>GstRTSPExtension</c>.</summary>
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
@@ -297,6 +301,22 @@ public static unsafe partial class RTSPExtensionExtensions
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_extension_stream_select")]
     private static partial int GstRtspExtensionStreamSelect(nint ext, nint url);
 
+    /// <summary>Returns the wrapper a handler of a signal of the interface is remembered on.</summary>
+    /// <param name="self">The instance, or the view of it, the handler is added to or removed from.</param>
+    /// <returns>The wrapper the connection is recorded on.</returns>
+    private static Gst.GObject.Object SignalOwnerOf(Gst.Rtsp.IRTSPExtension self)
+    {
+        ArgumentNullException.ThrowIfNull(self);
+        return self switch
+        {
+            Gst.GObject.Object wrapper => wrapper,
+            Adapter adapter => adapter.Owner,
+            _ => throw new ArgumentException(
+                "The instance is neither an object wrapper nor a view that As<T>() returned, so it has no wrapper to remember the handler on.",
+                nameof(self)),
+        };
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstRTSPExtension</c> under.</summary>
     /// <returns>The type of the <c>GstRTSPExtension</c> interface.</returns>
     [LibraryImport("GstRtsp", EntryPoint = "gst_rtsp_extension_get_type")]
@@ -313,6 +333,9 @@ public static unsafe partial class RTSPExtensionExtensions
 
         /// <inheritdoc/>
         public nint Handle => _owner.Handle;
+
+        /// <summary>Gets the wrapper that the view presents.</summary>
+        internal Gst.GObject.Object Owner => _owner;
     }
 
     /// <summary>Creates the view of an object, for the type registry.</summary>

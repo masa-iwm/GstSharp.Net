@@ -66,15 +66,9 @@ public sealed unsafe partial class SubclassColorBalanceTests
 
         List<(string? Label, int Value)> announced = [];
 
-        // The generated AddValueChangedHandler casts its receiver to an
-        // object wrapper, which the view As hands out for a class that does
-        // not declare IColorBalance is not, so the signal is connected by
-        // name.
-        _ = sink.ConnectSignal("value-changed", (sender, args) =>
-        {
-            announced.Add((((ColorBalanceChannel)args[0]!).Label, (int)args[1]!));
-            return null;
-        });
+        // The class does not declare IColorBalance, so the receiver is the
+        // view As hands out, which the accessor resolves to the sink.
+        balance.AddValueChangedHandler((sender, args) => announced.Add((args.Channel.Label, args.Value)));
 
         balance.SetValue(hue, 250);
         balance.SetValue(hue, 250);

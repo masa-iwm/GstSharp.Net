@@ -150,6 +150,13 @@ internal sealed class InterfaceEmitter
                 first: true,
                 CTypeOf(declaration),
                 qualifiedTypeName);
+            bool hasSignals = surface.Signals.Count > 0;
+            if (hasSignals)
+            {
+                writer.WriteLine();
+                SignalEmitter.WriteSignalOwnerHelper(writer, qualifiedTypeName, hasAdapter: hasTypeFunction);
+            }
+
             if (hasTypeFunction)
             {
                 if (!surface.IsEmpty)
@@ -157,7 +164,7 @@ internal sealed class InterfaceEmitter
                     writer.WriteLine();
                 }
 
-                WriteCast(writer, module, declaration, qualifiedTypeName);
+                WriteCast(writer, module, declaration, qualifiedTypeName, exposesOwner: hasSignals);
                 _registry.Add(
                     new InterfaceRegistryEntry(
                         qualifiedTypeName,
@@ -180,11 +187,16 @@ internal sealed class InterfaceEmitter
     /// <param name="module">The module being emitted.</param>
     /// <param name="declaration">The gir interface.</param>
     /// <param name="qualifiedTypeName">The C# name of the generated interface.</param>
+    /// <param name="exposesOwner">
+    /// Whether the adapter exposes the wrapper it presents, which the signal
+    /// accessors of the interface remember their handlers on.
+    /// </param>
     private static void WriteCast(
         CodeWriter writer,
         ModuleInfo module,
         GirInterface declaration,
-        string qualifiedTypeName)
+        string qualifiedTypeName,
+        bool exposesOwner)
     {
         ClassEmitter.WriteTypeFunction(
             writer,
@@ -207,6 +219,13 @@ internal sealed class InterfaceEmitter
         writer.WriteLine();
         writer.WriteLine("/// <inheritdoc/>");
         writer.WriteLine("public nint Handle => _owner.Handle;");
+        if (exposesOwner)
+        {
+            writer.WriteLine();
+            writer.WriteLine("/// <summary>Gets the wrapper that the view presents.</summary>");
+            writer.WriteLine("internal Gst.GObject.Object Owner => _owner;");
+        }
+
         writer.CloseBlock();
         writer.WriteLine();
         writer.WriteLine("/// <summary>Creates the view of an object, for the type registry.</summary>");

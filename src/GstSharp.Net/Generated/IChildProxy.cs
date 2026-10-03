@@ -264,9 +264,11 @@ public static unsafe partial class ChildProxyExtensions
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is
     /// replaced by a new one, which knows nothing of the handler.
+    /// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was
+    /// taken from, so a handler added through one view is found through another.
     /// </remarks>
     public static void AddChildAddedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>
-        Gst.SignalConnections.Add((Gst.GObject.Object)self, "child-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildAddedTrampoline, handler);
+        Gst.SignalConnections.Add(SignalOwnerOf(self), "child-added", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildAddedTrampoline, handler);
 
     /// <summary>Disconnects the handler that was connected last for a delegate of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
     /// <param name="self">The instance the handler was connected to.</param>
@@ -276,9 +278,11 @@ public static unsafe partial class ChildProxyExtensions
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is
     /// replaced by a new one, which knows nothing of the handler.
+    /// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was
+    /// taken from, so a handler added through one view is found through another.
     /// </remarks>
     public static void RemoveChildAddedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>
-        Gst.SignalConnections.Remove((Gst.GObject.Object)self, "child-added", handler);
+        Gst.SignalConnections.Remove(SignalOwnerOf(self), "child-added", handler);
 
     /// <summary>The native handler of the <c>child-added</c> signal of <c>GstChildProxy</c>.</summary>
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
@@ -332,9 +336,11 @@ public static unsafe partial class ChildProxyExtensions
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is
     /// replaced by a new one, which knows nothing of the handler.
+    /// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was
+    /// taken from, so a handler added through one view is found through another.
     /// </remarks>
     public static void AddChildRemovedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildRemovedSignalArgs> handler) =>
-        Gst.SignalConnections.Add((Gst.GObject.Object)self, "child-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildRemovedTrampoline, handler);
+        Gst.SignalConnections.Add(SignalOwnerOf(self), "child-removed", (nint)(delegate* unmanaged[Cdecl]<nint, nint, byte*, nint, void>)&ChildRemovedTrampoline, handler);
 
     /// <summary>Disconnects the handler that was connected last for a delegate of the <c>child-removed</c> signal of <c>GstChildProxy</c>.</summary>
     /// <param name="self">The instance the handler was connected to.</param>
@@ -344,9 +350,11 @@ public static unsafe partial class ChildProxyExtensions
     /// removed from that same instance. Looking the object up again normally
     /// hands the same wrapper out, but one that was disposed in between is
     /// replaced by a new one, which knows nothing of the handler.
+    /// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was
+    /// taken from, so a handler added through one view is found through another.
     /// </remarks>
     public static void RemoveChildRemovedHandler(this Gst.IChildProxy self, System.EventHandler<Gst.ChildProxyExtensions.ChildRemovedSignalArgs> handler) =>
-        Gst.SignalConnections.Remove((Gst.GObject.Object)self, "child-removed", handler);
+        Gst.SignalConnections.Remove(SignalOwnerOf(self), "child-removed", handler);
 
     /// <summary>The native handler of the <c>child-removed</c> signal of <c>GstChildProxy</c>.</summary>
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
@@ -409,6 +417,22 @@ public static unsafe partial class ChildProxyExtensions
     [LibraryImport("Gst", EntryPoint = "gst_child_proxy_set_property")]
     private static partial void GstChildProxySetProperty(nint @object, byte* name, Gst.GObject.GValueNative* value);
 
+    /// <summary>Returns the wrapper a handler of a signal of the interface is remembered on.</summary>
+    /// <param name="self">The instance, or the view of it, the handler is added to or removed from.</param>
+    /// <returns>The wrapper the connection is recorded on.</returns>
+    private static Gst.GObject.Object SignalOwnerOf(Gst.IChildProxy self)
+    {
+        ArgumentNullException.ThrowIfNull(self);
+        return self switch
+        {
+            Gst.GObject.Object wrapper => wrapper,
+            Adapter adapter => adapter.Owner,
+            _ => throw new ArgumentException(
+                "The instance is neither an object wrapper nor a view that As<T>() returned, so it has no wrapper to remember the handler on.",
+                nameof(self)),
+        };
+    }
+
     /// <summary>Returns the <c>GType</c> that GObject registered <c>GstChildProxy</c> under.</summary>
     /// <returns>The type of the <c>GstChildProxy</c> interface.</returns>
     [LibraryImport("Gst", EntryPoint = "gst_child_proxy_get_type")]
@@ -425,6 +449,9 @@ public static unsafe partial class ChildProxyExtensions
 
         /// <inheritdoc/>
         public nint Handle => _owner.Handle;
+
+        /// <summary>Gets the wrapper that the view presents.</summary>
+        internal Gst.GObject.Object Owner => _owner;
     }
 
     /// <summary>Creates the view of an object, for the type registry.</summary>

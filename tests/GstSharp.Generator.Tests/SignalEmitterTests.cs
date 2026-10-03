@@ -394,16 +394,24 @@ public sealed class SignalEmitterTests
 
         // The signal of an interface is reached through extension methods
         // rather than an event, and the table behind them is keyed the same
-        // way, so both halves of the pair carry the same remark.
+        // way, so both halves of the pair carry the same remark, with one
+        // sentence more: the receiver can be a view that As<T>() hands out,
+        // which resolves to the wrapper it was taken from.
         string childProxy = Source("IChildProxy.cs");
+        string interfaceRemark = Remark.Replace(
+            "    /// </remarks>\n",
+            "    /// A view that <c>As&lt;T&gt;()</c> returns resolves to the wrapper it was\n"
+            + "    /// taken from, so a handler added through one view is found through another.\n"
+            + "    /// </remarks>\n",
+            StringComparison.Ordinal);
 
         Assert.Contains(
-            Remark
+            interfaceRemark
             + "    public static void AddChildAddedHandler(this Gst.IChildProxy self, ",
             childProxy,
             StringComparison.Ordinal);
         Assert.Contains(
-            Remark
+            interfaceRemark
             + "    public static void RemoveChildAddedHandler(this Gst.IChildProxy self, ",
             childProxy,
             StringComparison.Ordinal);
@@ -1029,13 +1037,13 @@ public sealed class SignalEmitterTests
         Assert.Contains(
             "public static void AddChildAddedHandler(this Gst.IChildProxy self, "
             + "System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>\n"
-            + "        Gst.SignalConnections.Add((Gst.GObject.Object)self, \"child-added\", ",
+            + "        Gst.SignalConnections.Add(SignalOwnerOf(self), \"child-added\", ",
             source,
             StringComparison.Ordinal);
         Assert.Contains(
             "public static void RemoveChildAddedHandler(this Gst.IChildProxy self, "
             + "System.EventHandler<Gst.ChildProxyExtensions.ChildAddedSignalArgs> handler) =>\n"
-            + "        Gst.SignalConnections.Remove((Gst.GObject.Object)self, \"child-added\", handler);",
+            + "        Gst.SignalConnections.Remove(SignalOwnerOf(self), \"child-added\", handler);",
             source,
             StringComparison.Ordinal);
 
@@ -1043,6 +1051,56 @@ public sealed class SignalEmitterTests
         // interface itself only exposes the native handle.
         Assert.Contains("public sealed class ChildAddedSignalArgs : System.EventArgs", source, StringComparison.Ordinal);
         Assert.DoesNotContain("public event", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheReceiverOfAnInterfaceSignalAccessorResolvesToTheWrapperOfAView()
+    {
+        // GstChildProxy has two signals, and the four accessors share one
+        // helper. A view that As<T>() hands out is the nested Adapter rather
+        // than an object wrapper, so the helper reads the wrapper off the
+        // adapter instead of casting the receiver.
+        string source = Source("IChildProxy.cs");
+
+        Assert.DoesNotContain("(Gst.GObject.Object)self", source, StringComparison.Ordinal);
+        Assert.Equal(
+            1,
+            source.Split("private static Gst.GObject.Object SignalOwnerOf(Gst.IChildProxy self)\n").Length - 1);
+        Assert.Equal(4, source.Split("SignalConnections.Add(SignalOwnerOf(self), ").Length - 1
+            + source.Split("SignalConnections.Remove(SignalOwnerOf(self), ").Length - 1);
+        Assert.Contains(
+            "        ArgumentNullException.ThrowIfNull(self);\n"
+            + "        return self switch\n"
+            + "        {\n"
+            + "            Gst.GObject.Object wrapper => wrapper,\n"
+            + "            Adapter adapter => adapter.Owner,\n"
+            + "            _ => throw new ArgumentException(\n",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains("        internal Gst.GObject.Object Owner => _owner;\n", source, StringComparison.Ordinal);
+
+        // An interface without signals carries neither the helper nor the
+        // property on its adapter, which it still has.
+        string withoutSignals = Source("IURIHandler.cs");
+        Assert.Contains("internal sealed class Adapter : Gst.IURIHandler", withoutSignals, StringComparison.Ordinal);
+        Assert.DoesNotContain("SignalOwnerOf", withoutSignals, StringComparison.Ordinal);
+        Assert.DoesNotContain("Owner =>", withoutSignals, StringComparison.Ordinal);
+
+        // The four interfaces with signals are the only adapters that expose
+        // their owner.
+        string[] owners = Generated.Files
+            .Where(file => file.Content.Contains("internal Gst.GObject.Object Owner => _owner;", StringComparison.Ordinal))
+            .Select(file => file.RelativePath)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(
+            [
+                "GstSharp.Net.GES/Generated/IMetaContainer.cs",
+                "GstSharp.Net.Rtsp/Generated/IRTSPExtension.cs",
+                "GstSharp.Net.Video/Generated/IColorBalance.cs",
+                "GstSharp.Net/Generated/IChildProxy.cs",
+            ],
+            owners);
     }
 
     [Fact]
