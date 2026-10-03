@@ -970,9 +970,9 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// The library rewrites the field under STREAM_LOCK, PREROLL_LOCK, both, or in pull mode
     /// neither, depending on the path, and no single lock covers every write (a FLUSH_STOP
     /// reset and the pull-mode seek and loop bypass PREROLL_LOCK, an instant rate change
-    /// bypasses STREAM_LOCK, and a pull-mode duration query rewrites `duration`, one aligned
-    /// 64-bit word, under neither lock), so the copy is only guaranteed consistent when it is
-    /// read on the streaming thread, inside
+    /// bypasses STREAM_LOCK, and a pull-mode duration query rewrites <c>duration</c>, one
+    /// aligned 64-bit word, under neither lock), so the copy is only guaranteed consistent when
+    /// it is read on the streaming thread, inside
     /// <see cref="OnRender"/> or <see cref="OnPreroll"/>.
     /// A read from any other thread may mix the fields of two segments; it is never
     /// unsafe, because the structure is flat and owns no pointer.
