@@ -967,9 +967,11 @@ public abstract unsafe partial class BaseSink : Gst.Element
     /// the instance is gone, and writing into it changes nothing native.
     /// </para>
     /// <para>
-    /// The library rewrites the field under STREAM_LOCK and, for an instant rate change,
-    /// PREROLL_LOCK, which managed code cannot take, so the copy is only guaranteed consistent
-    /// when it is read on the streaming thread, inside
+    /// The library rewrites the field under STREAM_LOCK, PREROLL_LOCK or both depending on the
+    /// path, and no single lock covers every write (a FLUSH_STOP reset and the pull-mode seek,
+    /// loop and duration-query paths bypass PREROLL_LOCK, while an instant rate change bypasses
+    /// STREAM_LOCK), so the copy is only guaranteed consistent when it is read on the streaming
+    /// thread, inside
     /// <see cref="OnRender"/> or <see cref="OnPreroll"/>.
     /// A read from any other thread may mix the fields of two segments; it is never
     /// unsafe, because the structure is flat and owns no pointer.

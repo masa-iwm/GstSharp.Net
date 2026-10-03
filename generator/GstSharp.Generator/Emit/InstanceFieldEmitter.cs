@@ -291,10 +291,13 @@ internal sealed class InstanceFieldEmitter
             writer.WriteLine("/// <para>");
             // The lock is free text of an overlay entry, so the sentence it
             // stands in is wrapped rather than written out at whatever width
-            // the entry happens to give it.
+            // the entry happens to give it. An entry whose lock managed code
+            // can take after all states the clause that replaces the one
+            // saying it cannot, and the window stands either way.
+            string clause = plan.Entry.LockRemark ?? ", which managed code cannot take,";
             foreach (string line in XmlDocWriter.Wrap(
-                "The library rewrites the field under " + plan.Entry.Lock + ", which managed code cannot "
-                + "take, so the copy is only guaranteed consistent when it is read on the streaming "
+                "The library rewrites the field under " + plan.Entry.Lock + clause
+                + " so the copy is only guaranteed consistent when it is read on the streaming "
                 + "thread, inside"))
             {
                 writer.WriteLine("/// " + line);

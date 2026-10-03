@@ -428,7 +428,10 @@ asserts the crossing the hierarchy makes possible: the same source handed to
    three probe layers of `InstanceFieldProbeTests` with it; an entry states the
    optional `headerPublic` when the gir marks the field private because the
    structure it belongs to switched from a private marker to a protected one,
-   and the hand written route stays for a field that key refuses.
+   and the optional `lockRemark` when the clause of the generated remark that
+   says managed code cannot take the lock is not true (`GstBaseSink.segment`,
+   whose `PREROLL_LOCK` `BaseSink.PrerollLock()` takes), and the hand written
+   route stays for a field that key refuses.
 10. A zero terminated `Record**` return that comes with a free of its own is
     hand bound. Walk to the terminator, and wrap every element with the
     transfer the C dictates: a deep boxed copy when one free releases the whole

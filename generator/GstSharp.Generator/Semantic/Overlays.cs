@@ -330,6 +330,12 @@ internal sealed class FieldSkip
 /// printed into generated code, and it goes stale the moment the gir catches
 /// up, which the emitter reports.
 /// </para>
+/// <para>
+/// <c>lockRemark</c> is optional too, and replaces the clause of the remark
+/// that says managed code cannot take the lock, for a field where that is not
+/// true: the remark keeps the window, and the clause says instead why a read
+/// outside it is still not consistent.
+/// </para>
 /// </remarks>
 internal sealed class InstanceField
 {
@@ -363,6 +369,12 @@ internal sealed class InstanceField
     public string? HeaderPublic { get; set; }
 
     /// <summary>
+    /// Gets or sets the clause the generated remark prints after the lock, in
+    /// place of the one that says managed code cannot take it.
+    /// </summary>
+    public string? LockRemark { get; set; }
+
+    /// <summary>
     /// Gets what is wrong with the shape of the entry, read off the entry alone
     /// and without asking what this run made of it.
     /// </summary>
@@ -379,7 +391,9 @@ internal sealed class InstanceField
                             ? "states an empty 'name'"
                             : Name is { } stem && !IsIdentifier(stem)
                                 ? $"states the 'name' '{stem}', which is no C# identifier"
-                                : null;
+                                : LockRemark is { } lockRemark && string.IsNullOrWhiteSpace(lockRemark)
+                                    ? "states an empty 'lockRemark'"
+                                    : null;
 
     /// <summary>
     /// Tests whether a stem can be pasted into the name of a generated member.

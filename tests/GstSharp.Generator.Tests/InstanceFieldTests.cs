@@ -46,22 +46,26 @@ public sealed class InstanceFieldTests
     [Theory]
     [InlineData(
         "BaseSink.cs",
-        "STREAM_LOCK and, for an instant rate change, PREROLL_LOCK",
-        "<see cref=\"OnRender\"/> or <see cref=\"OnPreroll\"/>")]
-    [InlineData("BaseSrc.cs", "STREAM_LOCK and OBJECT_LOCK", "<see cref=\"OnCreate\"/> or <see cref=\"OnFill\"/>")]
-    [InlineData("BaseTransform.cs", "STREAM_LOCK", "<see cref=\"OnTransform\"/> or <see cref=\"OnTransformIp\"/>")]
-    [InlineData("BaseParse.cs", "STREAM_LOCK", "<see cref=\"OnHandleFrame\"/>")]
-    public void TheRemarkNamesTheLockAndTheWindow(string fileName, string @lock, string window)
+        "STREAM_LOCK, PREROLL_LOCK or both depending on the path",
+        "<see cref=\"OnRender\"/> or <see cref=\"OnPreroll\"/>",
+        ", and no single lock covers every write (a FLUSH_STOP reset and the pull-mode seek, loop and "
+        + "duration-query paths bypass PREROLL_LOCK, while an instant rate change bypasses STREAM_LOCK),")]
+    [InlineData("BaseSrc.cs", "STREAM_LOCK and OBJECT_LOCK", "<see cref=\"OnCreate\"/> or <see cref=\"OnFill\"/>", null)]
+    [InlineData("BaseTransform.cs", "STREAM_LOCK", "<see cref=\"OnTransform\"/> or <see cref=\"OnTransformIp\"/>", null)]
+    [InlineData("BaseParse.cs", "STREAM_LOCK", "<see cref=\"OnHandleFrame\"/>", null)]
+    public void TheRemarkNamesTheLockAndTheWindow(string fileName, string @lock, string window, string? lockRemark)
     {
         string source = Source(fileName);
 
         // The sentence is wrapped, because the lock is free text of an overlay
         // entry: what the file carries is the words of it, in order, with a
-        // documentation prefix wherever the wrap broke the line.
+        // documentation prefix wherever the wrap broke the line. An entry that
+        // states a 'lockRemark' prints it in place of the clause that says
+        // managed code cannot take the lock, and only that entry does.
         string wrapped = string.Join(
             " ",
-            ("The library rewrites the field under " + @lock + ", which managed code cannot take, so the "
-            + "copy is only guaranteed consistent when it is read on the streaming thread, inside")
+            ("The library rewrites the field under " + @lock + (lockRemark ?? ", which managed code cannot take,")
+            + " so the copy is only guaranteed consistent when it is read on the streaming thread, inside")
             .Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
         string written = string.Join(
@@ -72,6 +76,7 @@ public sealed class InstanceFieldTests
                 .SelectMany(static line => line[4..].Split(' ', StringSplitOptions.RemoveEmptyEntries)));
 
         Assert.Contains(wrapped, written, StringComparison.Ordinal);
+        Assert.Equal(lockRemark is null, written.Contains("which managed code cannot take", StringComparison.Ordinal));
         Assert.Contains("/// " + window + ".\n", source, StringComparison.Ordinal);
 
         // No line of the remark is wider than an editor of this repository

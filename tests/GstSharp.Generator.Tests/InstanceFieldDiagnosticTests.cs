@@ -207,6 +207,10 @@ public sealed class InstanceFieldDiagnosticTests
         "GEN0060",
         "states an empty 'headerPublic'")]
     [InlineData(
+        Entries + "{ \"GstWidget.segment\": { " + Window + ", \"lockRemark\": \" \" } } }",
+        "GEN0060",
+        "states an empty 'lockRemark'")]
+    [InlineData(
         Entries + "{ \"GstWidget.data\": { " + Window + " } } }",
         "GEN0061",
         "Pointer instance fields are not exposed")]
@@ -330,6 +334,34 @@ public sealed class InstanceFieldDiagnosticTests
             run.File("InstanceFields/GadgetOwnFieldsRaw.cs", "GstSharp.Net.Base"),
             StringComparison.Ordinal);
         Assert.Equal(1, run.Result.Census.EmittedCount("GstBase", "instance field"));
+    }
+
+    /// <summary>
+    /// A <c>lockRemark</c> is printed in place of the clause that says managed
+    /// code cannot take the lock, and the rest of the sentence stays.
+    /// </summary>
+    [Fact]
+    public void ALockRemarkReplacesTheClauseAfterTheLock()
+    {
+        FixtureRun stated = Run(
+            Entries + "{ \"GstGadget.segment\": { " + Window + ", \"lockRemark\": \", which is not all,\" } } }",
+            allowErrors: false);
+        FixtureRun plain = Run(
+            Entries + "{ \"GstGadget.segment\": { " + Window + " } } }",
+            allowErrors: false);
+
+        string withRemark = stated.File("Gadget.cs", "GstSharp.Net.Base");
+        string without = plain.File("Gadget.cs", "GstSharp.Net.Base");
+
+        Assert.Contains(
+            "/// The library rewrites the field under STREAM_LOCK, which is not all, so the copy",
+            withRemark,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("which managed code cannot", withRemark, StringComparison.Ordinal);
+        Assert.Contains(
+            "/// The library rewrites the field under STREAM_LOCK, which managed code cannot take, so",
+            without,
+            StringComparison.Ordinal);
     }
 
     /// <summary>
